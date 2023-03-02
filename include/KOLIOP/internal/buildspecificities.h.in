@@ -14,7 +14,7 @@
 ///
 /// Example usage:
 ///
-///     #if defined(SPLB2_ASSERT_ENABLED)
+///     #if defined(KOLIOP_ASSERT_ENABLED)
 ///         KOLIOP_ASSERT(x > 10);
 ///     #else
 ///         something else;
