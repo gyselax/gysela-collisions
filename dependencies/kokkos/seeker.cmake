@@ -1,8 +1,8 @@
-option(koliop_USE_SYSTEM_PROVIDED_KOKKOS "Download kokkos, compile it, use it. Does not rely on a system installation." OFF)
+option(koliop_USE_SYSTEM_PROVIDED_KOKKOS "Download Kokkos, compiles it, use it. Does not rely on a system installation." OFF)
 
 # NOTE: Kokkos option provided in the toolchains.
 
-if(NOT MYLIB_USE_SYSTEM_PROVIDED_KOKKOS)
+if(NOT koliop_USE_SYSTEM_PROVIDED_KOKKOS)
     include(FetchContent)
     # cmake_policy(SET CMP0135 NEW)
     FetchContent_Declare(Kokkos
@@ -19,7 +19,7 @@ else()
     find_package(Kokkos 3.7.01 REQUIRED)
 endif()
 
-function(mylib_target_add_kokkos target_name)
+function(koliop_target_add_kokkos target_name)
     target_link_libraries("${target_name}"
                           PRIVATE Kokkos::kokkos)
 

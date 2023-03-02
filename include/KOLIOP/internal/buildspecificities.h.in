@@ -7,7 +7,20 @@
 #define KOLIOP_VERSION_TWEAK @PROJECT_VERSION_TWEAK@
 #define KOLIOP_VERSION       "@PROJECT_VERSION@"
 
-// TODO(Etienne M): something here
+////////////////////////////////////////
+/// KOLIOP_ASSERT_ENABLED
+///
+/// If not defined, disable assertion, else, enable them.
+///
+/// Example usage:
+///
+///     #if defined(SPLB2_ASSERT_ENABLED)
+///         KOLIOP_ASSERT(x > 10);
+///     #else
+///         something else;
+///     #endif
+///
+////////////////////////////////////////
 
 #cmakedefine KOLIOP_ASSERT_ENABLED
 

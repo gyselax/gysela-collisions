@@ -11,7 +11,7 @@ function(koliop_add_test executable_subject_path executable_subject)
     target_link_libraries("${target_name}"
                           PRIVATE koliop)
 
-    koliop_target_build_options("${target_name}")
+    koliop_dependent_target_build_options("${target_name}")
 
 
     ########################################

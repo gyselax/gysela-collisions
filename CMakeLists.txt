@@ -10,7 +10,7 @@ include(CTest)
 ### Global options. Dependency specific options are defined in the dependencies.
 ################################################################################
 
-option(MYLIB_ASSERT_ENABLED "Enable assertions. This enable/disable KOLIOP_ASSERT() but not C's assert()." ON)
+option(KOLIOP_ASSERT_ENABLED "Enable assertions. This enable/disable KOLIOP_ASSERT() but not C's assert()." ON)
 
 
 ################################################################################
@@ -52,51 +52,55 @@ function(koliop_global_target_build_options target_name)
 
     target_link_options("${target_name}"
                         PRIVATE ${koliop_LINKER_FLAGS})
+endfunction()
+
+function(koliop_dependent_target_build_options target_name)
+    koliop_global_target_build_options("${target_name}")
 
     # Call the dependency defined functions on the target.
-    mylib_target_try_enable_lto("${target_name}")
+    koliop_target_enable_lto("${target_name}")
+endfunction()
+
+function(koliop_target_build_options target_name)
+    koliop_dependent_target_build_options("${target_name}")
+
+    # Call the dependency defined functions on the target.
+    koliop_target_add_kokkos("${target_name}")
 endfunction()
 
 
-
-
 ################################################################################
-### MYLIB library
+### koliop library
 ################################################################################
 
-add_library(mylib
-            STATIC)
+# NOTE: For now, for force the library to bbe static. It is often harder to
+# maintain dynamic libraries. Later, we can rely on the BUILD_SHARED_LIBS
+# variable and GenerateExportHeader:
+# https://cmake.org/cmake/help/latest/module/GenerateExportHeader.html
+add_library(koliop STATIC)
 
-set(mylib_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/sources")
-set(mylib_HEADER_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include")
+set(koliop_SOURCES_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/sources")
+set(koliop_INCLUDE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/include/MYLIB/internal/buildspecificities.h.in"
-               "${CMAKE_CURRENT_SOURCE_DIR}/include/MYLIB/internal/buildspecificities.h")
+configure_file("${koliop_INCLUDE_DIRECTORY}/KOLIOP/internal/buildspecificities.h.in"
+               "${koliop_INCLUDE_DIRECTORY}/KOLIOP/internal/buildspecificities.h")
 
 # NOTE: GLOBing file is not considered good practice. One could instead specify
 # the full, verbose lsit of ehader and source.
-file(GLOB_RECURSE mylib_SOURCES "${mylib_SOURCE_DIR}/*.cpp")
-file(GLOB_RECURSE mylib_HEADERS "${mylib_HEADER_DIR}/*.h")
+file(GLOB_RECURSE koliop_SOURCES_GLOB "${koliop_SOURCES_DIRECTORY}/*.cpp")
 
-target_sources(mylib
-               PRIVATE ${mylib_SOURCES}
-                       ${mylib_HEADERS})
+target_sources(koliop
+               PRIVATE ${koliop_SOURCES_GLOB})
 
-target_include_directories(mylib
-                           PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-                                  $<INSTALL_INTERFACE:include>)
+target_include_directories(koliop
+                           PUBLIC   "$<BUILD_INTERFACE:${koliop_INCLUDE_DIRECTORY}/>"
+                                    "$<INSTALL_INTERFACE:include/>")
 
 ########################################
 ### Compilation and linking
 ########################################
 
-mylib_target_add_threads(mylib)
-mylib_target_try_add_openmp(mylib)
-mylib_target_try_add_mpi(mylib)
-mylib_target_try_add_hip(mylib)
-mylib_target_add_kokkos(mylib)
-
-mylib_target_compile_options(mylib)
+koliop_target_build_options(koliop)
 
 
 ################################################################################
