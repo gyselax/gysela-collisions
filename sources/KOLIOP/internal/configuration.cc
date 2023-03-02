@@ -4,7 +4,7 @@
 
 namespace koliop {
 
-    void AssertionFailure(const char* an_expression) {
+    void AssertionFailure(const char* an_expression) noexcept {
         std::fprintf(stderr, "%s\n", an_expression);
         std::fflush(stdout);
         std::fflush(stderr);

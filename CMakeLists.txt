@@ -87,10 +87,13 @@ configure_file("${koliop_INCLUDE_DIRECTORY}/KOLIOP/internal/buildspecificities.h
 
 # NOTE: GLOBing file is not considered good practice. One could instead specify
 # the full, verbose list of headers and sources.
-file(GLOB_RECURSE koliop_SOURCES_GLOB "${koliop_SOURCES_DIRECTORY}/*.cpp")
+file(GLOB_RECURSE koliop_SOURCES_GLOB "${koliop_SOURCES_DIRECTORY}/*.cc")
 
 target_sources(koliop
                PRIVATE ${koliop_SOURCES_GLOB})
+
+target_include_directories(koliop
+                           PRIVATE "${koliop_SOURCES_DIRECTORY}/")
 
 target_include_directories(koliop
                            PUBLIC   "$<BUILD_INTERFACE:${koliop_INCLUDE_DIRECTORY}/>"
