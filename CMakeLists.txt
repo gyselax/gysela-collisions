@@ -73,7 +73,7 @@ endfunction()
 ### koliop library
 ################################################################################
 
-# NOTE: For now, for force the library to bbe static. It is often harder to
+# NOTE: For now, we force the library to be static. It is often harder to
 # maintain dynamic libraries. Later, we can rely on the BUILD_SHARED_LIBS
 # variable and GenerateExportHeader:
 # https://cmake.org/cmake/help/latest/module/GenerateExportHeader.html
@@ -86,7 +86,7 @@ configure_file("${koliop_INCLUDE_DIRECTORY}/KOLIOP/internal/buildspecificities.h
                "${koliop_INCLUDE_DIRECTORY}/KOLIOP/internal/buildspecificities.h")
 
 # NOTE: GLOBing file is not considered good practice. One could instead specify
-# the full, verbose lsit of ehader and source.
+# the full, verbose list of headers and sources.
 file(GLOB_RECURSE koliop_SOURCES_GLOB "${koliop_SOURCES_DIRECTORY}/*.cpp")
 
 target_sources(koliop
