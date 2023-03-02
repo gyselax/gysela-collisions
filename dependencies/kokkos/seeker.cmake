@@ -1,0 +1,32 @@
+option(koliop_USE_SYSTEM_PROVIDED_KOKKOS "Download kokkos, compile it, use it. Does not rely on a system installation." OFF)
+
+# NOTE: Kokkos option provided in the toolchains.
+
+if(NOT MYLIB_USE_SYSTEM_PROVIDED_KOKKOS)
+    include(FetchContent)
+    # cmake_policy(SET CMP0135 NEW)
+    FetchContent_Declare(Kokkos
+                         SYSTEM                # Requires CMake v3.25
+                         OVERRIDE_FIND_PACKAGE # Requires CMake v3.24
+                         URL https://github.com/kokkos/kokkos/archive/refs/tags/3.7.01.tar.gz
+                         URL_HASH "SHA512=97cb7e05aec145ba9adae30b20ae3138a532db3a56cdd5e092d8f9c1e1788efe7a6f721282e2a5c5bf9c0da4c53d28f30b27fcb546b68aa8eaa589a362eb40c1")
+    FetchContent_MakeAvailable(Kokkos)
+else()
+    # NOTE: With CMake 3.24, we can jut ask FetchContent_Declare with
+    # OVERRIDE_FIND_PACKAGE and put the find_package in the main control flow
+    # (not in the else).
+    # https://cmake.org/cmake/help/latest/module/FetchContent.html#integrating-with-find-package
+    find_package(Kokkos 3.7.01 REQUIRED)
+endif()
+
+function(mylib_target_add_kokkos target_name)
+    target_link_libraries("${target_name}"
+                          PRIVATE Kokkos::kokkos)
+
+    if(koliop_TOOLCHAIN_NAME MATCHES "acc.cce.adastra")
+        # WORKAROUND:
+        # https://gitlab.kitware.com/cmake/cmake/-/issues/24402
+        target_link_options("${target_name}"
+                            PUBLIC -fopenmp)
+    endif()
+endfunction()
