@@ -7,7 +7,7 @@
 // Platform macro definition
 ////////////////////////////////////////////////////////////////////////////////
 
-//////////////////////////////////////
+////////////////////////////////////////
 /// KOLIOP_COMPILER_IS_ICX
 /// KOLIOP_COMPILER_IS_ICC
 /// KOLIOP_COMPILER_IS_CLANG
@@ -80,7 +80,7 @@
 ///
 /// NOTE: CMake could give it to us, just look at CMakeCXXCompilerId.
 ///
-//////////////////////////////////////
+////////////////////////////////////////
 
 #if defined(__INTEL_CLANG_COMPILER)
     // For icl
@@ -112,7 +112,7 @@ static_assert(false, "This library doesn't support your compiler.");
 // Utility macro definition
 ////////////////////////////////////////////////////////////////////////////////
 
-//////////////////////////////////////
+////////////////////////////////////////
 /// KOLIOP_DEBUG_BREAK
 ///
 /// This macro will stop the program.
@@ -123,14 +123,14 @@ static_assert(false, "This library doesn't support your compiler.");
 ///
 ///     KOLIOP_DEBUG_BREAK();
 ///
-//////////////////////////////////////
+////////////////////////////////////////
 
 #include <cstdlib>
 // NOTE: We could also use __debugbreak or int3
 #define KOLIOP_DEBUG_BREAK() std::exit(EXIT_FAILURE)
 
 
-//////////////////////////////////////
+////////////////////////////////////////
 /// KOLIOP_UNUSED
 ///
 /// Prevent a compiler warning for an unused variable.
@@ -141,11 +141,11 @@ static_assert(false, "This library doesn't support your compiler.");
 ///     KOLIOP_UNUSED(a);
 ///     return;
 ///
-//////////////////////////////////////
+////////////////////////////////////////
 
 #define KOLIOP_UNUSED(an_expression) static_cast<void>(an_expression)
 
-//////////////////////////////////////
+////////////////////////////////////////
 /// KOLIOP_ASSERT
 ///
 /// Use this macro to assert a condition. The assertions trigger only if
@@ -155,7 +155,7 @@ static_assert(false, "This library doesn't support your compiler.");
 ///
 ///     KOLIOP_ASSERT(x > 10);
 ///
-//////////////////////////////////////
+////////////////////////////////////////
 
 namespace koliop {
     void AssertionFailure(const char* the_message) noexcept;
@@ -168,7 +168,7 @@ namespace koliop {
 #endif
 
 
-//////////////////////////////////////
+////////////////////////////////////////
 /// KOLIOP_FORCE_INLINE
 /// KOLIOP_FORCE_NOINLINE
 ///
@@ -176,7 +176,7 @@ namespace koliop {
 ///     KOLIOP_FORCE_INLINE inline int
 ///     foo(float* magic) { /* stuff */ return 1;}
 ///
-//////////////////////////////////////
+////////////////////////////////////////
 
 #if defined(KOLIOP_COMPILER_IS_GCC) || defined(KOLIOP_COMPILER_IS_CLANG)
     #define KOLIOP_FORCE_INLINE   __attribute__((always_inline))
