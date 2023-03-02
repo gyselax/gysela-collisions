@@ -2,6 +2,7 @@
 #define KOLIOP_ERROR_EXCEPTION_H
 
 #include "KOLIOP/error/status.h"
+#include "KOLIOP/internal/configuration.h"
 
 namespace koliop {
     namespace error {

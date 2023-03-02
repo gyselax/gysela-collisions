@@ -16,11 +16,11 @@
             return KOLIOP_STATUS_FAILURE;
         }
 
-        Kokkos::Initialize(Kokkos::InitializationSettings()
+        Kokkos::initialize(Kokkos::InitializationSettings()
                                .set_num_threads(static_cast<int>(a_host_thread_count))
                                .set_device_id(static_cast<int>(a_device_index))
                                .set_disable_warnings(!with_verbose_initialization)
-                               .print_configuration(with_verbose_initialization));
+                               .set_print_configuration(with_verbose_initialization));
 
         if(!Kokkos::is_initialized()) {
             return KOLIOP_STATUS_FAILURE;

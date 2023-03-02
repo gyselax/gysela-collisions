@@ -143,17 +143,17 @@ static_assert(false, "This library doesn't support your compiler.");
 ///
 //////////////////////////////////////
 
-#define SPLB2_UNUSED(an_expression) static_cast<void>(an_expression)
-
+#define KOLIOP_UNUSED(an_expression) static_cast<void>(an_expression)
 
 //////////////////////////////////////
-/// SPLB2_FAIL_MSG
+/// KOLIOP_ASSERT
 ///
-/// Use this macro to report a failure.
+/// Use this macro to assert a condition. The assertions trigger only if
+/// KOLIOP_ASSERT_ENABLED is defined.
 ///
 /// Example usage:
 ///
-///     if(x.empty()) { SPLB2_FAIL_MSG("Empty x"); }
+///     KOLIOP_ASSERT(x > 10);
 ///
 //////////////////////////////////////
 
@@ -161,77 +161,29 @@ namespace koliop {
     void AssertionFailure(const char* the_message) noexcept;
 } // namespace koliop
 
-
-//////////////////////////////////////
-/// SPLB2_ASSERT
-/// SPLB2_ASSERT_ALWAYS_EXECUTE
-///
-/// Use this macro to assert a condition.
-///
-/// Example usage:
-///
-///     SPLB2_ASSERT(x > 10);
-///     // If SPLB2_ASSERT_ENABLED is defined, this is equivalent to
-///     // SPLB2_ASSERT, else, it execute an_expression but never trigger
-///     // assertion failures.
-///     SPLB2_ASSERT_ALWAYS_EXECUTE(Work() > 10);
-///
-//////////////////////////////////////
-
-#if defined(SPLB2_ASSERT_ENABLED)
-    #define SPLB2_ASSERT(an_expression) SPLB2_UNUSED((an_expression) || (koliop::AssertionFailure(#an_expression " in " __FILE__ ":" SPLB2_UTILITY_STRINGIFY(__LINE__)), false))
+#if defined(KOLIOP_ASSERT_ENABLED)
+    #define KOLIOP_ASSERT(an_expression) KOLIOP_UNUSED((an_expression) || (koliop::AssertionFailure(#an_expression " in " __FILE__ ":" KOLIOP_UTILITY_STRINGIFY(__LINE__)), false))
 #else
-    #define SPLB2_ASSERT(an_expression)
-#endif
-
-//////////////////////////////////////
-/// SPLB2_RESTRICT
-///
-/// Restrict wrapper for compiler specific implementation.
-/// Why ?:
-/// https://cellperformance.beyond3d.com/articles/2006/05/demystifying-the-restrict-keyword.html
-/// https://en.wikipedia.org/wiki/Restrict
-///
-//////////////////////////////////////
-
-#if defined(SPLB2_COMPILER_IS_GCC) || defined(SPLB2_COMPILER_IS_CLANG)
-    #define SPLB2_RESTRICT __restrict // or __restrict__
-#elif defined(SPLB2_COMPILER_IS_MSVC)
-    #define SPLB2_RESTRICT __restrict
+    #define KOLIOP_ASSERT(an_expression)
 #endif
 
 
 //////////////////////////////////////
-/// SPLB2_FORCE_INLINE
-/// SPLB2_FORCE_NOINLINE
-///
-/// Contract with the compiler constraining it to inline the function, on gcc
-/// this contract seems to be respected pretty much all the time, dunno about
-/// clang or msvc.
-/// The *complement* of SPLB2_FORCE_INLINE is SPLB2_FORCE_NOINLINE.
-///
-/// NOTE: You'll want to add the traditional 'inline' if you wanna use
-/// SPLB2_FORCE_INLINE, see example. Say SPLB2_FORCE_INLINE is not available,
-/// your code wont break because 'inline' will still convey a similar meaning.
-///
-/// Doc:
-/// https://clang.llvm.org/docs/AttributeReference.html#always-inline-force-inline
-/// https://docs.microsoft.com/en-us/cpp/cpp/inline-functions-cpp?view=msvc-160
-/// https://gcc.gnu.org/onlinedocs/gcc/Common-Function-Attributes.html
-/// https://gcc.gnu.org/onlinedocs/gcc/Inline.html
+/// KOLIOP_FORCE_INLINE
+/// KOLIOP_FORCE_NOINLINE
 ///
 /// Example usage:
-///     SPLB2_FORCE_INLINE inline int
+///     KOLIOP_FORCE_INLINE inline int
 ///     foo(float* magic) { /* stuff */ return 1;}
 ///
 //////////////////////////////////////
 
-#if defined(SPLB2_COMPILER_IS_GCC) || defined(SPLB2_COMPILER_IS_CLANG)
-    #define SPLB2_FORCE_INLINE   __attribute__((always_inline))
-    #define SPLB2_FORCE_NOINLINE __attribute__((noinline))
-#elif defined(SPLB2_COMPILER_IS_MSVC)
-    #define SPLB2_FORCE_INLINE   __forceinline
-    #define SPLB2_FORCE_NOINLINE __declspec(noinline)
+#if defined(KOLIOP_COMPILER_IS_GCC) || defined(KOLIOP_COMPILER_IS_CLANG)
+    #define KOLIOP_FORCE_INLINE   __attribute__((always_inline))
+    #define KOLIOP_FORCE_NOINLINE __attribute__((noinline))
+#elif defined(KOLIOP_COMPILER_IS_MSVC)
+    #define KOLIOP_FORCE_INLINE   __forceinline
+    #define KOLIOP_FORCE_NOINLINE __declspec(noinline)
 #endif
 
 #endif
