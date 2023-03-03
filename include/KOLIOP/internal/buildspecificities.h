@@ -7,6 +7,7 @@
 #define KOLIOP_VERSION_TWEAK 
 #define KOLIOP_VERSION       "0.0.1"
 
+
 ////////////////////////////////////////
 /// KOLIOP_ASSERT_ENABLED
 ///
