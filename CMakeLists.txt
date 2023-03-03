@@ -7,9 +7,9 @@ include(FetchContent)
 include(CTest)
 
 if(koliop_TOOLCHAIN_NAME)
-    message(STATUS "Using Koliop toolchain: '${koliop_TOOLCHAIN_NAME}'.")
+    message(STATUS "[koliop] Using Koliop toolchain: '${koliop_TOOLCHAIN_NAME}'.")
 else()
-    message(FATAL_ERROR "koliop_TOOLCHAIN_NAME is not defined.")
+    message(FATAL_ERROR "[koliop] koliop_TOOLCHAIN_NAME is not defined.")
 endif()
 
 
@@ -37,8 +37,8 @@ endforeach()
 ### Compiler flags
 ################################################################################
 
-message(STATUS "Build type is '${CMAKE_BUILD_TYPE}', configuration types are '${CMAKE_CONFIGURATION_TYPES}'.")
-message(STATUS "Assuming the compiler is ${CMAKE_CXX_COMPILER_ID}.")
+message(STATUS "[koliop] Build type is '${CMAKE_BUILD_TYPE}', configuration types are '${CMAKE_CONFIGURATION_TYPES}'.")
+message(STATUS "[koliop] Assuming the compiler is ${CMAKE_CXX_COMPILER_ID}.")
 
 function(koliop_global_target_build_options target_name)
     # Use the flags defined in the toolchain. If the

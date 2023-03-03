@@ -1,4 +1,4 @@
-message(STATUS "[SEEKER] Kokkos implementation.")
+message(STATUS "[koliop] Seeking Kokkos implementation.")
 
 option(koliop_USE_SYSTEM_PROVIDED_KOKKOS "Download Kokkos, compiles it, use it. Does not rely on a system installation." OFF)
 

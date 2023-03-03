@@ -1,7 +1,9 @@
 #ifndef KOLIOP_INTERNAL_CONFIGURATION_H
 #define KOLIOP_INTERNAL_CONFIGURATION_H
 
+#include "KOLIOP/internal/buildspecificities.h"
 #include "KOLIOP/utility/preprocessor.h"
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // Platform macro definition
@@ -78,8 +80,6 @@
 /// Oracle Solaris Studio      cc    -xdumpmacros -E /dev/null  CC      -xdumpmacros -E /dev/null
 /// Portland Group PGCC/PGCPP  pgcc  -dM -E                     (none)
 ///
-/// NOTE: CMake could give it to us, just look at CMakeCXXCompilerId.
-///
 ////////////////////////////////////////
 
 #if defined(__INTEL_CLANG_COMPILER)
@@ -145,6 +145,7 @@ static_assert(false, "This library doesn't support your compiler.");
 
 #define KOLIOP_UNUSED(an_expression) static_cast<void>(an_expression)
 
+
 ////////////////////////////////////////
 /// KOLIOP_ASSERT
 ///
@@ -158,11 +159,13 @@ static_assert(false, "This library doesn't support your compiler.");
 ////////////////////////////////////////
 
 namespace koliop {
-    void AssertionFailure(const char* the_message) noexcept;
+    namespace error {
+        void AssertionFailure(const char* the_message) noexcept;
+    }
 } // namespace koliop
 
 #if defined(KOLIOP_ASSERT_ENABLED)
-    #define KOLIOP_ASSERT(an_expression) KOLIOP_UNUSED((an_expression) || (koliop::AssertionFailure(#an_expression " in " __FILE__ ":" KOLIOP_UTILITY_STRINGIFY(__LINE__)), false))
+    #define KOLIOP_ASSERT(an_expression) KOLIOP_UNUSED((an_expression) || (koliop::error::AssertionFailure(#an_expression " in " __FILE__ ":" KOLIOP_UTILITY_STRINGIFY(__LINE__)), false))
 #else
     #define KOLIOP_ASSERT(an_expression)
 #endif
