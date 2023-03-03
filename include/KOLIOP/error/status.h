@@ -11,7 +11,9 @@
 
 typedef int32_t koliop_Status;
 
+// NOTE: Errors go towards -infinity.
+
 #define KOLIOP_STATUS_SUCCESS 0
-#define KOLIOP_STATUS_FAILURE 1
+#define KOLIOP_STATUS_FAILURE -1
 
 #endif

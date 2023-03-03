@@ -10,6 +10,14 @@
 
 
 ////////////////////////////////////////////////////////////////////////////////
+// koliop constants declaration
+////////////////////////////////////////////////////////////////////////////////
+
+#define KOLIOP_FALSE 0
+#define KOLIOP_TRUE  1
+
+
+////////////////////////////////////////////////////////////////////////////////
 // koliop method declaration
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -22,8 +30,8 @@ extern "C" {
 /// do the computation. Depending on how koliop was built.
 /// @param a_device_index The device koliop will use to offload the work. The
 /// value as no meaning if koliop was not built with device support enabled.
-/// @param with_verbose_initialization 0 to disable, else, present additional
-/// information.
+/// @param with_verbose_initialization KOLIOP_FALSE to disable or KOLIOP_TRUE to
+/// present additional information.
 /// @return KOLIOP_STATUS_SUCCESS on success.
 koliop_Status koliop_Initialize(uint32_t a_host_thread_count,
                                 uint32_t a_device_index,
@@ -33,6 +41,9 @@ koliop_Status koliop_Initialize(uint32_t a_host_thread_count,
 /// lifetime of the program.
 /// @return KOLIOP_STATUS_SUCCESS on success.
 koliop_Status koliop_Deinitialize(void);
+
+
+koliop_Status koliop_Dummy(void);
 
 #if defined(__cplusplus)
 }

@@ -46,3 +46,9 @@
         return KOLIOP_STATUS_SUCCESS;
     });
 }
+
+::koliop_Status koliop_Dummy(void) {
+    // Kokkos::View<>;
+
+    return KOLIOP_STATUS_SUCCESS;
+}
