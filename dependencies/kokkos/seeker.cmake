@@ -2,6 +2,8 @@ message(STATUS "[koliop] Seeking Kokkos implementation.")
 
 option(koliop_USE_SYSTEM_PROVIDED_KOKKOS "Download Kokkos, compiles it, use it. Does not rely on a system installation." OFF)
 
+# NOTE: It is a *bit* unfortunate that Kokkos relies on CMAKE_CXX_STANDARD
+# instead of a less pervasive set_target_properties(... CXX_STANDARD ...).
 # NOTE: Kokkos option provided in the toolchains.
 
 if(NOT koliop_USE_SYSTEM_PROVIDED_KOKKOS)
