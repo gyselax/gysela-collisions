@@ -2,11 +2,11 @@
 ### Helpers
 ################################################################################
 
-function(koliop_add_test executable_subject_path executable_subject)
-    set(target_name "test_${executable_subject}")
+function(koliop_add_test test_category test_name)
+    set(target_name "test_${test_name}")
 
     add_executable("${target_name}"
-                   "${CMAKE_CURRENT_SOURCE_DIR}/${executable_subject_path}/${executable_subject}.cpp")
+                   "${CMAKE_CURRENT_SOURCE_DIR}/${test_category}/${test_name}.cc")
 
     target_link_libraries("${target_name}"
                           PRIVATE koliop)
@@ -18,9 +18,9 @@ function(koliop_add_test executable_subject_path executable_subject)
     ### Boiler plate
     ########################################
 
-    # "return" by writing to a variable named ${executable_subject}
+    # "return" by writing to a variable named ${test_name}
     # Returns, the name of the created target
-    set("${executable_subject}" "${target_name}"  PARENT_SCOPE)
+    set("${test_name}" "${target_name}"  PARENT_SCOPE)
 
     message(STATUS "Adding test ${target_name}")
     add_test(NAME "${target_name}"

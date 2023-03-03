@@ -6,6 +6,12 @@ include(CheckIPOSupported)
 include(FetchContent)
 include(CTest)
 
+if(koliop_TOOLCHAIN_NAME)
+    message(STATUS "Using Koliop toolchain: '${koliop_TOOLCHAIN_NAME}'.")
+else()
+    message(FATAL_ERROR "koliop_TOOLCHAIN_NAME is not defined.")
+endif()
+
 
 ################################################################################
 ### Global options. Dependency specific options are defined in the dependencies.

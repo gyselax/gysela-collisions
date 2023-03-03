@@ -1,3 +1,5 @@
+message(STATUS "[SEEKER] LTO support.")
+
 include(CheckIPOSupported)
 check_ipo_supported(RESULT koliop_IS_LTO_ENABLED)
 
