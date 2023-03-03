@@ -32,18 +32,20 @@ extern "C" {
 /// value as no meaning if koliop was not built with device support enabled.
 /// @param with_verbose_initialization KOLIOP_FALSE to disable or KOLIOP_TRUE to
 /// present additional information.
-/// @return KOLIOP_STATUS_SUCCESS on success.
+/// @return KOLIOP_STATUS_SUCCESS on success TODO(Etienne M): more.
 koliop_Status koliop_Initialize(uint32_t a_host_thread_count,
                                 uint32_t a_device_index,
                                 int32_t  with_verbose_initialization);
 
 /// @brief Has to be called when koliop is not to be used anymore for the
 /// lifetime of the program.
-/// @return KOLIOP_STATUS_SUCCESS on success.
+/// @return KOLIOP_STATUS_SUCCESS on success TODO(Etienne M): more.
 koliop_Status koliop_Deinitialize(void);
 
+typedef struct _koliop_State* koliop_State;
 
-koliop_Status koliop_Dummy(void);
+koliop_Status koliop_Create(koliop_State* a_state_handle);
+koliop_Status koliop_Release(koliop_State a_state);
 
 #if defined(__cplusplus)
 }

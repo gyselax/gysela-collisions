@@ -22,19 +22,20 @@ namespace koliop {
             } catch(const std::runtime_error& an_exception) {
                 PresentErrorExplanation("std::runtime_error",
                                         an_exception.what());
-                return KOLIOP_STATUS_FAILURE;
+                return KOLIOP_STATUS_UNKOWN_FAILURE;
             } catch(const std::exception& an_exception) {
                 PresentErrorExplanation("std::exception",
                                         an_exception.what());
-                return KOLIOP_STATUS_FAILURE;
+                return KOLIOP_STATUS_UNKOWN_FAILURE;
             } catch(...) {
                 KOLIOP_ASSERT(false);
-                return KOLIOP_STATUS_FAILURE;
+                return KOLIOP_STATUS_UNKOWN_FAILURE;
             }
 
             KOLIOP_ASSERT(false);
-            return KOLIOP_STATUS_FAILURE;
+            return KOLIOP_STATUS_UNKOWN_FAILURE;
         }
+
     } // namespace error
 } // namespace koliop
 
