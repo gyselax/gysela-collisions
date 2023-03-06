@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 #ifndef KOLIOP_KOLIOP_H
 #define KOLIOP_KOLIOP_H
 

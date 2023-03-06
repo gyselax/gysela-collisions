@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 #ifndef KOLIOP_COLLISION_STATE_H
 #define KOLIOP_COLLISION_STATE_H
 

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 #ifndef KOLIOP_ERROR_EXCEPTION_H
 #define KOLIOP_ERROR_EXCEPTION_H
 

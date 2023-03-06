@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 #include "KOLIOP/error/exception.h"
 
 #include <cstdio>

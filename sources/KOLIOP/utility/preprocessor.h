@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 #ifndef KOLIOP_UTILITY_PREPROCESSOR_H
 #define KOLIOP_UTILITY_PREPROCESSOR_H
 
