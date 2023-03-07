@@ -58,7 +58,7 @@
         }
 
         using State         = koliop::collision::State<koliop::collision::CollisionPolicy>;
-        auto* const a_state = new State{};
+        auto* const a_state = new State{1024 * 65};
 
         KOLIOP_ASSERT(a_state != nullptr);
 
@@ -88,7 +88,7 @@
         }
 
         using State = koliop::collision::State<koliop::collision::CollisionPolicy>;
-        reinterpret_cast<State*>(a_state)->Do();
+        reinterpret_cast<State*>(a_state)->Multiply();
 
         return KOLIOP_STATUS_SUCCESS;
     });
