@@ -18,6 +18,8 @@ int main(int, char**) {
 
     std::cout << a_state << "\n";
 
+    ::koliop_Compute(a_state);
+
     if(::koliop_Release(a_state) != KOLIOP_STATUS_SUCCESS) {
         std::cout << "::koliop_Release() failed\n";
     }

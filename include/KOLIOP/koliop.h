@@ -49,6 +49,8 @@ typedef struct _koliop_State* koliop_State;
 koliop_Status koliop_Create(koliop_State* a_state_handle);
 koliop_Status koliop_Release(koliop_State a_state);
 
+koliop_Status koliop_Compute(koliop_State a_state);
+
 #if defined(__cplusplus)
 }
 #endif

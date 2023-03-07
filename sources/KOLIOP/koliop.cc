@@ -80,3 +80,16 @@
         return KOLIOP_STATUS_SUCCESS;
     });
 }
+
+::koliop_Status koliop_Compute(::koliop_State a_state) {
+    return koliop::error::FromException([&]() {
+        if(a_state == nullptr) {
+            return KOLIOP_STATUS_INVALID_VALUE;
+        }
+
+        using State = koliop::collision::State<koliop::collision::CollisionPolicy>;
+        reinterpret_cast<State*>(a_state)->Do();
+
+        return KOLIOP_STATUS_SUCCESS;
+    });
+}
