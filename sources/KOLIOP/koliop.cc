@@ -58,7 +58,7 @@
         }
 
         using State         = koliop::collision::State<koliop::collision::CollisionPolicy>;
-        auto* const a_state = new State{1024 * 65};
+        auto* const a_state = new State{1024 * 64};
 
         KOLIOP_ASSERT(a_state != nullptr);
 
