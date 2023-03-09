@@ -57,8 +57,17 @@
             return KOLIOP_STATUS_INVALID_VALUE;
         }
 
-        using State         = koliop::collision::State<koliop::collision::CollisionPolicy>;
-        auto* const a_state = new State{1024 * 64};
+        using State = koliop::collision::State<koliop::collision::CollisionPolicy>;
+
+        koliop::Flo64        dummy[1024];
+        const koliop::Flo64* comb_mat = dummy;
+        const koliop::Flo64* hat_As   = dummy;
+        const koliop::Flo64* hat_Zs   = dummy;
+
+        auto* const a_state = new State{1, 2, 3, 4, 5, 6, true,
+                                        comb_mat, 10, 10,
+                                        hat_As, 10,
+                                        hat_Zs, 10};
 
         KOLIOP_ASSERT(a_state != nullptr);
 
@@ -70,11 +79,9 @@
 
 ::koliop_Status koliop_Release(::koliop_State a_state) {
     return koliop::error::FromException([&]() {
-        if(a_state == nullptr) {
-            return KOLIOP_STATUS_INVALID_VALUE;
-        }
-
         using State = koliop::collision::State<koliop::collision::CollisionPolicy>;
+
+        // Freeing a nullptr is *fine*.
         delete reinterpret_cast<State*>(a_state);
 
         return KOLIOP_STATUS_SUCCESS;
@@ -87,8 +94,8 @@
             return KOLIOP_STATUS_INVALID_VALUE;
         }
 
-        using State = koliop::collision::State<koliop::collision::CollisionPolicy>;
-        reinterpret_cast<State*>(a_state)->Multiply();
+        // using State = koliop::collision::State<koliop::collision::CollisionPolicy>;
+        // reinterpret_cast<State*>(a_state)->Multiply();
 
         return KOLIOP_STATUS_SUCCESS;
     });

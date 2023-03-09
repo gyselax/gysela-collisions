@@ -12,8 +12,10 @@ if(NOT koliop_USE_SYSTEM_PROVIDED_KOKKOS)
     FetchContent_Declare(Kokkos
                          SYSTEM                # Requires CMake v3.25
                          OVERRIDE_FIND_PACKAGE # Requires CMake v3.24
-                         URL https://github.com/kokkos/kokkos/archive/refs/tags/3.7.01.tar.gz
-                         URL_HASH "SHA512=97cb7e05aec145ba9adae30b20ae3138a532db3a56cdd5e092d8f9c1e1788efe7a6f721282e2a5c5bf9c0da4c53d28f30b27fcb546b68aa8eaa589a362eb40c1")
+                         # URL https://github.com/kokkos/kokkos/archive/refs/tags/3.7.01.tar.gz
+                         # URL_HASH "SHA512=97cb7e05aec145ba9adae30b20ae3138a532db3a56cdd5e092d8f9c1e1788efe7a6f721282e2a5c5bf9c0da4c53d28f30b27fcb546b68aa8eaa589a362eb40c1"
+                         URL https://github.com/kokkos/kokkos/archive/refs/tags/4.0.00.tar.gz
+                         URL_HASH "SHA512=c205d81a0556d39cd91a38254818f9c698340c313d4e33fea8e18ad9cdc0b5465585996f3224563efa2e40e9b62e676e2baf67b221eb8621d2dfa4da5282428d")
     FetchContent_MakeAvailable(Kokkos)
 else()
     # NOTE: With CMake 3.24, we can jut ask FetchContent_Declare with
