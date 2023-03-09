@@ -71,10 +71,6 @@ namespace koliop {
                                              "hat_Zs_"),
                           hat_Zs_extent_0} {
 
-
-                // todo test perf with amdclang for mohamed
-
-
                 auto unmanaged_comb_mat = Kokkos::View<const Flo64**,
                                                        Kokkos::LayoutLeft,
                                                        Kokkos::HostSpace,
