@@ -4,7 +4,6 @@
 #define KOLIOP_COLLISION_STATE_H
 
 #include <Kokkos_Core.hpp>
-#include <Kokkos_ExecPolicy.hpp> // Why do I need that to use require() ?
 
 #include "KOLIOP/internal/configuration.h"
 
