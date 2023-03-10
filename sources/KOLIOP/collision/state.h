@@ -70,7 +70,7 @@ namespace koliop {
                 , hat_Zs_{Kokkos::view_alloc(Kokkos::WithoutInitializing,
                                              "hat_Zs_"),
                           hat_Zs_extent_0}
-                // TODO(Etienne M): Compile time  code based on Npolmax_ value (small)
+                // TODO(Etienne M): Compile time code based on Npolmax_ value (small)
                 , C_j_{Kokkos::view_alloc(Kokkos::WithoutInitializing, // Initialize to zero
                                           "C_j_"),
                        Npolmax_,
@@ -129,8 +129,8 @@ namespace koliop {
                 if(the_polynomial_degree > 2) {
                     a_host_visible_C_j(2, 2) = 0.5;
                     if(the_polynomial_degree > 3) {
-                        C_j(2, 3) = 1.5;
-                        C_j(3, 3) = -1.0 / 6.0;
+                        a_host_visible_C_j(2, 3) = 1.5;
+                        a_host_visible_C_j(3, 3) = -1.0 / 6.0;
                     }
                 }
 

@@ -64,7 +64,7 @@
         const koliop::Flo64* hat_As   = dummy;
         const koliop::Flo64* hat_Zs   = dummy;
 
-        auto* const a_state = new State{1, 2, 3, 4, 5, 6, true,
+        auto* const a_state = new State{4, 2 * 4, 3, 4, 5, 6, true,
                                         comb_mat, 10, 10,
                                         hat_As, 10,
                                         hat_Zs, 10};
