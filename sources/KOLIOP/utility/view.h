@@ -90,9 +90,12 @@ namespace koliop {
                 // compatible layout which makes copying a simple memcpy.
                 Kokkos::deep_copy(to_view, from_view);
             } else {
+
+                // TODO(Etienne M): create_mirror_view_and_copy ?
+
                 // TODO(Etienne M): Do we really need to copy to the host ?
-                auto a_host_visible_source_mirror = Kokkos::create_mirror_view(from_view);
-                auto a_host_visible_target_mirror = Kokkos::create_mirror_view(to_view);
+                auto a_host_visible_source_mirror = Kokkos::create_mirror_view(Kokkos::view_alloc(Kokkos::WithoutInitializing), from_view);
+                auto a_host_visible_target_mirror = Kokkos::create_mirror_view(Kokkos::view_alloc(Kokkos::WithoutInitializing), to_view);
 
                 // Could be a no-op.
                 Kokkos::deep_copy(a_host_visible_source_mirror,

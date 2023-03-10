@@ -69,7 +69,17 @@ namespace koliop {
                           hat_As_extent_0}
                 , hat_Zs_{Kokkos::view_alloc(Kokkos::WithoutInitializing,
                                              "hat_Zs_"),
-                          hat_Zs_extent_0} {
+                          hat_Zs_extent_0}
+                // TODO(Etienne M): Compile time  code based on Npolmax_ value (small)
+                , C_j_{Kokkos::view_alloc(Kokkos::WithoutInitializing, // Initialize to zero
+                                          "C_j_"),
+                       Npolmax_,
+                       Npolmax_}
+                , C_jl_{Kokkos::view_alloc(Kokkos::WithoutInitializing,
+                                           "C_jl_"),
+                        index_max_,
+                        Npolmax_,
+                        Npolmax_} {
 
                 auto unmanaged_comb_mat = Kokkos::View<const Flo64**,
                                                        Kokkos::LayoutLeft,
@@ -95,9 +105,71 @@ namespace koliop {
                                                                                               hat_Zs,
                                                                                               hat_Zs_extent_0};
                 koliop::utility::SmartDeepCopy(unmanaged_hat_Zs, hat_Zs_);
+
+                PrepareCj_Cjl(C_j_, C_jl_);
             }
 
         protected:
+            template <typename DeviceView0,
+                      typename DeviceView1>
+            static void PrepareCj_Cjl(DeviceView0&& C_j,
+                                      DeviceView1&& C_jl) {
+                // a_host_visible_C_j is zero initialized.
+                auto a_host_visible_C_j = Kokkos::create_mirror_view(C_j);
+
+                const auto the_polynomial_degree = C_j.extent(0);
+
+                // TODO(Etienne M): what does Cj looks like.
+
+                for(std::size_t i = 0; i < the_polynomial_degree; ++i) {
+                    a_host_visible_C_j(0, i) = 1.0;
+                    a_host_visible_C_j(1, i) = static_cast<Flo64>(-i);
+                }
+
+                if(the_polynomial_degree > 2) {
+                    a_host_visible_C_j(2, 2) = 0.5;
+                    if(the_polynomial_degree > 3) {
+                        C_j(2, 3) = 1.5;
+                        C_j(3, 3) = -1.0 / 6.0;
+                    }
+                }
+
+                koliop::utility::SmartDeepCopy(C_j, a_host_visible_C_j);
+
+                PrepareCjl(a_host_visible_C_j, C_jl);
+            }
+
+            template <typename DeviceView,
+                      typename HostView>
+            static void PrepareCjl(const HostView& a_host_visible_C_j,
+                                   DeviceView&&    C_jl) {
+                // a_host_visible_C_jl is zero initialized.
+                auto a_host_visible_C_jl = Kokkos::create_mirror_view(C_jl);
+
+                const auto the_polynomial_degree = a_host_visible_C_j.extent(0);
+
+                const auto Stuff = [&](auto j_tmp, auto l_tmp) {
+                    for(std::size_t i = 0; i < (j_tmp + l_tmp); ++i) {
+                        a_host_visible_C_jl(i, j_tmp, l_tmp) = 0.0;
+                    }
+
+                    for(std::size_t alpha = 0; alpha < j_tmp; ++alpha) {
+                        for(std::size_t beta = 0; beta < l_tmp; ++beta) {
+                            a_host_visible_C_jl(alpha + beta, j_tmp, l_tmp) = a_host_visible_C_jl(alpha + beta, j_tmp, l_tmp) +
+                                                                              a_host_visible_C_j(alpha, j_tmp) * a_host_visible_C_j(beta, l_tmp);
+                        }
+                    }
+                };
+
+                for(std::size_t i = 0; i < the_polynomial_degree; ++i) {
+                    for(std::size_t j = 0; j < the_polynomial_degree; ++j) {
+                        Stuff(i, j);
+                    }
+                }
+
+                koliop::utility::SmartDeepCopy(C_jl, a_host_visible_C_jl);
+            }
+
             std::size_t Npolmax_;
             std::size_t index_max_;
             std::size_t Nvpar_;
@@ -109,6 +181,8 @@ namespace koliop {
             Kokkos::View<Flo64**, Kokkos::LayoutLeft> comb_mat_;
             Kokkos::View<Flo64*>                      hat_As_;
             Kokkos::View<Flo64*>                      hat_Zs_;
+            Kokkos::View<Flo64**>                     C_j_;
+            Kokkos::View<Flo64***>                    C_jl_;
         };
 
 
