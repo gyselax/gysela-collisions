@@ -167,7 +167,71 @@ namespace koliop {
                                const Flo64* nustaR0_r,
                                const Flo64* q_r,
                                const Flo64* mask_buffer_r,
-                               Flo64*       nustar_coeff) {
+                               Flo64*       nustar_coeff) const {
+
+                const uint64_t element_count  = iend_ + 1 - istart_;
+                const uint64_t element_offset = istart_;
+
+                rg += element_offset;
+                nustaR0_r += element_offset;
+                q_r += element_offset;
+                mask_buffer_r += element_offset;
+
+                std::vector<Flo64> mask_space;
+                mask_space.resize(element_count, 1.0);
+
+                if(q_r[0] < koliop::portability::GyselaConstant<Flo64>::kInfinity) {
+                    for(uint64_t i = 0; i < element_count; ++i) {
+                        mask_space[i] = 1.0 / q_r[i];
+                    }
+                }
+
+                if(!(LIM_ || SOL_)) {
+                    for(uint64_t i = 0; i < element_count; ++i) {
+                        mask_space[i] = mask_space[i] *
+                                        (1.0 - mask_buffer_r[i]);
+                    }
+                }
+
+                for(uint64_t ispeciesB = 0; ispeciesB < Nspecies_; ++ispeciesB) {
+                    for(uint64_t ispeciesA = 0; ispeciesA < Nspecies_; ++ispeciesA) {
+                        // TODO(Etienne M): Wrong memory space
+                        const Flo64 hat_Aa = 0.0; // hat_As_(ispeciesA);
+                        const Flo64 hat_Za = 0.0; // hat_Zs_(ispeciesA);
+                        const Flo64 hat_Ab = 0.0; // hat_As_(ispeciesB);
+                        const Flo64 hat_Zb = 0.0; // hat_Zs_(ispeciesB);
+
+                        const Flo64 AD_factor = ((hat_Za * hat_Za) * (hat_Zb * hat_Zb)) *
+                                                (1.0 / hat_Aa) *
+                                                (1.0 / hat_Aa + 1.0 / hat_Ab);
+
+                        for(uint64_t ir = 0; ir < element_count; ++ir) {
+                            // Computation of
+                            // AD(r) = sqrt(2) * eps ^ (3 / 2) / (q R0_)*nustaR0_(r)
+                            // which is independant on the species considered (eps = r/R0_)
+                            const Flo64 eps = rg[ir] * R0_inverse_;
+
+                            const Flo64 AD = nustaR0_r[ir] *
+                                             mask_space[ir] *
+                                             // NOTE:
+                                             // sqrt(2)*(rg*R0_inverse_)*sqrt(rg*R0_inverse_)*R0_inverse_ =
+                                             // sqrt(2)*pow(r, 5/2)*pow(rg, 3/2)
+                                             // sqrt(2)*pow(r, 5/2) is constant here.
+                                             koliop::portability::MathematicalConstant<Flo64>::kSQRT2 *
+                                             eps *
+                                             std::sqrt(eps) *
+                                             R0_inverse_;
+
+                            // Computation of nu_ab =
+                            // (AD * hat_Za ^ 2 * hat_Zb ^ 2 * Nb) /
+                            // (vTa ^ 2 + vTb ^ 2) ^ (3 / 2) * (1 / hat_Aa) *
+                            // (1 / hat_Aa + 1 / hat_Ab)
+                            nustar_coeff[ispeciesA +
+                                         ispeciesB * (Nspecies_) +
+                                         ir * (Nspecies_ * Nspecies_)] = AD * AD_factor;
+                        }
+                    }
+                }
             }
 
         protected:
