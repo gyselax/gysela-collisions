@@ -4,7 +4,6 @@
 
 #include <Kokkos_Core.hpp>
 
-#include "KOLIOP/collision/policy.h"
 #include "KOLIOP/collision/state.h"
 #include "KOLIOP/error/exception.h"
 
@@ -51,127 +50,86 @@
     });
 }
 
-::koliop_Status koliop_Create(::koliop_State* a_state_handle) {
+::koliop_Status koliop_Create(::koliop_Operator* an_operator_handle,
+                              uint64_t           Npolmax,
+                              uint64_t           index_max,
+                              uint64_t           Nmu,
+                              uint64_t           Nvpar,
+                              uint64_t           Nspecies,
+                              uint64_t           pSpecies_id,
+                              uint64_t           mu_id,
+                              uint64_t           istart,
+                              uint64_t           iend,
+                              uint64_t           jstart,
+                              uint64_t           jend,
+                              int64_t            collstart,
+                              int64_t            collend,
+                              double             R0,
+                              uint32_t           collision_interspecies,
+                              uint32_t           SOL,
+                              uint32_t           LIM,
+                              const double*      comb_mat,
+                              uint64_t           comb_mat_extent_0,
+                              uint64_t           comb_mat_extent_1,
+                              const double*      hat_As,
+                              uint64_t           hat_As_extent_0,
+                              const double*      hat_Zs,
+                              uint64_t           hat_Zs_extent_0) {
     return koliop::error::FromException([&]() {
-        if(a_state_handle == nullptr) {
+        if(an_operator_handle == nullptr) {
             return KOLIOP_STATUS_INVALID_VALUE;
         }
 
-        using State = koliop::collision::State<koliop::collision::CollisionPolicy>;
+        using State = koliop::collision::State;
 
-        static constexpr int  Npolmax                = 3;
-        static constexpr int  index_max              = 4;
-        static constexpr int  Nmu                    = 47;
-        static constexpr int  Nvpar                  = 127;
-        static constexpr int  Nspecies               = 1;
-        static constexpr int  pSpecies_id            = 0;
-        static constexpr int  mu_id                  = 4; // [0, nproc)
-        static constexpr int  istart                 = 0;
-        static constexpr int  iend                   = 31;
-        static constexpr int  jstart                 = 0;
-        static constexpr int  jend                   = 31;
-        static constexpr int  collstart              = 0; // [0, nproc)
-        static constexpr int  collend                = 0; // [0, nproc)
-        static constexpr int  R0                     = 320.;
-        static constexpr bool collision_interspecies = true;
-        static constexpr bool SOL                    = false;
-        static constexpr bool LIM                    = false;
+        auto* const an_operator = new State{Npolmax,
+                                            index_max,
+                                            Nmu,
+                                            Nvpar,
+                                            Nspecies,
+                                            pSpecies_id,
+                                            mu_id,
+                                            istart,
+                                            iend,
+                                            jstart,
+                                            jend,
+                                            collstart,
+                                            collend,
+                                            R0,
+                                            static_cast<bool>(collision_interspecies),
+                                            static_cast<bool>(SOL),
+                                            static_cast<bool>(LIM),
+                                            comb_mat, comb_mat_extent_0, comb_mat_extent_1,
+                                            hat_As, hat_As_extent_0,
+                                            hat_Zs, hat_Zs_extent_0};
 
-        // lbound(comb_mat,1) = 0;
-        // ubound(comb_mat,1) = 5;
-        // size(comb_mat,1) = 6;
+        KOLIOP_ASSERT(an_operator != nullptr);
 
-        // lbound(comb_mat,2) = 0;
-        // ubound(comb_mat,2) = 5;
-        // size(comb_mat,2) = 6;
-
-        // lbound(hat_As,1) = 0;
-        // ubound(hat_As,1) = 2;
-        // size(hat_As,1) = 3;
-
-        // lbound(hat_Zs,1) = 0;
-        // ubound(hat_Zs,1) = 2;
-        // size(hat_Zs,1) = 3;
-
-        // lbound(mug,1) = 0;
-        // ubound(mug,1) = 47;
-        // size(mug,1) = 48;
-
-        // lbound(vparg,1) = 0;
-        // ubound(vparg,1) = 127;
-        // size(vparg,1) = 128;
-
-        // lbound(coeff_intdmu,1) = 0;
-        // ubound(coeff_intdmu,1) = 47;
-        // size(coeff_intdmu,1) = 48;
-
-        // lbound(coeff_intdvpar,1) = 0;
-        // ubound(coeff_intdvpar,1) = 127;
-        // size(coeff_intdvpar,1) = 128;
-
-        koliop::Flo64        dummy[1024];
-        const koliop::Flo64* comb_mat       = dummy;
-        const koliop::Flo64* hat_As         = dummy;
-        const koliop::Flo64* hat_Zs         = dummy;
-        // const koliop::Flo64* mug            = dummy;
-        // const koliop::Flo64* vparg          = dummy;
-        // const koliop::Flo64* coeff_intdmu   = dummy;
-        // const koliop::Flo64* coeff_intdvpar = dummy;
-
-        auto* const a_state = new State{
-            Npolmax,
-            index_max,
-            Nmu,
-            Nvpar,
-            Nspecies,
-            pSpecies_id,
-            mu_id,
-            istart,
-            iend,
-            jstart,
-            jend,
-            collstart,
-            collend,
-            R0,
-            collision_interspecies,
-            SOL,
-            LIM,
-            comb_mat, 6, 6,
-            hat_As, 3,
-            hat_Zs, 3
-            // mug, 48,
-            // vparg, 128,
-            // coeff_intdmu, 48,
-            // coeff_intdvpar, 128
-        };
-
-        KOLIOP_ASSERT(a_state != nullptr);
-
-        *a_state_handle = reinterpret_cast<koliop_State>(a_state);
+        *an_operator_handle = reinterpret_cast<koliop_Operator>(an_operator);
 
         return KOLIOP_STATUS_SUCCESS;
     });
 }
 
-::koliop_Status koliop_Release(::koliop_State a_state) {
+::koliop_Status koliop_Release(::koliop_Operator an_operator) {
     return koliop::error::FromException([&]() {
-        using State = koliop::collision::State<koliop::collision::CollisionPolicy>;
+        using State = koliop::collision::State;
 
         // Freeing a nullptr is *fine*.
-        delete reinterpret_cast<State*>(a_state);
+        delete reinterpret_cast<State*>(an_operator);
 
         return KOLIOP_STATUS_SUCCESS;
     });
 }
 
-::koliop_Status koliop_Compute(::koliop_State a_state) {
+::koliop_Status koliop_PrepareNuStar(::koliop_Operator an_operator) {
     return koliop::error::FromException([&]() {
-        if(a_state == nullptr) {
+        if(an_operator == nullptr) {
             return KOLIOP_STATUS_INVALID_VALUE;
         }
 
-        // using State = koliop::collision::State<koliop::collision::CollisionPolicy>;
-        // reinterpret_cast<State*>(a_state)->Multiply();
+        // using State = koliop::collision::State;
+        // reinterpret_cast<State*>(an_operator)->Multiply();
 
         return KOLIOP_STATUS_SUCCESS;
     });

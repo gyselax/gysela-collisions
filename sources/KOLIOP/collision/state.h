@@ -29,52 +29,33 @@ namespace koliop {
         /// Execution Policies:
         ///     Range, team, dynamic or static scheduling
         ///
-        template <typename Policy>
         class State {
         public:
-            using PolicyType = Policy;
-
         public:
-            State(std::size_t Npolmax,
-                  std::size_t index_max,
-                  std::size_t Nmu,
-                  std::size_t Nvpar,
-                  std::size_t Nspecies,
-                  std::size_t pSpecies_id,
-                  std::size_t mu_id,
-                  std::size_t istart,
-                  std::size_t iend,
-                  std::size_t jstart,
-                  std::size_t jend,
-                  std::size_t collstart,
-                  std::size_t collend,
-                  std::size_t R0,
-                  bool        collision_interspecies,
-                  bool        SOL,
-                  bool        LIM,
-
+            State(uint64_t     Npolmax,
+                  uint64_t     index_max,
+                  uint64_t     Nmu,
+                  uint64_t     Nvpar,
+                  uint64_t     Nspecies,
+                  uint64_t     pSpecies_id,
+                  uint64_t     mu_id,
+                  uint64_t     istart,
+                  uint64_t     iend,
+                  uint64_t     jstart,
+                  uint64_t     jend,
+                  int64_t      collstart,
+                  int64_t      collend,
+                  Flo64        R0,
+                  bool         collision_interspecies,
+                  bool         SOL,
+                  bool         LIM,
                   const Flo64* comb_mat,
-                  std::size_t  comb_mat_extent_0,
-                  std::size_t  comb_mat_extent_1,
-
+                  uint64_t     comb_mat_extent_0,
+                  uint64_t     comb_mat_extent_1,
                   const Flo64* hat_As,
-                  std::size_t  hat_As_extent_0,
-
+                  uint64_t     hat_As_extent_0,
                   const Flo64* hat_Zs,
-                  std::size_t  hat_Zs_extent_0
-
-                  // const Flo64* mug,
-                  // std::size_t  mug_extent_0,
-
-                  // const Flo64* vparg,
-                  // std::size_t  vparg_extent_0,
-
-                  // const Flo64* coeff_intdmu,
-                  // std::size_t  coeff_intdmu_extent_0,
-
-                  // const Flo64* coeff_intdvpar,
-                  // std::size_t  coeff_intdvpar_extent_0
-                  )
+                  uint64_t     hat_Zs_extent_0)
                 : Npolmax_{Npolmax}
                 , index_max_{index_max}
                 , Nmu_{Nmu}
@@ -102,18 +83,6 @@ namespace koliop {
                 , hat_Zs_{Kokkos::view_alloc(Kokkos::WithoutInitializing,
                                              "hat_Zs_"),
                           hat_Zs_extent_0}
-                // , mug_{Kokkos::view_alloc(Kokkos::WithoutInitializing,
-                //                           "mug_"),
-                //        mug_extent_0}
-                // , vparg_{Kokkos::view_alloc(Kokkos::WithoutInitializing,
-                //                             "vparg_"),
-                //          vparg_extent_0}
-                // , coeff_intdmu_{Kokkos::view_alloc(Kokkos::WithoutInitializing,
-                //                                    "coeff_intdmu_"),
-                //                 coeff_intdmu_extent_0}
-                // , coeff_intdvpar_{Kokkos::view_alloc(Kokkos::WithoutInitializing,
-                //                                      "coeff_intdvpar_"),
-                //                   coeff_intdvpar_extent_0}
 
                 // TODO(Etienne M): Compile time code based on Npolmax_ value (small)
                 , C_j_{Kokkos::view_alloc(Kokkos::WithoutInitializing, // Initialize to zero
@@ -198,7 +167,7 @@ namespace koliop {
 
                 const auto the_polynomial_degree = C_j.extent(1);
 
-                for(std::size_t j = 0; j < the_polynomial_degree; ++j) {
+                for(uint64_t j = 0; j < the_polynomial_degree; ++j) {
                     a_host_visible_C_j(0, j) = 1.0;
                     a_host_visible_C_j(1, j) = static_cast<Flo64>(-static_cast<int64_t>(j));
                 }
@@ -224,21 +193,21 @@ namespace koliop {
                 auto a_host_visible_C_jl = Kokkos::create_mirror_view(C_jl);
 
                 const auto Stuff = [&](auto j_tmp, auto l_tmp) {
-                    // for(std::size_t i = 0; i <= (j_tmp + l_tmp); ++i) {
+                    // for(uint64_t i = 0; i <= (j_tmp + l_tmp); ++i) {
                     //     // Is that necessary ?
                     //     a_host_visible_C_jl(i, j_tmp, l_tmp) = 0.0;
                     // }
 
-                    for(std::size_t alpha = 0; alpha <= j_tmp; ++alpha) {
-                        for(std::size_t beta = 0; beta <= l_tmp; ++beta) {
+                    for(uint64_t alpha = 0; alpha <= j_tmp; ++alpha) {
+                        for(uint64_t beta = 0; beta <= l_tmp; ++beta) {
                             a_host_visible_C_jl(alpha + beta, j_tmp, l_tmp) = a_host_visible_C_jl(alpha + beta, j_tmp, l_tmp) +
                                                                               a_host_visible_C_j(alpha, j_tmp) * a_host_visible_C_j(beta, l_tmp);
                         }
                     }
                 };
 
-                for(std::size_t i = 0; i < a_host_visible_C_jl.extent(1); ++i) {
-                    for(std::size_t j = 0; j < a_host_visible_C_jl.extent(2); ++j) {
+                for(uint64_t i = 0; i < a_host_visible_C_jl.extent(1); ++i) {
+                    for(uint64_t j = 0; j < a_host_visible_C_jl.extent(2); ++j) {
                         Stuff(i, j);
                     }
                 }
@@ -246,31 +215,27 @@ namespace koliop {
                 koliop::utility::SmartDeepCopy(a_host_visible_C_jl, C_jl);
             }
 
-            std::size_t Npolmax_;
-            std::size_t index_max_; // TODO(Etienne M): INDEX Fortran s***
-            std::size_t Nmu_;
-            std::size_t Nvpar_;
-            std::size_t Nspecies_;
-            std::size_t pSpecies_id_;
-            std::size_t mu_id_;
-            std::size_t istart_;
-            std::size_t iend_;
-            std::size_t jstart_;
-            std::size_t jend_;
-            std::size_t collstart_;
-            std::size_t collend_;
-            std::size_t R0_;
-            bool        collision_interspecies_;
-            bool        SOL_;
-            bool        LIM_;
+            uint64_t Npolmax_;
+            uint64_t index_max_; // TODO(Etienne M): INDEX Fortran s***
+            uint64_t Nmu_;
+            uint64_t Nvpar_;
+            uint64_t Nspecies_;
+            uint64_t pSpecies_id_;
+            uint64_t mu_id_;
+            uint64_t istart_;
+            uint64_t iend_;
+            uint64_t jstart_;
+            uint64_t jend_;
+            int64_t  collstart_;
+            int64_t  collend_;
+            Flo64    R0_;
+            bool     collision_interspecies_;
+            bool     SOL_;
+            bool     LIM_;
 
             Kokkos::View<Flo64**> comb_mat_;
             Kokkos::View<Flo64*>  hat_As_;
             Kokkos::View<Flo64*>  hat_Zs_;
-            // Kokkos::View<Flo64*>  mug_;
-            // Kokkos::View<Flo64*>  vparg_;
-            // Kokkos::View<Flo64*>  coeff_intdmu_;
-            // Kokkos::View<Flo64*>  coeff_intdvpar_;
 
             Kokkos::View<Flo64**>  C_j_;
             Kokkos::View<Flo64***> C_jl_;
