@@ -99,9 +99,25 @@
                                             static_cast<bool>(collision_interspecies),
                                             static_cast<bool>(SOL),
                                             static_cast<bool>(LIM),
-                                            comb_mat, comb_mat_extent_0, comb_mat_extent_1,
-                                            hat_As, hat_As_extent_0,
-                                            hat_Zs, hat_Zs_extent_0};
+                                            Kokkos::View<const koliop::Flo64**,
+                                                         Kokkos::LayoutLeft,
+                                                         Kokkos::HostSpace,
+                                                         Kokkos::MemoryTraits<Kokkos::Unmanaged>>{// "unmanaged_host_comb_mat",
+                                                                                                  comb_mat,
+                                                                                                  comb_mat_extent_0,
+                                                                                                  comb_mat_extent_1},
+                                            Kokkos::View<const koliop::Flo64*,
+                                                         Kokkos::LayoutLeft,
+                                                         Kokkos::HostSpace,
+                                                         Kokkos::MemoryTraits<Kokkos::Unmanaged>>{// "unmanaged_host_hat_As",
+                                                                                                  hat_As,
+                                                                                                  hat_As_extent_0},
+                                            Kokkos::View<const koliop::Flo64*,
+                                                         Kokkos::LayoutLeft,
+                                                         Kokkos::HostSpace,
+                                                         Kokkos::MemoryTraits<Kokkos::Unmanaged>>{// "unmanaged_host_hat_Zs",
+                                                                                                  hat_Zs,
+                                                                                                  hat_Zs_extent_0}};
 
         KOLIOP_ASSERT(an_operator != nullptr);
 

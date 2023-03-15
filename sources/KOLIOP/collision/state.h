@@ -33,30 +33,35 @@ namespace koliop {
         class State {
         public:
         public:
-            State(uint64_t     Npolmax,
-                  uint64_t     index_max,
-                  uint64_t     Nmu,
-                  uint64_t     Nvpar,
-                  uint64_t     Nspecies,
-                  uint64_t     pSpecies_id,
-                  uint64_t     mu_id,
-                  uint64_t     istart,
-                  uint64_t     iend,
-                  uint64_t     jstart,
-                  uint64_t     jend,
-                  int64_t      collstart,
-                  int64_t      collend,
-                  Flo64        R0,
-                  bool         collision_interspecies,
-                  bool         SOL,
-                  bool         LIM,
-                  const Flo64* comb_mat,
-                  uint64_t     comb_mat_extent_0,
-                  uint64_t     comb_mat_extent_1,
-                  const Flo64* hat_As,
-                  uint64_t     hat_As_extent_0,
-                  const Flo64* hat_Zs,
-                  uint64_t     hat_Zs_extent_0)
+            State(uint64_t                                                     Npolmax,
+                  uint64_t                                                     index_max,
+                  uint64_t                                                     Nmu,
+                  uint64_t                                                     Nvpar,
+                  uint64_t                                                     Nspecies,
+                  uint64_t                                                     pSpecies_id,
+                  uint64_t                                                     mu_id,
+                  uint64_t                                                     istart,
+                  uint64_t                                                     iend,
+                  uint64_t                                                     jstart,
+                  uint64_t                                                     jend,
+                  int64_t                                                      collstart,
+                  int64_t                                                      collend,
+                  Flo64                                                        R0,
+                  bool                                                         collision_interspecies,
+                  bool                                                         SOL,
+                  bool                                                         LIM,
+                  const Kokkos::View<const Flo64**,
+                                     Kokkos::LayoutLeft,
+                                     Kokkos::HostSpace,
+                                     Kokkos::MemoryTraits<Kokkos::Unmanaged>>& a_host_visible_comb_mat,
+                  const Kokkos::View<const Flo64*,
+                                     Kokkos::LayoutLeft,
+                                     Kokkos::HostSpace,
+                                     Kokkos::MemoryTraits<Kokkos::Unmanaged>>& a_host_visible_hat_As,
+                  const Kokkos::View<const Flo64*,
+                                     Kokkos::LayoutLeft,
+                                     Kokkos::HostSpace,
+                                     Kokkos::MemoryTraits<Kokkos::Unmanaged>>& a_host_visible_hat_Zs)
                 : Npolmax_{Npolmax}
                 , index_max_{index_max}
                 , Nmu_{Nmu}
@@ -74,16 +79,9 @@ namespace koliop {
                 , collision_interspecies_{collision_interspecies}
                 , SOL_{SOL}
                 , LIM_{LIM}
-                , comb_mat_{Kokkos::view_alloc(Kokkos::WithoutInitializing,
-                                               "comb_mat_"),
-                            comb_mat_extent_0,
-                            comb_mat_extent_1}
-                , hat_As_{Kokkos::view_alloc(Kokkos::WithoutInitializing,
-                                             "hat_As_"),
-                          hat_As_extent_0}
-                , hat_Zs_{Kokkos::view_alloc(Kokkos::WithoutInitializing,
-                                             "hat_Zs_"),
-                          hat_Zs_extent_0}
+                , comb_mat_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "comb_mat_"), a_host_visible_comb_mat.extent(0), a_host_visible_comb_mat.extent(1)}
+                , hat_As_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "hat_As_"), a_host_visible_hat_As.extent(0)}
+                , hat_Zs_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "hat_Zs_"), a_host_visible_hat_Zs.extent(0)}
 
                 // TODO(Etienne M): Compile time code based on Npolmax_ value ?
                 , C_j_{Kokkos::view_alloc(Kokkos::WithoutInitializing,
@@ -101,64 +99,12 @@ namespace koliop {
                 KOLIOP_ASSERT(istart_ == 0);
                 KOLIOP_ASSERT(jstart_ == 0);
 
-                auto unmanaged_comb_mat = Kokkos::View<const Flo64**,
-                                                       Kokkos::LayoutLeft,
-                                                       Kokkos::HostSpace,
-                                                       Kokkos::MemoryTraits<Kokkos::Unmanaged>>{// "unmanaged_host_comb_mat",
-                                                                                                comb_mat,
-                                                                                                comb_mat_extent_0,
-                                                                                                comb_mat_extent_1};
                 // TODO(Etienne M): Deep or shallow ? On CPU, shallow would be
                 // enough.
-                koliop::utility::SmartDeepCopy(unmanaged_comb_mat, comb_mat_);
 
-                auto unmanaged_hat_As = Kokkos::View<const Flo64*,
-                                                     Kokkos::LayoutLeft,
-                                                     Kokkos::HostSpace,
-                                                     Kokkos::MemoryTraits<Kokkos::Unmanaged>>{// "unmanaged_host_hat_As",
-                                                                                              hat_As,
-                                                                                              hat_As_extent_0};
-                koliop::utility::SmartDeepCopy(unmanaged_hat_As, hat_As_);
-
-                auto unmanaged_hat_Zs = Kokkos::View<const Flo64*,
-                                                     Kokkos::LayoutLeft,
-                                                     Kokkos::HostSpace,
-                                                     Kokkos::MemoryTraits<Kokkos::Unmanaged>>{// "unmanaged_host_hat_Zs",
-                                                                                              hat_Zs,
-                                                                                              hat_Zs_extent_0};
-                koliop::utility::SmartDeepCopy(unmanaged_hat_Zs, hat_Zs_);
-
-                // auto unmanaged_mug = Kokkos::View<const Flo64*,
-                //                                   Kokkos::LayoutLeft,
-                //                                   Kokkos::HostSpace,
-                //                                   Kokkos::MemoryTraits<Kokkos::Unmanaged>>{// "unmanaged_mug",
-                //                                                                            mug,
-                //                                                                            mug_extent_0};
-                // koliop::utility::SmartDeepCopy(unmanaged_mug, mug_);
-
-                // auto unmanaged_vparg = Kokkos::View<const Flo64*,
-                //                                     Kokkos::LayoutLeft,
-                //                                     Kokkos::HostSpace,
-                //                                     Kokkos::MemoryTraits<Kokkos::Unmanaged>>{// "unmanaged_vparg",
-                //                                                                              vparg,
-                //                                                                              vparg_extent_0};
-                // koliop::utility::SmartDeepCopy(unmanaged_vparg, vparg_);
-
-                // auto unmanaged_coeff_intdmu = Kokkos::View<const Flo64*,
-                //                                            Kokkos::LayoutLeft,
-                //                                            Kokkos::HostSpace,
-                //                                            Kokkos::MemoryTraits<Kokkos::Unmanaged>>{// "unmanaged_coeff_intdmu",
-                //                                                                                     coeff_intdmu,
-                //                                                                                     coeff_intdmu_extent_0};
-                // koliop::utility::SmartDeepCopy(unmanaged_coeff_intdmu, coeff_intdmu_);
-
-                // auto unmanaged_coeff_intdvpar = Kokkos::View<const Flo64*,
-                //                                              Kokkos::LayoutLeft,
-                //                                              Kokkos::HostSpace,
-                //                                              Kokkos::MemoryTraits<Kokkos::Unmanaged>>{// "unmanaged_coeff_intdvpar",
-                //                                                                                       coeff_intdvpar,
-                //                                                                                       coeff_intdvpar_extent_0};
-                // koliop::utility::SmartDeepCopy(unmanaged_coeff_intdvpar, coeff_intdvpar_);
+                koliop::utility::SmartDeepCopy(a_host_visible_comb_mat, comb_mat_);
+                koliop::utility::SmartDeepCopy(a_host_visible_hat_As, hat_As_);
+                koliop::utility::SmartDeepCopy(a_host_visible_hat_Zs, hat_Zs_);
 
                 PrepareCj_Cjl(C_j_, C_jl_);
             }
@@ -197,13 +143,23 @@ namespace koliop {
             }
 
         protected:
-            template <typename HostView0,
-                      typename HostView1>
-            void DoPrepareNuStar(const HostView0& a_host_visible_rg,
-                                 const HostView0& a_host_visible_nustaR0_r,
-                                 const HostView0& a_host_visible_q_r,
-                                 const HostView0& a_host_visible_mask_buffer_r,
-                                 HostView1&&      a_host_visible_nustar_coeff) const {
+            void DoPrepareNuStar(const Kokkos::View<const Flo64*,
+                                                    Kokkos::LayoutLeft,
+                                                    Kokkos::HostSpace,
+                                                    Kokkos::MemoryTraits<Kokkos::Unmanaged>>&                                             a_host_visible_rg,
+                                 const Kokkos::View<const Flo64*,
+                                                    Kokkos::LayoutLeft,
+                                                    Kokkos::HostSpace,
+                                                    Kokkos::MemoryTraits<Kokkos::Unmanaged>>&                                             a_host_visible_nustaR0_r,
+                                 const Kokkos::View<const Flo64*,
+                                                    Kokkos::LayoutLeft,
+                                                    Kokkos::HostSpace,
+                                                    Kokkos::MemoryTraits<Kokkos::Unmanaged>>&                                             a_host_visible_q_r,
+                                 const Kokkos::View<const Flo64*,
+                                                    Kokkos::LayoutLeft,
+                                                    Kokkos::HostSpace,
+                                                    Kokkos::MemoryTraits<Kokkos::Unmanaged>>&                                             a_host_visible_mask_buffer_r,
+                                 Kokkos::View<Flo64***, Kokkos::LayoutLeft, Kokkos::HostSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>>&& a_host_visible_nustar_coeff) const {
 
                 const uint64_t element_count = a_host_visible_rg.extent(0);
 
