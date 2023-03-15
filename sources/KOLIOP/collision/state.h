@@ -85,8 +85,8 @@ namespace koliop {
                                              "hat_Zs_"),
                           hat_Zs_extent_0}
 
-                // TODO(Etienne M): Compile time code based on Npolmax_ value (small)
-                , C_j_{Kokkos::view_alloc(Kokkos::WithoutInitializing, // Initialize to zero
+                // TODO(Etienne M): Compile time code based on Npolmax_ value ?
+                , C_j_{Kokkos::view_alloc(Kokkos::WithoutInitializing,
                                           "C_j_"),
                        Npolmax_,
                        Npolmax_}
@@ -169,30 +169,63 @@ namespace koliop {
                                const Flo64* mask_buffer_r,
                                Flo64*       nustar_coeff) const {
 
-                const uint64_t element_count  = iend_ + 1 - istart_;
                 const uint64_t element_offset = istart_;
+                const uint64_t element_count  = iend_ + 1 - element_offset;
 
                 rg += element_offset;
                 nustaR0_r += element_offset;
                 q_r += element_offset;
                 mask_buffer_r += element_offset;
 
-                std::vector<Flo64> mask_space;
-                mask_space.resize(element_count, 1.0);
+                DoPrepareNuStar(Kokkos::View<const Flo64*,
+                                             Kokkos::LayoutLeft,
+                                             Kokkos::HostSpace,
+                                             Kokkos::MemoryTraits<Kokkos::Unmanaged>>{// "unmanaged_host_rg",
+                                                                                      rg, element_count},
+                                Kokkos::View<const Flo64*, Kokkos::LayoutLeft, Kokkos::HostSpace,
+                                             Kokkos::MemoryTraits<Kokkos::Unmanaged>>{// "unmanaged_host_nustaR0_r",
+                                                                                      nustaR0_r, element_count},
+                                Kokkos::View<const Flo64*, Kokkos::LayoutLeft, Kokkos::HostSpace,
+                                             Kokkos::MemoryTraits<Kokkos::Unmanaged>>{// "unmanaged_host_q_r",
+                                                                                      q_r, element_count},
+                                Kokkos::View<const Flo64*, Kokkos::LayoutLeft, Kokkos::HostSpace,
+                                             Kokkos::MemoryTraits<Kokkos::Unmanaged>>{// "unmanaged_host_mask_buffer_r",
+                                                                                      mask_buffer_r, element_count},
+                                Kokkos::View<Flo64***, Kokkos::LayoutLeft, Kokkos::HostSpace,
+                                             Kokkos::MemoryTraits<Kokkos::Unmanaged>>{// "unmanaged_host_nustar_coeff",
+                                                                                      nustar_coeff, Nspecies_, Nspecies_, element_count});
+            }
 
-                if(q_r[0] < koliop::portability::GyselaConstant<Flo64>::kInfinity) {
+        protected:
+            template <typename HostView0,
+                      typename HostView1>
+            void DoPrepareNuStar(const HostView0& a_host_visible_rg,
+                                 const HostView0& a_host_visible_nustaR0_r,
+                                 const HostView0& a_host_visible_q_r,
+                                 const HostView0& a_host_visible_mask_buffer_r,
+                                 HostView1&&      a_host_visible_nustar_coeff) const {
+
+                const uint64_t element_count = a_host_visible_rg.extent(0);
+
+                Kokkos::View<Flo64*, Kokkos::LayoutLeft, Kokkos::HostSpace>
+                    mask_space{Kokkos::view_alloc(Kokkos::WithoutInitializing,
+                                                  "mask_space"),
+                               element_count};
+
+                if(a_host_visible_q_r(0) < koliop::portability::GyselaConstant<Flo64>::kInfinity) {
                     for(uint64_t i = 0; i < element_count; ++i) {
-                        mask_space[i] = 1.0 / q_r[i];
+                        mask_space(i) = 1.0 / a_host_visible_q_r[i];
                     }
                 }
 
                 if(!(LIM_ || SOL_)) {
                     for(uint64_t i = 0; i < element_count; ++i) {
-                        mask_space[i] = mask_space[i] *
-                                        (1.0 - mask_buffer_r[i]);
+                        mask_space(i) = mask_space[i] *
+                                        (1.0 - a_host_visible_mask_buffer_r(i));
                     }
                 }
 
+                // TODO(Etienne M): Obvious loop inter exchange.
                 for(uint64_t ispeciesB = 0; ispeciesB < Nspecies_; ++ispeciesB) {
                     for(uint64_t ispeciesA = 0; ispeciesA < Nspecies_; ++ispeciesA) {
                         // TODO(Etienne M): Wrong memory space
@@ -209,10 +242,10 @@ namespace koliop {
                             // Computation of
                             // AD(r) = sqrt(2) * eps ^ (3 / 2) / (q R0_)*nustaR0_(r)
                             // which is independant on the species considered (eps = r/R0_)
-                            const Flo64 eps = rg[ir] * R0_inverse_;
+                            const Flo64 eps = a_host_visible_rg(ir) * R0_inverse_;
 
-                            const Flo64 AD = nustaR0_r[ir] *
-                                             mask_space[ir] *
+                            const Flo64 AD = a_host_visible_nustaR0_r(ir) *
+                                             mask_space(ir) *
                                              // NOTE:
                                              // sqrt(2)*(rg*R0_inverse_)*sqrt(rg*R0_inverse_)*R0_inverse_ =
                                              // sqrt(2)*pow(r, 5/2)*pow(rg, 3/2)
@@ -226,15 +259,12 @@ namespace koliop {
                             // (AD * hat_Za ^ 2 * hat_Zb ^ 2 * Nb) /
                             // (vTa ^ 2 + vTb ^ 2) ^ (3 / 2) * (1 / hat_Aa) *
                             // (1 / hat_Aa + 1 / hat_Ab)
-                            nustar_coeff[ispeciesA +
-                                         ispeciesB * (Nspecies_) +
-                                         ir * (Nspecies_ * Nspecies_)] = AD * AD_factor;
+                            a_host_visible_nustar_coeff(ispeciesA, ispeciesB, ir) = AD * AD_factor;
                         }
                     }
                 }
             }
 
-        protected:
             template <typename DeviceView0,
                       typename DeviceView1>
             static void PrepareCj_Cjl(DeviceView0&& C_j,
