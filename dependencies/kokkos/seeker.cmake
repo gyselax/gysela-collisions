@@ -22,7 +22,7 @@ else()
     # OVERRIDE_FIND_PACKAGE and put the find_package in the main control flow
     # (not in the else).
     # https://cmake.org/cmake/help/latest/module/FetchContent.html#integrating-with-find-package
-    find_package(Kokkos 3.7.01 REQUIRED)
+    find_package(Kokkos 4.0.0 REQUIRED)
 endif()
 
 function(koliop_target_add_kokkos target_name)

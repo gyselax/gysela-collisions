@@ -59,15 +59,89 @@
 
         using State = koliop::collision::State<koliop::collision::CollisionPolicy>;
 
-        koliop::Flo64        dummy[1024];
-        const koliop::Flo64* comb_mat = dummy;
-        const koliop::Flo64* hat_As   = dummy;
-        const koliop::Flo64* hat_Zs   = dummy;
+        static constexpr int  Npolmax                = 3;
+        static constexpr int  index_max              = 4;
+        static constexpr int  Nmu                    = 47;
+        static constexpr int  Nvpar                  = 127;
+        static constexpr int  Nspecies               = 1;
+        static constexpr int  pSpecies_id            = 0;
+        static constexpr int  mu_id                  = 4; // [0, nproc)
+        static constexpr int  istart                 = 0;
+        static constexpr int  iend                   = 31;
+        static constexpr int  jstart                 = 0;
+        static constexpr int  jend                   = 31;
+        static constexpr int  collstart              = 0; // [0, nproc)
+        static constexpr int  collend                = 0; // [0, nproc)
+        static constexpr int  R0                     = 320.;
+        static constexpr bool collision_interspecies = true;
+        static constexpr bool SOL                    = false;
+        static constexpr bool LIM                    = false;
 
-        auto* const a_state = new State{4, 2 * 4, 3, 4, 5, 6, true,
-                                        comb_mat, 10, 10,
-                                        hat_As, 10,
-                                        hat_Zs, 10};
+        // lbound(comb_mat,1) = 0;
+        // ubound(comb_mat,1) = 5;
+        // size(comb_mat,1) = 6;
+
+        // lbound(comb_mat,2) = 0;
+        // ubound(comb_mat,2) = 5;
+        // size(comb_mat,2) = 6;
+
+        // lbound(hat_As,1) = 0;
+        // ubound(hat_As,1) = 2;
+        // size(hat_As,1) = 3;
+
+        // lbound(hat_Zs,1) = 0;
+        // ubound(hat_Zs,1) = 2;
+        // size(hat_Zs,1) = 3;
+
+        // lbound(mug,1) = 0;
+        // ubound(mug,1) = 47;
+        // size(mug,1) = 48;
+
+        // lbound(vparg,1) = 0;
+        // ubound(vparg,1) = 127;
+        // size(vparg,1) = 128;
+
+        // lbound(coeff_intdmu,1) = 0;
+        // ubound(coeff_intdmu,1) = 47;
+        // size(coeff_intdmu,1) = 48;
+
+        // lbound(coeff_intdvpar,1) = 0;
+        // ubound(coeff_intdvpar,1) = 127;
+        // size(coeff_intdvpar,1) = 128;
+
+        koliop::Flo64        dummy[1024];
+        const koliop::Flo64* comb_mat       = dummy;
+        const koliop::Flo64* hat_As         = dummy;
+        const koliop::Flo64* hat_Zs         = dummy;
+        const koliop::Flo64* mug            = dummy;
+        const koliop::Flo64* vparg          = dummy;
+        const koliop::Flo64* coeff_intdmu   = dummy;
+        const koliop::Flo64* coeff_intdvpar = dummy;
+
+        auto* const a_state = new State{Npolmax,
+                                        index_max,
+                                        Nmu,
+                                        Nvpar,
+                                        Nspecies,
+                                        pSpecies_id,
+                                        mu_id,
+                                        istart,
+                                        iend,
+                                        jstart,
+                                        jend,
+                                        collstart,
+                                        collend,
+                                        R0,
+                                        collision_interspecies,
+                                        SOL,
+                                        LIM,
+                                        comb_mat, 6, 6,
+                                        hat_As, 3,
+                                        hat_Zs, 3,
+                                        mug, 48,
+                                        vparg, 128,
+                                        coeff_intdmu, 48,
+                                        coeff_intdvpar, 128};
 
         KOLIOP_ASSERT(a_state != nullptr);
 
