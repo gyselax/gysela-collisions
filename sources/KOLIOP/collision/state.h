@@ -223,23 +223,22 @@ namespace koliop {
                 // a_host_visible_C_jl is zero initialized.
                 auto a_host_visible_C_jl = Kokkos::create_mirror_view(C_jl);
 
-                const auto the_polynomial_degree = a_host_visible_C_j.extent(0);
-
                 const auto Stuff = [&](auto j_tmp, auto l_tmp) {
-                    for(std::size_t i = 0; i < (j_tmp + l_tmp); ++i) {
-                        a_host_visible_C_jl(i, j_tmp, l_tmp) = 0.0;
-                    }
+                    // for(std::size_t i = 0; i <= (j_tmp + l_tmp); ++i) {
+                    //     // Is that necessary ?
+                    //     a_host_visible_C_jl(i, j_tmp, l_tmp) = 0.0;
+                    // }
 
-                    for(std::size_t alpha = 0; alpha < j_tmp; ++alpha) {
-                        for(std::size_t beta = 0; beta < l_tmp; ++beta) {
+                    for(std::size_t alpha = 0; alpha <= j_tmp; ++alpha) {
+                        for(std::size_t beta = 0; beta <= l_tmp; ++beta) {
                             a_host_visible_C_jl(alpha + beta, j_tmp, l_tmp) = a_host_visible_C_jl(alpha + beta, j_tmp, l_tmp) +
                                                                               a_host_visible_C_j(alpha, j_tmp) * a_host_visible_C_j(beta, l_tmp);
                         }
                     }
                 };
 
-                for(std::size_t i = 0; i < the_polynomial_degree; ++i) {
-                    for(std::size_t j = 0; j < the_polynomial_degree; ++j) {
+                for(std::size_t i = 0; i < a_host_visible_C_jl.extent(1); ++i) {
+                    for(std::size_t j = 0; j < a_host_visible_C_jl.extent(2); ++j) {
                         Stuff(i, j);
                     }
                 }
