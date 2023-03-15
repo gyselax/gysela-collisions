@@ -113,35 +113,37 @@
         const koliop::Flo64* comb_mat       = dummy;
         const koliop::Flo64* hat_As         = dummy;
         const koliop::Flo64* hat_Zs         = dummy;
-        const koliop::Flo64* mug            = dummy;
-        const koliop::Flo64* vparg          = dummy;
-        const koliop::Flo64* coeff_intdmu   = dummy;
-        const koliop::Flo64* coeff_intdvpar = dummy;
+        // const koliop::Flo64* mug            = dummy;
+        // const koliop::Flo64* vparg          = dummy;
+        // const koliop::Flo64* coeff_intdmu   = dummy;
+        // const koliop::Flo64* coeff_intdvpar = dummy;
 
-        auto* const a_state = new State{Npolmax,
-                                        index_max,
-                                        Nmu,
-                                        Nvpar,
-                                        Nspecies,
-                                        pSpecies_id,
-                                        mu_id,
-                                        istart,
-                                        iend,
-                                        jstart,
-                                        jend,
-                                        collstart,
-                                        collend,
-                                        R0,
-                                        collision_interspecies,
-                                        SOL,
-                                        LIM,
-                                        comb_mat, 6, 6,
-                                        hat_As, 3,
-                                        hat_Zs, 3,
-                                        mug, 48,
-                                        vparg, 128,
-                                        coeff_intdmu, 48,
-                                        coeff_intdvpar, 128};
+        auto* const a_state = new State{
+            Npolmax,
+            index_max,
+            Nmu,
+            Nvpar,
+            Nspecies,
+            pSpecies_id,
+            mu_id,
+            istart,
+            iend,
+            jstart,
+            jend,
+            collstart,
+            collend,
+            R0,
+            collision_interspecies,
+            SOL,
+            LIM,
+            comb_mat, 6, 6,
+            hat_As, 3,
+            hat_Zs, 3
+            // mug, 48,
+            // vparg, 128,
+            // coeff_intdmu, 48,
+            // coeff_intdvpar, 128
+        };
 
         KOLIOP_ASSERT(a_state != nullptr);
 

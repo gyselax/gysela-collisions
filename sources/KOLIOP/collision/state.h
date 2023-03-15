@@ -61,19 +61,20 @@ namespace koliop {
                   std::size_t  hat_As_extent_0,
 
                   const Flo64* hat_Zs,
-                  std::size_t  hat_Zs_extent_0,
+                  std::size_t  hat_Zs_extent_0
 
-                  const Flo64* mug,
-                  std::size_t  mug_extent_0,
+                  // const Flo64* mug,
+                  // std::size_t  mug_extent_0,
 
-                  const Flo64* vparg,
-                  std::size_t  vparg_extent_0,
+                  // const Flo64* vparg,
+                  // std::size_t  vparg_extent_0,
 
-                  const Flo64* coeff_intdmu,
-                  std::size_t  coeff_intdmu_extent_0,
+                  // const Flo64* coeff_intdmu,
+                  // std::size_t  coeff_intdmu_extent_0,
 
-                  const Flo64* coeff_intdvpar,
-                  std::size_t  coeff_intdvpar_extent_0)
+                  // const Flo64* coeff_intdvpar,
+                  // std::size_t  coeff_intdvpar_extent_0
+                  )
                 : Npolmax_{Npolmax}
                 , index_max_{index_max}
                 , Nmu_{Nmu}
@@ -101,18 +102,19 @@ namespace koliop {
                 , hat_Zs_{Kokkos::view_alloc(Kokkos::WithoutInitializing,
                                              "hat_Zs_"),
                           hat_Zs_extent_0}
-                , mug_{Kokkos::view_alloc(Kokkos::WithoutInitializing,
-                                          "mug_"),
-                       mug_extent_0}
-                , vparg_{Kokkos::view_alloc(Kokkos::WithoutInitializing,
-                                            "vparg_"),
-                         vparg_extent_0}
-                , coeff_intdmu_{Kokkos::view_alloc(Kokkos::WithoutInitializing,
-                                                   "coeff_intdmu_"),
-                                coeff_intdmu_extent_0}
-                , coeff_intdvpar_{Kokkos::view_alloc(Kokkos::WithoutInitializing,
-                                                     "coeff_intdvpar_"),
-                                  coeff_intdvpar_extent_0}
+                // , mug_{Kokkos::view_alloc(Kokkos::WithoutInitializing,
+                //                           "mug_"),
+                //        mug_extent_0}
+                // , vparg_{Kokkos::view_alloc(Kokkos::WithoutInitializing,
+                //                             "vparg_"),
+                //          vparg_extent_0}
+                // , coeff_intdmu_{Kokkos::view_alloc(Kokkos::WithoutInitializing,
+                //                                    "coeff_intdmu_"),
+                //                 coeff_intdmu_extent_0}
+                // , coeff_intdvpar_{Kokkos::view_alloc(Kokkos::WithoutInitializing,
+                //                                      "coeff_intdvpar_"),
+                //                   coeff_intdvpar_extent_0}
+
                 // TODO(Etienne M): Compile time code based on Npolmax_ value (small)
                 , C_j_{Kokkos::view_alloc(Kokkos::WithoutInitializing, // Initialize to zero
                                           "C_j_"),
@@ -120,7 +122,7 @@ namespace koliop {
                        Npolmax_}
                 , C_jl_{Kokkos::view_alloc(Kokkos::WithoutInitializing,
                                            "C_jl_"),
-                        index_max_,
+                        index_max_ + 1, // TODO(Etienne M): INDEX Fortran s***
                         Npolmax_,
                         Npolmax_} {
 
@@ -151,37 +153,37 @@ namespace koliop {
                                                                                               hat_Zs_extent_0};
                 koliop::utility::SmartDeepCopy(unmanaged_hat_Zs, hat_Zs_);
 
-                auto unmanaged_mug = Kokkos::View<const Flo64*,
-                                                  Kokkos::LayoutLeft,
-                                                  Kokkos::HostSpace,
-                                                  Kokkos::MemoryTraits<Kokkos::Unmanaged>>{// "unmanaged_mug",
-                                                                                           mug,
-                                                                                           mug_extent_0};
-                koliop::utility::SmartDeepCopy(unmanaged_mug, mug_);
+                // auto unmanaged_mug = Kokkos::View<const Flo64*,
+                //                                   Kokkos::LayoutLeft,
+                //                                   Kokkos::HostSpace,
+                //                                   Kokkos::MemoryTraits<Kokkos::Unmanaged>>{// "unmanaged_mug",
+                //                                                                            mug,
+                //                                                                            mug_extent_0};
+                // koliop::utility::SmartDeepCopy(unmanaged_mug, mug_);
 
-                auto unmanaged_vparg = Kokkos::View<const Flo64*,
-                                                    Kokkos::LayoutLeft,
-                                                    Kokkos::HostSpace,
-                                                    Kokkos::MemoryTraits<Kokkos::Unmanaged>>{// "unmanaged_vparg",
-                                                                                             vparg,
-                                                                                             vparg_extent_0};
-                koliop::utility::SmartDeepCopy(unmanaged_vparg, vparg_);
+                // auto unmanaged_vparg = Kokkos::View<const Flo64*,
+                //                                     Kokkos::LayoutLeft,
+                //                                     Kokkos::HostSpace,
+                //                                     Kokkos::MemoryTraits<Kokkos::Unmanaged>>{// "unmanaged_vparg",
+                //                                                                              vparg,
+                //                                                                              vparg_extent_0};
+                // koliop::utility::SmartDeepCopy(unmanaged_vparg, vparg_);
 
-                auto unmanaged_coeff_intdmu = Kokkos::View<const Flo64*,
-                                                           Kokkos::LayoutLeft,
-                                                           Kokkos::HostSpace,
-                                                           Kokkos::MemoryTraits<Kokkos::Unmanaged>>{// "unmanaged_coeff_intdmu",
-                                                                                                    coeff_intdmu,
-                                                                                                    coeff_intdmu_extent_0};
-                koliop::utility::SmartDeepCopy(unmanaged_coeff_intdmu, coeff_intdmu_);
+                // auto unmanaged_coeff_intdmu = Kokkos::View<const Flo64*,
+                //                                            Kokkos::LayoutLeft,
+                //                                            Kokkos::HostSpace,
+                //                                            Kokkos::MemoryTraits<Kokkos::Unmanaged>>{// "unmanaged_coeff_intdmu",
+                //                                                                                     coeff_intdmu,
+                //                                                                                     coeff_intdmu_extent_0};
+                // koliop::utility::SmartDeepCopy(unmanaged_coeff_intdmu, coeff_intdmu_);
 
-                auto unmanaged_coeff_intdvpar = Kokkos::View<const Flo64*,
-                                                             Kokkos::LayoutLeft,
-                                                             Kokkos::HostSpace,
-                                                             Kokkos::MemoryTraits<Kokkos::Unmanaged>>{// "unmanaged_coeff_intdvpar",
-                                                                                                      coeff_intdvpar,
-                                                                                                      coeff_intdvpar_extent_0};
-                koliop::utility::SmartDeepCopy(unmanaged_coeff_intdvpar, coeff_intdvpar_);
+                // auto unmanaged_coeff_intdvpar = Kokkos::View<const Flo64*,
+                //                                              Kokkos::LayoutLeft,
+                //                                              Kokkos::HostSpace,
+                //                                              Kokkos::MemoryTraits<Kokkos::Unmanaged>>{// "unmanaged_coeff_intdvpar",
+                //                                                                                       coeff_intdvpar,
+                //                                                                                       coeff_intdvpar_extent_0};
+                // koliop::utility::SmartDeepCopy(unmanaged_coeff_intdvpar, coeff_intdvpar_);
 
                 PrepareCj_Cjl(C_j_, C_jl_);
             }
@@ -246,7 +248,7 @@ namespace koliop {
             }
 
             std::size_t Npolmax_;
-            std::size_t index_max_;
+            std::size_t index_max_; // TODO(Etienne M): INDEX Fortran s***
             std::size_t Nmu_;
             std::size_t Nvpar_;
             std::size_t Nspecies_;
@@ -266,13 +268,13 @@ namespace koliop {
             Kokkos::View<Flo64**> comb_mat_;
             Kokkos::View<Flo64*>  hat_As_;
             Kokkos::View<Flo64*>  hat_Zs_;
-            Kokkos::View<Flo64*>  mug_;
-            Kokkos::View<Flo64*>  vparg_;
-            Kokkos::View<Flo64*>  coeff_intdmu_;
-            Kokkos::View<Flo64*>  coeff_intdvpar_;
+            // Kokkos::View<Flo64*>  mug_;
+            // Kokkos::View<Flo64*>  vparg_;
+            // Kokkos::View<Flo64*>  coeff_intdmu_;
+            // Kokkos::View<Flo64*>  coeff_intdvpar_;
 
-            Kokkos::View<Flo64**>                     C_j_;
-            Kokkos::View<Flo64***>                    C_jl_;
+            Kokkos::View<Flo64**>  C_j_;
+            Kokkos::View<Flo64***> C_jl_;
         };
 
 
