@@ -77,7 +77,12 @@ koliop_Status koliop_Create(koliop_Operator* an_operator_handle,
                             uint64_t         hat_Zs_extent_0);
 koliop_Status koliop_Release(koliop_Operator an_operator);
 
-koliop_Status koliop_PrepareNuStar(koliop_Operator an_operator);
+koliop_Status koliop_PrepareNuStar(koliop_Operator an_operator,
+                                   const double*   rg,
+                                   const double*   nustaR0_r,
+                                   const double*   q_r,
+                                   const double*   mask_buffer_r,
+                                   double*         nustar_coeff);
 
 #if defined(__cplusplus)
 }

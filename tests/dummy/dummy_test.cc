@@ -12,23 +12,23 @@ int main(int, char**) {
 
     ::koliop_Operator an_operator;
 
-    static constexpr uint64_t  Npolmax                = 3;
-    static constexpr uint64_t  index_max              = 4;
-    static constexpr uint64_t  Nmu                    = 47;
-    static constexpr uint64_t  Nvpar                  = 127;
-    static constexpr uint64_t  Nspecies               = 1;
-    static constexpr uint64_t  pSpecies_id            = 0;
-    static constexpr uint64_t  mu_id                  = 4; // [0, nproc)
-    static constexpr uint64_t  istart                 = 0;
-    static constexpr uint64_t  iend                   = 31;
-    static constexpr uint64_t  jstart                 = 0;
-    static constexpr uint64_t  jend                   = 31;
-    static constexpr int64_t   collstart              = 0; // [0, nproc)
-    static constexpr int64_t   collend                = 0; // [0, nproc)
-    static constexpr double    R0                     = 320.0;
-    static constexpr uint32_t  collision_interspecies = true;
-    static constexpr uint32_t  SOL                    = false;
-    static constexpr uint32_t  LIM                    = false;
+    static constexpr uint64_t Npolmax                = 3;
+    static constexpr uint64_t index_max              = 4;
+    static constexpr uint64_t Nmu                    = 47;
+    static constexpr uint64_t Nvpar                  = 127;
+    static constexpr uint64_t Nspecies               = 1;
+    static constexpr uint64_t pSpecies_id            = 0;
+    static constexpr uint64_t mu_id                  = 4; // [0, nproc)
+    static constexpr uint64_t istart                 = 0;
+    static constexpr uint64_t iend                   = 31;
+    static constexpr uint64_t jstart                 = 0;
+    static constexpr uint64_t jend                   = 31;
+    static constexpr int64_t  collstart              = 0; // [0, nproc)
+    static constexpr int64_t  collend                = 0; // [0, nproc)
+    static constexpr double   R0                     = 320.0;
+    static constexpr uint32_t collision_interspecies = true;
+    static constexpr uint32_t SOL                    = false;
+    static constexpr uint32_t LIM                    = false;
 
     double dummy[1024];
 
@@ -100,7 +100,18 @@ int main(int, char**) {
 
     std::cout << an_operator << "\n";
 
-    ::koliop_PrepareNuStar(an_operator);
+    const double* rg            = dummy;
+    const double* nustaR0_r     = dummy;
+    const double* q_r           = dummy;
+    const double* mask_buffer_r = dummy;
+    double*       nustar_coeff  = dummy;
+
+    ::koliop_PrepareNuStar(an_operator,
+                           rg,
+                           nustaR0_r,
+                           q_r,
+                           mask_buffer_r,
+                           nustar_coeff);
 
     if(::koliop_Release(an_operator) != KOLIOP_STATUS_SUCCESS) {
         std::cout << "::koliop_Release() failed\n";

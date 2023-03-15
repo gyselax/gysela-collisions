@@ -6,6 +6,7 @@
 #include <Kokkos_Core.hpp>
 
 #include "KOLIOP/internal/configuration.h"
+#include "KOLIOP/portability/cmath.h"
 #include "KOLIOP/utility/view.h"
 
 namespace koliop {
@@ -69,7 +70,7 @@ namespace koliop {
                 , jend_{jend}
                 , collstart_{collstart}
                 , collend_{collend}
-                , R0_{R0}
+                , R0_inverse_{1.0 / R0}
                 , collision_interspecies_{collision_interspecies}
                 , SOL_{SOL}
                 , LIM_{LIM}
@@ -91,9 +92,14 @@ namespace koliop {
                        Npolmax_}
                 , C_jl_{Kokkos::view_alloc(Kokkos::WithoutInitializing,
                                            "C_jl_"),
-                        index_max_ + 1, // TODO(Etienne M): INDEX Fortran s***
+                        index_max_ + 1,
                         Npolmax_,
                         Npolmax_} {
+
+                // This assumption allows for some simpler indexing.
+                // TODO(Etienne M): INDEX, recheck all array indexing.
+                KOLIOP_ASSERT(istart_ == 0);
+                KOLIOP_ASSERT(jstart_ == 0);
 
                 auto unmanaged_comb_mat = Kokkos::View<const Flo64**,
                                                        Kokkos::LayoutLeft,
@@ -155,6 +161,13 @@ namespace koliop {
                 // koliop::utility::SmartDeepCopy(unmanaged_coeff_intdvpar, coeff_intdvpar_);
 
                 PrepareCj_Cjl(C_j_, C_jl_);
+            }
+
+            void PrepareNuStar(const Flo64* rg,
+                               const Flo64* nustaR0_r,
+                               const Flo64* q_r,
+                               const Flo64* mask_buffer_r,
+                               Flo64*       nustar_coeff) {
             }
 
         protected:
@@ -223,12 +236,12 @@ namespace koliop {
             uint64_t pSpecies_id_;
             uint64_t mu_id_;
             uint64_t istart_;
-            uint64_t iend_;
+            uint64_t iend_; // TODO(Etienne M): INDEX Fortran s***
             uint64_t jstart_;
             uint64_t jend_;
             int64_t  collstart_;
             int64_t  collend_;
-            Flo64    R0_;
+            Flo64    R0_inverse_;
             bool     collision_interspecies_;
             bool     SOL_;
             bool     LIM_;
