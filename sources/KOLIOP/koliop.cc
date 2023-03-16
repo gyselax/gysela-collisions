@@ -74,7 +74,15 @@
                               const double*      hat_As,
                               uint64_t           hat_As_extent_0,
                               const double*      hat_Zs,
-                              uint64_t           hat_Zs_extent_0) {
+                              uint64_t           hat_Zs_extent_0,
+                              const double*      mug,
+                              uint64_t           mug_extent_0,
+                              const double*      vparg,
+                              uint64_t           vparg_extent_0,
+                              const double*      coeff_intdmu,
+                              uint64_t           coeff_intdmu_extent_0,
+                              const double*      coeff_intdvpar,
+                              uint64_t           coeff_intdvpar_extent_0) {
     return koliop::error::FromException([&]() {
         if(an_operator_handle == nullptr) {
             return KOLIOP_STATUS_INVALID_VALUE;
@@ -117,7 +125,31 @@
                                                          Kokkos::HostSpace,
                                                          Kokkos::MemoryTraits<Kokkos::Unmanaged>>{// "unmanaged_host_hat_Zs",
                                                                                                   hat_Zs,
-                                                                                                  hat_Zs_extent_0}};
+                                                                                                  hat_Zs_extent_0},
+                                            Kokkos::View<const koliop::Flo64*,
+                                                         Kokkos::LayoutLeft,
+                                                         Kokkos::HostSpace,
+                                                         Kokkos::MemoryTraits<Kokkos::Unmanaged>>{// "unmanaged_host_mug",
+                                                                                                  mug,
+                                                                                                  mug_extent_0},
+                                            Kokkos::View<const koliop::Flo64*,
+                                                         Kokkos::LayoutLeft,
+                                                         Kokkos::HostSpace,
+                                                         Kokkos::MemoryTraits<Kokkos::Unmanaged>>{// "unmanaged_host_vparg",
+                                                                                                  vparg,
+                                                                                                  vparg_extent_0},
+                                            Kokkos::View<const koliop::Flo64*,
+                                                         Kokkos::LayoutLeft,
+                                                         Kokkos::HostSpace,
+                                                         Kokkos::MemoryTraits<Kokkos::Unmanaged>>{// "unmanaged_host_coeff_intdmu",
+                                                                                                  coeff_intdmu,
+                                                                                                  coeff_intdmu_extent_0},
+                                            Kokkos::View<const koliop::Flo64*,
+                                                         Kokkos::LayoutLeft,
+                                                         Kokkos::HostSpace,
+                                                         Kokkos::MemoryTraits<Kokkos::Unmanaged>>{// "unmanaged_host_coeff_intdvpar",
+                                                                                                  coeff_intdvpar,
+                                                                                                  coeff_intdvpar_extent_0}};
 
         KOLIOP_ASSERT(an_operator != nullptr);
 

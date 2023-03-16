@@ -61,7 +61,23 @@ namespace koliop {
                   const Kokkos::View<const Flo64*,
                                      Kokkos::LayoutLeft,
                                      Kokkos::HostSpace,
-                                     Kokkos::MemoryTraits<Kokkos::Unmanaged>>& a_host_visible_hat_Zs)
+                                     Kokkos::MemoryTraits<Kokkos::Unmanaged>>& a_host_visible_hat_Zs,
+                  const Kokkos::View<const Flo64*,
+                                     Kokkos::LayoutLeft,
+                                     Kokkos::HostSpace,
+                                     Kokkos::MemoryTraits<Kokkos::Unmanaged>>& a_host_visible_mug,
+                  const Kokkos::View<const Flo64*,
+                                     Kokkos::LayoutLeft,
+                                     Kokkos::HostSpace,
+                                     Kokkos::MemoryTraits<Kokkos::Unmanaged>>& a_host_visible_vparg,
+                  const Kokkos::View<const Flo64*,
+                                     Kokkos::LayoutLeft,
+                                     Kokkos::HostSpace,
+                                     Kokkos::MemoryTraits<Kokkos::Unmanaged>>& a_host_visible_coeff_intdmu,
+                  const Kokkos::View<const Flo64*,
+                                     Kokkos::LayoutLeft,
+                                     Kokkos::HostSpace,
+                                     Kokkos::MemoryTraits<Kokkos::Unmanaged>>& a_host_visible_coeff_intdvpar)
                 : Npolmax_{Npolmax}
                 , index_max_{index_max}
                 , Nmu_{Nmu}
@@ -82,6 +98,10 @@ namespace koliop {
                 , comb_mat_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "comb_mat_"), a_host_visible_comb_mat.extent(0), a_host_visible_comb_mat.extent(1)}
                 , hat_As_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "hat_As_"), a_host_visible_hat_As.extent(0)}
                 , hat_Zs_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "hat_Zs_"), a_host_visible_hat_Zs.extent(0)}
+                , mug_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "mug_"), a_host_visible_mug.extent(0)}
+                , vparg_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "vparg_"), a_host_visible_vparg.extent(0)}
+                , coeff_intdmu_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "coeff_intdmu_"), a_host_visible_coeff_intdmu.extent(0)}
+                , coeff_intdvpar_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "coeff_intdvpar_"), a_host_visible_coeff_intdvpar.extent(0)}
 
                 // TODO(Etienne M): Compile time code based on Npolmax_ value ?
                 , C_j_{Kokkos::view_alloc(Kokkos::WithoutInitializing,
@@ -104,6 +124,10 @@ namespace koliop {
                 koliop::utility::SmartDeepCopy(a_host_visible_comb_mat, comb_mat_);
                 koliop::utility::SmartDeepCopy(a_host_visible_hat_As, hat_As_);
                 koliop::utility::SmartDeepCopy(a_host_visible_hat_Zs, hat_Zs_);
+                koliop::utility::SmartDeepCopy(a_host_visible_mug, mug_);
+                koliop::utility::SmartDeepCopy(a_host_visible_vparg, vparg_);
+                koliop::utility::SmartDeepCopy(a_host_visible_coeff_intdmu, coeff_intdmu_);
+                koliop::utility::SmartDeepCopy(a_host_visible_coeff_intdvpar, coeff_intdvpar_);
 
                 PrepareCj_Cjl(C_j_, C_jl_);
             }
@@ -306,6 +330,10 @@ namespace koliop {
             Kokkos::View<Flo64**> comb_mat_;
             Kokkos::View<Flo64*>  hat_As_;
             Kokkos::View<Flo64*>  hat_Zs_;
+            Kokkos::View<Flo64*>  mug_;
+            Kokkos::View<Flo64*>  vparg_;
+            Kokkos::View<Flo64*>  coeff_intdmu_;
+            Kokkos::View<Flo64*>  coeff_intdvpar_;
 
             Kokkos::View<Flo64**>  C_j_;
             Kokkos::View<Flo64***> C_jl_;

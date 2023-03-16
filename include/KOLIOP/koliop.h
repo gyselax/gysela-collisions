@@ -50,6 +50,42 @@ koliop_Status koliop_Deinitialize(void);
 ///
 typedef struct _koliop_Operator* koliop_Operator;
 
+/// @brief The values given below are expected NOT to change during the lifetime
+/// of the operator. Notably, comb_mat, hat_As, hat_Zs, mug, vparg etc.
+/// @param an_operator_handle
+/// @param Npolmax
+/// @param index_max
+/// @param Nmu
+/// @param Nvpar
+/// @param Nspecies
+/// @param pSpecies_id
+/// @param mu_id
+/// @param istart
+/// @param iend
+/// @param jstart
+/// @param jend
+/// @param collstart
+/// @param collend
+/// @param R0
+/// @param collision_interspecies
+/// @param SOL
+/// @param LIM
+/// @param comb_mat
+/// @param comb_mat_extent_0
+/// @param comb_mat_extent_1
+/// @param hat_As
+/// @param hat_As_extent_0
+/// @param hat_Zs
+/// @param hat_Zs_extent_0
+/// @param mug
+/// @param mug_extent_0
+/// @param vparg
+/// @param vparg_extent_0
+/// @param coeff_intdmu
+/// @param coeff_intdmu_extent_0
+/// @param coeff_intdvpar
+/// @param coeff_intdvpar_extent_0
+/// @return
 koliop_Status koliop_Create(koliop_Operator* an_operator_handle,
                             uint64_t         Npolmax,
                             uint64_t         index_max,
@@ -74,7 +110,15 @@ koliop_Status koliop_Create(koliop_Operator* an_operator_handle,
                             const double*    hat_As,
                             uint64_t         hat_As_extent_0,
                             const double*    hat_Zs,
-                            uint64_t         hat_Zs_extent_0);
+                            uint64_t         hat_Zs_extent_0,
+                            const double* mug,
+                            uint64_t      mug_extent_0,
+                            const double* vparg,
+                            uint64_t      vparg_extent_0,
+                            const double* coeff_intdmu,
+                            uint64_t      coeff_intdmu_extent_0,
+                            const double* coeff_intdvpar,
+                            uint64_t      coeff_intdvpar_extent_0);
 koliop_Status koliop_Release(koliop_Operator an_operator);
 
 koliop_Status koliop_PrepareNuStar(koliop_Operator an_operator,
