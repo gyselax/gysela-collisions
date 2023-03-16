@@ -101,7 +101,6 @@ namespace koliop {
 
                 // TODO(Etienne M): Deep or shallow ? On CPU, shallow would be
                 // enough.
-
                 koliop::utility::SmartDeepCopy(a_host_visible_comb_mat, comb_mat_);
                 koliop::utility::SmartDeepCopy(a_host_visible_hat_As, hat_As_);
                 koliop::utility::SmartDeepCopy(a_host_visible_hat_Zs, hat_Zs_);
@@ -181,14 +180,22 @@ namespace koliop {
                     }
                 }
 
+                // TODO(Etienne M): Either we keep the pointer to hat_[A|Z]s or
+                // we do a deep copy.
+                const auto a_host_visible_hat_As = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::HostSpace{},
+                                                                                                          Kokkos::WithoutInitializing),
+                                                                                       hat_As_);
+                const auto a_host_visible_hat_Zs = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::HostSpace{},
+                                                                                                          Kokkos::WithoutInitializing),
+                                                                                       hat_Zs_);
+
                 // TODO(Etienne M): Obvious loop inter exchange.
                 for(uint64_t ispeciesB = 0; ispeciesB < Nspecies_; ++ispeciesB) {
                     for(uint64_t ispeciesA = 0; ispeciesA < Nspecies_; ++ispeciesA) {
-                        // TODO(Etienne M): Wrong memory space
-                        const Flo64 hat_Aa = 0.0; // hat_As_(ispeciesA);
-                        const Flo64 hat_Za = 0.0; // hat_Zs_(ispeciesA);
-                        const Flo64 hat_Ab = 0.0; // hat_As_(ispeciesB);
-                        const Flo64 hat_Zb = 0.0; // hat_Zs_(ispeciesB);
+                        const Flo64 hat_Aa = a_host_visible_hat_As(ispeciesA);
+                        const Flo64 hat_Za = a_host_visible_hat_Zs(ispeciesA);
+                        const Flo64 hat_Ab = a_host_visible_hat_As(ispeciesB);
+                        const Flo64 hat_Zb = a_host_visible_hat_Zs(ispeciesB);
 
                         const Flo64 AD_factor = ((hat_Za * hat_Za) * (hat_Zb * hat_Zb)) *
                                                 (1.0 / hat_Aa) *
