@@ -120,6 +120,14 @@ koliop_Status koliop_PrepareNuStar(koliop_Operator an_operator,
                                    const double*   mask_buffer_r,
                                    double*         nustar_coeff);
 
+koliop_Status koliop_ComputeMoments(koliop_Operator an_operator,
+                                    const double*   B_norm,
+                                    const double*   Bstar_s,
+                                    double*         f5d_s,
+                                    double*         n_s,
+                                    double*         U_par_s,
+                                    double*         T_s);
+
 #if defined(__cplusplus)
 }
 #endif

@@ -179,3 +179,22 @@
         return KOLIOP_STATUS_SUCCESS;
     });
 }
+
+::koliop_Status koliop_ComputeMoments(::koliop_Operator an_operator,
+                                      const double*     B_norm,
+                                      const double*     Bstar_s,
+                                      double*           f5d_s,
+                                      double*           n_s,
+                                      double*           U_par_s,
+                                      double*           T_s) {
+    return koliop::error::FromException([&]() {
+        if(an_operator == nullptr) {
+            return KOLIOP_STATUS_INVALID_VALUE;
+        }
+
+        using State = koliop::collision::State;
+        reinterpret_cast<State*>(an_operator)->ComputeMoments(B_norm, Bstar_s, f5d_s, n_s, U_par_s, T_s);
+
+        return KOLIOP_STATUS_SUCCESS;
+    });
+}

@@ -138,31 +138,63 @@ namespace koliop {
                                const Flo64* mask_buffer_r,
                                Flo64*       nustar_coeff) const {
 
-                const uint64_t element_offset = istart_;
-                const uint64_t element_count  = iend_ + 1 - element_offset;
+                const uint64_t the_rank_r_range = (iend_ + 1) - istart_;
 
-                rg += element_offset;
-                nustaR0_r += element_offset;
-                q_r += element_offset;
-                mask_buffer_r += element_offset;
+                // NOTE: For nustar_coeff, we assume the whole array is
+                // contiguous and that we can discard the istart_ offset. So
+                // assuming:
+                // real(F64), contiguous, intent(out) :: nustar_coeff(0:,0:,istart_:)
+                // We get:
+                // real(F64), contiguous, intent(out) :: nustar_coeff(0:,0:,0:the_rank_r_range - 1)
 
-                DoPrepareNuStar(Kokkos::View<const Flo64*,
-                                             Kokkos::LayoutLeft,
-                                             Kokkos::HostSpace,
+                DoPrepareNuStar(Kokkos::View<const Flo64*, Kokkos::LayoutLeft, Kokkos::HostSpace,
                                              Kokkos::MemoryTraits<Kokkos::Unmanaged>>{// "unmanaged_host_rg",
-                                                                                      rg, element_count},
+                                                                                      rg, the_rank_r_range},
                                 Kokkos::View<const Flo64*, Kokkos::LayoutLeft, Kokkos::HostSpace,
                                              Kokkos::MemoryTraits<Kokkos::Unmanaged>>{// "unmanaged_host_nustaR0_r",
-                                                                                      nustaR0_r, element_count},
+                                                                                      nustaR0_r, the_rank_r_range},
                                 Kokkos::View<const Flo64*, Kokkos::LayoutLeft, Kokkos::HostSpace,
                                              Kokkos::MemoryTraits<Kokkos::Unmanaged>>{// "unmanaged_host_q_r",
-                                                                                      q_r, element_count},
+                                                                                      q_r, the_rank_r_range},
                                 Kokkos::View<const Flo64*, Kokkos::LayoutLeft, Kokkos::HostSpace,
                                              Kokkos::MemoryTraits<Kokkos::Unmanaged>>{// "unmanaged_host_mask_buffer_r",
-                                                                                      mask_buffer_r, element_count},
+                                                                                      mask_buffer_r, the_rank_r_range},
                                 Kokkos::View<Flo64***, Kokkos::LayoutLeft, Kokkos::HostSpace,
                                              Kokkos::MemoryTraits<Kokkos::Unmanaged>>{// "unmanaged_host_nustar_coeff",
-                                                                                      nustar_coeff, Nspecies_, Nspecies_, element_count});
+                                                                                      nustar_coeff, Nspecies_, Nspecies_, the_rank_r_range});
+            }
+
+            void ComputeMoments(const Flo64* B_norm,
+                                const Flo64* Bstar_s,
+                                Flo64*       f5d_s,
+                                Flo64*       n_s,
+                                Flo64*       U_par_s,
+                                Flo64*       T_s) const {
+
+                const uint64_t the_rank_r_range     = (iend_ + 1) - istart_;
+                const uint64_t the_rank_theta_range = (jend_ + 1) - jstart_;
+
+                DoComputeMoments(Kokkos::View<const Flo64**, Kokkos::LayoutLeft, Kokkos::HostSpace,
+                                              Kokkos::MemoryTraits<Kokkos::Unmanaged>>{// "unmanaged_host_B_norm",
+                                                                                       B_norm, the_rank_r_range, the_rank_theta_range + /* This +1 is weird */ 1},
+                                 Kokkos::View<const Flo64****, Kokkos::LayoutLeft, Kokkos::HostSpace,
+                                              Kokkos::MemoryTraits<Kokkos::Unmanaged>>{// "unmanaged_host_Bstar_s",
+                                                                                       Bstar_s, Nvpar_ + 1, the_rank_r_range, the_rank_theta_range, Nspecies_});
+
+
+                //                                                        ,
+                //  Kokkos::View<Flo64*, Kokkos::LayoutLeft, Kokkos::HostSpace,
+                //               Kokkos::MemoryTraits<Kokkos::Unmanaged>>{// "unmanaged_host_f5d_s",
+                //                                                        f5d_s, element_count},
+                //  Kokkos::View<Flo64*, Kokkos::LayoutLeft, Kokkos::HostSpace,
+                //               Kokkos::MemoryTraits<Kokkos::Unmanaged>>{// "unmanaged_host_n_s",
+                //                                                        n_s, element_count},
+                //  Kokkos::View<Flo64***, Kokkos::LayoutLeft, Kokkos::HostSpace,
+                //               Kokkos::MemoryTraits<Kokkos::Unmanaged>>{// "unmanaged_host_U_par_s",
+                //                                                        U_par_s},
+                //  Kokkos::View<Flo64***, Kokkos::LayoutLeft, Kokkos::HostSpace,
+                //               Kokkos::MemoryTraits<Kokkos::Unmanaged>>{// "unmanaged_host_T_s",
+                //                                                        T_s}
             }
 
         protected:
@@ -250,6 +282,16 @@ namespace koliop {
                         }
                     }
                 }
+            }
+
+            void DoComputeMoments(const Kokkos::View<const Flo64**,
+                                                     Kokkos::LayoutLeft,
+                                                     Kokkos::HostSpace,
+                                                     Kokkos::MemoryTraits<Kokkos::Unmanaged>>&,
+                                  const Kokkos::View<const Flo64****,
+                                                     Kokkos::LayoutLeft,
+                                                     Kokkos::HostSpace,
+                                                     Kokkos::MemoryTraits<Kokkos::Unmanaged>>&) const {
             }
 
             template <typename DeviceView0,
