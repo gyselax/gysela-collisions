@@ -13,7 +13,7 @@ namespace koliop {
     namespace collision {
 
         // TODO(Etienne M): Cleanup that stuff.
-        // View[U|M][H|D][L|R][1-9]
+        // View[U|M][H|D][L|R|D][1-9]
         // Unmanaged/Managed | Host or Default (device or host) | Left or Right layout | Dimension
         template <typename Float>
         using ViewUHL1 = Kokkos::View<Float*, Kokkos::LayoutLeft, Kokkos::HostSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
@@ -28,18 +28,31 @@ namespace koliop {
         template <typename Float>
         using ViewUHL6 = Kokkos::View<Float******, Kokkos::LayoutLeft, Kokkos::HostSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
 
+        // template <typename Float>
+        // using ViewMDL1 = Kokkos::View<Float*, Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace::memory_space>;
+        // template <typename Float>
+        // using ViewMDL2 = Kokkos::View<Float**, Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace::memory_space>;
+        // template <typename Float>
+        // using ViewMDL3 = Kokkos::View<Float***, Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace::memory_space>;
+        // template <typename Float>
+        // using ViewMDL4 = Kokkos::View<Float****, Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace::memory_space>;
+        // template <typename Float>
+        // using ViewMDL5 = Kokkos::View<Float*****, Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace::memory_space>;
+        // template <typename Float>
+        // using ViewMDL6 = Kokkos::View<Float******, Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace::memory_space>;
+
         template <typename Float>
-        using ViewMDL1 = Kokkos::View<Float*, Kokkos::LayoutLeft, Kokkos::HostSpace>;
+        using ViewMDD1 = Kokkos::View<Float*, Kokkos::DefaultExecutionSpace::array_layout, Kokkos::DefaultExecutionSpace::memory_space>;
         template <typename Float>
-        using ViewMDL2 = Kokkos::View<Float**, Kokkos::LayoutLeft, Kokkos::HostSpace>;
+        using ViewMDD2 = Kokkos::View<Float**, Kokkos::DefaultExecutionSpace::array_layout, Kokkos::DefaultExecutionSpace::memory_space>;
         template <typename Float>
-        using ViewMDL3 = Kokkos::View<Float***, Kokkos::LayoutLeft, Kokkos::HostSpace>;
+        using ViewMDD3 = Kokkos::View<Float***, Kokkos::DefaultExecutionSpace::array_layout, Kokkos::DefaultExecutionSpace::memory_space>;
         template <typename Float>
-        using ViewMDL4 = Kokkos::View<Float****, Kokkos::LayoutLeft, Kokkos::HostSpace>;
+        using ViewMDD4 = Kokkos::View<Float****, Kokkos::DefaultExecutionSpace::array_layout, Kokkos::DefaultExecutionSpace::memory_space>;
         template <typename Float>
-        using ViewMDL5 = Kokkos::View<Float*****, Kokkos::LayoutLeft, Kokkos::HostSpace>;
+        using ViewMDD5 = Kokkos::View<Float*****, Kokkos::DefaultExecutionSpace::array_layout, Kokkos::DefaultExecutionSpace::memory_space>;
         template <typename Float>
-        using ViewMDL6 = Kokkos::View<Float******, Kokkos::LayoutLeft, Kokkos::HostSpace>;
+        using ViewMDD6 = Kokkos::View<Float******, Kokkos::DefaultExecutionSpace::array_layout, Kokkos::DefaultExecutionSpace::memory_space>;
 
 
         ////////////////////////////////////////////////////////////////////////
@@ -102,15 +115,11 @@ namespace koliop {
                                   ViewUHL4<Flo64>&&            a_host_visible_U_par_s,
                                   ViewUHL4<Flo64>&&            a_host_visible_T_s) const;
 
-            template <typename DeviceView0,
-                      typename DeviceView1>
-            static void PrepareCj_Cjl(DeviceView0&& C_j,
-                                      DeviceView1&& C_jl);
+            static void PrepareCj_Cjl(ViewMDD2<Flo64>& C_j,
+                                      ViewMDD3<Flo64>& C_jl);
 
-            template <typename DeviceView,
-                      typename HostView>
-            static void PrepareCjl(const HostView& a_host_visible_C_j,
-                                   DeviceView&&    C_jl);
+            static void PrepareCjl(const ViewMDD2<Flo64>::host_mirror_type& a_host_visible_C_j,
+                                   ViewMDD3<Flo64>&                         C_jl);
 
             uint64_t Npolmax_;
             uint64_t index_max_; // TODO(Etienne M): INDEX Fortran s***
@@ -130,16 +139,16 @@ namespace koliop {
             bool     SOL_;
             bool     LIM_;
 
-            Kokkos::View<Flo64**> comb_mat_;
-            Kokkos::View<Flo64*>  hat_As_;
-            Kokkos::View<Flo64*>  hat_Zs_;
-            Kokkos::View<Flo64*>  mug_;
-            Kokkos::View<Flo64*>  vparg_;
-            Kokkos::View<Flo64*>  coeff_intdmu_;
-            Kokkos::View<Flo64*>  coeff_intdvpar_;
+            ViewMDD2<Flo64> comb_mat_;
+            ViewMDD1<Flo64> hat_As_;
+            ViewMDD1<Flo64> hat_Zs_;
+            ViewMDD1<Flo64> mug_;
+            ViewMDD1<Flo64> vparg_;
+            ViewMDD1<Flo64> coeff_intdmu_;
+            ViewMDD1<Flo64> coeff_intdvpar_;
 
-            Kokkos::View<Flo64**>  C_j_;
-            Kokkos::View<Flo64***> C_jl_;
+            ViewMDD2<Flo64> C_j_;
+            ViewMDD3<Flo64> C_jl_;
         };
 
 
@@ -416,10 +425,8 @@ namespace koliop {
             Kokkos::parallel_for("DoComputeMoments", a_policy, the_kernel);
         }
 
-        template <typename DeviceView0,
-                  typename DeviceView1>
-        inline void State::PrepareCj_Cjl(DeviceView0&& C_j,
-                                         DeviceView1&& C_jl) {
+        inline void State::PrepareCj_Cjl(ViewMDD2<Flo64>& C_j,
+                                         ViewMDD3<Flo64>& C_jl) {
             // a_host_visible_C_j is zero initialized.
             auto a_host_visible_C_j = Kokkos::create_mirror_view(C_j);
 
@@ -443,18 +450,16 @@ namespace koliop {
             PrepareCjl(a_host_visible_C_j, C_jl);
         }
 
-        template <typename DeviceView,
-                  typename HostView>
-        inline void State::PrepareCjl(const HostView& a_host_visible_C_j,
-                                      DeviceView&&    C_jl) {
+        inline void State::PrepareCjl(const ViewMDD2<Flo64>::host_mirror_type& a_host_visible_C_j,
+                                      ViewMDD3<Flo64>&                         C_jl) {
             // a_host_visible_C_jl is zero initialized.
             auto a_host_visible_C_jl = Kokkos::create_mirror_view(C_jl);
 
             const auto Stuff = [&](auto j_tmp, auto l_tmp) {
-                // for(uint64_t i = 0; i <= (j_tmp + l_tmp); ++i) {
-                //     // Is that necessary ?
-                //     a_host_visible_C_jl(i, j_tmp, l_tmp) = 0.0;
-                // }
+                for(uint64_t i = 0; i <= (j_tmp + l_tmp); ++i) {
+                    // This seems unnecessary ?
+                    a_host_visible_C_jl(i, j_tmp, l_tmp) = 0.0;
+                }
 
                 for(uint64_t alpha = 0; alpha <= j_tmp; ++alpha) {
                     for(uint64_t beta = 0; beta <= l_tmp; ++beta) {
