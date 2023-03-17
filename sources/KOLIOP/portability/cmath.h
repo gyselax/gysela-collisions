@@ -35,6 +35,7 @@ namespace koliop {
             static inline constexpr value_type kLn2      = static_cast<value_type>(0.693147180559945309417); // ln(2)
             static inline constexpr value_type kLn10     = static_cast<value_type>(2.30258509299404568402);  // ln(10)
             static inline constexpr value_type kPi       = static_cast<value_type>(3.14159265358979323846);  // pi
+            static inline constexpr value_type k2Pi      = static_cast<value_type>(kPi * 2.0);               // 2*pi
             static inline constexpr value_type kPi_2     = static_cast<value_type>(1.57079632679489661923);  // pi/2
             static inline constexpr value_type kPi_4     = static_cast<value_type>(0.785398163397448309616); // pi/4
             static inline constexpr value_type k1_Pi     = static_cast<value_type>(0.318309886183790671538); // 1/pi

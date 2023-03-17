@@ -16,17 +16,17 @@ namespace koliop {
         // View[U|M][H|D][L|R|D][1-9]
         // Unmanaged/Managed | Host or Default (device or host) | Left or Right layout | Dimension
         template <typename Float>
-        using ViewUHL1 = Kokkos::View<Float*, Kokkos::LayoutLeft, Kokkos::HostSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
+        using ViewUHL1 = Kokkos::View<Float*, Kokkos::LayoutLeft, Kokkos::DefaultHostExecutionSpace::memory_space, Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
         template <typename Float>
-        using ViewUHL2 = Kokkos::View<Float**, Kokkos::LayoutLeft, Kokkos::HostSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
+        using ViewUHL2 = Kokkos::View<Float**, Kokkos::LayoutLeft, Kokkos::DefaultHostExecutionSpace::memory_space, Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
         template <typename Float>
-        using ViewUHL3 = Kokkos::View<Float***, Kokkos::LayoutLeft, Kokkos::HostSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
+        using ViewUHL3 = Kokkos::View<Float***, Kokkos::LayoutLeft, Kokkos::DefaultHostExecutionSpace::memory_space, Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
         template <typename Float>
-        using ViewUHL4 = Kokkos::View<Float****, Kokkos::LayoutLeft, Kokkos::HostSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
+        using ViewUHL4 = Kokkos::View<Float****, Kokkos::LayoutLeft, Kokkos::DefaultHostExecutionSpace::memory_space, Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
         template <typename Float>
-        using ViewUHL5 = Kokkos::View<Float*****, Kokkos::LayoutLeft, Kokkos::HostSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
+        using ViewUHL5 = Kokkos::View<Float*****, Kokkos::LayoutLeft, Kokkos::DefaultHostExecutionSpace::memory_space, Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
         template <typename Float>
-        using ViewUHL6 = Kokkos::View<Float******, Kokkos::LayoutLeft, Kokkos::HostSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
+        using ViewUHL6 = Kokkos::View<Float******, Kokkos::LayoutLeft, Kokkos::DefaultHostExecutionSpace::memory_space, Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
 
         // template <typename Float>
         // using ViewMDL1 = Kokkos::View<Float*, Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace::memory_space>;
@@ -121,6 +121,8 @@ namespace koliop {
             static void PrepareCjl(const ViewMDD2<Flo64>::host_mirror_type& a_host_visible_C_j,
                                    ViewMDD3<Flo64>&                         C_jl);
 
+            // TODO(Etienne M): Convert all these indicies to half open ranges
+            // counter.
             uint64_t Npolmax_;
             uint64_t index_max_; // TODO(Etienne M): INDEX Fortran s***
             uint64_t Nmu_;
@@ -288,7 +290,7 @@ namespace koliop {
 
             const uint64_t element_count = a_host_visible_rg.extent(0);
 
-            Kokkos::View<Flo64*, Kokkos::LayoutLeft, Kokkos::HostSpace>
+            Kokkos::View<Flo64*, Kokkos::LayoutLeft, Kokkos::DefaultHostExecutionSpace::memory_space>
                 mask_space{Kokkos::view_alloc(Kokkos::WithoutInitializing,
                                               "mask_space"),
                            element_count};
@@ -308,10 +310,10 @@ namespace koliop {
 
             // TODO(Etienne M): Either we keep the pointer to hat_[A|Z]s or
             // we do a deep copy.
-            const auto a_host_visible_hat_As = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::HostSpace{},
+            const auto a_host_visible_hat_As = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{},
                                                                                                       Kokkos::WithoutInitializing),
                                                                                    hat_As_);
-            const auto a_host_visible_hat_Zs = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::HostSpace{},
+            const auto a_host_visible_hat_Zs = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{},
                                                                                                       Kokkos::WithoutInitializing),
                                                                                    hat_Zs_);
 
@@ -361,55 +363,66 @@ namespace koliop {
                                             ViewUHL4<Flo64>&&            a_host_visible_U_par_s,
                                             ViewUHL4<Flo64>&&            a_host_visible_T_s) const {
 
-            // do ispecies = 0,Nspecies_-1
-            //   do iphi = collstart_, collend_
-            //     do itheta = jstart_, jend_
-            //          the_kernel()
-            //     end do ! itheta = jstart_, jend_
-            //   end do ! iphi = collstart_, collend_
-            // end do ! ispecies = 0,Nspecies_-1
+            const uint64_t the_rank_r_range = a_host_visible_B_norm.extent(0);
 
-            const auto the_kernel = KOKKOS_LAMBDA(auto ispecies, auto iphi, auto itheta){
-                //       do ir = istart_, iend_
-                //         do ivpar = 0,Nvpar_
-                //           do imu = 0,Nmu_
-                //             f5d_s(imu,ivpar,ir,itheta,iphi,ispecies) = &
-                //               MAX( 1.d-40, f5d_s(imu,ivpar,ir,itheta,iphi,ispecies) )
-                //           end do
-                //         end do
-                //         do ivpar = 0,Nvpar_
-                //           do imu = 0,Nmu_
-                //             ftmp(imu,ivpar) = Bstar_s(ivpar,ir,itheta,ispecies) * &
-                //                 coeff_intdmu(imu) * coeff_intdvpar(ivpar) * &
-                //                 f5d_s(imu,ivpar,ir,itheta,iphi,ispecies)
-                //           end do
-                //         end do
-                //         !Computation of na and vpara
-                //         na    = 0._F64
-                //         vpara = 0._F64
-                //         do ivpar = 0,Nvpar_
-                //           do imu = 0,Nmu_
-                //             na = na + ftmp(imu,ivpar)
-                //             vpara = vpara + vparg(ivpar) * ftmp(imu,ivpar)
-                //           end do
-                //         end do
-                //         na    = TWOPI * na
-                //         vpara = TWOPI * vpara  / na
-                //         Ta = 0._F64
-                //         !Computation of Ta
-                //         do ivpar = 0,Nvpar_
-                //           do imu = 0,Nmu_
-                //             Ta = Ta + &
-                //                 ((vparg(ivpar)-vpara)*(vparg(ivpar)-vpara) + &
-                //                 2*mug(imu)*B_norm(ir,itheta)) * &
-                //                 ftmp(imu,ivpar)
-                //           end do
-                //         end do
-                //         Ta = TWOPI * Ta / (3._F64 * na)
-                //         n_s(ir,itheta,iphi,ispecies)     = na
-                //         U_par_s(ir,itheta,iphi,ispecies) = vpara
-                //         T_s(ir,itheta,iphi,ispecies)     = Ta
-                //       end do ! ir = istart_, iend_
+            const auto a_host_visible_mug            = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{},
+                                                                                                              Kokkos::WithoutInitializing),
+                                                                                           mug_);
+            const auto a_host_visible_vparg          = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{},
+                                                                                                              Kokkos::WithoutInitializing),
+                                                                                           vparg_);
+            const auto a_host_visible_coeff_intdmu   = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{},
+                                                                                                              Kokkos::WithoutInitializing),
+                                                                                           coeff_intdmu_);
+            const auto a_host_visible_coeff_intdvpar = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{},
+                                                                                                              Kokkos::WithoutInitializing),
+                                                                                           coeff_intdvpar_);
+
+            const auto the_kernel = KOKKOS_LAMBDA(auto itheta, auto iphi, auto ispecies) {
+                for(uint64_t ir = 0; ir < the_rank_r_range; ++ir) {
+                    auto na    = 0.0;
+                    auto vpara = 0.0;
+
+                    for(uint64_t ivpar = 0; ivpar <= Nvpar_; ++ivpar) {
+                        for(uint64_t imu = 0; imu <= Nmu_; ++imu) {
+                            const auto f5d_s_value = std::max(1.0E-40,
+                                                              a_host_visible_f5d_s(imu, ivpar, ir, itheta, iphi, ispecies));
+
+                            // TODO(Etienne M): Hoist the invariant load.
+                            const auto ftmp = (a_host_visible_Bstar_s(ivpar, ir, itheta, ispecies) * a_host_visible_coeff_intdvpar(ivpar)) *
+                                              (a_host_visible_coeff_intdmu(imu) * f5d_s_value);
+                            na += ftmp;
+                            vpara += a_host_visible_vparg(ivpar) * ftmp;
+
+                            a_host_visible_f5d_s(imu, ivpar, ir, itheta, iphi, ispecies) = f5d_s_value;
+                        }
+                    }
+
+                    vpara = vpara / na;
+
+                    auto Ta = 0.0;
+
+                    for(uint64_t ivpar = 0; ivpar <= Nvpar_; ++ivpar) {
+                        for(uint64_t imu = 0; imu <= Nmu_; ++imu) {
+                            // TODO(Etienne M): Avoid this recomputation ? On
+                            // Gysela fortran, a temporary buffer is used but
+                            // that would hardly fit on a GPU.
+                            // TODO(Etienne M): Hoist the invariant load.
+                            const auto ftmp = (a_host_visible_Bstar_s(ivpar, ir, itheta, ispecies) * a_host_visible_coeff_intdvpar(ivpar)) *
+                                              (a_host_visible_coeff_intdmu(imu) * a_host_visible_f5d_s(imu, ivpar, ir, itheta, iphi, ispecies));
+                            Ta += ((a_host_visible_vparg(ivpar) - vpara) * (a_host_visible_vparg(ivpar) - vpara) +
+                                   2 * a_host_visible_mug(imu) * a_host_visible_B_norm(ir, itheta)) *
+                                  ftmp;
+                        }
+                    }
+
+                    Ta = Ta / (3.0 * na);
+                    na = koliop::portability::MathematicalConstant<Flo64>::k2Pi * na;
+
+                    a_host_visible_n_s(ir, itheta, iphi, ispecies)     = na;
+                    a_host_visible_U_par_s(ir, itheta, iphi, ispecies) = vpara;
+                    a_host_visible_T_s(ir, itheta, iphi, ispecies)     = Ta;
+                }
             };
 
             const uint64_t the_rank_theta_range = (jend_ + 1) - jstart_;
@@ -417,12 +430,16 @@ namespace koliop {
             // TODO(Etienne M): Launch a kernel per species on different
             // execution space instances (partition_space) and loop on phi,
             // theta and r.
-            const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<3>>{{0, 0, 0},
-                                                                         {Nspecies_,
-                                                                          static_cast<uint64_t>((collend_ + 1) - collstart_),
-                                                                          the_rank_theta_range}};
+            const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<3,
+                                                                     Kokkos::Iterate::Left,
+                                                                     Kokkos::Iterate::Left>,
+                                                        Kokkos::DefaultHostExecutionSpace>{{0, 0, 0},
+                                                                                           {the_rank_theta_range,
+                                                                                            static_cast<uint64_t>((collend_ + 1) - collstart_),
+                                                                                            Nspecies_}};
 
-            Kokkos::parallel_for("DoComputeMoments", a_policy, the_kernel);
+            Kokkos::parallel_for("DoComputeMoments",
+                                 a_policy, the_kernel);
         }
 
         inline void State::PrepareCj_Cjl(ViewMDD2<Flo64>& C_j,
