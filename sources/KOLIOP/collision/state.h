@@ -17,18 +17,6 @@ namespace koliop {
         ////////////////////////////////////////////////////////////////////////
 
 
-        /// Execution Spaces:
-        ///     Where you physically execute
-        ///     Memory Spaces:
-        ///         Where you physically store
-        ///         Memory Layout:
-        ///             How to index
-        ///         Memory Traits:
-        ///             Modifier: stream, random, atomic, texture memory
-        /// Execution Patterns:
-        ///     Parallel for/scan/reduce
-        /// Execution Policies:
-        ///     Range, team, dynamic or static scheduling
         ///
         class State {
         public:
@@ -114,11 +102,6 @@ namespace koliop {
                         Npolmax_,
                         Npolmax_} {
 
-                // This assumption allows for some simpler indexing.
-                // TODO(Etienne M): INDEX, recheck all array indexing.
-                KOLIOP_ASSERT(istart_ == 0);
-                KOLIOP_ASSERT(jstart_ == 0);
-
                 // TODO(Etienne M): Deep or shallow ? On CPU, shallow would be
                 // enough.
                 koliop::utility::SmartDeepCopy(a_host_visible_comb_mat, comb_mat_);
@@ -179,22 +162,19 @@ namespace koliop {
                                                                                        B_norm, the_rank_r_range, the_rank_theta_range + /* This +1 is weird */ 1},
                                  Kokkos::View<const Flo64****, Kokkos::LayoutLeft, Kokkos::HostSpace,
                                               Kokkos::MemoryTraits<Kokkos::Unmanaged>>{// "unmanaged_host_Bstar_s",
-                                                                                       Bstar_s, Nvpar_ + 1, the_rank_r_range, the_rank_theta_range, Nspecies_});
-
-
-                //                                                        ,
-                //  Kokkos::View<Flo64*, Kokkos::LayoutLeft, Kokkos::HostSpace,
-                //               Kokkos::MemoryTraits<Kokkos::Unmanaged>>{// "unmanaged_host_f5d_s",
-                //                                                        f5d_s, element_count},
-                //  Kokkos::View<Flo64*, Kokkos::LayoutLeft, Kokkos::HostSpace,
-                //               Kokkos::MemoryTraits<Kokkos::Unmanaged>>{// "unmanaged_host_n_s",
-                //                                                        n_s, element_count},
-                //  Kokkos::View<Flo64***, Kokkos::LayoutLeft, Kokkos::HostSpace,
-                //               Kokkos::MemoryTraits<Kokkos::Unmanaged>>{// "unmanaged_host_U_par_s",
-                //                                                        U_par_s},
-                //  Kokkos::View<Flo64***, Kokkos::LayoutLeft, Kokkos::HostSpace,
-                //               Kokkos::MemoryTraits<Kokkos::Unmanaged>>{// "unmanaged_host_T_s",
-                //                                                        T_s}
+                                                                                       Bstar_s, Nvpar_ + 1, the_rank_r_range, the_rank_theta_range, Nspecies_},
+                                 Kokkos::View<Flo64******, Kokkos::LayoutLeft, Kokkos::HostSpace,
+                                              Kokkos::MemoryTraits<Kokkos::Unmanaged>>{// "unmanaged_host_f5d_s",
+                                                                                       f5d_s, Nmu_ + 1, Nvpar_ + 1, the_rank_r_range, the_rank_theta_range, static_cast<uint64_t>((collend_ + 1) - collstart_), Nspecies_},
+                                 Kokkos::View<Flo64****, Kokkos::LayoutLeft, Kokkos::HostSpace,
+                                              Kokkos::MemoryTraits<Kokkos::Unmanaged>>{// "unmanaged_host_n_s",
+                                                                                       n_s, the_rank_r_range, the_rank_theta_range, static_cast<uint64_t>((collend_ + 1) - collstart_), Nspecies_},
+                                 Kokkos::View<Flo64****, Kokkos::LayoutLeft, Kokkos::HostSpace,
+                                              Kokkos::MemoryTraits<Kokkos::Unmanaged>>{// "unmanaged_host_U_par_s",
+                                                                                       U_par_s, the_rank_r_range, the_rank_theta_range, static_cast<uint64_t>((collend_ + 1) - collstart_), Nspecies_},
+                                 Kokkos::View<Flo64****, Kokkos::LayoutLeft, Kokkos::HostSpace,
+                                              Kokkos::MemoryTraits<Kokkos::Unmanaged>>{// "unmanaged_host_T_s",
+                                                                                       T_s, the_rank_r_range, the_rank_theta_range, static_cast<uint64_t>((collend_ + 1) - collstart_), Nspecies_});
             }
 
         protected:
@@ -245,7 +225,7 @@ namespace koliop {
                                                                                                           Kokkos::WithoutInitializing),
                                                                                        hat_Zs_);
 
-                // TODO(Etienne M): Obvious loop inter exchange.
+                // TODO(Etienne M): Obvious loop inter exchange optimization ?
                 for(uint64_t ispeciesB = 0; ispeciesB < Nspecies_; ++ispeciesB) {
                     for(uint64_t ispeciesA = 0; ispeciesA < Nspecies_; ++ispeciesA) {
                         const Flo64 hat_Aa = a_host_visible_hat_As(ispeciesA);
@@ -287,11 +267,78 @@ namespace koliop {
             void DoComputeMoments(const Kokkos::View<const Flo64**,
                                                      Kokkos::LayoutLeft,
                                                      Kokkos::HostSpace,
-                                                     Kokkos::MemoryTraits<Kokkos::Unmanaged>>&,
+                                                     Kokkos::MemoryTraits<Kokkos::Unmanaged>>&                                                a_host_visible_B_norm,
                                   const Kokkos::View<const Flo64****,
                                                      Kokkos::LayoutLeft,
                                                      Kokkos::HostSpace,
-                                                     Kokkos::MemoryTraits<Kokkos::Unmanaged>>&) const {
+                                                     Kokkos::MemoryTraits<Kokkos::Unmanaged>>&                                                a_host_visible_Bstar_s,
+                                  Kokkos::View<Flo64******, Kokkos::LayoutLeft, Kokkos::HostSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>>&& a_host_visible_f5d_s,
+                                  Kokkos::View<Flo64****, Kokkos::LayoutLeft, Kokkos::HostSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>>&&   a_host_visible_n_s,
+                                  Kokkos::View<Flo64****, Kokkos::LayoutLeft, Kokkos::HostSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>>&&   a_host_visible_U_par_s,
+                                  Kokkos::View<Flo64****, Kokkos::LayoutLeft, Kokkos::HostSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>>&&   a_host_visible_T_s) const {
+
+                // do ispecies = 0,Nspecies_-1
+                //   do iphi = collstart_, collend_
+                //     do itheta = jstart_, jend_
+                //          the_kernel()
+                //     end do ! itheta = jstart_, jend_
+                //   end do ! iphi = collstart_, collend_
+                // end do ! ispecies = 0,Nspecies_-1
+
+                const auto the_kernel = KOKKOS_LAMBDA(auto ispecies, auto iphi, auto itheta){
+                    //       do ir = istart_, iend_
+                    //         do ivpar = 0,Nvpar_
+                    //           do imu = 0,Nmu_
+                    //             f5d_s(imu,ivpar,ir,itheta,iphi,ispecies) = &
+                    //               MAX( 1.d-40, f5d_s(imu,ivpar,ir,itheta,iphi,ispecies) )
+                    //           end do
+                    //         end do
+                    //         do ivpar = 0,Nvpar_
+                    //           do imu = 0,Nmu_
+                    //             ftmp(imu,ivpar) = Bstar_s(ivpar,ir,itheta,ispecies) * &
+                    //                 coeff_intdmu(imu) * coeff_intdvpar(ivpar) * &
+                    //                 f5d_s(imu,ivpar,ir,itheta,iphi,ispecies)
+                    //           end do
+                    //         end do
+                    //         !Computation of na and vpara
+                    //         na    = 0._F64
+                    //         vpara = 0._F64
+                    //         do ivpar = 0,Nvpar_
+                    //           do imu = 0,Nmu_
+                    //             na = na + ftmp(imu,ivpar)
+                    //             vpara = vpara + vparg(ivpar) * ftmp(imu,ivpar)
+                    //           end do
+                    //         end do
+                    //         na    = TWOPI * na
+                    //         vpara = TWOPI * vpara  / na
+                    //         Ta = 0._F64
+                    //         !Computation of Ta
+                    //         do ivpar = 0,Nvpar_
+                    //           do imu = 0,Nmu_
+                    //             Ta = Ta + &
+                    //                 ((vparg(ivpar)-vpara)*(vparg(ivpar)-vpara) + &
+                    //                 2*mug(imu)*B_norm(ir,itheta)) * &
+                    //                 ftmp(imu,ivpar)
+                    //           end do
+                    //         end do
+                    //         Ta = TWOPI * Ta / (3._F64 * na)
+                    //         n_s(ir,itheta,iphi,ispecies)     = na
+                    //         U_par_s(ir,itheta,iphi,ispecies) = vpara
+                    //         T_s(ir,itheta,iphi,ispecies)     = Ta
+                    //       end do ! ir = istart_, iend_
+                };
+
+                const uint64_t the_rank_theta_range = (jend_ + 1) - jstart_;
+
+                // TODO(Etienne M): Launch a kernel per species on different
+                // execution space instances (partition_space) and loop on phi,
+                // theta and r.
+                const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<3>>{{0, 0, 0},
+                                                                             {Nspecies_,
+                                                                              static_cast<uint64_t>((collend_ + 1) - collstart_),
+                                                                              the_rank_theta_range}};
+
+                Kokkos::parallel_for("DoComputeMoments", a_policy, the_kernel);
             }
 
             template <typename DeviceView0,
