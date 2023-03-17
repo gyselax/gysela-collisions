@@ -101,6 +101,14 @@ namespace koliop {
                                 Flo64*       U_par_s,
                                 Flo64*       T_s) const;
 
+            void ComputeFrequencyNUAB(Flo64    nustar_coeff,
+                                      uint64_t speciesA,
+                                      uint64_t speciesB,
+                                      Flo64    Ta,
+                                      Flo64    nb,
+                                      Flo64    Tb,
+                                      Flo64*   nu_ab) const;
+
         protected:
             void DoPrepareNuStar(const ViewUHL1<const Flo64>& a_host_visible_rg,
                                  const ViewUHL1<const Flo64>& a_host_visible_nustaR0_r,
@@ -120,6 +128,14 @@ namespace koliop {
 
             static void PrepareCjl(const ViewMDD2<Flo64>::host_mirror_type& a_host_visible_C_j,
                                    ViewMDD3<Flo64>&                         C_jl);
+
+            static KOKKOS_INLINE_FUNCTION Flo64
+            DoComputeFrequencyNUAB(Flo64 nustar_coeff,
+                                   Flo64 hat_As_speciesA,
+                                   Flo64 hat_As_speciesB,
+                                   Flo64 Ta,
+                                   Flo64 nb,
+                                   Flo64 Tb);
 
             // TODO(Etienne M): Convert all these indicies to half open ranges
             // counter.
@@ -218,6 +234,10 @@ namespace koliop {
                     Npolmax_,
                     Npolmax_} {
 
+            // TODO(Etienne M): Make sure, we get ALL the data and not only some
+            // thread specific part. The collision operator handles its
+            // *threads* autonomously.
+
             // TODO(Etienne M): Deep or shallow ? On CPU, shallow would be
             // enough.
             koliop::utility::SmartDeepCopy(a_host_visible_comb_mat, comb_mat_);
@@ -280,6 +300,26 @@ namespace koliop {
                                              U_par_s, the_rank_r_range, the_rank_theta_range, static_cast<uint64_t>((collend_ + 1) - collstart_), Nspecies_},
                              ViewUHL4<Flo64>{// "unmanaged_host_T_s",
                                              T_s, the_rank_r_range, the_rank_theta_range, static_cast<uint64_t>((collend_ + 1) - collstart_), Nspecies_});
+        }
+
+        inline void State::ComputeFrequencyNUAB(Flo64    nustar_coeff,
+                                                uint64_t speciesA,
+                                                uint64_t speciesB,
+                                                Flo64    Ta,
+                                                Flo64    nb,
+                                                Flo64    Tb,
+                                                Flo64*   nu_ab) const {
+
+            const auto a_host_visible_hat_As = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{},
+                                                                                                      Kokkos::WithoutInitializing),
+                                                                                   hat_As_);
+
+            *nu_ab = DoComputeFrequencyNUAB(nustar_coeff,
+                                            a_host_visible_hat_As(speciesA),
+                                            a_host_visible_hat_As(speciesB),
+                                            Ta,
+                                            nb,
+                                            Tb);
         }
 
         inline void State::DoPrepareNuStar(const ViewUHL1<const Flo64>& a_host_visible_rg,
@@ -493,6 +533,26 @@ namespace koliop {
             }
 
             koliop::utility::SmartDeepCopy(a_host_visible_C_jl, C_jl);
+        }
+
+        KOKKOS_INLINE_FUNCTION Flo64
+        State::DoComputeFrequencyNUAB(Flo64  nustar_coeff,
+                                      Flo64  hat_As_speciesA,
+                                      Flo64  hat_As_speciesB,
+                                      Flo64  Ta,
+                                      Flo64  nb,
+                                      Flo64  Tb) {
+
+            const auto vTa = std::sqrt(Ta / hat_As_speciesA);
+            const auto vTb = std::sqrt(Tb / hat_As_speciesB);
+
+            // NOTE: SIMPLIFY We could do:
+            // (nustar_coeff * nb) *
+            //     std::pow((Tb * hat_As_speciesA +
+            //               Ta * hat_As_speciesB) /
+            //                  (hat_As_speciesA * hat_As_speciesB),
+            //              -3.0 / 2.0);
+            return (nustar_coeff * nb) / ((vTa * vTa + vTb * vTb) * std::sqrt(vTa * vTa + vTb * vTb));
         }
 
     } // namespace collision

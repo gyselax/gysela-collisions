@@ -128,6 +128,15 @@ koliop_Status koliop_ComputeMoments(koliop_Operator an_operator,
                                     double*         U_par_s,
                                     double*         T_s);
 
+koliop_Status koliop_ComputeFrequencyNUAB(koliop_Operator an_operator,
+                                          double          nustar_coeff,
+                                          uint64_t        speciesA,
+                                          uint64_t        speciesB,
+                                          double          Ta,
+                                          double          nb,
+                                          double          Tb,
+                                          double*         nu_ab);
+
 #if defined(__cplusplus)
 }
 #endif

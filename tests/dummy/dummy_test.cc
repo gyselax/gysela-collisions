@@ -268,6 +268,16 @@ int main(int, char**) {
                             &U_par_s[0][0][0][0],
                             &T_s[0][0][0][0]);
 
+    double nu_ab[the_rank_r_range][Nspecies][Nspecies]{};
+
+    ::koliop_ComputeFrequencyNUAB(an_operator,
+                                  nustar_coeff[0][0][0],
+                                  0, 0,
+                                  T_s[0][0][0][0],
+                                  n_s[0][0][0][0],
+                                  T_s[0][0][0][0],
+                                  &nu_ab[0][0][0]);
+
     if(::koliop_Release(an_operator) != KOLIOP_STATUS_SUCCESS) {
         std::cout << "::koliop_Release() failed\n";
     }

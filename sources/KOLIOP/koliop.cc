@@ -169,3 +169,23 @@
         return KOLIOP_STATUS_SUCCESS;
     });
 }
+
+::koliop_Status koliop_ComputeFrequencyNUAB(::koliop_Operator an_operator,
+                                            double            nustar_coeff,
+                                            uint64_t          speciesA,
+                                            uint64_t          speciesB,
+                                            double            Ta,
+                                            double            nb,
+                                            double            Tb,
+                                            double*           nu_ab) {
+    return koliop::error::FromException([&]() {
+        if(an_operator == nullptr) {
+            return KOLIOP_STATUS_INVALID_VALUE;
+        }
+
+        using State = koliop::collision::State;
+        reinterpret_cast<State*>(an_operator)->ComputeFrequencyNUAB(nustar_coeff, speciesA, speciesB, Ta, nb, Tb, nu_ab);
+
+        return KOLIOP_STATUS_SUCCESS;
+    });
+}
