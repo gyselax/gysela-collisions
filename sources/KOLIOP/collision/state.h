@@ -539,7 +539,69 @@ namespace koliop {
             const uint64_t the_rank_theta_range = a_host_visible_n_s.extent(1);
             const uint64_t the_rank_phi_range   = a_host_visible_n_s.extent(2);
 
-            const auto the_kernel = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi){
+            const auto a_host_visible_mug    = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{},
+                                                                                                      Kokkos::WithoutInitializing),
+                                                                                   mug_);
+            const auto a_host_visible_vparg  = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{},
+                                                                                                      Kokkos::WithoutInitializing),
+                                                                                   vparg_);
+            const auto a_host_visible_hat_As = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{},
+                                                                                                      Kokkos::WithoutInitializing),
+                                                                                   hat_As_);
+
+            const auto the_kernel = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi) {
+                for(uint64_t ispeciesA = 0; ispeciesA < Nspecies_; ++ispeciesA) {
+                    const auto hat_Aa = a_host_visible_hat_As(ispeciesA);
+                    const auto na     = a_host_visible_n_s(ir, itheta, iphi, ispeciesA);
+                    const auto Vpara  = a_host_visible_U_par_s(ir, itheta, iphi, ispeciesA);
+                    const auto Ta     = a_host_visible_T_s(ir, itheta, iphi, ispeciesA);
+
+                    Ta_tmp(ispeciesA) = Ta; // TODO()
+                    auto Ta_new       = 0.0;
+
+                    // TODO(Etienne M): Split into two loops to avoid the if ?
+
+                    for(uint64_t ispeciesB = 0; ispeciesB < Nspecies_; ++ispeciesB) {
+                        if(ispeciesA == ispeciesB) {
+                            continue;
+                        }
+
+                        const auto hat_Ab = a_host_visible_hat_As(ispeciesB);
+                        const auto nb     = a_host_visible_n_s(ir, itheta, iphi, ispeciesB);
+                        const auto Vparb  = a_host_visible_U_par_s(ir, itheta, iphi, ispeciesB);
+                        const auto Tb     = a_host_visible_T_s(ir, itheta, iphi, ispeciesB);
+
+                        const auto nu_ab = DoComputeFrequencyNUAB(a_host_visible_nustar_coeff(ispeciesA, ispeciesB, ir),
+                                                                  a_host_visible_hat_As(ispeciesA),
+                                                                  a_host_visible_hat_As(ispeciesB),
+                                                                  Ta, nb, Tb);
+
+                        Ta_new = Ta_tmp(ispeciesA) +
+                                 dt * nu_ab * (2.0 * hat_Aa * (Tb - Ta) / (hat_Aa + hat_Ab) + (2.0 / 3.0) * Vpara * (Vpara - sqrt(hat_Aa / hat_Ab) * Vparb));
+                        Ta_tmp(ispeciesA) = Ta_new;
+                    }
+
+                    const auto coeff_old = na / (koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta *
+                                                 std::sqrt(koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta));
+                    const auto coeff_new = na / (koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta_new *
+                                                 std::sqrt(koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta_new));
+                    const auto Bij       = a_host_visible_B_norm(ir, itheta);
+                    const auto bot_old   = Bij / Ta;
+                    const auto bot_new   = Bij / Ta_new;
+
+                    for(uint64_t ivpar = 0; ivpar <= Nvpar_; ++ivpar) {
+                        const auto vp2_old = (a_host_visible_vparg(ivpar) - Vpara) * (a_host_visible_vparg(ivpar) - Vpara) / (2.0 * Ta);
+                        const auto vp2_new = (a_host_visible_vparg(ivpar) - Vpara) * (a_host_visible_vparg(ivpar) - Vpara) / (2.0 * Ta_new);
+                        for(uint64_t imu = 0; imu <= Nmu_; ++imu) {
+                            a_host_visible_f5d_s(imu, ivpar, ir, itheta, iphi, ispeciesA) -= coeff_old * std::exp(-bot_old * a_host_visible_mug(imu) - vp2_old) +
+                                                                                             coeff_new * std::exp(-bot_new * a_host_visible_mug(imu) - vp2_new);
+                        }
+                    }
+                }
+
+                for(uint64_t ispeciesA = 0; ispeciesA < Nspecies_; ++ispeciesA) {
+                    a_host_visible_T_s(ir, itheta, iphi, ispeciesA) = Ta_tmp(ispeciesA);
+                }
             };
 
             const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<3,
