@@ -179,7 +179,7 @@ int main(int, char**) {
     // mom B_norm lbound 1   1
     // mom B_norm lbound 2   1
     // mom B_norm size   1   32
-    // mom B_norm size   2   33
+    // mom B_norm size   2   33 // NOTE: why the 32 + 1 ?
     // mom B_norm ubound 1   32
     // mom B_norm ubound 2   33
     static constexpr double B_norm[the_rank_theta_range + /* This +1 is weird */ 1][the_rank_r_range]{};
@@ -277,6 +277,17 @@ int main(int, char**) {
                                   n_s[0][0][0][0],
                                   T_s[0][0][0][0],
                                   &nu_ab[0][0][0]);
+
+    static constexpr double dt = 50.0;
+
+    ::koliop_ComputeEvolutionMaxwellian(an_operator,
+                                        &nustar_coeff[0][0][0],
+                                        &B_norm[0][0],
+                                        &f5d_s[0][0][0][0][0][0],
+                                        &n_s[0][0][0][0],
+                                        &U_par_s[0][0][0][0],
+                                        &T_s[0][0][0][0],
+                                        dt / 2.0);
 
     if(::koliop_Release(an_operator) != KOLIOP_STATUS_SUCCESS) {
         std::cout << "::koliop_Release() failed\n";

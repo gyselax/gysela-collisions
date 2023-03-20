@@ -137,6 +137,15 @@ koliop_Status koliop_ComputeFrequencyNUAB(koliop_Operator an_operator,
                                           double          Tb,
                                           double*         nu_ab);
 
+koliop_Status koliop_ComputeEvolutionMaxwellian(koliop_Operator an_operator,
+                                                const double*   nustar_coeff,
+                                                const double*   B_norm,
+                                                double*         f5d_s,
+                                                const double*   n_s,
+                                                const double*   U_par_s,
+                                                double*         T_s,
+                                                double          dt);
+
 #if defined(__cplusplus)
 }
 #endif

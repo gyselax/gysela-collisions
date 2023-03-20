@@ -29,3 +29,8 @@ $ make
 ```
 
 Note that you are recommended to not use make but prefer a tool such as [ninja](https://ninja-build.org/).
+
+<!--
+TODO(): [LOOP|LOAD|SIMPLIFY|INDEX]
+NOTE:
+-->

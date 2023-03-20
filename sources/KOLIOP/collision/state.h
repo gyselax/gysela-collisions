@@ -109,6 +109,14 @@ namespace koliop {
                                       Flo64    Tb,
                                       Flo64*   nu_ab) const;
 
+            void ComputeEvolutionMaxwellian(const Flo64* nustar_coeff,
+                                            const Flo64* B_norm,
+                                            Flo64*       f5d_s,
+                                            const Flo64* n_s,
+                                            const Flo64* U_par_s,
+                                            Flo64*       T_s,
+                                            Flo64        dt) const;
+
         protected:
             void DoPrepareNuStar(const ViewUHL1<const Flo64>& a_host_visible_rg,
                                  const ViewUHL1<const Flo64>& a_host_visible_nustaR0_r,
@@ -122,6 +130,14 @@ namespace koliop {
                                   ViewUHL4<Flo64>&&            a_host_visible_n_s,
                                   ViewUHL4<Flo64>&&            a_host_visible_U_par_s,
                                   ViewUHL4<Flo64>&&            a_host_visible_T_s) const;
+
+            void DoComputeEvolutionMaxwellian(const ViewUHL3<const Flo64>& a_host_visible_nustar_coeff,
+                                              const ViewUHL2<const Flo64>& a_host_visible_B_norm,
+                                              ViewUHL6<Flo64>&&            a_host_visible_f5d_s,
+                                              const ViewUHL4<const Flo64>& a_host_visible_n_s,
+                                              const ViewUHL4<const Flo64>& a_host_visible_U_par_s,
+                                              ViewUHL4<Flo64>&&            a_host_visible_T_s,
+                                              double                       dt) const;
 
             static void PrepareCj_Cjl(ViewMDD2<Flo64>& C_j,
                                       ViewMDD3<Flo64>& C_jl);
@@ -287,19 +303,20 @@ namespace koliop {
 
             const uint64_t the_rank_r_range     = (iend_ + 1) - istart_;
             const uint64_t the_rank_theta_range = (jend_ + 1) - jstart_;
+            const uint64_t the_rank_phi_range   = static_cast<uint64_t>((collend_ + 1) - collstart_);
 
             DoComputeMoments(ViewUHL2<const Flo64>{// "unmanaged_host_B_norm",
                                                    B_norm, the_rank_r_range, the_rank_theta_range + /* This +1 is weird */ 1},
                              ViewUHL4<const Flo64>{// "unmanaged_host_Bstar_s",
                                                    Bstar_s, Nvpar_ + 1, the_rank_r_range, the_rank_theta_range, Nspecies_},
                              ViewUHL6<Flo64>{// "unmanaged_host_f5d_s",
-                                             f5d_s, Nmu_ + 1, Nvpar_ + 1, the_rank_r_range, the_rank_theta_range, static_cast<uint64_t>((collend_ + 1) - collstart_), Nspecies_},
+                                             f5d_s, Nmu_ + 1, Nvpar_ + 1, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
                              ViewUHL4<Flo64>{// "unmanaged_host_n_s",
-                                             n_s, the_rank_r_range, the_rank_theta_range, static_cast<uint64_t>((collend_ + 1) - collstart_), Nspecies_},
+                                             n_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
                              ViewUHL4<Flo64>{// "unmanaged_host_U_par_s",
-                                             U_par_s, the_rank_r_range, the_rank_theta_range, static_cast<uint64_t>((collend_ + 1) - collstart_), Nspecies_},
+                                             U_par_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
                              ViewUHL4<Flo64>{// "unmanaged_host_T_s",
-                                             T_s, the_rank_r_range, the_rank_theta_range, static_cast<uint64_t>((collend_ + 1) - collstart_), Nspecies_});
+                                             T_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_});
         }
 
         inline void State::ComputeFrequencyNUAB(Flo64    nustar_coeff,
@@ -320,6 +337,33 @@ namespace koliop {
                                             Ta,
                                             nb,
                                             Tb);
+        }
+
+        inline void State::ComputeEvolutionMaxwellian(const Flo64* nustar_coeff,
+                                                      const Flo64* B_norm,
+                                                      Flo64*       f5d_s,
+                                                      const Flo64* n_s,
+                                                      const Flo64* U_par_s,
+                                                      Flo64*       T_s,
+                                                      Flo64        dt) const {
+
+            const uint64_t the_rank_r_range     = (iend_ + 1) - istart_;
+            const uint64_t the_rank_theta_range = (jend_ + 1) - jstart_;
+            const uint64_t the_rank_phi_range   = static_cast<uint64_t>((collend_ + 1) - collstart_);
+
+            DoComputeEvolutionMaxwellian(ViewUHL3<const Flo64>{// "unmanaged_host_nustar_coeff",
+                                                               nustar_coeff, Nspecies_, Nspecies_, the_rank_r_range},
+                                         ViewUHL2<const Flo64>{// "unmanaged_host_B_norm",
+                                                               B_norm, the_rank_r_range, the_rank_theta_range + /* This +1 is weird */ 1},
+                                         ViewUHL6<Flo64>{// "unmanaged_host_f5d_s",
+                                                         f5d_s, Nmu_ + 1, Nvpar_ + 1, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
+                                         ViewUHL4<const Flo64>{// "unmanaged_host_n_s",
+                                                               n_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
+                                         ViewUHL4<const Flo64>{// "unmanaged_host_U_par_s",
+                                                               U_par_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
+                                         ViewUHL4<Flo64>{// "unmanaged_host_T_s",
+                                                         T_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
+                                         dt);
         }
 
         inline void State::DoPrepareNuStar(const ViewUHL1<const Flo64>& a_host_visible_rg,
@@ -357,7 +401,7 @@ namespace koliop {
                                                                                                       Kokkos::WithoutInitializing),
                                                                                    hat_Zs_);
 
-            // TODO(Etienne M): Obvious loop inter exchange optimization ?
+            // TODO(Etienne M): LOOP Obvious loop inter exchange optimization ?
             for(uint64_t ispeciesB = 0; ispeciesB < Nspecies_; ++ispeciesB) {
                 for(uint64_t ispeciesA = 0; ispeciesA < Nspecies_; ++ispeciesA) {
                     const Flo64 hat_Aa = a_host_visible_hat_As(ispeciesA);
@@ -372,12 +416,12 @@ namespace koliop {
                     for(uint64_t ir = 0; ir < element_count; ++ir) {
                         // Computation of
                         // AD(r) = sqrt(2) * eps ^ (3 / 2) / (q R0_)*nustaR0_(r)
-                        // which is independant on the species considered (eps = r/R0_)
+                        // which is independent on the species considered (eps = r/R0_)
                         const Flo64 eps = a_host_visible_rg(ir) * R0_inverse_;
 
                         const Flo64 AD = a_host_visible_nustaR0_r(ir) *
                                          mask_space(ir) *
-                                         // NOTE:
+                                         // TODO(Etienne M): SIMPLIFY
                                          // sqrt(2)*(rg*R0_inverse_)*sqrt(rg*R0_inverse_)*R0_inverse_ =
                                          // sqrt(2)*pow(r, 5/2)*pow(rg, 3/2)
                                          // sqrt(2)*pow(r, 5/2) is constant here.
@@ -403,7 +447,9 @@ namespace koliop {
                                             ViewUHL4<Flo64>&&            a_host_visible_U_par_s,
                                             ViewUHL4<Flo64>&&            a_host_visible_T_s) const {
 
-            const uint64_t the_rank_r_range = a_host_visible_B_norm.extent(0);
+            const uint64_t the_rank_r_range     = a_host_visible_n_s.extent(0);
+            const uint64_t the_rank_theta_range = a_host_visible_n_s.extent(1);
+            const uint64_t the_rank_phi_range   = a_host_visible_n_s.extent(2);
 
             const auto a_host_visible_mug            = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{},
                                                                                                               Kokkos::WithoutInitializing),
@@ -428,7 +474,7 @@ namespace koliop {
                             const auto f5d_s_value = std::max(1.0E-40,
                                                               a_host_visible_f5d_s(imu, ivpar, ir, itheta, iphi, ispecies));
 
-                            // TODO(Etienne M): Hoist the invariant load.
+                            // TODO(Etienne M): LOAD Hoist the invariant load.
                             const auto ftmp = (a_host_visible_Bstar_s(ivpar, ir, itheta, ispecies) * a_host_visible_coeff_intdvpar(ivpar)) *
                                               (a_host_visible_coeff_intdmu(imu) * f5d_s_value);
                             na += ftmp;
@@ -447,7 +493,7 @@ namespace koliop {
                             // TODO(Etienne M): Avoid this recomputation ? On
                             // Gysela fortran, a temporary buffer is used but
                             // that would hardly fit on a GPU.
-                            // TODO(Etienne M): Hoist the invariant load.
+                            // TODO(Etienne M): LOAD Hoist the invariant load.
                             const auto ftmp = (a_host_visible_Bstar_s(ivpar, ir, itheta, ispecies) * a_host_visible_coeff_intdvpar(ivpar)) *
                                               (a_host_visible_coeff_intdmu(imu) * a_host_visible_f5d_s(imu, ivpar, ir, itheta, iphi, ispecies));
                             Ta += ((a_host_visible_vparg(ivpar) - vpara) * (a_host_visible_vparg(ivpar) - vpara) +
@@ -465,7 +511,6 @@ namespace koliop {
                 }
             };
 
-            const uint64_t the_rank_theta_range = (jend_ + 1) - jstart_;
 
             // TODO(Etienne M): Launch a kernel per species on different
             // execution space instances (partition_space) and loop on phi,
@@ -475,10 +520,37 @@ namespace koliop {
                                                                      Kokkos::Iterate::Left>,
                                                         Kokkos::DefaultHostExecutionSpace>{{0, 0, 0},
                                                                                            {the_rank_theta_range,
-                                                                                            static_cast<uint64_t>((collend_ + 1) - collstart_),
+                                                                                            the_rank_phi_range,
                                                                                             Nspecies_}};
 
             Kokkos::parallel_for("DoComputeMoments",
+                                 a_policy, the_kernel);
+        }
+
+        inline void State::DoComputeEvolutionMaxwellian(const ViewUHL3<const Flo64>& a_host_visible_nustar_coeff,
+                                                        const ViewUHL2<const Flo64>& a_host_visible_B_norm,
+                                                        ViewUHL6<Flo64>&&            a_host_visible_f5d_s,
+                                                        const ViewUHL4<const Flo64>& a_host_visible_n_s,
+                                                        const ViewUHL4<const Flo64>& a_host_visible_U_par_s,
+                                                        ViewUHL4<Flo64>&&            a_host_visible_T_s,
+                                                        double                       dt) const {
+
+            const uint64_t the_rank_r_range     = a_host_visible_n_s.extent(0);
+            const uint64_t the_rank_theta_range = a_host_visible_n_s.extent(1);
+            const uint64_t the_rank_phi_range   = a_host_visible_n_s.extent(2);
+
+            const auto the_kernel = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi){
+            };
+
+            const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<3,
+                                                                     Kokkos::Iterate::Left,
+                                                                     Kokkos::Iterate::Left>,
+                                                        Kokkos::DefaultHostExecutionSpace>{{0, 0, 0},
+                                                                                           {the_rank_r_range,
+                                                                                            the_rank_theta_range,
+                                                                                            the_rank_phi_range}};
+
+            Kokkos::parallel_for("DoComputeEvolutionMaxwellian",
                                  a_policy, the_kernel);
         }
 
@@ -536,12 +608,12 @@ namespace koliop {
         }
 
         KOKKOS_INLINE_FUNCTION Flo64
-        State::DoComputeFrequencyNUAB(Flo64  nustar_coeff,
-                                      Flo64  hat_As_speciesA,
-                                      Flo64  hat_As_speciesB,
-                                      Flo64  Ta,
-                                      Flo64  nb,
-                                      Flo64  Tb) {
+        State::DoComputeFrequencyNUAB(Flo64 nustar_coeff,
+                                      Flo64 hat_As_speciesA,
+                                      Flo64 hat_As_speciesB,
+                                      Flo64 Ta,
+                                      Flo64 nb,
+                                      Flo64 Tb) {
 
             const auto vTa = std::sqrt(Ta / hat_As_speciesA);
             const auto vTb = std::sqrt(Tb / hat_As_speciesB);
