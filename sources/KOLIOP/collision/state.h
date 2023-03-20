@@ -447,10 +447,6 @@ namespace koliop {
                                             ViewUHL4<Flo64>&&            a_host_visible_U_par_s,
                                             ViewUHL4<Flo64>&&            a_host_visible_T_s) const {
 
-            const uint64_t the_rank_r_range     = a_host_visible_n_s.extent(0);
-            const uint64_t the_rank_theta_range = a_host_visible_n_s.extent(1);
-            const uint64_t the_rank_phi_range   = a_host_visible_n_s.extent(2);
-
             const auto a_host_visible_mug            = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{},
                                                                                                               Kokkos::WithoutInitializing),
                                                                                            mug_);
@@ -464,62 +460,61 @@ namespace koliop {
                                                                                                               Kokkos::WithoutInitializing),
                                                                                            coeff_intdvpar_);
 
-            const auto the_kernel = KOKKOS_LAMBDA(auto itheta, auto iphi, auto ispecies) {
-                for(uint64_t ir = 0; ir < the_rank_r_range; ++ir) {
-                    auto na    = 0.0;
-                    auto vpara = 0.0;
+            const auto the_kernel = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi, auto ispecies) {
+                auto na    = 0.0;
+                auto vpara = 0.0;
 
-                    for(uint64_t ivpar = 0; ivpar <= Nvpar_; ++ivpar) {
-                        for(uint64_t imu = 0; imu <= Nmu_; ++imu) {
-                            const auto f5d_s_value = std::max(1.0E-40,
-                                                              a_host_visible_f5d_s(imu, ivpar, ir, itheta, iphi, ispecies));
+                for(uint64_t ivpar = 0; ivpar <= Nvpar_; ++ivpar) {
+                    for(uint64_t imu = 0; imu <= Nmu_; ++imu) {
+                        const auto f5d_s_value = std::max(1.0E-40,
+                                                          a_host_visible_f5d_s(imu, ivpar, ir, itheta, iphi, ispecies));
 
-                            // TODO(Etienne M): LOAD Hoist the invariant load.
-                            const auto ftmp = (a_host_visible_Bstar_s(ivpar, ir, itheta, ispecies) * a_host_visible_coeff_intdvpar(ivpar)) *
-                                              (a_host_visible_coeff_intdmu(imu) * f5d_s_value);
-                            na += ftmp;
-                            vpara += a_host_visible_vparg(ivpar) * ftmp;
+                        // TODO(Etienne M): LOAD Hoist the invariant load.
+                        const auto ftmp = (a_host_visible_Bstar_s(ivpar, ir, itheta, ispecies) * a_host_visible_coeff_intdvpar(ivpar)) *
+                                          (a_host_visible_coeff_intdmu(imu) * f5d_s_value);
+                        na += ftmp;
+                        vpara += a_host_visible_vparg(ivpar) * ftmp;
 
-                            a_host_visible_f5d_s(imu, ivpar, ir, itheta, iphi, ispecies) = f5d_s_value;
-                        }
+                        a_host_visible_f5d_s(imu, ivpar, ir, itheta, iphi, ispecies) = f5d_s_value;
                     }
-
-                    vpara = vpara / na;
-
-                    auto Ta = 0.0;
-
-                    for(uint64_t ivpar = 0; ivpar <= Nvpar_; ++ivpar) {
-                        for(uint64_t imu = 0; imu <= Nmu_; ++imu) {
-                            // TODO(Etienne M): Avoid this recomputation ? On
-                            // Gysela fortran, a temporary buffer is used but
-                            // that would hardly fit on a GPU.
-                            // TODO(Etienne M): LOAD Hoist the invariant load.
-                            const auto ftmp = (a_host_visible_Bstar_s(ivpar, ir, itheta, ispecies) * a_host_visible_coeff_intdvpar(ivpar)) *
-                                              (a_host_visible_coeff_intdmu(imu) * a_host_visible_f5d_s(imu, ivpar, ir, itheta, iphi, ispecies));
-                            Ta += ((a_host_visible_vparg(ivpar) - vpara) * (a_host_visible_vparg(ivpar) - vpara) +
-                                   2 * a_host_visible_mug(imu) * a_host_visible_B_norm(ir, itheta)) *
-                                  ftmp;
-                        }
-                    }
-
-                    Ta = Ta / (3.0 * na);
-                    na = koliop::portability::MathematicalConstant<Flo64>::k2Pi * na;
-
-                    a_host_visible_n_s(ir, itheta, iphi, ispecies)     = na;
-                    a_host_visible_U_par_s(ir, itheta, iphi, ispecies) = vpara;
-                    a_host_visible_T_s(ir, itheta, iphi, ispecies)     = Ta;
                 }
+
+                vpara = vpara / na;
+
+                auto Ta = 0.0;
+
+                for(uint64_t ivpar = 0; ivpar <= Nvpar_; ++ivpar) {
+                    for(uint64_t imu = 0; imu <= Nmu_; ++imu) {
+                        // TODO(Etienne M): Avoid this recomputation ? On
+                        // Gysela fortran, a temporary buffer is used but
+                        // that would hardly fit on a GPU.
+                        // TODO(Etienne M): LOAD Hoist the invariant load.
+                        const auto ftmp = (a_host_visible_Bstar_s(ivpar, ir, itheta, ispecies) * a_host_visible_coeff_intdvpar(ivpar)) *
+                                          (a_host_visible_coeff_intdmu(imu) * a_host_visible_f5d_s(imu, ivpar, ir, itheta, iphi, ispecies));
+                        Ta += ((a_host_visible_vparg(ivpar) - vpara) * (a_host_visible_vparg(ivpar) - vpara) +
+                               2 * a_host_visible_mug(imu) * a_host_visible_B_norm(ir, itheta)) *
+                              ftmp;
+                    }
+                }
+
+                Ta = Ta / (3.0 * na);
+                na = koliop::portability::MathematicalConstant<Flo64>::k2Pi * na;
+
+                a_host_visible_n_s(ir, itheta, iphi, ispecies)     = na;
+                a_host_visible_U_par_s(ir, itheta, iphi, ispecies) = vpara;
+                a_host_visible_T_s(ir, itheta, iphi, ispecies)     = Ta;
             };
 
+            const uint64_t the_rank_r_range     = a_host_visible_n_s.extent(0);
+            const uint64_t the_rank_theta_range = a_host_visible_n_s.extent(1);
+            const uint64_t the_rank_phi_range   = a_host_visible_n_s.extent(2);
 
-            // TODO(Etienne M): Launch a kernel per species on different
-            // execution space instances (partition_space) and loop on phi,
-            // theta and r.
-            const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<3,
+            const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<4,
                                                                      Kokkos::Iterate::Left,
                                                                      Kokkos::Iterate::Left>,
-                                                        Kokkos::DefaultHostExecutionSpace>{{0, 0, 0},
-                                                                                           {the_rank_theta_range,
+                                                        Kokkos::DefaultHostExecutionSpace>{{0, 0, 0, 0},
+                                                                                           {the_rank_r_range,
+                                                                                            the_rank_theta_range,
                                                                                             the_rank_phi_range,
                                                                                             Nspecies_}};
 
@@ -535,10 +530,6 @@ namespace koliop {
                                                         ViewUHL4<Flo64>&&            a_host_visible_T_s,
                                                         double                       dt) const {
 
-            const uint64_t the_rank_r_range     = a_host_visible_n_s.extent(0);
-            const uint64_t the_rank_theta_range = a_host_visible_n_s.extent(1);
-            const uint64_t the_rank_phi_range   = a_host_visible_n_s.extent(2);
-
             const auto a_host_visible_mug    = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{},
                                                                                                       Kokkos::WithoutInitializing),
                                                                                    mug_);
@@ -549,68 +540,115 @@ namespace koliop {
                                                                                                       Kokkos::WithoutInitializing),
                                                                                    hat_As_);
 
-            const auto the_kernel = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi) {
-                for(uint64_t ispeciesA = 0; ispeciesA < Nspecies_; ++ispeciesA) {
-                    const auto hat_Aa = a_host_visible_hat_As(ispeciesA);
-                    const auto na     = a_host_visible_n_s(ir, itheta, iphi, ispeciesA);
-                    const auto Vpara  = a_host_visible_U_par_s(ir, itheta, iphi, ispeciesA);
-                    const auto Ta     = a_host_visible_T_s(ir, itheta, iphi, ispeciesA);
+            // TODO(Etienne M): I wish we had MDRange with scratch memory.
+            // Instead of having to use a TeamPolicy and computing MDRange index
+            // by hand.
 
-                    Ta_tmp(ispeciesA) = Ta; // TODO()
-                    auto Ta_new       = 0.0;
+            // NOTE: We use scratch memory to avoid overwriting the T_s.
+            using ScratchMemory = Kokkos::View<Flo64*, Kokkos::DefaultHostExecutionSpace::scratch_memory_space>;
 
-                    // TODO(Etienne M): Split into two loops to avoid the if ?
+            const uint64_t the_scratch_memory_bytes_per_thread = Nspecies_ * sizeof(Flo64);
 
-                    for(uint64_t ispeciesB = 0; ispeciesB < Nspecies_; ++ispeciesB) {
-                        if(ispeciesA == ispeciesB) {
-                            continue;
+            using KernelIterationPolicy = Kokkos::TeamPolicy<Kokkos::DefaultHostExecutionSpace>;
+
+            const uint64_t the_rank_r_range     = a_host_visible_n_s.extent(0);
+            const uint64_t the_rank_theta_range = a_host_visible_n_s.extent(1);
+            const uint64_t the_rank_phi_range   = a_host_visible_n_s.extent(2);
+
+            const uint64_t the_team_count = the_rank_theta_range * the_rank_phi_range;
+            // Due to the inherent cuda/HIP threadblock limit.
+            KOLIOP_ASSERT(the_team_count <= std::numeric_limits<int>::max());
+
+            const auto the_kernel = KOKKOS_LAMBDA(const auto& a_team_handle) {
+                // Reference to the_kernel's member variable copy.
+                const auto the_kernel_core = [&](auto ir, auto itheta, auto iphi, auto& Ta_tmp) {
+                    // NOTE: Iterating on species leads to large strides in
+                    // memory access. This is mitigated on GPU but painful on
+                    // CPU. This behavior done to avoid copying the whole Ts_.
+
+                    for(uint64_t ispeciesA = 0; ispeciesA < Nspecies_; ++ispeciesA) {
+                        const auto hat_Aa = a_host_visible_hat_As(ispeciesA);
+                        const auto na     = a_host_visible_n_s(ir, itheta, iphi, ispeciesA);
+                        const auto Vpara  = a_host_visible_U_par_s(ir, itheta, iphi, ispeciesA);
+                        const auto Ta     = a_host_visible_T_s(ir, itheta, iphi, ispeciesA);
+
+                        auto Ta_new = Ta;
+
+                        // TODO(Etienne M): Split into two loops to avoid the if ?
+
+                        for(uint64_t ispeciesB = 0; ispeciesB < Nspecies_; ++ispeciesB) {
+                            if(ispeciesA == ispeciesB) {
+                                continue;
+                            }
+
+                            const auto hat_Ab = a_host_visible_hat_As(ispeciesB);
+                            const auto nb     = a_host_visible_n_s(ir, itheta, iphi, ispeciesB);
+                            const auto Vparb  = a_host_visible_U_par_s(ir, itheta, iphi, ispeciesB);
+                            const auto Tb     = a_host_visible_T_s(ir, itheta, iphi, ispeciesB);
+
+                            const auto nu_ab = DoComputeFrequencyNUAB(a_host_visible_nustar_coeff(ispeciesA, ispeciesB, ir),
+                                                                      a_host_visible_hat_As(ispeciesA),
+                                                                      a_host_visible_hat_As(ispeciesB),
+                                                                      Ta, nb, Tb);
+
+                            Ta_new += dt * nu_ab * (2.0 * hat_Aa * (Tb - Ta) / (hat_Aa + hat_Ab) + (2.0 / 3.0) * Vpara * (Vpara - sqrt(hat_Aa / hat_Ab) * Vparb));
                         }
 
-                        const auto hat_Ab = a_host_visible_hat_As(ispeciesB);
-                        const auto nb     = a_host_visible_n_s(ir, itheta, iphi, ispeciesB);
-                        const auto Vparb  = a_host_visible_U_par_s(ir, itheta, iphi, ispeciesB);
-                        const auto Tb     = a_host_visible_T_s(ir, itheta, iphi, ispeciesB);
-
-                        const auto nu_ab = DoComputeFrequencyNUAB(a_host_visible_nustar_coeff(ispeciesA, ispeciesB, ir),
-                                                                  a_host_visible_hat_As(ispeciesA),
-                                                                  a_host_visible_hat_As(ispeciesB),
-                                                                  Ta, nb, Tb);
-
-                        Ta_new = Ta_tmp(ispeciesA) +
-                                 dt * nu_ab * (2.0 * hat_Aa * (Tb - Ta) / (hat_Aa + hat_Ab) + (2.0 / 3.0) * Vpara * (Vpara - sqrt(hat_Aa / hat_Ab) * Vparb));
+                        // We can not overwrite the T_s until all the new_T_s are
+                        // computed.
                         Ta_tmp(ispeciesA) = Ta_new;
-                    }
 
-                    const auto coeff_old = na / (koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta *
-                                                 std::sqrt(koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta));
-                    const auto coeff_new = na / (koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta_new *
-                                                 std::sqrt(koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta_new));
-                    const auto Bij       = a_host_visible_B_norm(ir, itheta);
-                    const auto bot_old   = Bij / Ta;
-                    const auto bot_new   = Bij / Ta_new;
+                        const auto coeff_old = na / (koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta *
+                                                     std::sqrt(koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta));
+                        const auto coeff_new = na / (koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta_new *
+                                                     std::sqrt(koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta_new));
+                        const auto Bij       = a_host_visible_B_norm(ir, itheta);
+                        const auto bot_old   = Bij / Ta;
+                        const auto bot_new   = Bij / Ta_new;
 
-                    for(uint64_t ivpar = 0; ivpar <= Nvpar_; ++ivpar) {
-                        const auto vp2_old = (a_host_visible_vparg(ivpar) - Vpara) * (a_host_visible_vparg(ivpar) - Vpara) / (2.0 * Ta);
-                        const auto vp2_new = (a_host_visible_vparg(ivpar) - Vpara) * (a_host_visible_vparg(ivpar) - Vpara) / (2.0 * Ta_new);
-                        for(uint64_t imu = 0; imu <= Nmu_; ++imu) {
-                            a_host_visible_f5d_s(imu, ivpar, ir, itheta, iphi, ispeciesA) -= coeff_old * std::exp(-bot_old * a_host_visible_mug(imu) - vp2_old) +
-                                                                                             coeff_new * std::exp(-bot_new * a_host_visible_mug(imu) - vp2_new);
+                        for(uint64_t ivpar = 0; ivpar <= Nvpar_; ++ivpar) {
+                            const auto vp2_old = (a_host_visible_vparg(ivpar) - Vpara) * (a_host_visible_vparg(ivpar) - Vpara) / (2.0 * Ta);
+                            const auto vp2_new = (a_host_visible_vparg(ivpar) - Vpara) * (a_host_visible_vparg(ivpar) - Vpara) / (2.0 * Ta_new);
+                            for(uint64_t imu = 0; imu <= Nmu_; ++imu) {
+                                a_host_visible_f5d_s(imu, ivpar, ir, itheta, iphi, ispeciesA) -= coeff_old * std::exp(-bot_old * a_host_visible_mug(imu) - vp2_old) +
+                                                                                                 coeff_new * std::exp(-bot_new * a_host_visible_mug(imu) - vp2_new);
+                            }
                         }
                     }
-                }
 
-                for(uint64_t ispeciesA = 0; ispeciesA < Nspecies_; ++ispeciesA) {
-                    a_host_visible_T_s(ir, itheta, iphi, ispeciesA) = Ta_tmp(ispeciesA);
-                }
+                    for(uint64_t ispeciesA = 0; ispeciesA < Nspecies_; ++ispeciesA) {
+                        a_host_visible_T_s(ir, itheta, iphi, ispeciesA) = Ta_tmp(ispeciesA);
+                    }
+                };
+
+                const auto the_team_index = a_team_handle.league_rank();
+
+                const auto iphi   = the_team_index / the_rank_theta_range;
+                const auto itheta = the_team_index % the_rank_theta_range;
+
+                // TODO(Etienne M): Should be put that view allocation in the
+                // parallel_for below ? I dont think so as it would lead to
+                // bumping the LDS pointer for each R iteration. I think this
+                // should be done once per thread.
+                // TODO(Etienne M): Should we a_team_handle.team_barrier() ?
+                ScratchMemory the_thread_scratch_memory{a_team_handle.team_scratch(0),
+                                                        the_scratch_memory_bytes_per_thread};
+
+                const auto a_policy = Kokkos::TeamThreadRange(a_team_handle,
+                                                              the_rank_r_range);
+
+                Kokkos::parallel_for(a_policy,
+                                     // Reference to the_kernel's member variable copy.
+                                     [&](auto ir) {
+                                         the_kernel_core(ir, itheta, iphi, the_thread_scratch_memory);
+                                     });
             };
 
-            const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<3,
-                                                                     Kokkos::Iterate::Left,
-                                                                     Kokkos::Iterate::Left>,
-                                                        Kokkos::DefaultHostExecutionSpace>{{0, 0, 0},
-                                                                                           {the_rank_r_range,
-                                                                                            the_rank_theta_range,
-                                                                                            the_rank_phi_range}};
+            auto a_policy = KernelIterationPolicy{static_cast<int>(the_team_count),
+                                                  Kokkos::AUTO};
+
+            a_policy.set_scratch_size(0,
+                                      Kokkos::PerThread(ScratchMemory::shmem_size(the_scratch_memory_bytes_per_thread)));
 
             Kokkos::parallel_for("DoComputeEvolutionMaxwellian",
                                  a_policy, the_kernel);
