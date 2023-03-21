@@ -528,7 +528,7 @@ namespace koliop {
                                          // sqrt(2)*pow(r, 5/2) is constant here.
                                          koliop::portability::MathematicalConstant<Flo64>::kSQRT2 *
                                          eps *
-                                         std::sqrt(eps) *
+                                         Kokkos::sqrt(eps) *
                                          R0_inverse_;
 
                         // Computation of nu_ab =
@@ -700,9 +700,9 @@ namespace koliop {
                         Ta_tmp(ispeciesA) = Ta_new;
 
                         const auto coeff_old = na / (koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta *
-                                                     std::sqrt(koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta));
+                                                     Kokkos::sqrt(koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta));
                         const auto coeff_new = na / (koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta_new *
-                                                     std::sqrt(koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta_new));
+                                                     Kokkos::sqrt(koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta_new));
                         const auto Bij       = a_host_visible_B_norm(ir, itheta);
                         const auto bot_old   = Bij / Ta;
                         const auto bot_new   = Bij / Ta_new;
@@ -711,8 +711,8 @@ namespace koliop {
                             const auto vp2_old = (a_host_visible_vparg(ivpar) - Vpara) * (a_host_visible_vparg(ivpar) - Vpara) / (2.0 * Ta);
                             const auto vp2_new = (a_host_visible_vparg(ivpar) - Vpara) * (a_host_visible_vparg(ivpar) - Vpara) / (2.0 * Ta_new);
                             for(uint64_t imu = 0; imu <= Nmu_; ++imu) {
-                                a_host_visible_f5d_s(imu, ivpar, ir, itheta, iphi, ispeciesA) -= coeff_old * std::exp(-bot_old * a_host_visible_mug(imu) - vp2_old) +
-                                                                                                 coeff_new * std::exp(-bot_new * a_host_visible_mug(imu) - vp2_new);
+                                a_host_visible_f5d_s(imu, ivpar, ir, itheta, iphi, ispeciesA) -= coeff_old * Kokkos::exp(-bot_old * a_host_visible_mug(imu) - vp2_old) +
+                                                                                                 coeff_new * Kokkos::exp(-bot_new * a_host_visible_mug(imu) - vp2_new);
                             }
                         }
                     }
@@ -787,7 +787,7 @@ namespace koliop {
                 const double Vpara = a_host_visible_U_par_s(ir, itheta, iphi, ispecies);
                 const double Ta    = a_host_visible_T_s(ir, itheta, iphi, ispecies);
                 // TODO(Etienne M): SIMPLIFY as std::pow(koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta, -3 / 2);
-                const double coeff = 1.0 / (koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta * std::sqrt(koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta));
+                const double coeff = 1.0 / (koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta * Kokkos::sqrt(koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta));
 
                 double q_par_on_nT_s_reduction = 0.0;
 
@@ -801,7 +801,7 @@ namespace koliop {
 
                     for(uint64_t imu = 0; imu <= Nmu_; ++imu) {
                         const double u_tmp   = a_host_visible_mug(imu) * Bij / Ta;
-                        const double FMa_tmp = na * std::exp(-u_tmp - vp2) * coeff;
+                        const double FMa_tmp = na * Kokkos::exp(-u_tmp - vp2) * coeff;
                         const double v2      = 2.0 * a_host_visible_mug(imu) * Bij + vparg_minus_vpara_squared;
                         q_par_on_nT_s_reduction += 0.5 *
                                                    jac *
@@ -906,8 +906,8 @@ namespace koliop {
                                       Flo64 nb,
                                       Flo64 Tb) {
 
-            const auto vTa = std::sqrt(Ta / hat_As_speciesA);
-            const auto vTb = std::sqrt(Tb / hat_As_speciesB);
+            const auto vTa = Kokkos::sqrt(Ta / hat_As_speciesA);
+            const auto vTb = Kokkos::sqrt(Tb / hat_As_speciesB);
 
             // NOTE: SIMPLIFY We could do:
             // (nustar_coeff * nb) *
@@ -915,7 +915,7 @@ namespace koliop {
             //               Ta * hat_As_speciesB) /
             //                  (hat_As_speciesA * hat_As_speciesB),
             //              -3.0 / 2.0);
-            return (nustar_coeff * nb) / ((vTa * vTa + vTb * vTb) * std::sqrt(vTa * vTa + vTb * vTb));
+            return (nustar_coeff * nb) / ((vTa * vTa + vTb * vTb) * Kokkos::sqrt(vTa * vTa + vTb * vTb));
         }
 
     } // namespace collision

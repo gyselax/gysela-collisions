@@ -59,3 +59,19 @@ Total Test time (real) =   0.63 sec
 TODO(): [LOOP|LOAD|SIMPLIFY|INDEX]
 NOTE:
 -->
+
+## TODOs
+
+- Port more kernels
+- Simplify operations
+- Remove reference to std:: in kernels
+- Create the fortran bindings
+- Interchange loops
+- Document the C interface
+- Split the implementation in more files (one per function ?)
+- Test in Gysela
+- Run on GPU (assume we get GPU views as input)
+- Tune for GPU if possible
+- Which blas implementation for the LU decomposition
+- Make sure the C interface does not leak
+- Cleanup redundant names, long namespaces, View naming
