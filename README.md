@@ -75,3 +75,5 @@ NOTE:
 - Which blas implementation for the LU decomposition
 - Make sure the C interface does not leak
 - Cleanup redundant names, long namespaces, View naming
+- Quick recheck of the kernel and their fortran equivalent
+- Replace reference to Flo64 with something that can be changed more easily. For instance, to turn on/off the use of float instead of double.
