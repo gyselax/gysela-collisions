@@ -147,13 +147,13 @@ namespace koliop {
                                               ViewUHL4<Flo64>&&            a_host_visible_T_s,
                                               double                       dt) const;
 
-            void DoComputeQparOnNT(const Flo64* B_norm,
-                                   const Flo64* Bstar_s,
-                                   const Flo64* f5d_s,
-                                   const Flo64* n_s,
-                                   const Flo64* U_par_s,
-                                   const Flo64* T_s,
-                                   Flo64*       q_par_on_nT_s) const;
+            void DoComputeQparOnNT(const ViewUHL2<const Flo64>& a_host_visible_B_norm,
+                                   const ViewUHL4<const Flo64>& a_host_visible_Bstar_s,
+                                   const ViewUHL6<const Flo64>& a_host_visible_f5d_s,
+                                   const ViewUHL4<const Flo64>& a_host_visible_n_s,
+                                   const ViewUHL4<const Flo64>& a_host_visible_U_par_s,
+                                   const ViewUHL4<const Flo64>& a_host_visible_T_s,
+                                   ViewUHL4<Flo64>&&            a_host_visible_q_par_on_nT_s) const;
 
             static void PrepareCj_Cjl(ViewMDD2<Flo64>& C_j,
                                       ViewMDD3<Flo64>& C_jl);
@@ -389,6 +389,24 @@ namespace koliop {
                                            const Flo64* U_par_s,
                                            const Flo64* T_s,
                                            Flo64*       q_par_on_nT_s) const {
+            const uint64_t the_rank_r_range     = (iend_ + 1) - istart_;
+            const uint64_t the_rank_theta_range = (jend_ + 1) - jstart_;
+            const uint64_t the_rank_phi_range   = static_cast<uint64_t>((collend_ + 1) - collstart_);
+
+            DoComputeQparOnNT(ViewUHL2<const Flo64>{// "unmanaged_host_B_norm",
+                                                    B_norm, the_rank_r_range, the_rank_theta_range + /* This +1 is weird */ 1},
+                              ViewUHL4<const Flo64>{// "unmanaged_host_Bstar_s",
+                                                    Bstar_s, Nvpar_ + 1, the_rank_r_range, the_rank_theta_range, Nspecies_},
+                              ViewUHL6<const Flo64>{// "unmanaged_host_f5d_s",
+                                                    f5d_s, Nmu_ + 1, Nvpar_ + 1, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
+                              ViewUHL4<const Flo64>{// "unmanaged_host_n_s",
+                                                    n_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
+                              ViewUHL4<const Flo64>{// "unmanaged_host_U_par_s",
+                                                    U_par_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
+                              ViewUHL4<const Flo64>{// "unmanaged_host_T_s",
+                                                    T_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
+                              ViewUHL4<Flo64>{// "unmanaged_host_q_par_on_nT_s",
+                                              q_par_on_nT_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_});
         }
 
         inline void State::DoPrepareNuStar(const ViewUHL1<const Flo64>& a_host_visible_rg,
@@ -679,13 +697,32 @@ namespace koliop {
                                  a_policy, the_kernel);
         }
 
-        inline void State::DoComputeQparOnNT(const Flo64* B_norm,
-                                             const Flo64* Bstar_s,
-                                             const Flo64* f5d_s,
-                                             const Flo64* n_s,
-                                             const Flo64* U_par_s,
-                                             const Flo64* T_s,
-                                             Flo64*       q_par_on_nT_s) const {
+        inline void State::DoComputeQparOnNT(const ViewUHL2<const Flo64>& a_host_visible_B_norm,
+                                             const ViewUHL4<const Flo64>& a_host_visible_Bstar_s,
+                                             const ViewUHL6<const Flo64>& a_host_visible_f5d_s,
+                                             const ViewUHL4<const Flo64>& a_host_visible_n_s,
+                                             const ViewUHL4<const Flo64>& a_host_visible_U_par_s,
+                                             const ViewUHL4<const Flo64>& a_host_visible_T_s,
+                                             ViewUHL4<Flo64>&&            a_host_visible_q_par_on_nT_s) const {
+
+            const auto the_kernel = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi, auto ispecies){
+            };
+
+            const uint64_t the_rank_r_range     = a_host_visible_n_s.extent(0);
+            const uint64_t the_rank_theta_range = a_host_visible_n_s.extent(1);
+            const uint64_t the_rank_phi_range   = a_host_visible_n_s.extent(2);
+
+            const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<4,
+                                                                     Kokkos::Iterate::Left,
+                                                                     Kokkos::Iterate::Left>,
+                                                        Kokkos::DefaultHostExecutionSpace>{{0, 0, 0, 0},
+                                                                                           {the_rank_r_range,
+                                                                                            the_rank_theta_range,
+                                                                                            the_rank_phi_range,
+                                                                                            Nspecies_}};
+
+            Kokkos::parallel_for("DoComputeQparOnNT",
+                                 a_policy, the_kernel);
         }
 
         inline void State::PrepareCj_Cjl(ViewMDD2<Flo64>& C_j,
