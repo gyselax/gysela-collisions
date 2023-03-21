@@ -33,6 +33,12 @@ $ cmake .. -DCMAKE_TOOLCHAIN_FILE=../toolchains/<machine_file>/toolchain.cmake
 $ make
 ```
 
+Where `<machine_file>` being one of the supported machines. For instance:
+
+```bash
+$ cmake .. -G Ninja -DCMAKE_TOOLCHAIN_FILE=../toolchains/acc.cce.adastra/toolchain.cmake
+```
+
 ## Coding style
 
 <!--
