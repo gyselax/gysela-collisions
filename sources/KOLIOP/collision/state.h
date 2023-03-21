@@ -705,7 +705,57 @@ namespace koliop {
                                              const ViewUHL4<const Flo64>& a_host_visible_T_s,
                                              ViewUHL4<Flo64>&&            a_host_visible_q_par_on_nT_s) const {
 
-            const auto the_kernel = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi, auto ispecies){
+            const auto a_host_visible_mug            = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{},
+                                                                                                              Kokkos::WithoutInitializing),
+                                                                                           mug_);
+            const auto a_host_visible_vparg          = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{},
+                                                                                                              Kokkos::WithoutInitializing),
+                                                                                           vparg_);
+            const auto a_host_visible_coeff_intdmu   = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{},
+                                                                                                              Kokkos::WithoutInitializing),
+                                                                                           coeff_intdmu_);
+            const auto a_host_visible_coeff_intdvpar = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{},
+                                                                                                              Kokkos::WithoutInitializing),
+                                                                                           coeff_intdvpar_);
+
+            const auto the_kernel = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi, auto ispecies) {
+                // TODO(Etienne M): Should we flatten even more the loops ?
+                // Potentially computing/loading redundant values (Bij, na etc.)
+                // but extracting more parallelisms. The thing is that ivpar and
+                // imu tends to be larger than ir, itheta or iphi.
+
+                const double Bij   = a_host_visible_B_norm(ir, itheta);
+                const double na    = a_host_visible_n_s(ir, itheta, iphi, ispecies);
+                const double Vpara = a_host_visible_U_par_s(ir, itheta, iphi, ispecies);
+                const double Ta    = a_host_visible_T_s(ir, itheta, iphi, ispecies);
+                // TODO(Etienne M): SIMPLIFY as std::pow(koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta, -3 / 2);
+                const double coeff = 1.0 / (koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta * std::sqrt(koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta));
+
+                double q_par_on_nT_s_reduction = 0.0;
+
+                for(uint64_t ivpar = 0; ivpar <= Nvpar_; ++ivpar) {
+                    const double jac = koliop::portability::MathematicalConstant<Flo64>::k2Pi *
+                                       a_host_visible_Bstar_s(ivpar, ir, itheta, ispecies);
+
+                    const double vparg_minus_vpara         = a_host_visible_vparg(ivpar) - Vpara;
+                    const double vparg_minus_vpara_squared = vparg_minus_vpara * vparg_minus_vpara;
+                    const double vp2                       = vparg_minus_vpara_squared / (2.0 * Ta);
+
+                    for(uint64_t imu = 0; imu <= Nmu_; ++imu) {
+                        const double u_tmp   = a_host_visible_mug(imu) * Bij / Ta;
+                        const double FMa_tmp = na * std::exp(-u_tmp - vp2) * coeff;
+                        const double v2      = 2.0 * a_host_visible_mug(imu) * Bij + vparg_minus_vpara_squared;
+                        q_par_on_nT_s_reduction += 0.5 *
+                                                   jac *
+                                                   a_host_visible_coeff_intdmu(imu) *
+                                                   a_host_visible_coeff_intdvpar(ivpar) *
+                                                   vparg_minus_vpara *
+                                                   v2 *
+                                                   (a_host_visible_f5d_s(imu, ivpar, ir, itheta, iphi, ispecies) - FMa_tmp);
+                    }
+                }
+
+                a_host_visible_q_par_on_nT_s(ir, itheta, iphi, ispecies) = q_par_on_nT_s_reduction / (na * Ta);
             };
 
             const uint64_t the_rank_r_range     = a_host_visible_n_s.extent(0);
