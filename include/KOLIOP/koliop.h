@@ -146,6 +146,15 @@ koliop_Status koliop_ComputeEvolutionMaxwellian(koliop_Operator an_operator,
                                                 double*         T_s,
                                                 double          dt);
 
+koliop_Status koliop_ComputeQparOnNT(koliop_Operator an_operator,
+                                     const double*   B_norm,
+                                     const double*   Bstar_s,
+                                     const double*   f5d_s,
+                                     const double*   n_s,
+                                     const double*   U_par_s,
+                                     const double*   T_s,
+                                     double*         q_par_on_nT_s);
+
 #if defined(__cplusplus)
 }
 #endif

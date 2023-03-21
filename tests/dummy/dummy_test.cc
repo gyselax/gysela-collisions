@@ -49,6 +49,7 @@ int main(int, char**) {
 
     static constexpr uint64_t the_rank_r_range     = (iend + 1) - istart;
     static constexpr uint64_t the_rank_theta_range = (jend + 1) - jstart;
+    static constexpr uint64_t the_rank_phi_range   = static_cast<uint64_t>((collend + 1) - collstart);
 
     // lbound(comb_mat,1) = 0;
     // ubound(comb_mat,1) = 5;
@@ -216,7 +217,7 @@ int main(int, char**) {
     // mom f5d_s ubound 4   32
     // mom f5d_s ubound 5   1
     // mom f5d_s ubound 6   1
-    double f5d_s[Nspecies][(collend + 1) - collstart][the_rank_theta_range][the_rank_r_range][Nvpar + 1][Nmu + 1]{};
+    double f5d_s[Nspecies][the_rank_phi_range][the_rank_theta_range][the_rank_r_range][Nvpar + 1][Nmu + 1]{};
 
     // mom n_s lbound 1   1
     // mom n_s lbound 2   1
@@ -230,7 +231,7 @@ int main(int, char**) {
     // mom n_s ubound 2   32
     // mom n_s ubound 3   1
     // mom n_s ubound 4   1
-    double n_s[Nspecies][(collend + 1) - collstart][the_rank_theta_range][the_rank_r_range]{};
+    double n_s[Nspecies][the_rank_phi_range][the_rank_theta_range][the_rank_r_range]{};
 
     // mom U_par_s lbound 1   1
     // mom U_par_s lbound 2   1
@@ -244,7 +245,7 @@ int main(int, char**) {
     // mom U_par_s ubound 2   32
     // mom U_par_s ubound 3   1
     // mom U_par_s ubound 4   1
-    double U_par_s[Nspecies][(collend + 1) - collstart][the_rank_theta_range][the_rank_r_range]{};
+    double U_par_s[Nspecies][the_rank_phi_range][the_rank_theta_range][the_rank_r_range]{};
 
     // mom T_s lbound 1   1
     // mom T_s lbound 2   1
@@ -258,7 +259,7 @@ int main(int, char**) {
     // mom T_s ubound 2   32
     // mom T_s ubound 3   1
     // mom T_s ubound 4   1
-    double T_s[Nspecies][(collend + 1) - collstart][the_rank_theta_range][the_rank_r_range]{};
+    double T_s[Nspecies][the_rank_phi_range][the_rank_theta_range][the_rank_r_range]{};
 
     ::koliop_ComputeMoments(an_operator,
                             &B_norm[0][0],
@@ -288,6 +289,29 @@ int main(int, char**) {
                                         &U_par_s[0][0][0][0],
                                         &T_s[0][0][0][0],
                                         dt / 2.0);
+
+    // qpar q_par_on_nT_s lbound 1   1
+    // qpar q_par_on_nT_s lbound 2   1
+    // qpar q_par_on_nT_s lbound 3   1
+    // qpar q_par_on_nT_s lbound 4   1
+    // qpar q_par_on_nT_s size   1   32
+    // qpar q_par_on_nT_s size   2   32
+    // qpar q_par_on_nT_s size   3   1
+    // qpar q_par_on_nT_s size   4   1
+    // qpar q_par_on_nT_s ubound 1   32
+    // qpar q_par_on_nT_s ubound 2   32
+    // qpar q_par_on_nT_s ubound 3   1
+    // qpar q_par_on_nT_s ubound 4   1
+    double q_par_on_nT_s[Nspecies][the_rank_phi_range][the_rank_theta_range][the_rank_r_range]{};
+
+    ::koliop_ComputeQparOnNT(an_operator,
+                             &B_norm[0][0],
+                             &Bstar_s[0][0][0][0],
+                             &f5d_s[0][0][0][0][0][0],
+                             &n_s[0][0][0][0],
+                             &U_par_s[0][0][0][0],
+                             &T_s[0][0][0][0],
+                             &q_par_on_nT_s[0][0][0][0]);
 
     if(::koliop_Release(an_operator) != KOLIOP_STATUS_SUCCESS) {
         std::cout << "::koliop_Release() failed\n";
