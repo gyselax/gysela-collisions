@@ -2,33 +2,38 @@
 
 A Kokkos based Collision Operator (KoLiOp) for Gysela.
 
-koliop (kokkos, Collision, Operator)
-gcokos (Gysela, Collision, Kokkos)
-
-### Version constraints
-
-```
-TODO(Etienne M):
-```
-
-## Cloning the repository
-
-1. Clone the repository
-```bash
-$ git clone <TODO(Etienne M)>.git
-```
-2. Install & Update the required packages. Please refer to the `Build` section.
+<!-- koliop (kokkos, Collision, Operator)
+gcokos (Gysela, Collision, Kokkos) -->
 
 ## Build
 
-Under different platforms only the shell changes, not the command:
+### Cloning the repository
+
+```bash
+$ git clone <TODO(Etienne M)>.git
 ```
+
+### Dependencies
+
+```
+cmake > 3.16 (3.25 and up is recommended)
+```
+
+### Build
+
+If you use [ninja](https://ninja-build.org/), then, under different platforms only the shell changes, not the command. We recommend the use of Ninja but if not possible, make should do as well.
+
+```bash
 $ mkdir build && cd build
+# Using Ninja:
+$ cmake .. -G Ninja -DCMAKE_TOOLCHAIN_FILE=../toolchains/<machine_file>/toolchain.cmake
+$ ninja
+# Using make:
 $ cmake .. -DCMAKE_TOOLCHAIN_FILE=../toolchains/<machine_file>/toolchain.cmake
 $ make
 ```
 
-Note that you are recommended to not use make but prefer a tool such as [ninja](https://ninja-build.org/).
+## Coding style
 
 <!--
 TODO(): [LOOP|LOAD|SIMPLIFY|INDEX]
