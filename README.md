@@ -62,18 +62,22 @@ NOTE:
 
 ## TODOs
 
-- Port more kernels
-- Simplify operations
-- Remove reference to std:: in kernels
-- Create the fortran bindings
-- Interchange loops
-- Document the C interface
-- Split the implementation in more files (one per function ?)
-- Test in Gysela
-- Run on GPU (assume we get GPU views as input)
-- Tune for GPU if possible
 - Which blas implementation for the LU decomposition
-- Make sure the C interface does not leak
-- Cleanup redundant names, long namespaces, View naming
+- Port more kernels
+- Create the fortran bindings
 - Quick recheck of the kernel and their fortran equivalent
+- Test in Gysela (progressively replace libcoll with koliop)
+
+- Simplify operations
+
+- Run on GPU (assume we get GPU views as input)
+
+- Inter exchange loops
+- Tune for GPU (coalesced reads)
+
+- Remove reference to std:: in kernels
+- Cleanup redundant names, long namespaces, View naming
 - Replace reference to Flo64 with something that can be changed more easily. For instance, to turn on/off the use of float instead of double.
+- Split the implementation in more files (one per function ?)
+- Document the C interface
+- Make sure the C interface does not leak (exception et al.)
