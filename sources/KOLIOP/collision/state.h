@@ -562,17 +562,17 @@ namespace koliop {
                                                                                            coeff_intdvpar_);
 
             const auto the_kernel = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi, auto ispecies) {
-                auto na    = 0.0;
-                auto vpara = 0.0;
+                Flo64 na    = 0.0;
+                Flo64 vpara = 0.0;
 
                 for(uint64_t ivpar = 0; ivpar <= Nvpar_; ++ivpar) {
                     for(uint64_t imu = 0; imu <= Nmu_; ++imu) {
-                        const auto f5d_s_value = std::max(1.0E-40,
-                                                          a_host_visible_f5d_s(imu, ivpar, ir, itheta, iphi, ispecies));
+                        const Flo64 f5d_s_value = std::max(1.0E-40,
+                                                           a_host_visible_f5d_s(imu, ivpar, ir, itheta, iphi, ispecies));
 
                         // TODO(Etienne M): LOAD Hoist the invariant load.
-                        const auto ftmp = (a_host_visible_Bstar_s(ivpar, ir, itheta, ispecies) * a_host_visible_coeff_intdvpar(ivpar)) *
-                                          (a_host_visible_coeff_intdmu(imu) * f5d_s_value);
+                        const Flo64 ftmp = (a_host_visible_Bstar_s(ivpar, ir, itheta, ispecies) * a_host_visible_coeff_intdvpar(ivpar)) *
+                                           (a_host_visible_coeff_intdmu(imu) * f5d_s_value);
                         na += ftmp;
                         vpara += a_host_visible_vparg(ivpar) * ftmp;
 
@@ -582,7 +582,7 @@ namespace koliop {
 
                 vpara = vpara / na;
 
-                auto Ta = 0.0;
+                Flo64 Ta = 0.0;
 
                 for(uint64_t ivpar = 0; ivpar <= Nvpar_; ++ivpar) {
                     for(uint64_t imu = 0; imu <= Nmu_; ++imu) {
@@ -590,8 +590,8 @@ namespace koliop {
                         // Gysela fortran, a temporary buffer is used but
                         // that would hardly fit on a GPU.
                         // TODO(Etienne M): LOAD Hoist the invariant load.
-                        const auto ftmp = (a_host_visible_Bstar_s(ivpar, ir, itheta, ispecies) * a_host_visible_coeff_intdvpar(ivpar)) *
-                                          (a_host_visible_coeff_intdmu(imu) * a_host_visible_f5d_s(imu, ivpar, ir, itheta, iphi, ispecies));
+                        const Flo64 ftmp = (a_host_visible_Bstar_s(ivpar, ir, itheta, ispecies) * a_host_visible_coeff_intdvpar(ivpar)) *
+                                           (a_host_visible_coeff_intdmu(imu) * a_host_visible_f5d_s(imu, ivpar, ir, itheta, iphi, ispecies));
                         Ta += ((a_host_visible_vparg(ivpar) - vpara) * (a_host_visible_vparg(ivpar) - vpara) +
                                2 * a_host_visible_mug(imu) * a_host_visible_B_norm(ir, itheta)) *
                               ftmp;
@@ -668,12 +668,12 @@ namespace koliop {
                     // CPU. This behavior done to avoid copying the whole Ts_.
 
                     for(uint64_t ispeciesA = 0; ispeciesA < Nspecies_; ++ispeciesA) {
-                        const auto hat_Aa = a_host_visible_hat_As(ispeciesA);
-                        const auto na     = a_host_visible_n_s(ir, itheta, iphi, ispeciesA);
-                        const auto Vpara  = a_host_visible_U_par_s(ir, itheta, iphi, ispeciesA);
-                        const auto Ta     = a_host_visible_T_s(ir, itheta, iphi, ispeciesA);
+                        const Flo64 hat_Aa = a_host_visible_hat_As(ispeciesA);
+                        const Flo64 na     = a_host_visible_n_s(ir, itheta, iphi, ispeciesA);
+                        const Flo64 Vpara  = a_host_visible_U_par_s(ir, itheta, iphi, ispeciesA);
+                        const Flo64 Ta     = a_host_visible_T_s(ir, itheta, iphi, ispeciesA);
 
-                        auto Ta_new = Ta;
+                        Flo64 Ta_new = Ta;
 
                         // TODO(Etienne M): Split into two loops to avoid the if ?
 
@@ -682,15 +682,15 @@ namespace koliop {
                                 continue;
                             }
 
-                            const auto hat_Ab = a_host_visible_hat_As(ispeciesB);
-                            const auto nb     = a_host_visible_n_s(ir, itheta, iphi, ispeciesB);
-                            const auto Vparb  = a_host_visible_U_par_s(ir, itheta, iphi, ispeciesB);
-                            const auto Tb     = a_host_visible_T_s(ir, itheta, iphi, ispeciesB);
+                            const Flo64 hat_Ab = a_host_visible_hat_As(ispeciesB);
+                            const Flo64 nb     = a_host_visible_n_s(ir, itheta, iphi, ispeciesB);
+                            const Flo64 Vparb  = a_host_visible_U_par_s(ir, itheta, iphi, ispeciesB);
+                            const Flo64 Tb     = a_host_visible_T_s(ir, itheta, iphi, ispeciesB);
 
-                            const auto nu_ab = DoComputeFrequencyNUAB(a_host_visible_nustar_coeff(ispeciesA, ispeciesB, ir),
-                                                                      a_host_visible_hat_As(ispeciesA),
-                                                                      a_host_visible_hat_As(ispeciesB),
-                                                                      Ta, nb, Tb);
+                            const Flo64 nu_ab = DoComputeFrequencyNUAB(a_host_visible_nustar_coeff(ispeciesA, ispeciesB, ir),
+                                                                       a_host_visible_hat_As(ispeciesA),
+                                                                       a_host_visible_hat_As(ispeciesB),
+                                                                       Ta, nb, Tb);
 
                             Ta_new += dt * nu_ab * (2.0 * hat_Aa * (Tb - Ta) / (hat_Aa + hat_Ab) + (2.0 / 3.0) * Vpara * (Vpara - sqrt(hat_Aa / hat_Ab) * Vparb));
                         }
@@ -699,17 +699,17 @@ namespace koliop {
                         // computed.
                         Ta_tmp(ispeciesA) = Ta_new;
 
-                        const auto coeff_old = na / (koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta *
-                                                     Kokkos::sqrt(koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta));
-                        const auto coeff_new = na / (koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta_new *
-                                                     Kokkos::sqrt(koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta_new));
-                        const auto Bij       = a_host_visible_B_norm(ir, itheta);
-                        const auto bot_old   = Bij / Ta;
-                        const auto bot_new   = Bij / Ta_new;
+                        const Flo64 coeff_old = na / (koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta *
+                                                      Kokkos::sqrt(koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta));
+                        const Flo64 coeff_new = na / (koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta_new *
+                                                      Kokkos::sqrt(koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta_new));
+                        const Flo64 Bij       = a_host_visible_B_norm(ir, itheta);
+                        const Flo64 bot_old   = Bij / Ta;
+                        const Flo64 bot_new   = Bij / Ta_new;
 
                         for(uint64_t ivpar = 0; ivpar <= Nvpar_; ++ivpar) {
-                            const auto vp2_old = (a_host_visible_vparg(ivpar) - Vpara) * (a_host_visible_vparg(ivpar) - Vpara) / (2.0 * Ta);
-                            const auto vp2_new = (a_host_visible_vparg(ivpar) - Vpara) * (a_host_visible_vparg(ivpar) - Vpara) / (2.0 * Ta_new);
+                            const Flo64 vp2_old = (a_host_visible_vparg(ivpar) - Vpara) * (a_host_visible_vparg(ivpar) - Vpara) / (2.0 * Ta);
+                            const Flo64 vp2_new = (a_host_visible_vparg(ivpar) - Vpara) * (a_host_visible_vparg(ivpar) - Vpara) / (2.0 * Ta_new);
                             for(uint64_t imu = 0; imu <= Nmu_; ++imu) {
                                 a_host_visible_f5d_s(imu, ivpar, ir, itheta, iphi, ispeciesA) -= coeff_old * Kokkos::exp(-bot_old * a_host_visible_mug(imu) - vp2_old) +
                                                                                                  coeff_new * Kokkos::exp(-bot_new * a_host_visible_mug(imu) - vp2_new);
@@ -782,27 +782,27 @@ namespace koliop {
                 // but extracting more parallelisms. The thing is that ivpar and
                 // imu tends to be larger than ir, itheta or iphi.
 
-                const auto Bij   = a_host_visible_B_norm(ir, itheta);
-                const auto na    = a_host_visible_n_s(ir, itheta, iphi, ispecies);
-                const auto Vpara = a_host_visible_U_par_s(ir, itheta, iphi, ispecies);
-                const auto Ta    = a_host_visible_T_s(ir, itheta, iphi, ispecies);
+                const Flo64 Bij   = a_host_visible_B_norm(ir, itheta);
+                const Flo64 na    = a_host_visible_n_s(ir, itheta, iphi, ispecies);
+                const Flo64 Vpara = a_host_visible_U_par_s(ir, itheta, iphi, ispecies);
+                const Flo64 Ta    = a_host_visible_T_s(ir, itheta, iphi, ispecies);
                 // TODO(Etienne M): SIMPLIFY as std::pow(koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta, -3 / 2);
-                const auto coeff = 1.0 / (koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta * Kokkos::sqrt(koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta));
+                const Flo64 coeff = 1.0 / (koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta * Kokkos::sqrt(koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta));
 
-                auto q_par_on_nT_s_reduction = 0.0;
+                Flo64 q_par_on_nT_s_reduction = 0.0;
 
                 for(uint64_t ivpar = 0; ivpar <= Nvpar_; ++ivpar) {
-                    const auto jac = koliop::portability::MathematicalConstant<Flo64>::k2Pi *
-                                     a_host_visible_Bstar_s(ivpar, ir, itheta, ispecies);
+                    const Flo64 jac = koliop::portability::MathematicalConstant<Flo64>::k2Pi *
+                                      a_host_visible_Bstar_s(ivpar, ir, itheta, ispecies);
 
-                    const auto vparg_minus_vpara         = a_host_visible_vparg(ivpar) - Vpara;
-                    const auto vparg_minus_vpara_squared = vparg_minus_vpara * vparg_minus_vpara;
-                    const auto vp2                       = vparg_minus_vpara_squared / (2.0 * Ta);
+                    const Flo64 vparg_minus_vpara         = a_host_visible_vparg(ivpar) - Vpara;
+                    const Flo64 vparg_minus_vpara_squared = vparg_minus_vpara * vparg_minus_vpara;
+                    const Flo64 vp2                       = vparg_minus_vpara_squared / (2.0 * Ta);
 
                     for(uint64_t imu = 0; imu <= Nmu_; ++imu) {
-                        const auto u_tmp   = a_host_visible_mug(imu) * Bij / Ta;
-                        const auto FMa_tmp = na * Kokkos::exp(-u_tmp - vp2) * coeff;
-                        const auto v2      = 2.0 * a_host_visible_mug(imu) * Bij + vparg_minus_vpara_squared;
+                        const Flo64 u_tmp   = a_host_visible_mug(imu) * Bij / Ta;
+                        const Flo64 FMa_tmp = na * Kokkos::exp(-u_tmp - vp2) * coeff;
+                        const Flo64 v2      = 2.0 * a_host_visible_mug(imu) * Bij + vparg_minus_vpara_squared;
                         q_par_on_nT_s_reduction += 0.5 *
                                                    jac *
                                                    a_host_visible_coeff_intdmu(imu) *
@@ -988,8 +988,8 @@ namespace koliop {
                                       Flo64 nb,
                                       Flo64 Tb) {
 
-            const auto vTa = Kokkos::sqrt(Ta / hat_As_speciesA);
-            const auto vTb = Kokkos::sqrt(Tb / hat_As_speciesB);
+            const Flo64 vTa = Kokkos::sqrt(Ta / hat_As_speciesA);
+            const Flo64 vTb = Kokkos::sqrt(Tb / hat_As_speciesB);
 
             // NOTE: SIMPLIFY We could do:
             // (nustar_coeff * nb) *
