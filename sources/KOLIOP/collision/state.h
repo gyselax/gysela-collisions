@@ -861,41 +861,44 @@ namespace koliop {
             const auto the_kernel = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi) {
                 // TODO(Etienne M): Assuming materialization, we could flatten
                 // the loop even more, up to Nmu_.
-                // TODO(Etienne M): We could inter exchange
+                // TODO(Etienne M): We could inter exchange some loops ?
+                // TODO(Etienne M): There is quite a lot to simplify here.
 
                 const Flo64 hat_Aa     = a_host_visible_hat_As(pSpecies_id_);
                 const Flo64 hat_Za     = a_host_visible_hat_Zs(pSpecies_id_);
                 const Flo64 inv_hat_Aa = 1.0 / hat_Aa;
 
-                const Flo64 smcsfqri    = a_host_visible_q_r(ir);
-                const Flo64 Bij         = a_host_visible_B_norm(ir, itheta);
+                const Flo64 smcsfqri = a_host_visible_q_r(ir);
+                const Flo64 Bij      = a_host_visible_B_norm(ir, itheta);
+
                 const Flo64 na          = a_host_visible_n_s(ir, itheta, iphi, pSpecies_id_);
                 const Flo64 Vpara       = a_host_visible_U_par_s(ir, itheta, iphi, pSpecies_id_);
                 const Flo64 Ta          = a_host_visible_T_s(ir, itheta, iphi, pSpecies_id_);
                 const Flo64 q_par_on_nT = a_host_visible_q_par_on_nT_s(ir, itheta, iphi, pSpecies_id_);
-                const Flo64 nustaR0_i   = a_host_visible_nustaR0_r(ir);
-                const Flo64 epstemp     = a_host_visible_rg(ir) * R0_inverse_;
-                const Flo64 vTa         = Kokkos::sqrt(Ta / hat_Aa);
-                const Flo64 coeff1      = 1.0 / (2.0 * Ta);
-                const Flo64 coeff3      = na / (koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta * Kokkos::sqrt(koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta));
-                const Flo64 AD          = nustaR0_i * koliop::portability::MathematicalConstant<Flo64>::kSQRT2 * epstemp * Kokkos::sqrt(epstemp) / ((1.0 / R0_inverse_) * (smcsfqri != koliop::portability::GyselaConstant<Flo64>::kInfinity ? smcsfqri : 1.0));
+
+                const Flo64 nustaR0_i = a_host_visible_nustaR0_r(ir);
+                const Flo64 epstemp   = a_host_visible_rg(ir) * R0_inverse_;
+                const Flo64 vTa       = Kokkos::sqrt(Ta / hat_Aa);
+                const Flo64 coeff1    = 1.0 / (2.0 * Ta);
+                const Flo64 coeff3    = na / (koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta * Kokkos::sqrt(koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta));
+                const Flo64 AD        = nustaR0_i * koliop::portability::MathematicalConstant<Flo64>::kSQRT2 * epstemp * Kokkos::sqrt(epstemp) / ((1.0 / R0_inverse_) * (smcsfqri != koliop::portability::GyselaConstant<Flo64>::kInfinity ? smcsfqri : 1.0));
 
                 for(uint64_t ispecies = 0; ispecies < Nspecies_; ++ispecies) {
                     const Flo64 hat_Ab         = a_host_visible_hat_As(ispecies);
-                    const Flo64 inv_hat_Ab     = 1.0 / a_host_visible_hat_As(ispecies);
+                    const Flo64 inv_hat_Ab     = 1.0 / hat_Ab;
                     const Flo64 hat_Zb         = a_host_visible_hat_Zs(ispecies);
                     const Flo64 nb             = a_host_visible_n_s(ir, itheta, iphi, ispecies);
                     const Flo64 Vparb          = a_host_visible_U_par_s(ir, itheta, iphi, ispecies);
                     const Flo64 Tb             = a_host_visible_T_s(ir, itheta, iphi, ispecies);
                     const Flo64 q_parb_on_nbTb = a_host_visible_q_par_on_nT_s(ir, itheta, iphi, ispecies);
-                    const Flo64 Rat            = Kokkos::sqrt(hat_Aa / hat_Ab);
-                    const Flo64 vTb            = Kokkos::sqrt(Tb / hat_Ab);
-                    const Flo64 coeff2         = vTa / vTb;
-                    const Flo64 coeff4         = (3.0 / 5.0) * Rat * q_parb_on_nbTb / (1.0 + (Ta * hat_Ab) / (Tb * hat_Aa));
+
+                    const Flo64 Rat    = Kokkos::sqrt(hat_Aa / hat_Ab);
+                    const Flo64 vTb    = Kokkos::sqrt(Tb / hat_Ab);
+                    const Flo64 coeff2 = vTa / vTb;
+                    const Flo64 coeff4 = (3.0 / 5.0) * Rat * q_parb_on_nbTb / (1.0 + (Ta * hat_Ab) / (Tb * hat_Aa));
 
                     for(uint64_t imu = 0; imu <= Nmu_; ++imu) {
                         for(uint64_t ivpar = 0; ivpar <= Nvpar_; ++ivpar) {
-                            const Flo64 fetch          = a_host_visible_f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id_);
                             const Flo64 coeff5         = (a_host_visible_vparg(ivpar) / Ta);
                             const Flo64 xa             = Kokkos::sqrt(coeff1 * (2.0 * a_host_visible_mug(imu) * Bij + a_host_visible_vparg(ivpar) * a_host_visible_vparg(ivpar)));
                             const Flo64 xb             = xa * coeff2;
@@ -905,7 +908,7 @@ namespace koliop {
                                                              1.0;
                             const Flo64 nu_sab         = (AD * hat_Za * hat_Za * hat_Zb * hat_Zb * nb) * inv_hat_Aa * (inv_hat_Aa + inv_hat_Ab) * Theta_func_tmp / (vTb * vTb * vTb);
 
-                            a_host_visible_f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id_) = fetch + dt * FM0a * nu_sab * coeff5 * (Rat * Vparb - Vpara + q_par_on_nT * (1.0 - 2.0 * xa * xa * 0.2) - coeff4);
+                            a_host_visible_f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id_) += dt * FM0a * nu_sab * coeff5 * (Rat * Vparb - Vpara + q_par_on_nT * (1.0 - 2.0 * xa * xa * 0.2) - coeff4);
                         }
                     }
                 }
