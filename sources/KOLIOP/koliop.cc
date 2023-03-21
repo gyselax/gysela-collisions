@@ -229,3 +229,26 @@
         return KOLIOP_STATUS_SUCCESS;
     });
 }
+
+::koliop_Status koliop_ComputeCpar(::koliop_Operator an_operator,
+                                   const double*     rg,
+                                   const double*     B_norm,
+                                   const double*     q_r,
+                                   const double*     nustaR0_r,
+                                   double*           f5d_s,
+                                   const double*     n_s,
+                                   const double*     U_par_s,
+                                   const double*     T_s,
+                                   const double*     q_par_on_nT_s,
+                                   double            dt) {
+    return koliop::error::FromException([&]() {
+        if(an_operator == nullptr) {
+            return KOLIOP_STATUS_INVALID_VALUE;
+        }
+
+        using State = koliop::collision::State;
+        reinterpret_cast<State*>(an_operator)->ComputeCpar(rg, B_norm, q_r, nustaR0_r, f5d_s, n_s, U_par_s, T_s, q_par_on_nT_s, dt);
+
+        return KOLIOP_STATUS_SUCCESS;
+    });
+}

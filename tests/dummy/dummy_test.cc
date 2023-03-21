@@ -313,6 +313,18 @@ int main(int, char**) {
                              &T_s[0][0][0][0],
                              &q_par_on_nT_s[0][0][0][0]);
 
+    ::koliop_ComputeCpar(an_operator,
+                         &rg[0],
+                         &B_norm[0][0],
+                         &q_r[0],
+                         &nustaR0_r[0],
+                         &f5d_s[0][0][0][0][0][0],
+                         &n_s[0][0][0][0],
+                         &U_par_s[0][0][0][0],
+                         &T_s[0][0][0][0],
+                         &q_par_on_nT_s[0][0][0][0],
+                         dt / 2.0);
+
     if(::koliop_Release(an_operator) != KOLIOP_STATUS_SUCCESS) {
         std::cout << "::koliop_Release() failed\n";
     }

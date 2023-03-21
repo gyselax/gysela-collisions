@@ -155,6 +155,19 @@ koliop_Status koliop_ComputeQparOnNT(koliop_Operator an_operator,
                                      const double*   T_s,
                                      double*         q_par_on_nT_s);
 
+koliop_Status koliop_ComputeCpar(koliop_Operator an_operator,
+                                 const double*   rg,
+                                 const double*   B_norm,
+                                 const double*   q_r,
+                                 const double*   nustaR0_r,
+                                 double*         f5d_s,
+                                 const double*   n_s,
+                                 const double*   U_par_s,
+                                 const double*   T_s,
+                                 const double*   q_par_on_nT_s,
+                                 double          dt);
+
+
 #if defined(__cplusplus)
 }
 #endif

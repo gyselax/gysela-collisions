@@ -125,6 +125,17 @@ namespace koliop {
                                  const Flo64* T_s,
                                  Flo64*       q_par_on_nT_s) const;
 
+            void ComputeCpar(const Flo64* rg,
+                             const Flo64* B_norm,
+                             const Flo64* q_r,
+                             const Flo64* nustaR0_r,
+                             Flo64*       f5d_s,
+                             const Flo64* n_s,
+                             const Flo64* U_par_s,
+                             const Flo64* T_s,
+                             const Flo64* q_par_on_nT_s,
+                             Flo64        dt) const;
+
         protected:
             void DoPrepareNuStar(const ViewUHL1<const Flo64>& a_host_visible_rg,
                                  const ViewUHL1<const Flo64>& a_host_visible_nustaR0_r,
@@ -154,6 +165,17 @@ namespace koliop {
                                    const ViewUHL4<const Flo64>& a_host_visible_U_par_s,
                                    const ViewUHL4<const Flo64>& a_host_visible_T_s,
                                    ViewUHL4<Flo64>&&            a_host_visible_q_par_on_nT_s) const;
+
+            void DoComputeCpar(const ViewUHL1<const Flo64>& a_host_visible_rg,
+                               const ViewUHL2<const Flo64>& a_host_visible_B_norm,
+                               const ViewUHL1<const Flo64>& a_host_visible_q_r,
+                               const ViewUHL1<const Flo64>& a_host_visible_nustaR0_r,
+                               ViewUHL6<Flo64>&&            a_host_visible_f5d_s,
+                               const ViewUHL4<const Flo64>& a_host_visible_n_s,
+                               const ViewUHL4<const Flo64>& a_host_visible_U_par_s,
+                               const ViewUHL4<const Flo64>& a_host_visible_T_s,
+                               const ViewUHL4<const Flo64>& a_host_visible_q_par_on_nT_s,
+                               Flo64                        dt) const;
 
             static void PrepareCj_Cjl(ViewMDD2<Flo64>& C_j,
                                       ViewMDD3<Flo64>& C_jl);
@@ -407,6 +429,42 @@ namespace koliop {
                                                     T_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
                               ViewUHL4<Flo64>{// "unmanaged_host_q_par_on_nT_s",
                                               q_par_on_nT_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_});
+        }
+
+        inline void State::ComputeCpar(const Flo64* rg,
+                                       const Flo64* B_norm,
+                                       const Flo64* q_r,
+                                       const Flo64* nustaR0_r,
+                                       Flo64*       f5d_s,
+                                       const Flo64* n_s,
+                                       const Flo64* U_par_s,
+                                       const Flo64* T_s,
+                                       const Flo64* q_par_on_nT_s,
+                                       Flo64        dt) const {
+
+            const uint64_t the_rank_r_range     = (iend_ + 1) - istart_;
+            const uint64_t the_rank_theta_range = (jend_ + 1) - jstart_;
+            const uint64_t the_rank_phi_range   = static_cast<uint64_t>((collend_ + 1) - collstart_);
+
+            DoComputeCpar(ViewUHL1<const Flo64>{// "unmanaged_host_rg",
+                                                rg, the_rank_r_range},
+                          ViewUHL2<const Flo64>{// "unmanaged_host_B_norm",
+                                                B_norm, the_rank_r_range, the_rank_theta_range + /* This +1 is weird */ 1},
+                          ViewUHL1<const Flo64>{// "unmanaged_host_q_r",
+                                                q_r, the_rank_r_range},
+                          ViewUHL1<const Flo64>{// "unmanaged_host_nustaR0_r",
+                                                nustaR0_r, the_rank_r_range},
+                          ViewUHL6<Flo64>{// "unmanaged_host_f5d_s",
+                                          f5d_s, Nmu_ + 1, Nvpar_ + 1, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
+                          ViewUHL4<const Flo64>{// "unmanaged_host_n_s",
+                                                n_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
+                          ViewUHL4<const Flo64>{// "unmanaged_host_U_par_s",
+                                                U_par_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
+                          ViewUHL4<const Flo64>{// "unmanaged_host_T_s",
+                                                T_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
+                          ViewUHL4<const Flo64>{// "unmanaged_host_q_par_on_nT_s",
+                                                q_par_on_nT_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
+                          dt);
         }
 
         inline void State::DoPrepareNuStar(const ViewUHL1<const Flo64>& a_host_visible_rg,
@@ -773,6 +831,18 @@ namespace koliop {
 
             Kokkos::parallel_for("DoComputeQparOnNT",
                                  a_policy, the_kernel);
+        }
+
+        inline void State::DoComputeCpar(const ViewUHL1<const Flo64>& a_host_visible_rg,
+                                         const ViewUHL2<const Flo64>& a_host_visible_B_norm,
+                                         const ViewUHL1<const Flo64>& a_host_visible_q_r,
+                                         const ViewUHL1<const Flo64>& a_host_visible_nustaR0_r,
+                                         ViewUHL6<Flo64>&&            a_host_visible_f5d_s,
+                                         const ViewUHL4<const Flo64>& a_host_visible_n_s,
+                                         const ViewUHL4<const Flo64>& a_host_visible_U_par_s,
+                                         const ViewUHL4<const Flo64>& a_host_visible_T_s,
+                                         const ViewUHL4<const Flo64>& a_host_visible_q_par_on_nT_s,
+                                         Flo64                        dt) const {
         }
 
         inline void State::PrepareCj_Cjl(ViewMDD2<Flo64>& C_j,
