@@ -174,6 +174,11 @@ koliop_Status koliop_ComputeOperationMaxwellianUnshiftedLoc(koliop_Operator an_o
                                                             const double*   T_s,
                                                             uint32_t        choice);
 
+koliop_Status koliop_ComputeCorrectionDensity(koliop_Operator an_operator,
+                                              const double*   Bstar_s,
+                                              double*         f5d_s,
+                                              const double*   n_s);
+
 #if defined(__cplusplus)
 }
 #endif

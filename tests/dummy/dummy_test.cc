@@ -334,6 +334,33 @@ int main(int, char**) {
                                                     &T_s[0][0][0][0],
                                                     choice);
 
+    // ::koliop_ComputeAlphaProjection(an_operator,
+    //                                 // Npol
+    //                                 // ir_start
+    //                                 // ir_end
+    //                                 // itheta_start
+    //                                 // itheta_end
+    //                                 // iphi_start
+    //                                 // iphi_end
+    //                                 // mask_coll(ir_start:,itheta_start:)
+    //                                 // mug(0:)
+    //                                 // coeff_intdmu(0:)
+    //                                 // B_norm(0:,0:)
+    //                                 // f5d_s(0:,0:,istart_:,jstart_:,collstart_:,0:)
+    //                                 // T_s(istart_:,jstart_:,collstart_:,0:)
+    //                                 // RHS_vec(0:,0:,0:)
+    // );
+
+    // libcoll_block_to_1d;
+    // libcoll_CvCd;
+    // libcoll_reconstruction;
+
+    ::koliop_ComputeCorrectionDensity(an_operator,
+                                      &Bstar_s[0][0][0][0],
+                                      &f5d_s[0][0][0][0][0][0],
+                                      &n_s[0][0][0][0]);
+    // libcoll_correction_U_par_T;
+
     if(::koliop_Release(an_operator) != KOLIOP_STATUS_SUCCESS) {
         std::cout << "::koliop_Release() failed\n";
     }

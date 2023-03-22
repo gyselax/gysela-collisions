@@ -219,6 +219,10 @@ namespace koliop {
                                                         const Flo64* T_s,
                                                         uint32_t     choice) const;
 
+            void ComputeCorrectionDensity(const Flo64* Bstar_s,
+                                          Flo64*       f5d_s,
+                                          const Flo64* n_s) const;
+
         protected:
             void DoPrepareNuStar(const ViewUHL1<const Flo64>& a_host_visible_rg,
                                  const ViewUHL1<const Flo64>& a_host_visible_nustaR0_r,
@@ -265,6 +269,10 @@ namespace koliop {
                                                           const ViewUHL4<const Flo64>& a_host_visible_n_s,
                                                           const ViewUHL4<const Flo64>& a_host_visible_T_s,
                                                           uint32_t                     choice) const;
+
+            void DoComputeCorrectionDensity(const ViewUHL4<const Flo64>& a_host_visible_Bstar_s,
+                                            ViewUHL6<Flo64>&&            a_host_visible_f5d_s,
+                                            const ViewUHL4<const Flo64>& a_host_visible_n_s) const;
 
             static void PrepareCj_Cjl(ViewMDD2<Flo64>& C_j,
                                       ViewMDD3<Flo64>& C_jl);
@@ -572,10 +580,25 @@ namespace koliop {
                                                                      f5d_s, Nmu_ + 1, Nvpar_ + 1, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
                                                      ViewUHL4<const Flo64>{// "unmanaged_host_n_s",
                                                                            n_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
-
                                                      ViewUHL4<const Flo64>{// "unmanaged_host_T_s",
                                                                            T_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
                                                      choice);
+        }
+
+        inline void State::ComputeCorrectionDensity(const Flo64* Bstar_s,
+                                                    Flo64*       f5d_s,
+                                                    const Flo64* n_s) const {
+
+            const uint64_t the_rank_r_range     = (iend_ + 1) - istart_;
+            const uint64_t the_rank_theta_range = (jend_ + 1) - jstart_;
+            const uint64_t the_rank_phi_range   = static_cast<uint64_t>((collend_ + 1) - collstart_);
+
+            DoComputeCorrectionDensity(ViewUHL4<const Flo64>{// "unmanaged_host_Bstar_s",
+                                                             Bstar_s, Nvpar_ + 1, the_rank_r_range, the_rank_theta_range, Nspecies_},
+                                       ViewUHL6<Flo64>{// "unmanaged_host_f5d_s",
+                                                       f5d_s, Nmu_ + 1, Nvpar_ + 1, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
+                                       ViewUHL4<const Flo64>{// "unmanaged_host_n_s",
+                                                             n_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_});
         }
 
         inline void State::DoPrepareNuStar(const ViewUHL1<const Flo64>& a_host_visible_rg,
@@ -1123,6 +1146,58 @@ namespace koliop {
                     KOLIOP_ASSERT(false);
                     break;
             }
+        }
+
+        inline void State::DoComputeCorrectionDensity(const ViewUHL4<const Flo64>& a_host_visible_Bstar_s,
+                                                      ViewUHL6<Flo64>&&            a_host_visible_f5d_s,
+                                                      const ViewUHL4<const Flo64>& a_host_visible_n_s) const {
+
+            const auto a_host_visible_coeff_intdmu   = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{},
+                                                                                                              Kokkos::WithoutInitializing),
+                                                                                           coeff_intdmu_);
+            const auto a_host_visible_coeff_intdvpar = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{},
+                                                                                                              Kokkos::WithoutInitializing),
+                                                                                           coeff_intdvpar_);
+
+            const auto the_kernel = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi){
+                // TODO(Etienne M): INDEX not coalesced.
+
+                Flo64 na = 0.0;
+                for(uint64_t ivpar = 0; ivpar <= Nvpar_; ++ivpar) {
+                    const Flo64 jacob_vel = koliop::portability::MathematicalConstant<Flo64>::k2Pi * a_host_visible_Bstar_s(ivpar, ir, itheta, pSpecies_id_);
+                    for(uint64_t imu = 0; imu <= Nmu_; ++imu) {
+                        const Flo64 ftmp = std::max(a_host_visible_f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id_),
+                                                    0.0);
+
+                        na += jacob_vel * a_host_visible_coeff_intdmu(imu) * a_host_visible_coeff_intdvpar(ivpar) * ftmp;
+
+                        a_host_visible_f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id_) = ftmp;
+                    }
+                }
+
+                const Flo64 invna = 1.0 / na;
+
+                for(uint64_t ivpar = 0; ivpar <= Nvpar_; ++ivpar) {
+                    for(uint64_t imu = 0; imu <= Nmu_; ++imu) {
+                        a_host_visible_f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id_) *= a_host_visible_n_s(ir, itheta, iphi, pSpecies_id_) * invna;
+                    }
+                }
+            };
+
+            const uint64_t the_rank_r_range     = a_host_visible_n_s.extent(0);
+            const uint64_t the_rank_theta_range = a_host_visible_n_s.extent(1);
+            const uint64_t the_rank_phi_range   = a_host_visible_n_s.extent(2);
+
+            const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<3,
+                                                                     Kokkos::Iterate::Left,
+                                                                     Kokkos::Iterate::Left>,
+                                                        Kokkos::DefaultHostExecutionSpace>{{0, 0, 0},
+                                                                                           {the_rank_r_range,
+                                                                                            the_rank_theta_range,
+                                                                                            the_rank_phi_range}};
+
+            Kokkos::parallel_for("DoComputeCorrectionDensity",
+                                 a_policy, the_kernel);
         }
 
         inline void State::PrepareCj_Cjl(ViewMDD2<Flo64>& C_j,

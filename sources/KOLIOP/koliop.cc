@@ -270,3 +270,19 @@
         return KOLIOP_STATUS_SUCCESS;
     });
 }
+
+::koliop_Status koliop_ComputeCorrectionDensity(::koliop_Operator an_operator,
+                                                const double*     Bstar_s,
+                                                double*           f5d_s,
+                                                const double*     n_s) {
+    return koliop::error::FromException([&]() {
+        if(an_operator == nullptr) {
+            return KOLIOP_STATUS_INVALID_VALUE;
+        }
+
+        using State = koliop::collision::State;
+        reinterpret_cast<const State*>(an_operator)->ComputeCorrectionDensity(Bstar_s, f5d_s, n_s);
+
+        return KOLIOP_STATUS_SUCCESS;
+    });
+}
