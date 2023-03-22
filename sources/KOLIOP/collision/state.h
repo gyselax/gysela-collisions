@@ -136,6 +136,12 @@ namespace koliop {
                              const Flo64* q_par_on_nT_s,
                              Flo64        dt) const;
 
+            void ComputeOperationMaxwellianUnshiftedLoc(const Flo64* B_norm,
+                                                        Flo64*       f5d_s,
+                                                        const Flo64* n_s,
+                                                        const Flo64* T_s,
+                                                        uint32_t     choice) const;
+
         protected:
             void DoPrepareNuStar(const ViewUHL1<const Flo64>& a_host_visible_rg,
                                  const ViewUHL1<const Flo64>& a_host_visible_nustaR0_r,
@@ -176,6 +182,8 @@ namespace koliop {
                                const ViewUHL4<const Flo64>& a_host_visible_T_s,
                                const ViewUHL4<const Flo64>& a_host_visible_q_par_on_nT_s,
                                Flo64                        dt) const;
+
+            void DoComputeOperationMaxwellianUnshiftedLoc() const;
 
             static void PrepareCj_Cjl(ViewMDD2<Flo64>& C_j,
                                       ViewMDD3<Flo64>& C_jl);
@@ -465,6 +473,14 @@ namespace koliop {
                           ViewUHL4<const Flo64>{// "unmanaged_host_q_par_on_nT_s",
                                                 q_par_on_nT_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
                           dt);
+        }
+
+        inline void State::ComputeOperationMaxwellianUnshiftedLoc(const Flo64* B_norm,
+                                                                  Flo64*       f5d_s,
+                                                                  const Flo64* n_s,
+                                                                  const Flo64* T_s,
+                                                                  uint32_t     choice) const {
+            DoComputeOperationMaxwellianUnshiftedLoc();
         }
 
         inline void State::DoPrepareNuStar(const ViewUHL1<const Flo64>& a_host_visible_rg,
@@ -928,6 +944,9 @@ namespace koliop {
 
             Kokkos::parallel_for("DoComputeCpar",
                                  a_policy, the_kernel);
+        }
+
+        inline void State::DoComputeOperationMaxwellianUnshiftedLoc() const {
         }
 
         inline void State::PrepareCj_Cjl(ViewMDD2<Flo64>& C_j,

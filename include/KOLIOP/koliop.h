@@ -167,6 +167,12 @@ koliop_Status koliop_ComputeCpar(koliop_Operator an_operator,
                                  const double*   q_par_on_nT_s,
                                  double          dt);
 
+koliop_Status koliop_ComputeOperationMaxwellianUnshiftedLoc(koliop_Operator an_operator,
+                                                            const double*   B_norm,
+                                                            double*         f5d_s,
+                                                            const double*   n_s,
+                                                            const double*   T_s,
+                                                            uint32_t        choice);
 
 #if defined(__cplusplus)
 }

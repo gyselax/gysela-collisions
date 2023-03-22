@@ -325,6 +325,15 @@ int main(int, char**) {
                          &q_par_on_nT_s[0][0][0][0],
                          dt / 2.0);
 
+    static constexpr uint32_t choice = 4;
+
+    ::koliop_ComputeOperationMaxwellianUnshiftedLoc(an_operator,
+                                                    &B_norm[0][0],
+                                                    &f5d_s[0][0][0][0][0][0],
+                                                    &n_s[0][0][0][0],
+                                                    &T_s[0][0][0][0],
+                                                    choice);
+
     if(::koliop_Release(an_operator) != KOLIOP_STATUS_SUCCESS) {
         std::cout << "::koliop_Release() failed\n";
     }

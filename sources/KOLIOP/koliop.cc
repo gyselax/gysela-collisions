@@ -127,7 +127,7 @@
         using State = koliop::collision::State;
 
         // Freeing a nullptr is *fine*.
-        delete reinterpret_cast<State*>(an_operator);
+        delete reinterpret_cast<const State*>(an_operator);
 
         return KOLIOP_STATUS_SUCCESS;
     });
@@ -145,7 +145,7 @@
         }
 
         using State = koliop::collision::State;
-        reinterpret_cast<State*>(an_operator)->PrepareNuStar(rg, nustaR0_r, q_r, mask_buffer_r, nustar_coeff);
+        reinterpret_cast<const State*>(an_operator)->PrepareNuStar(rg, nustaR0_r, q_r, mask_buffer_r, nustar_coeff);
 
         return KOLIOP_STATUS_SUCCESS;
     });
@@ -164,7 +164,7 @@
         }
 
         using State = koliop::collision::State;
-        reinterpret_cast<State*>(an_operator)->ComputeMoments(B_norm, Bstar_s, f5d_s, n_s, U_par_s, T_s);
+        reinterpret_cast<const State*>(an_operator)->ComputeMoments(B_norm, Bstar_s, f5d_s, n_s, U_par_s, T_s);
 
         return KOLIOP_STATUS_SUCCESS;
     });
@@ -184,7 +184,7 @@
         }
 
         using State = koliop::collision::State;
-        reinterpret_cast<State*>(an_operator)->ComputeFrequencyNUAB(nustar_coeff, speciesA, speciesB, Ta, nb, Tb, nu_ab);
+        reinterpret_cast<const State*>(an_operator)->ComputeFrequencyNUAB(nustar_coeff, speciesA, speciesB, Ta, nb, Tb, nu_ab);
 
         return KOLIOP_STATUS_SUCCESS;
     });
@@ -204,7 +204,7 @@
         }
 
         using State = koliop::collision::State;
-        reinterpret_cast<State*>(an_operator)->ComputeEvolutionMaxwellian(nustar_coeff, B_norm, f5d_s, n_s, U_par_s, T_s, dt);
+        reinterpret_cast<const State*>(an_operator)->ComputeEvolutionMaxwellian(nustar_coeff, B_norm, f5d_s, n_s, U_par_s, T_s, dt);
 
         return KOLIOP_STATUS_SUCCESS;
     });
@@ -224,7 +224,7 @@
         }
 
         using State = koliop::collision::State;
-        reinterpret_cast<State*>(an_operator)->ComputeQparOnNT(B_norm, Bstar_s, f5d_s, n_s, U_par_s, T_s, q_par_on_nT_s);
+        reinterpret_cast<const State*>(an_operator)->ComputeQparOnNT(B_norm, Bstar_s, f5d_s, n_s, U_par_s, T_s, q_par_on_nT_s);
 
         return KOLIOP_STATUS_SUCCESS;
     });
@@ -247,7 +247,25 @@
         }
 
         using State = koliop::collision::State;
-        reinterpret_cast<State*>(an_operator)->ComputeCpar(rg, B_norm, q_r, nustaR0_r, f5d_s, n_s, U_par_s, T_s, q_par_on_nT_s, dt);
+        reinterpret_cast<const State*>(an_operator)->ComputeCpar(rg, B_norm, q_r, nustaR0_r, f5d_s, n_s, U_par_s, T_s, q_par_on_nT_s, dt);
+
+        return KOLIOP_STATUS_SUCCESS;
+    });
+}
+
+::koliop_Status koliop_ComputeOperationMaxwellianUnshiftedLoc(::koliop_Operator an_operator,
+                                                              const double*     B_norm,
+                                                              double*           f5d_s,
+                                                              const double*     n_s,
+                                                              const double*     T_s,
+                                                              uint32_t          choice) {
+    return koliop::error::FromException([&]() {
+        if(an_operator == nullptr) {
+            return KOLIOP_STATUS_INVALID_VALUE;
+        }
+
+        using State = koliop::collision::State;
+        reinterpret_cast<const State*>(an_operator)->ComputeOperationMaxwellianUnshiftedLoc(B_norm, f5d_s, n_s, T_s, choice);
 
         return KOLIOP_STATUS_SUCCESS;
     });
