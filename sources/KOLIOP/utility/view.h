@@ -8,63 +8,23 @@
 namespace koliop {
     namespace utility {
 
-        // /// TODO(Etienne M): what about giving an execution space ?
-        // /// NOTE: Kokkos::view_alloc seems broken in our case.
-        // ///
-        // template <typename Dimension,
-        //           typename Layout,
-        //           typename MemorySpace,
-        //           typename T,
-        //           typename... Extents>
-        // auto CreateUnmanagedView(const char* an_identifier,
-        //                          T*          a_pointer,
-        //                          Extents... the_extents) {
-        //     using View = Kokkos::View<Dimension,
-        //                               Layout,
-        //                               MemorySpace,
-        //                               Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
-        //     // NOTE: Completely broken view_alloc ?
-        //     return View{// Kokkos::view_alloc(an_execution_space,
-        //                 //                    Kokkos::WithoutInitializing,
-        //                 //                    an_identifier,
-        //                 //                    a_pointer),
-        //                 a_pointer,
-        //                 the_extents...};
-        // }
-
-        // /// TODO(Etienne M): To be refined
-        // ///
-        // template <typename View0,
-        //           typename View1>
-        // void SmartCopy(const HostView2DDynamic& comb_mat,
-        //                DeviceView2DDynamic&     comb_mat_) {
-        //     {
-        //         // Same layout? | Input ptr on: | Output ptr on:      |
-        //         //              | Host | Other  | Host | (same) Other |
-        //         // Host to host
-        //         //          Yes |    1 | 0      | 1    | 0            | No op (reuse) or alloc+memcpy
-        //         //           No |    1 | 0      | 1    | 0            | alloc+transposition/memcpy
-        //         // Device to device
-        //         //          Yes |    0 | 1      | 0    | 1            | No op (reuse) or alloc+memcpy
-        //         //           No |    0 | 1      | 0    | 1            | alloc+transposition/memcpy
-        //         // Host to device
-        //         //          Yes |    1 | 0      | 0    | 1            | alloc+memcpy
-        //         //           No |    1 | 0      | 0    | 1            | Transpose on host, then memcpy
-        //         // Device to host
-        //         //          Yes |    0 | 1      | 1    | 0            | alloc+memcpy
-        //         //           No |    0 | 1      | 1    | 0            | alloc+transposition/memcpy
-
-        //         if constexpr(std::is_same<HostView2DDynamic::array_layout,
-        //                                   DeviceView2DDynamic::array_layout>::value)
-
-        //             auto tmp = Kokkos::create_mirror_view(comb_mat_);
-        //         Kokkos::deep_copy(tmp, comb_mat);
-        //         Kokkos::deep_copy(comb_mat_, tmp);
-        //     }
-        // }
-
-        /// May still do a deep copy if or memory spaces layouts are not
+        /// May still do a deep copy if memory spaces or layouts are not
         /// compatible.
+        ///
+        /// Same layout? | Input ptr on: | Output ptr on:      |
+        ///              | Host | Other  | Host | (same) Other |
+        /// Host to host
+        ///          Yes |    1 | 0      | 1    | 0            | No op (reuse) or alloc+memcpy
+        ///           No |    1 | 0      | 1    | 0            | alloc+transposition/memcpy
+        /// Device to device
+        ///          Yes |    0 | 1      | 0    | 1            | No op (reuse) or alloc+memcpy
+        ///           No |    0 | 1      | 0    | 1            | alloc+transposition/memcpy
+        /// Host to device
+        ///          Yes |    1 | 0      | 0    | 1            | alloc+memcpy
+        ///           No |    1 | 0      | 0    | 1            | Transpose on host, then memcpy
+        /// Device to host
+        ///          Yes |    0 | 1      | 1    | 0            | alloc+memcpy
+        ///           No |    0 | 1      | 1    | 0            | alloc+transposition/memcpy
         ///
         template <typename FromView,
                   typename ToView>
