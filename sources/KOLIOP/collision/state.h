@@ -183,7 +183,11 @@ namespace koliop {
                                const ViewUHL4<const Flo64>& a_host_visible_q_par_on_nT_s,
                                Flo64                        dt) const;
 
-            void DoComputeOperationMaxwellianUnshiftedLoc() const;
+            void DoComputeOperationMaxwellianUnshiftedLoc(const ViewUHL2<const Flo64>& a_host_visible_B_norm,
+                                                          ViewUHL6<Flo64>&&            a_host_visible_f5d_s,
+                                                          const ViewUHL4<const Flo64>& a_host_visible_n_s,
+                                                          const ViewUHL4<const Flo64>& a_host_visible_T_s,
+                                                          uint32_t                     choice) const;
 
             static void PrepareCj_Cjl(ViewMDD2<Flo64>& C_j,
                                       ViewMDD3<Flo64>& C_jl);
@@ -480,7 +484,21 @@ namespace koliop {
                                                                   const Flo64* n_s,
                                                                   const Flo64* T_s,
                                                                   uint32_t     choice) const {
-            DoComputeOperationMaxwellianUnshiftedLoc();
+
+            const uint64_t the_rank_r_range     = (iend_ + 1) - istart_;
+            const uint64_t the_rank_theta_range = (jend_ + 1) - jstart_;
+            const uint64_t the_rank_phi_range   = static_cast<uint64_t>((collend_ + 1) - collstart_);
+
+            DoComputeOperationMaxwellianUnshiftedLoc(ViewUHL2<const Flo64>{// "unmanaged_host_B_norm",
+                                                                           B_norm, the_rank_r_range, the_rank_theta_range + /* This +1 is weird */ 1},
+                                                     ViewUHL6<Flo64>{// "unmanaged_host_f5d_s",
+                                                                     f5d_s, Nmu_ + 1, Nvpar_ + 1, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
+                                                     ViewUHL4<const Flo64>{// "unmanaged_host_n_s",
+                                                                           n_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
+
+                                                     ViewUHL4<const Flo64>{// "unmanaged_host_T_s",
+                                                                           T_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
+                                                     choice);
         }
 
         inline void State::DoPrepareNuStar(const ViewUHL1<const Flo64>& a_host_visible_rg,
@@ -946,7 +964,11 @@ namespace koliop {
                                  a_policy, the_kernel);
         }
 
-        inline void State::DoComputeOperationMaxwellianUnshiftedLoc() const {
+        inline void State::DoComputeOperationMaxwellianUnshiftedLoc(const ViewUHL2<const Flo64>& a_host_visible_B_norm,
+                                                                    ViewUHL6<Flo64>&&            a_host_visible_f5d_s,
+                                                                    const ViewUHL4<const Flo64>& a_host_visible_n_s,
+                                                                    const ViewUHL4<const Flo64>& a_host_visible_T_s,
+                                                                    uint32_t                     choice) const {
         }
 
         inline void State::PrepareCj_Cjl(ViewMDD2<Flo64>& C_j,
