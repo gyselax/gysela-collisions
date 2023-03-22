@@ -59,6 +59,83 @@ namespace koliop {
         // State definition
         ////////////////////////////////////////////////////////////////////////
 
+        /// TODO(Etinne M): INDEX We have a dilemma. CPU allows for large
+        /// temporary, per thread, buffers. GPU do not (at least for LDS). Due
+        /// to caches hierarchy, CPU like per thread, contiguous memory
+        /// accesses. GPU do not because this kind of access leads to wastes in
+        /// the memory transactions (notion of un-coalesced accesses). Using
+        /// Kokkos, we hope to attain decent performance on both GPU and CPU.
+        ///
+        /// Assuming the following example, all arrays with layout left
+        /// (Fortran).
+        ///
+        ///     collapse(3)
+        ///     for(uint64_t iphi = 0; iphi <= phimax; ++iphi) {
+        ///         for(uint64_t itheta = 0; itheta <= thetamax; ++itheta) {
+        ///             for(uint64_t ir = 0; ir <= rmax; ++ir) {
+        ///                 const Flo64 a = A(ir, itheta);
+        ///                 const Flo64 b = B(ir, itheta, iphi);
+        ///                 for(uint64_t ivpar = 0; ivpar <= vparmax; ++ivpar) {
+        ///                     const Flo64 c = C(ivpar);
+        ///                     for(uint64_t imu = 0; imu <= mumax; ++imu) {
+        ///                         const Flo64 d = D(imu);
+        ///                         E(imu, ivpar, ir, itheta, iphi) *= a + b + c + d;
+        ///                     }
+        ///                 }
+        ///             }
+        ///         }
+        ///     }
+        ///
+        /// Collapsing on the first 3 loops would lead to decent performance on
+        /// CPU. On GPU though, this would be crappy as each thread would do
+        /// linear access in C, D and E. Access in C and D are *ok* that bad,
+        /// because, out of one memory transaction, conceptualize it as a cache
+        /// line, only 8 bytes will be kept but the next fetch will be likely to
+        /// hit the cache. Except that on MI250X cards, we have very few cache
+        /// (8 Mio per GCD!). Access in E are bad because each thread gets a
+        /// different ir value which means, thread n+1 will access memory in a
+        /// stride of mumax*vparmax (strongly un-coalesced).
+        ///
+        /// We could try to inter-exchange the loops but this would then work
+        /// badly on CPU.
+        ///
+        ///     collapse(3)
+        ///     for(uint64_t itheta = 0; itheta <= thetamax; ++itheta) {
+        ///         for(uint64_t ivpar = 0; ivpar <= vparmax; ++ivpar) {
+        ///             for(uint64_t imu = 0; imu <= mumax; ++imu) {
+        ///                 const Flo64 a = A(ir, itheta);
+        ///                 const Flo64 c = C(ivpar);
+        ///                 const Flo64 d = D(imu);
+        ///                 for(uint64_t iphi = 0; iphi <= phimax; ++iphi) {
+        ///                     for(uint64_t ir = 0; ir <= rmax; ++ir) {
+        ///                         const Flo64 b = B(ir, itheta, iphi);
+        ///                         E(imu, ivpar, ir, itheta, iphi) *= a + b + c + d;
+        ///                     }
+        ///                 }
+        ///             }
+        ///         }
+        ///     }
+        ///
+        /// In the end, the most versatile is to collapse everything, do
+        /// redundant computation on GPU and hope that the compiler will
+        /// optimize the computation on CPU.
+        ///
+        ///     collapse(5)
+        ///     for(uint64_t itheta = 0; itheta <= thetamax; ++itheta) {
+        ///         for(uint64_t iphi = 0; iphi <= phimax; ++iphi) {
+        ///             for(uint64_t ir = 0; ir <= rmax; ++ir) {
+        ///                 for(uint64_t ivpar = 0; ivpar <= vparmax; ++ivpar) {
+        ///                     for(uint64_t imu = 0; imu <= mumax; ++imu) {
+        ///                         const Flo64 a = A(ir, itheta);
+        ///                         const Flo64 c = C(ivpar);
+        ///                         const Flo64 d = D(imu);
+        ///                         const Flo64 b = B(ir, itheta, iphi);
+        ///                         E(imu, ivpar, ir, itheta, iphi) *= a + b + c + d;
+        ///                     }
+        ///                 }
+        ///             }
+        ///         }
+        ///     }
         ///
         class State {
         public:
