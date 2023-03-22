@@ -179,6 +179,17 @@ koliop_Status koliop_ComputeCorrectionDensity(koliop_Operator an_operator,
                                               double*         f5d_s,
                                               const double*   n_s);
 
+koliop_Status koliop_ComputeCorrectionUparT(koliop_Operator an_operator,
+                                            const double*   nustar_coeff,
+                                            const double*   B_norm,
+                                            const double*   Bstar_s,
+                                            double*         f5d_s,
+                                            const double*   n_s,
+                                            double*         U_par_s,
+                                            const double*   T_s,
+                                            const double*   q_par_on_nT_s,
+                                            double          dt);
+
 #if defined(__cplusplus)
 }
 #endif

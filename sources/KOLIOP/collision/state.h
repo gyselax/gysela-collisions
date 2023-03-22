@@ -223,6 +223,16 @@ namespace koliop {
                                           Flo64*       f5d_s,
                                           const Flo64* n_s) const;
 
+            void ComputeCorrectionUparT(const Flo64* nustar_coeff,
+                                        const Flo64* B_norm,
+                                        const Flo64* Bstar_s,
+                                        Flo64*       f5d_s,
+                                        const Flo64* n_s,
+                                        Flo64*       U_par_s,
+                                        const Flo64* T_s,
+                                        const Flo64* q_par_on_nT_s,
+                                        Flo64        dt) const;
+
         protected:
             void DoPrepareNuStar(const ViewUHL1<const Flo64>& a_host_visible_rg,
                                  const ViewUHL1<const Flo64>& a_host_visible_nustaR0_r,
@@ -273,6 +283,8 @@ namespace koliop {
             void DoComputeCorrectionDensity(const ViewUHL4<const Flo64>& a_host_visible_Bstar_s,
                                             ViewUHL6<Flo64>&&            a_host_visible_f5d_s,
                                             const ViewUHL4<const Flo64>& a_host_visible_n_s) const;
+
+            void DoComputeCorrectionUparT() const;
 
             static void PrepareCj_Cjl(ViewMDD2<Flo64>& C_j,
                                       ViewMDD3<Flo64>& C_jl);
@@ -599,6 +611,18 @@ namespace koliop {
                                                        f5d_s, Nmu_ + 1, Nvpar_ + 1, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
                                        ViewUHL4<const Flo64>{// "unmanaged_host_n_s",
                                                              n_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_});
+        }
+
+        inline void State::ComputeCorrectionUparT(const Flo64* nustar_coeff,
+                                                  const Flo64* B_norm,
+                                                  const Flo64* Bstar_s,
+                                                  Flo64*       f5d_s,
+                                                  const Flo64* n_s,
+                                                  Flo64*       U_par_s,
+                                                  const Flo64* T_s,
+                                                  const Flo64* q_par_on_nT_s,
+                                                  Flo64        dt) const {
+            DoComputeCorrectionUparT();
         }
 
         inline void State::DoPrepareNuStar(const ViewUHL1<const Flo64>& a_host_visible_rg,
@@ -1198,6 +1222,9 @@ namespace koliop {
 
             Kokkos::parallel_for("DoComputeCorrectionDensity",
                                  a_policy, the_kernel);
+        }
+
+        inline void State::DoComputeCorrectionUparT() const {
         }
 
         inline void State::PrepareCj_Cjl(ViewMDD2<Flo64>& C_j,
