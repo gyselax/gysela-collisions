@@ -298,6 +298,24 @@ namespace koliop {
                                                           const ViewUHL4<const Flo64>& a_host_visible_T_s,
                                                           uint32_t                     choice) const;
 
+            void DoComputeBlockTo1d(uint64_t                       ir_start,
+                                    uint64_t                       ir_end,
+                                    uint64_t                       itheta_start,
+                                    uint64_t                       itheta_end,
+                                    uint64_t                       iphi_start,
+                                    uint64_t                       iphi_end,
+                                    const ViewUHL2<const uint8_t>& mask_coll,
+                                    const ViewUHL3<const Flo64>&   nustar_coeff,
+                                    const ViewUHL4<const Flo64>&   n_s,
+                                    const ViewUHL4<const Flo64>&   U_par_s,
+                                    const ViewUHL4<const Flo64>&   T_s,
+                                    const ViewUHL4<const Flo64>&   q_par_on_nT_s,
+                                    ViewUHL2<Flo64>&&              n1d_s,
+                                    ViewUHL2<Flo64>&&              T1d_s,
+                                    ViewUHL1<Flo64>&&              U_par1d,
+                                    ViewUHL1<Flo64>&&              q_par_on_nT1d,
+                                    ViewUHL1<Flo64>&&              nu1d) const;
+
             void DoComputeCorrectionDensity(const ViewUHL4<const Flo64>& a_host_visible_Bstar_s,
                                             ViewUHL6<Flo64>&&            a_host_visible_f5d_s,
                                             const ViewUHL4<const Flo64>& a_host_visible_n_s) const;
@@ -644,6 +662,44 @@ namespace koliop {
                                             double*        U_par1d,
                                             double*        q_par_on_nT1d,
                                             double*        nu1d) const {
+
+            const uint64_t ir_block_size     = (ir_end + 1) - ir_start;
+            const uint64_t itheta_block_size = (itheta_end + 1) - itheta_start;
+            const uint64_t iphi_block_size   = (iphi_end + 1) - iphi_start;
+
+            const uint64_t Nspace = ir_block_size * itheta_block_size * iphi_block_size - 1;
+
+            const uint64_t the_rank_r_range     = (iend_ + 1) - istart_;
+            const uint64_t the_rank_theta_range = (jend_ + 1) - jstart_;
+            const uint64_t the_rank_phi_range   = static_cast<uint64_t>((collend_ + 1) - collstart_);
+
+            DoComputeBlockTo1d(ir_start,
+                               ir_end,
+                               itheta_start,
+                               itheta_end,
+                               iphi_start,
+                               iphi_end,
+                               ViewUHL2<const uint8_t>{mask_coll, ir_block_size, itheta_block_size},
+                               ViewUHL3<const Flo64>{// "unmanaged_host_nustar_coeff",
+                                                     nustar_coeff, Nspecies_, Nspecies_, the_rank_r_range},
+                               ViewUHL4<const Flo64>{// "unmanaged_host_n_s",
+                                                     n_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
+                               ViewUHL4<const Flo64>{// "unmanaged_host_U_par_s",
+                                                     U_par_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
+                               ViewUHL4<const Flo64>{// "unmanaged_host_T_s",
+                                                     T_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
+                               ViewUHL4<const Flo64>{// "unmanaged_host_q_par_on_nT_s",
+                                                     q_par_on_nT_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
+                               ViewUHL2<Flo64>{// "unmanaged_host_n1d_s",
+                                               n1d_s, Nspecies_, Nspace + 1},
+                               ViewUHL2<Flo64>{// "unmanaged_host_T1d_s"
+                                               T1d_s, Nspecies_, Nspace + 1},
+                               ViewUHL1<Flo64>{// "unmanaged_host_U_par1d"
+                                               U_par1d, Nspace + 1},
+                               ViewUHL1<Flo64>{// "unmanaged_host_q_par_on_nT1d"
+                                               q_par_on_nT1d, Nspace + 1},
+                               ViewUHL1<Flo64>{// "unmanaged_host_nu1d"
+                                               nu1d, Nspace + 1});
         }
 
         inline void State::ComputeCorrectionDensity(const Flo64* Bstar_s,
@@ -1240,6 +1296,25 @@ namespace koliop {
                     KOLIOP_ASSERT(false);
                     break;
             }
+        }
+
+        inline void State::DoComputeBlockTo1d(uint64_t                       ir_start,
+                                              uint64_t                       ir_end,
+                                              uint64_t                       itheta_start,
+                                              uint64_t                       itheta_end,
+                                              uint64_t                       iphi_start,
+                                              uint64_t                       iphi_end,
+                                              const ViewUHL2<const uint8_t>& mask_coll,
+                                              const ViewUHL3<const Flo64>&   nustar_coeff,
+                                              const ViewUHL4<const Flo64>&   n_s,
+                                              const ViewUHL4<const Flo64>&   U_par_s,
+                                              const ViewUHL4<const Flo64>&   T_s,
+                                              const ViewUHL4<const Flo64>&   q_par_on_nT_s,
+                                              ViewUHL2<Flo64>&&              n1d_s,
+                                              ViewUHL2<Flo64>&&              T1d_s,
+                                              ViewUHL1<Flo64>&&              U_par1d,
+                                              ViewUHL1<Flo64>&&              q_par_on_nT1d,
+                                              ViewUHL1<Flo64>&&              nu1d) const {
         }
 
         inline void State::DoComputeCorrectionDensity(const ViewUHL4<const Flo64>& a_host_visible_Bstar_s,
