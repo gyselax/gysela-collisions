@@ -271,6 +271,36 @@
     });
 }
 
+::koliop_Status koliop_ComputeBlockTo1d(::koliop_Operator an_operator,
+                                        uint64_t          ir_start,
+                                        uint64_t          ir_end,
+                                        uint64_t          itheta_start,
+                                        uint64_t          itheta_end,
+                                        uint64_t          iphi_start,
+                                        uint64_t          iphi_end,
+                                        const uint8_t*    mask_coll,
+                                        const double*     nustar_coeff,
+                                        const double*     n_s,
+                                        const double*     U_par_s,
+                                        const double*     T_s,
+                                        const double*     q_par_on_nT_s,
+                                        double*           n1d_s,
+                                        double*           T1d_s,
+                                        double*           U_par1d,
+                                        double*           q_par_on_nT1d,
+                                        double*           nu1d) {
+    return koliop::error::FromException([&]() {
+        if(an_operator == nullptr) {
+            return KOLIOP_STATUS_INVALID_VALUE;
+        }
+
+        using State = koliop::collision::State;
+        reinterpret_cast<const State*>(an_operator)->ComputeBlockTo1d(ir_start, ir_end, itheta_start, itheta_end, iphi_start, iphi_end, mask_coll, nustar_coeff, n_s, U_par_s, T_s, q_par_on_nT_s, n1d_s, T1d_s, U_par1d, q_par_on_nT1d, nu1d);
+
+        return KOLIOP_STATUS_SUCCESS;
+    });
+}
+
 ::koliop_Status koliop_ComputeCorrectionDensity(::koliop_Operator an_operator,
                                                 const double*     Bstar_s,
                                                 double*           f5d_s,

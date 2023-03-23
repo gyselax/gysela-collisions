@@ -174,6 +174,25 @@ koliop_Status koliop_ComputeOperationMaxwellianUnshiftedLoc(koliop_Operator an_o
                                                             const double*   T_s,
                                                             uint32_t        choice);
 
+koliop_Status koliop_ComputeBlockTo1d(koliop_Operator an_operator,
+                                      uint64_t        ir_start,
+                                      uint64_t        ir_end,
+                                      uint64_t        itheta_start,
+                                      uint64_t        itheta_end,
+                                      uint64_t        iphi_start,
+                                      uint64_t        iphi_end,
+                                      const uint8_t*  mask_coll,
+                                      const double*   nustar_coeff,
+                                      const double*   n_s,
+                                      const double*   U_par_s,
+                                      const double*   T_s,
+                                      const double*   q_par_on_nT_s,
+                                      double*         n1d_s,
+                                      double*         T1d_s,
+                                      double*         U_par1d,
+                                      double*         q_par_on_nT1d,
+                                      double*         nu1d);
+
 koliop_Status koliop_ComputeCorrectionDensity(koliop_Operator an_operator,
                                               const double*   Bstar_s,
                                               double*         f5d_s,

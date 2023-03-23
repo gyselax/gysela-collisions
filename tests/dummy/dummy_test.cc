@@ -334,24 +334,71 @@ int main(int, char**) {
                                                     &T_s[0][0][0][0],
                                                     choice);
 
-    // ::koliop_ComputeAlphaProjection(an_operator,
-    //                                 // Npol
-    //                                 // ir_start
-    //                                 // ir_end
-    //                                 // itheta_start
-    //                                 // itheta_end
-    //                                 // iphi_start
-    //                                 // iphi_end
-    //                                 // mask_coll(ir_start:,itheta_start:)
-    //                                 // mug(0:)
-    //                                 // coeff_intdmu(0:)
-    //                                 // B_norm(0:,0:)
-    //                                 // f5d_s(0:,0:,istart_:,jstart_:,collstart_:,0:)
-    //                                 // T_s(istart_:,jstart_:,collstart_:,0:)
-    //                                 // RHS_vec(0:,0:,0:)
-    // );
+    static constexpr uint64_t ir_block_size     = 8;
+    static constexpr uint64_t itheta_block_size = 1;
+    static constexpr uint64_t iphi_block_size   = 1;
 
-    // libcoll_block_to_1d;
+    static constexpr uint64_t Nspace = ir_block_size * itheta_block_size * iphi_block_size - 1;
+
+    double n1d_s[Nspecies][Nspace + 1]{};
+    double T1d_s[Nspecies][Nspace + 1]{};
+    double U_par1d[Nspace + 1]{};
+    double q_par_on_nT1d[Nspace + 1]{};
+    double nu1d[Nspace + 1]{};
+
+    static constexpr double RHS_vec[Nvpar + 1][Npolmax][Nspace + 1]{};
+    static constexpr double N0[Npolmax][Npolmax][Nspace + 1][Nvpar + 1]{};
+    static constexpr double N1[Npolmax][Npolmax][Nspace + 1][Nvpar + 1]{};
+    static constexpr double N2[Npolmax][Npolmax][Nspace + 1][Nvpar + 1]{};
+    static constexpr double D_mat[Nspace + 1][Npolmax][Npolmax * (Nvpar + 1)]{};
+    static constexpr double DL_mat[Nspace + 1][Npolmax][Npolmax * Nvpar]{};
+    static constexpr double DU1_mat[Nspace + 1][Npolmax][Npolmax * Nvpar]{};
+    static constexpr double DU2_mat[Nspace + 1][Npolmax][Npolmax * (Nvpar - 1)]{};
+
+    static constexpr uint64_t ir_start     = 0;
+    static constexpr uint64_t ir_end       = ir_start + ir_block_size - 1;
+    static constexpr uint64_t itheta_start = 0;
+    static constexpr uint64_t itheta_end   = itheta_start + itheta_block_size - 1;
+    static constexpr uint64_t iphi_start   = 0;
+    static constexpr uint64_t iphi_end     = iphi_start + iphi_block_size - 1;
+
+    static constexpr uint8_t mask_coll[itheta_block_size][ir_block_size]{};
+
+    // ::koliop_ComputeAlphaProjection(an_operator,
+    //                                 Npol,
+    //                                 ir_start,
+    //                                 ir_end,
+    //                                 itheta_start,
+    //                                 itheta_end,
+    //                                 iphi_start,
+    //                                 iphi_end,
+    //                                 &mask_coll,
+    //                                 &mug,
+    //                                 &coeff_intdmu,
+    //                                 &B_norm,
+    //                                 &f5d_s,
+    //                                 &T_s,
+    //                                 &RHS_vec);
+
+    ::koliop_ComputeBlockTo1d(an_operator,
+                              ir_start,
+                              ir_end,
+                              itheta_start,
+                              itheta_end,
+                              iphi_start,
+                              iphi_end,
+                              &mask_coll[0][0],
+                              &nustar_coeff[0][0][0],
+                              &n_s[0][0][0][0],
+                              &U_par_s[0][0][0][0],
+                              &T_s[0][0][0][0],
+                              &q_par_on_nT_s[0][0][0][0],
+                              &n1d_s[0][0],
+                              &T1d_s[0][0],
+                              &U_par1d[0],
+                              &q_par_on_nT1d[0],
+                              &nu1d[0]);
+
     // libcoll_CvCd;
     // libcoll_reconstruction;
 
