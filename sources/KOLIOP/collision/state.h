@@ -308,6 +308,10 @@ namespace koliop {
                                    Flo64 nb,
                                    Flo64 Tb);
 
+            static KOKKOS_INLINE_FUNCTION Flo64
+            DoComputeLaguerrePol(uint64_t l,
+                                 Flo64    x);
+
             // TODO(Etienne M): Convert all these indicies to half open ranges
             // counter.
             uint64_t Npolmax_;
@@ -1451,13 +1455,33 @@ namespace koliop {
             const Flo64 vTa = Kokkos::sqrt(Ta / hat_As_speciesA);
             const Flo64 vTb = Kokkos::sqrt(Tb / hat_As_speciesB);
 
-            // NOTE: SIMPLIFY We could do:
+            // TODO(Etienne M): SIMPLIFY We could do:
             // (nustar_coeff * nb) *
             //     std::pow((Tb * hat_As_speciesA +
             //               Ta * hat_As_speciesB) /
             //                  (hat_As_speciesA * hat_As_speciesB),
             //              -3.0 / 2.0);
             return (nustar_coeff * nb) / ((vTa * vTa + vTb * vTb) * Kokkos::sqrt(vTa * vTa + vTb * vTb));
+        }
+
+        KOKKOS_INLINE_FUNCTION Flo64
+        State::DoComputeLaguerrePol(uint64_t l, Flo64 x) {
+            // TODO(Etienne M): find a better way to compute that, based on l.
+            switch(l) {
+                case 0:
+                    return 1.0;
+                case 1:
+                    return -x + 1.0;
+                case 2:
+                    return (1.0 / 2.0) + (-4 + /* 1 * */ x) * x;
+                case 3:
+                    // Horner -> dependency            : 1 + (-3 + (1.5 - 1/6 * x) * x) * x
+                    // but FMA friendly.
+                    // Naive  -> latency and dependency: (1.0 / 6.0) * (-(x * x * x) + 9.0 * x * x - 18.0 * x + 6.0);
+                    // Slow.
+                    // Factorized -> low latency       : ((-1.0 / 6.0) * (x - 0.41577455678347908331)) * ((x - 2.29428036027904171982) * (x - 6.28994508293747919686))
+                    return 1.0 + (-3.0 + (1.5 - (1.0 / 6.0) * x) * x) * x;
+            }
         }
 
     } // namespace collision
