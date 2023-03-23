@@ -271,6 +271,30 @@
     });
 }
 
+::koliop_Status koliop_ComputeAlphaProjection(::koliop_Operator an_operator,
+                                              uint64_t          ir_start,
+                                              uint64_t          ir_end,
+                                              uint64_t          itheta_start,
+                                              uint64_t          itheta_end,
+                                              uint64_t          iphi_start,
+                                              uint64_t          iphi_end,
+                                              const uint8_t*    mask_coll,
+                                              const double*     B_norm,
+                                              const double*     f5d_s,
+                                              const double*     T_s,
+                                              double*           RHS_vec) {
+    return koliop::error::FromException([&]() {
+        if(an_operator == nullptr) {
+            return KOLIOP_STATUS_INVALID_VALUE;
+        }
+
+        using State = koliop::collision::State;
+        reinterpret_cast<const State*>(an_operator)->ComputeAlphaProjection(ir_start, ir_end, itheta_start, itheta_end, iphi_start, iphi_end, mask_coll, B_norm, f5d_s, T_s, RHS_vec);
+
+        return KOLIOP_STATUS_SUCCESS;
+    });
+}
+
 ::koliop_Status koliop_ComputeBlockTo1d(::koliop_Operator an_operator,
                                         uint64_t          ir_start,
                                         uint64_t          ir_end,

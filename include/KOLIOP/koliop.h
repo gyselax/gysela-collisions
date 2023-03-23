@@ -174,6 +174,19 @@ koliop_Status koliop_ComputeOperationMaxwellianUnshiftedLoc(koliop_Operator an_o
                                                             const double*   T_s,
                                                             uint32_t        choice);
 
+koliop_Status koliop_ComputeAlphaProjection(koliop_Operator an_operator,
+                                            uint64_t        ir_start,
+                                            uint64_t        ir_end,
+                                            uint64_t        itheta_start,
+                                            uint64_t        itheta_end,
+                                            uint64_t        iphi_start,
+                                            uint64_t        iphi_end,
+                                            const uint8_t*  mask_coll,
+                                            const double*   B_norm,
+                                            const double*   f5d_s,
+                                            const double*   T_s,
+                                            double*         RHS_vec);
+
 koliop_Status koliop_ComputeBlockTo1d(koliop_Operator an_operator,
                                       uint64_t        ir_start,
                                       uint64_t        ir_end,

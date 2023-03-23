@@ -346,7 +346,7 @@ int main(int, char**) {
     double q_par_on_nT1d[Nspace + 1]{};
     double nu1d[Nspace + 1]{};
 
-    static constexpr double RHS_vec[Nvpar + 1][Npolmax][Nspace + 1]{};
+    double                  RHS_vec[Nvpar + 1][Npolmax][Nspace + 1]{};
     static constexpr double N0[Npolmax][Npolmax][Nspace + 1][Nvpar + 1]{};
     static constexpr double N1[Npolmax][Npolmax][Nspace + 1][Nvpar + 1]{};
     static constexpr double N2[Npolmax][Npolmax][Nspace + 1][Nvpar + 1]{};
@@ -364,21 +364,18 @@ int main(int, char**) {
 
     static constexpr uint8_t mask_coll[itheta_block_size][ir_block_size]{};
 
-    // ::koliop_ComputeAlphaProjection(an_operator,
-    //                                 Npol,
-    //                                 ir_start,
-    //                                 ir_end,
-    //                                 itheta_start,
-    //                                 itheta_end,
-    //                                 iphi_start,
-    //                                 iphi_end,
-    //                                 &mask_coll,
-    //                                 &mug,
-    //                                 &coeff_intdmu,
-    //                                 &B_norm,
-    //                                 &f5d_s,
-    //                                 &T_s,
-    //                                 &RHS_vec);
+    ::koliop_ComputeAlphaProjection(an_operator,
+                                    ir_start,
+                                    ir_end,
+                                    itheta_start,
+                                    itheta_end,
+                                    iphi_start,
+                                    iphi_end,
+                                    &mask_coll[0][0],
+                                    &B_norm[0][0],
+                                    &f5d_s[0][0][0][0][0][0],
+                                    &T_s[0][0][0][0],
+                                    &RHS_vec[0][0][0]);
 
     ::koliop_ComputeBlockTo1d(an_operator,
                               ir_start,

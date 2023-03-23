@@ -220,6 +220,18 @@ namespace koliop {
                                                         const Flo64* T_s,
                                                         uint32_t     choice) const;
 
+            void ComputeAlphaProjection(uint64_t       ir_start,
+                                        uint64_t       ir_end,
+                                        uint64_t       itheta_start,
+                                        uint64_t       itheta_end,
+                                        uint64_t       iphi_start,
+                                        uint64_t       iphi_end,
+                                        const uint8_t* mask_coll,
+                                        const Flo64*   B_norm,
+                                        const Flo64*   f5d_s,
+                                        const Flo64*   T_s,
+                                        Flo64*         RHS_vec) const;
+
             void ComputeBlockTo1d(uint64_t       ir_start,
                                   uint64_t       ir_end,
                                   uint64_t       itheta_start,
@@ -641,6 +653,19 @@ namespace koliop {
                                                      ViewUHL4<const Flo64>{// "unmanaged_host_T_s",
                                                                            T_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
                                                      choice);
+        }
+
+        inline void State::ComputeAlphaProjection(uint64_t       ir_start,
+                                                  uint64_t       ir_end,
+                                                  uint64_t       itheta_start,
+                                                  uint64_t       itheta_end,
+                                                  uint64_t       iphi_start,
+                                                  uint64_t       iphi_end,
+                                                  const uint8_t* mask_coll,
+                                                  const Flo64*   B_norm,
+                                                  const Flo64*   f5d_s,
+                                                  const Flo64*   T_s,
+                                                  Flo64*         RHS_vec) const {
         }
 
         inline void State::ComputeBlockTo1d(uint64_t       ir_start,
