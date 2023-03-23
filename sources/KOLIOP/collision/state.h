@@ -117,8 +117,9 @@ namespace koliop {
         ///     }
         ///
         /// In the end, the most versatile is to collapse everything, do
-        /// redundant computation on GPU and hope that the compiler will
-        /// optimize the computation on CPU.
+        /// redundant computation on GPU but dont waste what you bring from
+        /// global memory and hope that the compiler will optimize the redundant
+        /// loads and computations computation on CPU.
         ///
         ///     collapse(5)
         ///     for(uint64_t itheta = 0; itheta <= thetamax; ++itheta) {
@@ -298,12 +299,9 @@ namespace koliop {
                                                           const ViewUHL4<const Flo64>& a_host_visible_T_s,
                                                           uint32_t                     choice) const;
 
-            void DoComputeBlockTo1d(uint64_t                       ir_start,
-                                    uint64_t                       ir_end,
-                                    uint64_t                       itheta_start,
-                                    uint64_t                       itheta_end,
-                                    uint64_t                       iphi_start,
-                                    uint64_t                       iphi_end,
+            void DoComputeBlockTo1d(uint64_t                       ir_block_size,
+                                    uint64_t                       itheta_block_size,
+                                    uint64_t                       iphi_block_size,
                                     const ViewUHL2<const uint8_t>& mask_coll,
                                     const ViewUHL3<const Flo64>&   nustar_coeff,
                                     const ViewUHL4<const Flo64>&   n_s,
@@ -673,12 +671,9 @@ namespace koliop {
             const uint64_t the_rank_theta_range = (jend_ + 1) - jstart_;
             const uint64_t the_rank_phi_range   = static_cast<uint64_t>((collend_ + 1) - collstart_);
 
-            DoComputeBlockTo1d(ir_start,
-                               ir_end,
-                               itheta_start,
-                               itheta_end,
-                               iphi_start,
-                               iphi_end,
+            DoComputeBlockTo1d(ir_block_size,
+                               itheta_block_size,
+                               iphi_block_size,
                                ViewUHL2<const uint8_t>{mask_coll, ir_block_size, itheta_block_size},
                                ViewUHL3<const Flo64>{// "unmanaged_host_nustar_coeff",
                                                      nustar_coeff, Nspecies_, Nspecies_, the_rank_r_range},
@@ -1298,23 +1293,59 @@ namespace koliop {
             }
         }
 
-        inline void State::DoComputeBlockTo1d(uint64_t                       ir_start,
-                                              uint64_t                       ir_end,
-                                              uint64_t                       itheta_start,
-                                              uint64_t                       itheta_end,
-                                              uint64_t                       iphi_start,
-                                              uint64_t                       iphi_end,
-                                              const ViewUHL2<const uint8_t>& mask_coll,
-                                              const ViewUHL3<const Flo64>&   nustar_coeff,
-                                              const ViewUHL4<const Flo64>&   n_s,
-                                              const ViewUHL4<const Flo64>&   U_par_s,
-                                              const ViewUHL4<const Flo64>&   T_s,
-                                              const ViewUHL4<const Flo64>&   q_par_on_nT_s,
-                                              ViewUHL2<Flo64>&&              n1d_s,
-                                              ViewUHL2<Flo64>&&              T1d_s,
-                                              ViewUHL1<Flo64>&&              U_par1d,
-                                              ViewUHL1<Flo64>&&              q_par_on_nT1d,
-                                              ViewUHL1<Flo64>&&              nu1d) const {
+        inline void State::DoComputeBlockTo1d(uint64_t                       ir_block_size,
+                                              uint64_t                       itheta_block_size,
+                                              uint64_t                       iphi_block_size,
+                                              const ViewUHL2<const uint8_t>& a_host_visible_mask_coll,
+                                              const ViewUHL3<const Flo64>&   a_host_visible_nustar_coeff,
+                                              const ViewUHL4<const Flo64>&   a_host_visible_n_s,
+                                              const ViewUHL4<const Flo64>&   a_host_visible_U_par_s,
+                                              const ViewUHL4<const Flo64>&   a_host_visible_T_s,
+                                              const ViewUHL4<const Flo64>&   a_host_visible_q_par_on_nT_s,
+                                              ViewUHL2<Flo64>&&              a_host_visible_n1d_s,
+                                              ViewUHL2<Flo64>&&              a_host_visible_T1d_s,
+                                              ViewUHL1<Flo64>&&              a_host_visible_U_par1d,
+                                              ViewUHL1<Flo64>&&              a_host_visible_q_par_on_nT1d,
+                                              ViewUHL1<Flo64>&&              a_host_visible_nu1d) const {
+
+            const auto a_host_visible_hat_As = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{},
+                                                                                                      Kokkos::WithoutInitializing),
+                                                                                   hat_As_);
+
+            const auto the_kernel = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi) {
+                const uint64_t ispace = iphi * itheta_block_size * ir_block_size +
+                                        itheta * ir_block_size +
+                                        ir;
+
+                if(!a_host_visible_mask_coll(ir, itheta))
+                    return;
+
+                for(uint64_t ispecies = 0; ispecies < Nspecies_; ++ispecies) {
+                    a_host_visible_n1d_s(ispace, ispecies) = a_host_visible_n_s(ir, itheta, iphi, ispecies);
+                    a_host_visible_T1d_s(ispace, ispecies) = a_host_visible_T_s(ir, itheta, iphi, ispecies);
+                }
+
+                a_host_visible_U_par1d(ispace)       = a_host_visible_U_par_s(ir, itheta, iphi, pSpecies_id_);
+                a_host_visible_q_par_on_nT1d(ispace) = a_host_visible_q_par_on_nT_s(ir, itheta, iphi, pSpecies_id_);
+
+                a_host_visible_nu1d(ispace) = DoComputeFrequencyNUAB(a_host_visible_nustar_coeff(pSpecies_id_, pSpecies_id_, ir),
+                                                                     a_host_visible_hat_As(pSpecies_id_),
+                                                                     a_host_visible_hat_As(pSpecies_id_),
+                                                                     a_host_visible_T1d_s(ispace, pSpecies_id_),
+                                                                     a_host_visible_n1d_s(ispace, pSpecies_id_),
+                                                                     a_host_visible_T1d_s(ispace, pSpecies_id_));
+            };
+
+            const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<3,
+                                                                     Kokkos::Iterate::Left,
+                                                                     Kokkos::Iterate::Left>,
+                                                        Kokkos::DefaultHostExecutionSpace>{{0, 0, 0},
+                                                                                           {ir_block_size,
+                                                                                            itheta_block_size,
+                                                                                            iphi_block_size}};
+
+            Kokkos::parallel_for("DoComputeBlockTo1d",
+                                 a_policy, the_kernel);
         }
 
         inline void State::DoComputeCorrectionDensity(const ViewUHL4<const Flo64>& a_host_visible_Bstar_s,
@@ -1396,6 +1427,7 @@ namespace koliop {
                                                                                            coeff_intdvpar_);
 
             const auto the_kernel = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi) {
+                // TODO(Etienne M): INDEX not coalesced.
                 const Flo64 Bij            = a_host_visible_B_norm(ir, itheta);
                 const Flo64 na             = a_host_visible_n_s(ir, itheta, iphi, pSpecies_id_);
                 Flo64       impulsion_coll = 0.0;
