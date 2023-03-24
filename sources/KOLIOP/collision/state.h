@@ -570,6 +570,9 @@ namespace koliop {
                                              U_par_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
                              ViewUHL4<Flo64>{// "unmanaged_host_T_s",
                                              T_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_});
+
+            // TODO(Etienne M): ASYNC, relax that constraint ?
+            Kokkos::fence();
         }
 
         inline void State::ComputeFrequencyNUAB(Flo64    nustar_coeff,
@@ -617,6 +620,9 @@ namespace koliop {
                                          ViewUHL4<Flo64>{// "unmanaged_host_T_s",
                                                          T_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
                                          dt);
+
+            // TODO(Etienne M): ASYNC, relax that constraint ?
+            Kokkos::fence();
         }
 
         inline void State::ComputeQparOnNT(const Flo64* B_norm,
@@ -644,6 +650,9 @@ namespace koliop {
                                                     T_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
                               ViewUHL4<Flo64>{// "unmanaged_host_q_par_on_nT_s",
                                               q_par_on_nT_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_});
+
+            // TODO(Etienne M): ASYNC, relax that constraint ?
+            Kokkos::fence();
         }
 
         inline void State::ComputeCpar(const Flo64* rg,
@@ -680,6 +689,9 @@ namespace koliop {
                           ViewUHL4<const Flo64>{// "unmanaged_host_q_par_on_nT_s",
                                                 q_par_on_nT_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
                           dt);
+
+            // TODO(Etienne M): ASYNC, relax that constraint ?
+            Kokkos::fence();
         }
 
         inline void State::ComputeOperationMaxwellianUnshiftedLoc(const Flo64* B_norm,
@@ -701,6 +713,9 @@ namespace koliop {
                                                      ViewUHL4<const Flo64>{// "unmanaged_host_T_s",
                                                                            T_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
                                                      choice);
+
+            // TODO(Etienne M): ASYNC, relax that constraint ?
+            Kokkos::fence();
         }
 
         inline void State::ComputeAlphaProjection(uint64_t       ir_start,
@@ -738,6 +753,9 @@ namespace koliop {
                                                            T_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
                                      ViewUHL3<Flo64>{// "unmanaged_host_RHS_vec",
                                                      RHS_vec, Nspace + 1, Npolmax_, Nvpar_ + 1});
+
+            // TODO(Etienne M): ASYNC, relax that constraint ?
+            Kokkos::fence();
         }
 
         inline void State::ComputeBlockTo1d(uint64_t       ir_start,
@@ -793,6 +811,9 @@ namespace koliop {
                                                q_par_on_nT1d, Nspace + 1},
                                ViewUHL1<Flo64>{// "unmanaged_host_nu1d"
                                                nu1d, Nspace + 1});
+
+            // TODO(Etienne M): ASYNC, relax that constraint ?
+            Kokkos::fence();
         }
 
         inline void State::ComputeCorrectionDensity(const Flo64* Bstar_s,
@@ -809,6 +830,9 @@ namespace koliop {
                                                        f5d_s, Nmu_ + 1, Nvpar_ + 1, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
                                        ViewUHL4<const Flo64>{// "unmanaged_host_n_s",
                                                              n_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_});
+
+            // TODO(Etienne M): ASYNC, relax that constraint ?
+            Kokkos::fence();
         }
 
         inline void State::ComputeCvCd(uint64_t     Nspace,
@@ -867,6 +891,9 @@ namespace koliop {
                                                           T_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
                                     ViewUHL3<const Flo64>{// "unmanaged_host_RHS_vec",
                                                           RHS_vec, Nspace + 1, Npolmax_, Nvpar_ + 1});
+
+            // TODO(Etienne M): ASYNC, relax that constraint ?
+            Kokkos::fence();
         }
 
         inline void State::ComputeCorrectionUparT(const Flo64* nustar_coeff,
@@ -900,6 +927,9 @@ namespace koliop {
                                      ViewUHL4<const Flo64>{// "unmanaged_host_q_par_on_nT_s",
                                                            q_par_on_nT_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
                                      dt);
+
+            // TODO(Etienne M): ASYNC, relax that constraint ?
+            Kokkos::fence();
         }
 
         inline void State::DoPrepareNuStar(const ViewUHL1<const Flo64>& a_host_visible_rg,
