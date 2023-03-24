@@ -1535,53 +1535,39 @@ namespace koliop {
                                                    const ViewUHL4<const Flo64>&   a_host_visible_T_s,
                                                    const ViewUHL3<const Flo64>&   a_host_visible_RHS_vec) const {
 
-            const auto the_kernel = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi){
+            const auto a_host_visible_mug = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{},
+                                                                                                   Kokkos::WithoutInitializing),
+                                                                                mug_);
 
-                // logical  , contiguous, intent(in)    :: mask_coll(ir_start:,itheta_start:)
-                // real(F64), contiguous, intent(in)    :: mug(0:)
-                // real(F64), contiguous, intent(in)    :: B_norm(0:,0:)
-                // real(F64), contiguous, intent(inout) :: f5d_s(0:,0:,istart_:,jstart_:,collstart_:,0:)
-                // real(F64), contiguous, intent(in)    :: T_s(istart_:,jstart_:,collstart_:,0:)
-                // real(F64), contiguous, intent(in)    :: RHS_vec(0:,0:,0:)
+            const auto the_kernel = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi) {
+                // TODO(Etienne M): INDEX not coalesced.
+                // TODO(Etienne M): Expensive DoComputeLaguerrePol call.
 
-                // integer   :: imu, ivpar, ir, itheta, iphi, ispace, ipol
-                // real(F64) :: BoT, muBoT
-                // real(F64) :: Laguerre_coeffs(0:Nmu_,0:Npol-1)
+                const uint64_t ispace = iphi * itheta_block_size * ir_block_size +
+                                        itheta * ir_block_size +
+                                        ir;
 
-                // ispace = 0
+                if(!a_host_visible_mask_coll(ir, itheta))
+                    return;
 
-                // do iphi = iphi_start, iphi_end
-                //   do itheta = itheta_start, itheta_end
-                //     do ir = ir_start, ir_end
+                const Flo64 BoT = a_host_visible_B_norm(ir, itheta) / a_host_visible_T_s(ir, itheta, iphi, pSpecies_id_);
 
-                //       if ( .not. mask_coll(ir,itheta) ) cycle
+                for(uint64_t ivpar = 0; ivpar <= Nvpar_; ++ivpar) {
+                    // TODO(Etienne M): Interchange loops and remove this
+                    // initialization. Use a temporary scalar, and do the
+                    // reduction.
+                    for(uint64_t imu = 0; imu <= Nmu_; ++imu) {
+                        a_host_visible_f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id_) = 0.0;
+                    }
 
-                //       BoT = B_norm(ir,itheta) / T_s(ir,itheta,iphi,pSpecies_id_)
-
-                //       do imu = 0,Nmu_
-                //         muBoT = mug(imu) * BoT
-                //         do ipol = 0,Npol-1
-                //           Laguerre_coeffs(imu,ipol) = LaguerrePol(ipol, muBoT)
-                //         end do
-                //       end do
-
-                //       !--> Reconstruct the value of f
-                //       do ivpar = 0,Nvpar_
-                //         f5d_s(:,ivpar,ir,itheta,iphi,pSpecies_id_) = 0._F64
-                //         do ipol = 0,Npol-1
-                //           do imu = 0,Nmu_
-                //             f5d_s(imu,ivpar,ir,itheta,iphi,pSpecies_id_) = &
-                //                 f5d_s(imu,ivpar,ir,itheta,iphi,pSpecies_id_) + &
-                //                 RHS_vec(ispace,ipol,ivpar) * Laguerre_coeffs(imu,ipol)
-                //           end do
-                //         end do
-                //       end do
-
-                //       ispace = ispace + 1
-
-                //     end do ! ir_start, ir_end
-                //   end do ! itheta_start, itheta_end
-                // end do ! iphi = iphi_start, iphi_end
+                    for(uint64_t ipol = 0; ipol < Npolmax_; ++ipol) {
+                        for(uint64_t imu = 0; imu <= Nmu_; ++imu) {
+                            const Flo64 muBoT = a_host_visible_mug(imu) * BoT;
+                            a_host_visible_f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id_) += a_host_visible_RHS_vec(ispace, ipol, ivpar) *
+                                                                                                DoComputeLaguerrePol(ipol, muBoT);
+                        }
+                    }
+                }
             };
 
             const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<3,
