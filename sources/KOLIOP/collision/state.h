@@ -250,6 +250,22 @@ namespace koliop {
                                   Flo64*         q_par_on_nT1d,
                                   Flo64*         nu1d) const;
 
+            void ComputeCvCd(uint64_t     Nspace,
+                             const Flo64* n1d_s,
+                             const Flo64* T1d_s,
+                             const Flo64* U_par1d,
+                             const Flo64* q_par_on_nT1d,
+                             const Flo64* nu1d,
+                             Flo64*       RHS_vec,
+                             Flo64*       N0,
+                             Flo64*       N1,
+                             Flo64*       N2,
+                             Flo64*       D_mat,
+                             Flo64*       DL_mat,
+                             Flo64*       DU1_mat,
+                             Flo64*       DU2_mat,
+                             Flo64        dt) const;
+
             void ComputeReconstruction(uint64_t       ir_start,
                                        uint64_t       ir_end,
                                        uint64_t       itheta_start,
@@ -346,6 +362,8 @@ namespace koliop {
                                     ViewUHL1<Flo64>&&              a_host_visible_U_par1d,
                                     ViewUHL1<Flo64>&&              a_host_visible_q_par_on_nT1d,
                                     ViewUHL1<Flo64>&&              a_host_visible_nu1d) const;
+
+            void DoComputeCvCd() const;
 
             void DoComputeReconstruction(uint64_t                       ir_block_size,
                                          uint64_t                       itheta_block_size,
@@ -791,6 +809,27 @@ namespace koliop {
                                                        f5d_s, Nmu_ + 1, Nvpar_ + 1, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
                                        ViewUHL4<const Flo64>{// "unmanaged_host_n_s",
                                                              n_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_});
+        }
+
+        inline void State::ComputeCvCd(uint64_t     Nspace,
+                                       const Flo64* n1d_s,
+                                       const Flo64* T1d_s,
+                                       const Flo64* U_par1d,
+                                       const Flo64* q_par_on_nT1d,
+                                       const Flo64* nu1d,
+                                       Flo64*       RHS_vec,
+                                       Flo64*       N0,
+                                       Flo64*       N1,
+                                       Flo64*       N2,
+                                       Flo64*       D_mat,
+                                       Flo64*       DL_mat,
+                                       Flo64*       DU1_mat,
+                                       Flo64*       DU2_mat,
+                                       Flo64        dt) const {
+            // DoComputeCvCd(
+
+            //     ViewUHL3<const Flo64>{// "unmanaged_host_RHS_vec",
+            //                           RHS_vec, Nspace + 1, Npolmax_, Nvpar_ + 1});
         }
 
         inline void State::ComputeReconstruction(uint64_t       ir_start,
@@ -1524,6 +1563,9 @@ namespace koliop {
 
             Kokkos::parallel_for("DoComputeBlockTo1d",
                                  a_policy, the_kernel);
+        }
+
+        inline void State::DoComputeCvCd() const {
         }
 
         inline void State::DoComputeReconstruction(uint64_t                       ir_block_size,

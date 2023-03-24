@@ -206,6 +206,23 @@ koliop_Status koliop_ComputeBlockTo1d(koliop_Operator an_operator,
                                       double*         q_par_on_nT1d,
                                       double*         nu1d);
 
+koliop_Status koliop_ComputeCvCd(koliop_Operator an_operator,
+                                 uint64_t        Nspace,
+                                 const double*   n1d_s,
+                                 const double*   T1d_s,
+                                 const double*   U_par1d,
+                                 const double*   q_par_on_nT1d,
+                                 const double*   nu1d,
+                                 double*         RHS_vec,
+                                 double*         N0,
+                                 double*         N1,
+                                 double*         N2,
+                                 double*         D_mat,
+                                 double*         DL_mat,
+                                 double*         DU1_mat,
+                                 double*         DU2_mat,
+                                 double          dt);
+
 koliop_Status koliop_ComputeReconstruction(koliop_Operator an_operator,
                                            uint64_t        ir_start,
                                            uint64_t        ir_end,

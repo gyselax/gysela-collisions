@@ -346,14 +346,14 @@ int main(int, char**) {
     double q_par_on_nT1d[Nspace + 1]{};
     double nu1d[Nspace + 1]{};
 
-    double                  RHS_vec[Nvpar + 1][Npolmax][Nspace + 1]{};
-    static constexpr double N0[Npolmax][Npolmax][Nspace + 1][Nvpar + 1]{};
-    static constexpr double N1[Npolmax][Npolmax][Nspace + 1][Nvpar + 1]{};
-    static constexpr double N2[Npolmax][Npolmax][Nspace + 1][Nvpar + 1]{};
-    static constexpr double D_mat[Nspace + 1][Npolmax][Npolmax * (Nvpar + 1)]{};
-    static constexpr double DL_mat[Nspace + 1][Npolmax][Npolmax * Nvpar]{};
-    static constexpr double DU1_mat[Nspace + 1][Npolmax][Npolmax * Nvpar]{};
-    static constexpr double DU2_mat[Nspace + 1][Npolmax][Npolmax * (Nvpar - 1)]{};
+    double RHS_vec[Nvpar + 1][Npolmax][Nspace + 1]{};
+    double N0[Npolmax][Npolmax][Nspace + 1][Nvpar + 1]{};
+    double N1[Npolmax][Npolmax][Nspace + 1][Nvpar + 1]{};
+    double N2[Npolmax][Npolmax][Nspace + 1][Nvpar + 1]{};
+    double D_mat[Nspace + 1][Npolmax][Npolmax * (Nvpar + 1)]{};
+    double DL_mat[Nspace + 1][Npolmax][Npolmax * Nvpar]{};
+    double DU1_mat[Nspace + 1][Npolmax][Npolmax * Nvpar]{};
+    double DU2_mat[Nspace + 1][Npolmax][Npolmax * (Nvpar - 1)]{};
 
     static constexpr uint64_t ir_start     = 0;
     static constexpr uint64_t ir_end       = ir_start + ir_block_size - 1;
@@ -396,7 +396,24 @@ int main(int, char**) {
                               &q_par_on_nT1d[0],
                               &nu1d[0]);
 
-    // libcoll_CvCd;
+    ::koliop_ComputeCvCd(an_operator,
+                         Nspace,
+                         &n1d_s[0][0],
+                         &T1d_s[0][0],
+                         &U_par1d[0],
+                         &q_par_on_nT1d[0],
+                         &nu1d[0],
+                         &RHS_vec[0][0][0],
+                         // TODO(Etienne M): These ar just tmp arrays. They
+                         // could be allocated by the operator ?
+                         &N0[0][0][0][0],
+                         &N1[0][0][0][0],
+                         &N2[0][0][0][0],
+                         &D_mat[0][0][0],
+                         &DL_mat[0][0][0],
+                         &DU1_mat[0][0][0],
+                         &DU2_mat[0][0][0],
+                         dt);
 
     ::koliop_ComputeReconstruction(an_operator,
                                    ir_start,

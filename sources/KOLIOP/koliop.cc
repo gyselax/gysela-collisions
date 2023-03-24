@@ -325,6 +325,34 @@
     });
 }
 
+::koliop_Status koliop_ComputeCvCd(::koliop_Operator an_operator,
+                                   uint64_t          Nspace,
+                                   const double*     n1d_s,
+                                   const double*     T1d_s,
+                                   const double*     U_par1d,
+                                   const double*     q_par_on_nT1d,
+                                   const double*     nu1d,
+                                   double*           RHS_vec,
+                                   double*           N0,
+                                   double*           N1,
+                                   double*           N2,
+                                   double*           D_mat,
+                                   double*           DL_mat,
+                                   double*           DU1_mat,
+                                   double*           DU2_mat,
+                                   double            dt) {
+    return koliop::error::FromException([&]() {
+        if(an_operator == nullptr) {
+            return KOLIOP_STATUS_INVALID_VALUE;
+        }
+
+        using State = koliop::collision::State;
+        reinterpret_cast<const State*>(an_operator)->ComputeCvCd(Nspace, n1d_s, T1d_s, U_par1d, q_par_on_nT1d, nu1d, RHS_vec, N0, N1, N2, D_mat, DL_mat, DU1_mat, DU2_mat, dt);
+
+        return KOLIOP_STATUS_SUCCESS;
+    });
+}
+
 ::koliop_Status koliop_ComputeReconstruction(::koliop_Operator an_operator,
                                              uint64_t          ir_start,
                                              uint64_t          ir_end,
