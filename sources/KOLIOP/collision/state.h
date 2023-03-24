@@ -323,14 +323,14 @@ namespace koliop {
                                                           const ViewUHL4<const Flo64>& a_host_visible_T_s,
                                                           uint32_t                     choice) const;
 
-            void DoComputeAlphaProjection(uint64_t                      ir_block_size,
-                                          uint64_t                      itheta_block_size,
-                                          uint64_t                      iphi_block_size,
-                                          const ViewUHL2<const uint8_t> a_host_visible_mask_coll,
-                                          const ViewUHL2<const Flo64>   a_host_visible_B_norm,
-                                          const ViewUHL6<const Flo64>   a_host_visible_f5d_s,
-                                          const ViewUHL4<const Flo64>   a_host_visible_T_s,
-                                          ViewUHL3<Flo64>               a_host_visible_RHS_vec) const;
+            void DoComputeAlphaProjection(uint64_t                       ir_block_size,
+                                          uint64_t                       itheta_block_size,
+                                          uint64_t                       iphi_block_size,
+                                          const ViewUHL2<const uint8_t>& a_host_visible_mask_coll,
+                                          const ViewUHL2<const Flo64>&   a_host_visible_B_norm,
+                                          const ViewUHL6<const Flo64>&   a_host_visible_f5d_s,
+                                          const ViewUHL4<const Flo64>&   a_host_visible_T_s,
+                                          ViewUHL3<Flo64>&&              a_host_visible_RHS_vec) const;
 
             void DoComputeBlockTo1d(uint64_t                       ir_block_size,
                                     uint64_t                       itheta_block_size,
@@ -347,7 +347,14 @@ namespace koliop {
                                     ViewUHL1<Flo64>&&              a_host_visible_q_par_on_nT1d,
                                     ViewUHL1<Flo64>&&              a_host_visible_nu1d) const;
 
-            void DoComputeReconstruction() const;
+            void DoComputeReconstruction(uint64_t                       ir_block_size,
+                                         uint64_t                       itheta_block_size,
+                                         uint64_t                       iphi_block_size,
+                                         const ViewUHL2<const uint8_t>& a_host_visible_mask_coll,
+                                         const ViewUHL2<const Flo64>&   a_host_visible_B_norm,
+                                         ViewUHL6<Flo64>&&              a_host_visible_f5d_s,
+                                         const ViewUHL4<const Flo64>&   a_host_visible_T_s,
+                                         const ViewUHL3<const Flo64>&   a_host_visible_RHS_vec) const;
 
             void DoComputeCorrectionDensity(const ViewUHL4<const Flo64>& a_host_visible_Bstar_s,
                                             ViewUHL6<Flo64>&&            a_host_visible_f5d_s,
@@ -797,6 +804,30 @@ namespace koliop {
                                                  Flo64*         f5d_s,
                                                  const Flo64*   T_s,
                                                  const Flo64*   RHS_vec) const {
+
+            const uint64_t ir_block_size     = (ir_end + 1) - ir_start;
+            const uint64_t itheta_block_size = (itheta_end + 1) - itheta_start;
+            const uint64_t iphi_block_size   = (iphi_end + 1) - iphi_start;
+
+            const uint64_t Nspace = ir_block_size * itheta_block_size * iphi_block_size - 1;
+
+            const uint64_t the_rank_r_range     = (iend_ + 1) - istart_;
+            const uint64_t the_rank_theta_range = (jend_ + 1) - jstart_;
+            const uint64_t the_rank_phi_range   = static_cast<uint64_t>((collend_ + 1) - collstart_);
+
+            DoComputeReconstruction(ir_block_size,
+                                    itheta_block_size,
+                                    iphi_block_size,
+                                    ViewUHL2<const uint8_t>{// "unmanaged_host_mask_coll",
+                                                            mask_coll, ir_block_size, itheta_block_size},
+                                    ViewUHL2<const Flo64>{// "unmanaged_host_B_norm",
+                                                          B_norm, the_rank_r_range, the_rank_theta_range + /* This +1 is weird */ 1},
+                                    ViewUHL6<Flo64>{// "unmanaged_host_f5d_s",
+                                                    f5d_s, Nmu_ + 1, Nvpar_ + 1, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
+                                    ViewUHL4<const Flo64>{// "unmanaged_host_T_s",
+                                                          T_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
+                                    ViewUHL3<const Flo64>{// "unmanaged_host_RHS_vec",
+                                                          RHS_vec, Nspace + 1, Npolmax_, Nvpar_ + 1});
         }
 
         inline void State::ComputeCorrectionUparT(const Flo64* nustar_coeff,
@@ -1379,14 +1410,14 @@ namespace koliop {
             }
         }
 
-        inline void State::DoComputeAlphaProjection(uint64_t                      ir_block_size,
-                                                    uint64_t                      itheta_block_size,
-                                                    uint64_t                      iphi_block_size,
-                                                    const ViewUHL2<const uint8_t> a_host_visible_mask_coll,
-                                                    const ViewUHL2<const Flo64>   a_host_visible_B_norm,
-                                                    const ViewUHL6<const Flo64>   a_host_visible_f5d_s,
-                                                    const ViewUHL4<const Flo64>   a_host_visible_T_s,
-                                                    ViewUHL3<Flo64>               a_host_visible_RHS_vec) const {
+        inline void State::DoComputeAlphaProjection(uint64_t                       ir_block_size,
+                                                    uint64_t                       itheta_block_size,
+                                                    uint64_t                       iphi_block_size,
+                                                    const ViewUHL2<const uint8_t>& a_host_visible_mask_coll,
+                                                    const ViewUHL2<const Flo64>&   a_host_visible_B_norm,
+                                                    const ViewUHL6<const Flo64>&   a_host_visible_f5d_s,
+                                                    const ViewUHL4<const Flo64>&   a_host_visible_T_s,
+                                                    ViewUHL3<Flo64>&&              a_host_visible_RHS_vec) const {
 
             const auto a_host_visible_mug          = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{},
                                                                                                             Kokkos::WithoutInitializing),
@@ -1495,7 +1526,74 @@ namespace koliop {
                                  a_policy, the_kernel);
         }
 
-        inline void State::DoComputeReconstruction() const {
+        inline void State::DoComputeReconstruction(uint64_t                       ir_block_size,
+                                                   uint64_t                       itheta_block_size,
+                                                   uint64_t                       iphi_block_size,
+                                                   const ViewUHL2<const uint8_t>& a_host_visible_mask_coll,
+                                                   const ViewUHL2<const Flo64>&   a_host_visible_B_norm,
+                                                   ViewUHL6<Flo64>&&              a_host_visible_f5d_s,
+                                                   const ViewUHL4<const Flo64>&   a_host_visible_T_s,
+                                                   const ViewUHL3<const Flo64>&   a_host_visible_RHS_vec) const {
+
+            const auto the_kernel = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi){
+
+                // logical  , contiguous, intent(in)    :: mask_coll(ir_start:,itheta_start:)
+                // real(F64), contiguous, intent(in)    :: mug(0:)
+                // real(F64), contiguous, intent(in)    :: B_norm(0:,0:)
+                // real(F64), contiguous, intent(inout) :: f5d_s(0:,0:,istart_:,jstart_:,collstart_:,0:)
+                // real(F64), contiguous, intent(in)    :: T_s(istart_:,jstart_:,collstart_:,0:)
+                // real(F64), contiguous, intent(in)    :: RHS_vec(0:,0:,0:)
+
+                // integer   :: imu, ivpar, ir, itheta, iphi, ispace, ipol
+                // real(F64) :: BoT, muBoT
+                // real(F64) :: Laguerre_coeffs(0:Nmu_,0:Npol-1)
+
+                // ispace = 0
+
+                // do iphi = iphi_start, iphi_end
+                //   do itheta = itheta_start, itheta_end
+                //     do ir = ir_start, ir_end
+
+                //       if ( .not. mask_coll(ir,itheta) ) cycle
+
+                //       BoT = B_norm(ir,itheta) / T_s(ir,itheta,iphi,pSpecies_id_)
+
+                //       do imu = 0,Nmu_
+                //         muBoT = mug(imu) * BoT
+                //         do ipol = 0,Npol-1
+                //           Laguerre_coeffs(imu,ipol) = LaguerrePol(ipol, muBoT)
+                //         end do
+                //       end do
+
+                //       !--> Reconstruct the value of f
+                //       do ivpar = 0,Nvpar_
+                //         f5d_s(:,ivpar,ir,itheta,iphi,pSpecies_id_) = 0._F64
+                //         do ipol = 0,Npol-1
+                //           do imu = 0,Nmu_
+                //             f5d_s(imu,ivpar,ir,itheta,iphi,pSpecies_id_) = &
+                //                 f5d_s(imu,ivpar,ir,itheta,iphi,pSpecies_id_) + &
+                //                 RHS_vec(ispace,ipol,ivpar) * Laguerre_coeffs(imu,ipol)
+                //           end do
+                //         end do
+                //       end do
+
+                //       ispace = ispace + 1
+
+                //     end do ! ir_start, ir_end
+                //   end do ! itheta_start, itheta_end
+                // end do ! iphi = iphi_start, iphi_end
+            };
+
+            const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<3,
+                                                                     Kokkos::Iterate::Left,
+                                                                     Kokkos::Iterate::Left>,
+                                                        Kokkos::DefaultHostExecutionSpace>{{0, 0, 0},
+                                                                                           {ir_block_size,
+                                                                                            itheta_block_size,
+                                                                                            iphi_block_size}};
+
+            Kokkos::parallel_for("DoComputeReconstruction",
+                                 a_policy, the_kernel);
         }
 
         inline void State::DoComputeCorrectionDensity(const ViewUHL4<const Flo64>& a_host_visible_Bstar_s,
