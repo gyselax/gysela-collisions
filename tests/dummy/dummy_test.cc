@@ -397,7 +397,19 @@ int main(int, char**) {
                               &nu1d[0]);
 
     // libcoll_CvCd;
-    // libcoll_reconstruction;
+
+    ::koliop_ComputeReconstruction(an_operator,
+                                   ir_start,
+                                   ir_end,
+                                   itheta_start,
+                                   itheta_end,
+                                   iphi_start,
+                                   iphi_end,
+                                   &mask_coll[0][0],
+                                   &B_norm[0][0],
+                                   &f5d_s[0][0][0][0][0][0],
+                                   &T_s[0][0][0][0],
+                                   &RHS_vec[0][0][0]);
 
     ::koliop_ComputeCorrectionDensity(an_operator,
                                       &Bstar_s[0][0][0][0],

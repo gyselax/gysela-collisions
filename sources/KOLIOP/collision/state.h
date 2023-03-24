@@ -250,6 +250,18 @@ namespace koliop {
                                   Flo64*         q_par_on_nT1d,
                                   Flo64*         nu1d) const;
 
+            void ComputeReconstruction(uint64_t       ir_start,
+                                       uint64_t       ir_end,
+                                       uint64_t       itheta_start,
+                                       uint64_t       itheta_end,
+                                       uint64_t       iphi_start,
+                                       uint64_t       iphi_end,
+                                       const uint8_t* mask_coll,
+                                       const Flo64*   B_norm,
+                                       Flo64*         f5d_s,
+                                       const Flo64*   T_s,
+                                       const Flo64*   RHS_vec) const;
+
             void ComputeCorrectionDensity(const Flo64* Bstar_s,
                                           Flo64*       f5d_s,
                                           const Flo64* n_s) const;
@@ -334,6 +346,8 @@ namespace koliop {
                                     ViewUHL1<Flo64>&&              a_host_visible_U_par1d,
                                     ViewUHL1<Flo64>&&              a_host_visible_q_par_on_nT1d,
                                     ViewUHL1<Flo64>&&              a_host_visible_nu1d) const;
+
+            void DoComputeReconstruction() const;
 
             void DoComputeCorrectionDensity(const ViewUHL4<const Flo64>& a_host_visible_Bstar_s,
                                             ViewUHL6<Flo64>&&            a_host_visible_f5d_s,
@@ -770,6 +784,19 @@ namespace koliop {
                                                        f5d_s, Nmu_ + 1, Nvpar_ + 1, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
                                        ViewUHL4<const Flo64>{// "unmanaged_host_n_s",
                                                              n_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_});
+        }
+
+        inline void State::ComputeReconstruction(uint64_t       ir_start,
+                                                 uint64_t       ir_end,
+                                                 uint64_t       itheta_start,
+                                                 uint64_t       itheta_end,
+                                                 uint64_t       iphi_start,
+                                                 uint64_t       iphi_end,
+                                                 const uint8_t* mask_coll,
+                                                 const Flo64*   B_norm,
+                                                 Flo64*         f5d_s,
+                                                 const Flo64*   T_s,
+                                                 const Flo64*   RHS_vec) const {
         }
 
         inline void State::ComputeCorrectionUparT(const Flo64* nustar_coeff,
@@ -1370,6 +1397,7 @@ namespace koliop {
 
             const auto the_kernel = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi) {
                 // TODO(Etienne M): INDEX not coalesced.
+                // TODO(Etienne M): Expensive DoComputeLaguerrePol call.
 
                 const uint64_t ispace = iphi * itheta_block_size * ir_block_size +
                                         itheta * ir_block_size +
@@ -1465,6 +1493,9 @@ namespace koliop {
 
             Kokkos::parallel_for("DoComputeBlockTo1d",
                                  a_policy, the_kernel);
+        }
+
+        inline void State::DoComputeReconstruction() const {
         }
 
         inline void State::DoComputeCorrectionDensity(const ViewUHL4<const Flo64>& a_host_visible_Bstar_s,
