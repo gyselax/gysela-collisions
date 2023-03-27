@@ -363,8 +363,6 @@ namespace koliop {
                                     ViewUHL1<Flo64>&&              a_host_visible_q_par_on_nT1d,
                                     ViewUHL1<Flo64>&&              a_host_visible_nu1d) const;
 
-            void DoComputeCvCd() const;
-
             void DoComputeReconstruction(uint64_t                       ir_block_size,
                                          uint64_t                       itheta_block_size,
                                          uint64_t                       iphi_block_size,
@@ -850,10 +848,31 @@ namespace koliop {
                                        Flo64*       DU1_mat,
                                        Flo64*       DU2_mat,
                                        Flo64        dt) const {
-            // DoComputeCvCd(
+            const auto a_host_visible_vparg = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{},
+                                                                                                     Kokkos::WithoutInitializing),
+                                                                                  vparg_);
 
-            //     ViewUHL3<const Flo64>{// "unmanaged_host_RHS_vec",
-            //                           RHS_vec, Nspace + 1, Npolmax_, Nvpar_ + 1});
+            const Flo64 dvpar = vparg_(1) - vparg_(0);
+
+            // // ! Computation of the N_i,a ^ jl = sum_b M_i,ab ^ jl
+            // call libcoll_N_a_jl(Nspace, Npolmax_, vparg, C_jl_, n_allspecies, T_allspecies, nu, N0, N1, N2);
+            // // ! Computation of the RHS vector RHS_vec = (I + deltat * T/4) * alpha
+            // call libcoll_CvCd_RHS(Nspace, Npolmax_, dvpar, deltat / 4._F64, RHS_vec, N0, N1, N2);
+            // // ! Computation of the tridiagonal matrix element of (I - deltat * T /4)
+            // // ! in prevision to the LU factorization
+            // call libcoll_tridiag_matrix(Nspace, Npolmax_, dvpar, deltat / 4._F64, D_mat, DL_mat, DU1_mat, N0, N1, N2);
+            // // ! LU factorization of the matrix (I - deltat * T /4)
+            // call DGEBLTTRF(Nvpar_ + 1, Npolmax_, D_mat, DL_mat, DU1_mat, DU2_mat, Nspace + 1);
+            // // ! Solve the problem (I - deltat * T /4)*X = RHS_vec
+            // // ! Rk : The result is in RHS_vec
+            // call DGEBLTTRS(Nvpar_ + 1, Npolmax_, 1, D_mat, DL_mat, DU1_mat, DU2_mat, RHS_vec, Npolmax_ * (Nvpar_ + 1), Nspace + 1);
+            // // ! Add the source term RHS = RHS + deltat * S
+            // call libcoll_CvCd_source( Nspace, Npolmax_, deltat, vparg, T_allspecies(:,pSpecies_id_), U_par, q_par_on_nT, N0, N1, N2, RHS_vec );
+            // // ! Computation of the RHS vector RHS_vec = (I + deltat * T/4) * alpha
+            // call libcoll_CvCd_RHS(Nspace, Npolmax_, dvpar, deltat / 4._F64, RHS_vec, N0, N1, N2);
+            // // ! Solve the problem (I - deltat * T /4)*X = RHS_vec
+            // // ! Rk : The result is in RHS_vec
+            // call DGEBLTTRS(Nvpar_ + 1, Npolmax_, 1, D_mat, DL_mat, DU1_mat, DU2_mat, RHS_vec, Npolmax_ * (Nvpar_ + 1), Nspace + 1);
         }
 
         inline void State::ComputeReconstruction(uint64_t       ir_start,
@@ -1593,9 +1612,6 @@ namespace koliop {
 
             Kokkos::parallel_for("DoComputeBlockTo1d",
                                  a_policy, the_kernel);
-        }
-
-        inline void State::DoComputeCvCd() const {
         }
 
         inline void State::DoComputeReconstruction(uint64_t                       ir_block_size,
