@@ -62,6 +62,30 @@ NOTE:
 
 ## TODOs
 
+- CvCd
+    - LU factorization is serial.
+    - Assuming tridiagonal by block it can be parallelized via omp or vectorized in SPMD (ispc/one factorization per thread)
+    - LU / TRSM / GEMM can be used to factorize the matrix in doolittle format
+    - What about the layotu of the data, it'l depend on the factorization and solving
+    - Kokkos kernel
+    - Proof test tridiag by block LU factorization algo with preparation for later solving:
+
+```c
+    for each block do:
+        for each 2x2 matrix:
+            A_r B_r
+            C_r A_r+1 B_r+1
+                C_r+1 A_r+2
+        // So for:
+        // A_r B_r
+        // C_r A_r+1
+
+        A_r   := LU(A_r);           // LU
+        B_r   := L^-1 * B_r;        // TRSM
+        C_r   := C_r * U^-1;        // TRSM
+        A_r+1 := C_r+1 - C_r * B_r; // GEMM
+```
+
 - Which blas implementation for the LU decomposition
 - Port more kernels
 - Test KOKKOS_BOUNDS_CHECK
