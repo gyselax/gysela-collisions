@@ -1,17 +1,18 @@
 message(STATUS "[koliop] Seeking Kokkos implementation.")
 
-option(koliop_USE_SYSTEM_PROVIDED_KOKKOS "Download Kokkos, compiles it, use it. Does not rely on a system installation." OFF)
+option(koliop_USE_SYSTEM_PROVIDED_KOKKOS        "Look for a system provided installation instead of downloading Kokkos and compiling it." OFF)
+option(koliop_USE_SYSTEM_PROVIDED_KOKKOS_KERNEL "Look for a system provided installation instead of downloading Kokkos Kernel and compiling it." OFF)
 
 # NOTE: It is a *bit* unfortunate that Kokkos relies on CMAKE_CXX_STANDARD
 # instead of a less pervasive set_target_properties(... CXX_STANDARD ...).
-# NOTE: Kokkos option provided in the toolchains.
+# NOTE: Kokkos options provided in the toolchains.
 
 if(NOT koliop_USE_SYSTEM_PROVIDED_KOKKOS)
     include(FetchContent)
     # cmake_policy(SET CMP0135 NEW)
     FetchContent_Declare(Kokkos
-                         SYSTEM                # Requires CMake v3.25
-                         OVERRIDE_FIND_PACKAGE # Requires CMake v3.24
+                         SYSTEM                # Affects only with CMake v3.25 and up.
+                         OVERRIDE_FIND_PACKAGE # Affects only with CMake v3.24 and up.
                          # URL https://github.com/kokkos/kokkos/archive/refs/tags/3.7.01.tar.gz
                          # URL_HASH "SHA512=97cb7e05aec145ba9adae30b20ae3138a532db3a56cdd5e092d8f9c1e1788efe7a6f721282e2a5c5bf9c0da4c53d28f30b27fcb546b68aa8eaa589a362eb40c1"
                          URL https://github.com/kokkos/kokkos/archive/refs/tags/4.0.00.tar.gz
@@ -25,6 +26,20 @@ else()
     find_package(Kokkos 4.0.0 REQUIRED)
 endif()
 
+if(NOT koliop_USE_SYSTEM_PROVIDED_KOKKOS_KERNEL)
+    include(FetchContent)
+    # cmake_policy(SET CMP0135 NEW)
+    FetchContent_Declare(KokkosKernels
+                         SYSTEM                # Affects only with CMake v3.25 and up.
+                         OVERRIDE_FIND_PACKAGE # Affects only with CMake v3.24 and up.
+                         URL https://github.com/kokkos/kokkos-kernels/archive/refs/tags/4.0.00.tar.gz
+                         URL_HASH "SHA512=97a2c24150eb2fd64599337248f77b3e4350164fee01656cf3d71c55dfd5733657e53c70b31dc2872c1a6d63ce679e1c61ce45a236f8ac5927ae6eac85f9cdfe")
+    FetchContent_MakeAvailable(KokkosKernels)
+else()
+    # NOTE: Same remark as the previous find_package.
+    find_package(KokkosKernels 4.0.0 REQUIRED)
+endif()
+
 function(koliop_target_add_kokkos target_name)
     target_link_libraries("${target_name}"
                           PRIVATE Kokkos::kokkos)
@@ -35,4 +50,9 @@ function(koliop_target_add_kokkos target_name)
         target_link_options("${target_name}"
                             PUBLIC -fopenmp)
     endif()
+endfunction()
+
+function(koliop_target_add_kokkos_kernels target_name)
+    target_link_libraries("${target_name}"
+                          PRIVATE Kokkos::kokkoskernels)
 endfunction()

@@ -40,7 +40,9 @@ endforeach()
 message(STATUS "[koliop] Build type is '${CMAKE_BUILD_TYPE}', configuration types are '${CMAKE_CONFIGURATION_TYPES}'.")
 message(STATUS "[koliop] Assuming the compiler is ${CMAKE_CXX_COMPILER_ID}.")
 
-function(koliop_global_target_build_options target_name)
+# Basis used by the tests. Does not link with private (internal) interfaces like
+# Kokkos.
+function(koliop_dependent_target_build_options target_name)
     # Use the flags defined in the toolchain. If the
     # koliop_[FLAGS|LINKER_FLAGS]_* are not defined, they are ignored transparently.
     set(koliop_FLAGS                               ${koliop_FLAGS_BASE}
@@ -59,20 +61,18 @@ function(koliop_global_target_build_options target_name)
 
     target_link_options("${target_name}"
                         PRIVATE ${koliop_LINKER_FLAGS})
-endfunction()
-
-function(koliop_dependent_target_build_options target_name)
-    koliop_global_target_build_options("${target_name}")
 
     # Call the dependency defined functions on the target.
     koliop_target_enable_lto("${target_name}")
 endfunction()
 
+# Koliop specific build options for private interface, say, Kokkos.
 function(koliop_target_build_options target_name)
     koliop_dependent_target_build_options("${target_name}")
 
     # Call the dependency defined functions on the target.
     koliop_target_add_kokkos("${target_name}")
+    koliop_target_add_kokkos_kernels("${target_name}")
 endfunction()
 
 
