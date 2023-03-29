@@ -26,11 +26,11 @@ namespace koliop {
         ///
         template <typename Float>
         class LUFactorization {
-            public:
-            public:
-                void operator();
+        public:
+        public:
+            void operator();
 
-            protected:
+        protected:
             void DoFactorization() {
                 // // General scalar LU decomp ~
                 // const SizeType the_matrix_width = the_input.ColumnCount();
