@@ -87,48 +87,52 @@ typedef struct _koliop_Operator* koliop_Operator;
 /// @param coeff_intdvpar_extent_0
 /// @return
 koliop_Status koliop_Create(koliop_Operator* an_operator_handle,
-                            uint64_t         Npolmax,
-                            uint64_t         index_max,
-                            uint64_t         Nmu,
-                            uint64_t         Nvpar,
-                            uint64_t         Nspecies,
-                            uint64_t         pSpecies_id,
-                            uint64_t         mu_id,
-                            uint64_t         istart,
-                            uint64_t         iend,
-                            uint64_t         jstart,
-                            uint64_t         jend,
-                            int64_t          collstart,
-                            int64_t          collend,
-                            double           R0,
-                            uint32_t         collision_interspecies,
-                            uint32_t         SOL,
-                            uint32_t         LIM,
-                            const double*    comb_mat,
-                            const double*    hat_As,
-                            const double*    hat_Zs,
-                            const double*    mug,
-                            const double*    vparg,
-                            const double*    coeff_intdmu,
-                            const double*    coeff_intdvpar);
+                            uint64_t         Npolmax,                // const external
+                            uint64_t         index_max,              // const external
+                            uint64_t         Nmu,                    // const external
+                            uint64_t         Nvpar,                  // const external
+                            uint64_t         Nspecies,               // const external
+                            uint64_t         pSpecies_id,            // const external
+                            uint64_t         mu_id,                  // const external
+                            uint64_t         istart,                 // const external
+                            uint64_t         iend,                   // const external
+                            uint64_t         jstart,                 // const external
+                            uint64_t         jend,                   // const external
+                            int64_t          collstart,              // const external
+                            int64_t          collend,                // const external
+                            double           R0,                     // const external
+                            uint32_t         collision_interspecies, // const external
+                            uint32_t         SOL,                    // const external
+                            uint32_t         LIM,                    // const external
+                            const double*    comb_mat,               // const external
+                            const double*    hat_As,                 // const external
+                            const double*    hat_Zs,                 // const external
+                            const double*    mug,                    // const external
+                            const double*    vparg,                  // const external
+                            const double*    coeff_intdmu,           // const external
+                            const double*    coeff_intdvpar);           // const external
 koliop_Status koliop_Release(koliop_Operator an_operator);
 
+
+// TODO(Etienne M): Put it into the init
 koliop_Status koliop_PrepareNuStar(koliop_Operator an_operator,
-                                   const double*   rg,
-                                   const double*   nustaR0_r,
-                                   const double*   q_r,
-                                   const double*   mask_buffer_r,
-                                   double*         nustar_coeff);
+                                   const double*   rg,            // TODO(Etienne M): const external
+                                   const double*   nustar0_r,     // TODO(Etienne M): const external
+                                   const double*   q_r,           // TODO(Etienne M): const external
+                                   const double*   mask_buffer_r, // TODO(Etienne M): const external
+                                   double*         nustar_coeff);         // TODO(Etienne M): internal
 
 koliop_Status koliop_ComputeMoments(koliop_Operator an_operator,
-                                    const double*   B_norm,
-                                    const double*   Bstar_s,
+                                    const double*   B_norm,  // TODO(Etienne M): const external
+                                    const double*   Bstar_s, // TODO(Etienne M): const external
                                     double*         f5d_s,
-                                    double*         n_s,
-                                    double*         U_par_s,
-                                    double*         T_s);
+                                    double*         n_s,     // TODO(Etienne M): internal
+                                    double*         U_par_s, // TODO(Etienne M): internal
+                                    double*         T_s);            // TODO(Etienne M): internal
 
-koliop_Status koliop_ComputeFrequencyNUAB(koliop_Operator an_operator,
+// TODO(Etienne M): nu_ab becomes internal
+
+koliop_Status koliop_ComputeFrequencyNuab(koliop_Operator an_operator,
                                           double          nustar_coeff,
                                           uint64_t        speciesA,
                                           uint64_t        speciesB,
@@ -138,41 +142,47 @@ koliop_Status koliop_ComputeFrequencyNUAB(koliop_Operator an_operator,
                                           double*         nu_ab);
 
 koliop_Status koliop_ComputeEvolutionMaxwellian(koliop_Operator an_operator,
-                                                const double*   nustar_coeff,
-                                                const double*   B_norm,
+                                                const double*   nustar_coeff, // TODO(Etienne M): const internal
+                                                const double*   B_norm,       // TODO(Etienne M): const external
                                                 double*         f5d_s,
-                                                const double*   n_s,
-                                                const double*   U_par_s,
-                                                double*         T_s,
-                                                double          dt);
+                                                const double*   n_s,     // TODO(Etienne M): internal
+                                                const double*   U_par_s, // TODO(Etienne M): internal
+                                                double*         T_s,     // TODO(Etienne M): internal
+                                                double          dt);              // const external
 
 koliop_Status koliop_ComputeQparOnNT(koliop_Operator an_operator,
-                                     const double*   B_norm,
-                                     const double*   Bstar_s,
+                                     const double*   B_norm,  // TODO(Etienne M): const external
+                                     const double*   Bstar_s, // TODO(Etienne M): const external
                                      const double*   f5d_s,
-                                     const double*   n_s,
-                                     const double*   U_par_s,
-                                     const double*   T_s,
-                                     double*         q_par_on_nT_s);
+                                     const double*   n_s,     // TODO(Etienne M): const external
+                                     const double*   U_par_s, // TODO(Etienne M): const external
+                                     const double*   T_s,     // TODO(Etienne M): const external
+                                     double*         q_par_on_nT_s);  // TODO(Etienne M): internal
 
 koliop_Status koliop_ComputeCpar(koliop_Operator an_operator,
-                                 const double*   rg,
-                                 const double*   B_norm,
-                                 const double*   q_r,
-                                 const double*   nustaR0_r,
+                                 const double*   rg,        // TODO(Etienne M): const external
+                                 const double*   B_norm,    // TODO(Etienne M): const external
+                                 const double*   q_r,       // TODO(Etienne M): const external
+                                 const double*   nustar0_r, // TODO(Etienne M): const external
                                  double*         f5d_s,
-                                 const double*   n_s,
-                                 const double*   U_par_s,
-                                 const double*   T_s,
-                                 const double*   q_par_on_nT_s,
-                                 double          dt);
+                                 const double*   n_s,           // TODO(Etienne M): const external
+                                 const double*   U_par_s,       // TODO(Etienne M): const external
+                                 const double*   T_s,           // TODO(Etienne M): const external
+                                 const double*   q_par_on_nT_s, // TODO(Etienne M): internal
+                                 double          dt);                    // const external
 
 koliop_Status koliop_ComputeOperationMaxwellianUnshiftedLoc(koliop_Operator an_operator,
-                                                            const double*   B_norm,
+                                                            const double*   B_norm, // TODO(Etienne M): const external
                                                             double*         f5d_s,
                                                             const double*   n_s,
                                                             const double*   T_s,
-                                                            uint32_t        choice);
+                                                            uint32_t        choice); // external
+
+// TODO(Etienne M): The blocking is mainly done for memory consumption reasons,
+// we have to do something similar.
+
+// TODO(Etienne M): we can drop the ir_start/ir_end and just pass the range as
+// the arrays are not subarrays.
 
 koliop_Status koliop_ComputeAlphaProjection(koliop_Operator an_operator,
                                             uint64_t        ir_start,
@@ -181,11 +191,12 @@ koliop_Status koliop_ComputeAlphaProjection(koliop_Operator an_operator,
                                             uint64_t        itheta_end,
                                             uint64_t        iphi_start,
                                             uint64_t        iphi_end,
-                                            const uint8_t*  mask_coll,
-                                            const double*   B_norm,
-                                            const double*   f5d_s,
-                                            const double*   T_s,
-                                            double*         RHS_vec);
+                                            // mask_LIM, // const external
+                                            const uint8_t* mask_coll, // TODO(Etienne M): internal but needs mask_LIM
+                                            const double*  B_norm,    // TODO(Etienne M): const external
+                                            const double*  f5d_s,
+                                            const double*  T_s, // TODO(Etienne M): const external
+                                            double*        RHS_vec);   // TODO(Etienne M): internal
 
 koliop_Status koliop_ComputeBlockTo1d(koliop_Operator an_operator,
                                       uint64_t        ir_start,
@@ -200,11 +211,11 @@ koliop_Status koliop_ComputeBlockTo1d(koliop_Operator an_operator,
                                       const double*   U_par_s,
                                       const double*   T_s,
                                       const double*   q_par_on_nT_s,
-                                      double*         n1d_s,
-                                      double*         T1d_s,
-                                      double*         U_par1d,
-                                      double*         q_par_on_nT1d,
-                                      double*         nu1d);
+                                      double*         n1d_s,         // TODO(Etienne M): internal
+                                      double*         T1d_s,         // TODO(Etienne M): internal
+                                      double*         U_par1d,       // TODO(Etienne M): internal
+                                      double*         q_par_on_nT1d, // TODO(Etienne M): internal
+                                      double*         nu1d);                 // TODO(Etienne M): internal
 
 koliop_Status koliop_ComputeCvCd(koliop_Operator an_operator,
                                  uint64_t        Nspace,
@@ -214,13 +225,13 @@ koliop_Status koliop_ComputeCvCd(koliop_Operator an_operator,
                                  const double*   q_par_on_nT1d,
                                  const double*   nu1d,
                                  double*         RHS_vec,
-                                 double*         N0,
-                                 double*         N1,
-                                 double*         N2,
-                                 double*         D_mat,
-                                 double*         DL_mat,
-                                 double*         DU1_mat,
-                                 double*         DU2_mat,
+                                 double*         N0,      // TODO(Etienne M): internal
+                                 double*         N1,      // TODO(Etienne M): internal
+                                 double*         N2,      // TODO(Etienne M): internal
+                                 double*         D_mat,   // TODO(Etienne M): internal
+                                 double*         DL_mat,  // TODO(Etienne M): internal
+                                 double*         DU1_mat, // TODO(Etienne M): internal
+                                 double*         DU2_mat, // TODO(Etienne M): internal
                                  double          dt);
 
 koliop_Status koliop_ComputeReconstruction(koliop_Operator an_operator,
@@ -251,6 +262,17 @@ koliop_Status koliop_ComputeCorrectionUparT(koliop_Operator an_operator,
                                             const double*   T_s,
                                             const double*   q_par_on_nT_s,
                                             double          dt);
+
+// TODO(Etienne M): diags.
+
+koliop_Status koliop_ExtractUrtheta(koliop_Operator an_operator,
+                                    double*         U_par_a_rtheta);
+
+koliop_Status koliop_ExtractQrtheta(koliop_Operator an_operator,
+                                    double*         q_par_);
+
+koliop_Status koliop_ExtractNuab(koliop_Operator an_operator,
+                                 double*         nu_ab);
 
 #if defined(__cplusplus)
 }
