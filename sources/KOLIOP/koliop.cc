@@ -141,7 +141,7 @@
 
 ::koliop_Status koliop_PrepareNuStar(::koliop_Operator an_operator,
                                      const double*     rg,
-                                     const double*     nustaR0_r,
+                                     const double*     nustar0_r,
                                      const double*     q_r,
                                      const double*     mask_buffer_r,
                                      double*           nustar_coeff) {
@@ -151,7 +151,7 @@
         }
 
         using State = koliop::collision::State;
-        reinterpret_cast<const State*>(an_operator)->PrepareNuStar(rg, nustaR0_r, q_r, mask_buffer_r, nustar_coeff);
+        reinterpret_cast<const State*>(an_operator)->PrepareNuStar(rg, nustar0_r, q_r, mask_buffer_r, nustar_coeff);
 
         return KOLIOP_STATUS_SUCCESS;
     });
@@ -176,7 +176,7 @@
     });
 }
 
-::koliop_Status koliop_ComputeFrequencyNUAB(::koliop_Operator an_operator,
+::koliop_Status koliop_ComputeFrequencyNuab(::koliop_Operator an_operator,
                                             double            nustar_coeff,
                                             uint64_t          speciesA,
                                             uint64_t          speciesB,
@@ -190,7 +190,7 @@
         }
 
         using State = koliop::collision::State;
-        reinterpret_cast<const State*>(an_operator)->ComputeFrequencyNUAB(nustar_coeff, speciesA, speciesB, Ta, nb, Tb, nu_ab);
+        reinterpret_cast<const State*>(an_operator)->ComputeFrequencyNuab(nustar_coeff, speciesA, speciesB, Ta, nb, Tb, nu_ab);
 
         return KOLIOP_STATUS_SUCCESS;
     });
@@ -240,7 +240,7 @@
                                    const double*     rg,
                                    const double*     B_norm,
                                    const double*     q_r,
-                                   const double*     nustaR0_r,
+                                   const double*     nustar0_r,
                                    double*           f5d_s,
                                    const double*     n_s,
                                    const double*     U_par_s,
@@ -253,7 +253,7 @@
         }
 
         using State = koliop::collision::State;
-        reinterpret_cast<const State*>(an_operator)->ComputeCpar(rg, B_norm, q_r, nustaR0_r, f5d_s, n_s, U_par_s, T_s, q_par_on_nT_s, dt);
+        reinterpret_cast<const State*>(an_operator)->ComputeCpar(rg, B_norm, q_r, nustar0_r, f5d_s, n_s, U_par_s, T_s, q_par_on_nT_s, dt);
 
         return KOLIOP_STATUS_SUCCESS;
     });

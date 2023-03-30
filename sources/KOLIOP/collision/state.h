@@ -167,7 +167,7 @@ namespace koliop {
                   const ViewUHL1<const Flo64>& a_host_visible_coeff_intdvpar);
 
             void PrepareNuStar(const Flo64* rg,
-                               const Flo64* nustaR0_r,
+                               const Flo64* nustar0_r,
                                const Flo64* q_r,
                                const Flo64* mask_buffer_r,
                                Flo64*       nustar_coeff) const;
@@ -179,7 +179,7 @@ namespace koliop {
                                 Flo64*       U_par_s,
                                 Flo64*       T_s) const;
 
-            void ComputeFrequencyNUAB(Flo64    nustar_coeff,
+            void ComputeFrequencyNuab(Flo64    nustar_coeff,
                                       uint64_t speciesA,
                                       uint64_t speciesB,
                                       Flo64    Ta,
@@ -206,7 +206,7 @@ namespace koliop {
             void ComputeCpar(const Flo64* rg,
                              const Flo64* B_norm,
                              const Flo64* q_r,
-                             const Flo64* nustaR0_r,
+                             const Flo64* nustar0_r,
                              Flo64*       f5d_s,
                              const Flo64* n_s,
                              const Flo64* U_par_s,
@@ -294,7 +294,7 @@ namespace koliop {
 
         protected:
             void DoPrepareNuStar(const ViewUHL1<const Flo64>& a_host_visible_rg,
-                                 const ViewUHL1<const Flo64>& a_host_visible_nustaR0_r,
+                                 const ViewUHL1<const Flo64>& a_host_visible_nustar0_r,
                                  const ViewUHL1<const Flo64>& a_host_visible_q_r,
                                  const ViewUHL1<const Flo64>& a_host_visible_mask_buffer_r,
                                  ViewUHL3<Flo64>&&            a_host_visible_nustar_coeff) const;
@@ -325,7 +325,7 @@ namespace koliop {
             void DoComputeCpar(const ViewUHL1<const Flo64>& a_host_visible_rg,
                                const ViewUHL2<const Flo64>& a_host_visible_B_norm,
                                const ViewUHL1<const Flo64>& a_host_visible_q_r,
-                               const ViewUHL1<const Flo64>& a_host_visible_nustaR0_r,
+                               const ViewUHL1<const Flo64>& a_host_visible_nustar0_r,
                                ViewUHL6<Flo64>&&            a_host_visible_f5d_s,
                                const ViewUHL4<const Flo64>& a_host_visible_n_s,
                                const ViewUHL4<const Flo64>& a_host_visible_U_par_s,
@@ -393,7 +393,7 @@ namespace koliop {
                                    ViewMDD3<Flo64>&                         C_jl);
 
             static KOKKOS_INLINE_FUNCTION Flo64
-            DoComputeFrequencyNUAB(Flo64 nustar_coeff,
+            DoComputeFrequencyNuab(Flo64 nustar_coeff,
                                    Flo64 hat_As_speciesA,
                                    Flo64 hat_As_speciesB,
                                    Flo64 Ta,
@@ -519,7 +519,7 @@ namespace koliop {
         }
 
         inline void State::PrepareNuStar(const Flo64* rg,
-                                         const Flo64* nustaR0_r,
+                                         const Flo64* nustar0_r,
                                          const Flo64* q_r,
                                          const Flo64* mask_buffer_r,
                                          Flo64*       nustar_coeff) const {
@@ -535,8 +535,8 @@ namespace koliop {
 
             DoPrepareNuStar(ViewUHL1<const Flo64>{// "unmanaged_host_rg",
                                                   rg, the_rank_r_range},
-                            ViewUHL1<const Flo64>{// "unmanaged_host_nustaR0_r",
-                                                  nustaR0_r, the_rank_r_range},
+                            ViewUHL1<const Flo64>{// "unmanaged_host_nustar0_r",
+                                                  nustar0_r, the_rank_r_range},
                             ViewUHL1<const Flo64>{// "unmanaged_host_q_r",
                                                   q_r, the_rank_r_range},
                             ViewUHL1<const Flo64>{// "unmanaged_host_mask_buffer_r",
@@ -573,7 +573,7 @@ namespace koliop {
             Kokkos::fence();
         }
 
-        inline void State::ComputeFrequencyNUAB(Flo64    nustar_coeff,
+        inline void State::ComputeFrequencyNuab(Flo64    nustar_coeff,
                                                 uint64_t speciesA,
                                                 uint64_t speciesB,
                                                 Flo64    Ta,
@@ -585,7 +585,7 @@ namespace koliop {
                                                                                                       Kokkos::WithoutInitializing),
                                                                                    hat_As_);
 
-            *nu_ab = DoComputeFrequencyNUAB(nustar_coeff,
+            *nu_ab = DoComputeFrequencyNuab(nustar_coeff,
                                             a_host_visible_hat_As(speciesA),
                                             a_host_visible_hat_As(speciesB),
                                             Ta,
@@ -656,7 +656,7 @@ namespace koliop {
         inline void State::ComputeCpar(const Flo64* rg,
                                        const Flo64* B_norm,
                                        const Flo64* q_r,
-                                       const Flo64* nustaR0_r,
+                                       const Flo64* nustar0_r,
                                        Flo64*       f5d_s,
                                        const Flo64* n_s,
                                        const Flo64* U_par_s,
@@ -674,8 +674,8 @@ namespace koliop {
                                                 B_norm, the_rank_r_range, the_rank_theta_range + /* This +1 is weird */ 1},
                           ViewUHL1<const Flo64>{// "unmanaged_host_q_r",
                                                 q_r, the_rank_r_range},
-                          ViewUHL1<const Flo64>{// "unmanaged_host_nustaR0_r",
-                                                nustaR0_r, the_rank_r_range},
+                          ViewUHL1<const Flo64>{// "unmanaged_host_nustar0_r",
+                                                nustar0_r, the_rank_r_range},
                           ViewUHL6<Flo64>{// "unmanaged_host_f5d_s",
                                           f5d_s, Nmu_ + 1, Nvpar_ + 1, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
                           ViewUHL4<const Flo64>{// "unmanaged_host_n_s",
@@ -952,7 +952,7 @@ namespace koliop {
         }
 
         inline void State::DoPrepareNuStar(const ViewUHL1<const Flo64>& a_host_visible_rg,
-                                           const ViewUHL1<const Flo64>& a_host_visible_nustaR0_r,
+                                           const ViewUHL1<const Flo64>& a_host_visible_nustar0_r,
                                            const ViewUHL1<const Flo64>& a_host_visible_q_r,
                                            const ViewUHL1<const Flo64>& a_host_visible_mask_buffer_r,
                                            ViewUHL3<Flo64>&&            a_host_visible_nustar_coeff) const {
@@ -1004,7 +1004,7 @@ namespace koliop {
                         // which is independent on the species considered (eps = r/R0_)
                         const Flo64 eps = a_host_visible_rg(ir) * R0_inverse_;
 
-                        const Flo64 AD = a_host_visible_nustaR0_r(ir) *
+                        const Flo64 AD = a_host_visible_nustar0_r(ir) *
                                          mask_space(ir) *
                                          // TODO(Etienne M): SIMPLIFY
                                          // sqrt(2)*(rg*R0_inverse_)*sqrt(rg*R0_inverse_)*R0_inverse_ =
@@ -1174,7 +1174,7 @@ namespace koliop {
                             const Flo64 Vparb  = a_host_visible_U_par_s(ir, itheta, iphi, ispeciesB);
                             const Flo64 Tb     = a_host_visible_T_s(ir, itheta, iphi, ispeciesB);
 
-                            const Flo64 nu_ab = DoComputeFrequencyNUAB(a_host_visible_nustar_coeff(ispeciesA, ispeciesB, ir),
+                            const Flo64 nu_ab = DoComputeFrequencyNuab(a_host_visible_nustar_coeff(ispeciesA, ispeciesB, ir),
                                                                        a_host_visible_hat_As(ispeciesA),
                                                                        a_host_visible_hat_As(ispeciesB),
                                                                        Ta, nb, Tb);
@@ -1324,7 +1324,7 @@ namespace koliop {
         inline void State::DoComputeCpar(const ViewUHL1<const Flo64>& a_host_visible_rg,
                                          const ViewUHL2<const Flo64>& a_host_visible_B_norm,
                                          const ViewUHL1<const Flo64>& a_host_visible_q_r,
-                                         const ViewUHL1<const Flo64>& a_host_visible_nustaR0_r,
+                                         const ViewUHL1<const Flo64>& a_host_visible_nustar0_r,
                                          ViewUHL6<Flo64>&&            a_host_visible_f5d_s,
                                          const ViewUHL4<const Flo64>& a_host_visible_n_s,
                                          const ViewUHL4<const Flo64>& a_host_visible_U_par_s,
@@ -1365,7 +1365,7 @@ namespace koliop {
                 const Flo64 Ta          = a_host_visible_T_s(ir, itheta, iphi, pSpecies_id_);
                 const Flo64 q_par_on_nT = a_host_visible_q_par_on_nT_s(ir, itheta, iphi, pSpecies_id_);
 
-                const Flo64 nustaR0_i = a_host_visible_nustaR0_r(ir);
+                const Flo64 nustaR0_i = a_host_visible_nustar0_r(ir);
                 const Flo64 epstemp   = a_host_visible_rg(ir) * R0_inverse_;
                 const Flo64 vTa       = Kokkos::sqrt(Ta / hat_Aa);
                 const Flo64 coeff1    = 1.0 / (2.0 * Ta);
@@ -1594,7 +1594,7 @@ namespace koliop {
                 a_host_visible_U_par1d(ispace)       = a_host_visible_U_par_s(ir, itheta, iphi, pSpecies_id_);
                 a_host_visible_q_par_on_nT1d(ispace) = a_host_visible_q_par_on_nT_s(ir, itheta, iphi, pSpecies_id_);
 
-                a_host_visible_nu1d(ispace) = DoComputeFrequencyNUAB(a_host_visible_nustar_coeff(pSpecies_id_, pSpecies_id_, ir),
+                a_host_visible_nu1d(ispace) = DoComputeFrequencyNuab(a_host_visible_nustar_coeff(pSpecies_id_, pSpecies_id_, ir),
                                                                      a_host_visible_hat_As(pSpecies_id_),
                                                                      a_host_visible_hat_As(pSpecies_id_),
                                                                      a_host_visible_T1d_s(ispace, pSpecies_id_),
@@ -1800,7 +1800,7 @@ namespace koliop {
                                                   hat_Ab * a_host_visible_T_s(ir, itheta, iphi, pSpecies_id_) /
                                                       (hat_Aa * a_host_visible_T_s(ir, itheta, iphi, ispecies)));
 
-                        const Flo64 nu_ab = DoComputeFrequencyNUAB(a_host_visible_nustar_coeff(pSpecies_id_, ispecies, ir),
+                        const Flo64 nu_ab = DoComputeFrequencyNuab(a_host_visible_nustar_coeff(pSpecies_id_, ispecies, ir),
                                                                    a_host_visible_hat_As(pSpecies_id_),
                                                                    a_host_visible_hat_As(ispecies),
                                                                    a_host_visible_T_s(ir, itheta, iphi, pSpecies_id_),
@@ -1911,7 +1911,7 @@ namespace koliop {
         }
 
         KOKKOS_INLINE_FUNCTION Flo64
-        State::DoComputeFrequencyNUAB(Flo64 nustar_coeff,
+        State::DoComputeFrequencyNuab(Flo64 nustar_coeff,
                                       Flo64 hat_As_speciesA,
                                       Flo64 hat_As_speciesB,
                                       Flo64 Ta,
