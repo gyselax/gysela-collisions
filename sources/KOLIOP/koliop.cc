@@ -82,9 +82,9 @@
                               const double*      nustar0_r,
                               const double*      q_r,
                               const double*      mask_buffer_r,
-                              double             dt,
                               const double*      B_norm,
-                              const double*      Bstar_s) {
+                              const double*      Bstar_s,
+                              double             dt) {
     return koliop::error::FromException([&]() {
         if(an_operator_handle == nullptr) {
             return KOLIOP_STATUS_INVALID_VALUE;
@@ -128,11 +128,11 @@
                                                                                              q_r, the_r_extent},
                                             koliop::collision::ViewUHL1<const koliop::Flo64>{// "unmanaged_host_mask_buffer_r",
                                                                                              mask_buffer_r, the_r_extent},
-                                            dt,
                                             koliop::collision::ViewUHL2<const koliop::Flo64>{// "unmanaged_host_B_norm",
                                                                                              B_norm, the_r_extent, the_theta_extent + 1 /* Weird +1 */},
                                             koliop::collision::ViewUHL4<const koliop::Flo64>{// "unmanaged_host_Bstar_s",
-                                                                                             Bstar_s, Nvpar + 1, the_r_extent, the_theta_extent, Nspecies}};
+                                                                                             Bstar_s, Nvpar + 1, the_r_extent, the_theta_extent, Nspecies},
+                                            dt};
 
         KOLIOP_ASSERT(an_operator != nullptr);
 

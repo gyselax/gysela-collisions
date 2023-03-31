@@ -172,9 +172,9 @@ int main(int, char**) {
                        &nustar0_r[0],
                        &q_r[0],
                        &mask_buffer_r[0],
-                       dt,
                        &B_norm[0][0],
-                       &Bstar_s[0][0][0][0]) != KOLIOP_STATUS_SUCCESS) {
+                       &Bstar_s[0][0][0][0],
+                       dt) != KOLIOP_STATUS_SUCCESS) {
         std::cout << "::koliop_Initialize() failed\n";
     }
 

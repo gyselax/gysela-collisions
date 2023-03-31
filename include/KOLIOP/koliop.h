@@ -112,9 +112,9 @@ koliop_Status koliop_Create(koliop_Operator* an_operator_handle,
                             const double*    nustar0_r,
                             const double*    q_r,
                             const double*    mask_buffer_r,
-                            double           dt,
                             const double*    B_norm,
-                            const double*    Bstar_s);
+                            const double*    Bstar_s,
+                            double           dt);
 koliop_Status koliop_Release(koliop_Operator an_operator);
 
 // TODO(Etienne M): Put it into the init

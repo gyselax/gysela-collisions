@@ -166,9 +166,9 @@ namespace koliop {
                   const ViewUHL1<const Flo64>& a_host_visible_nustar0_r,
                   const ViewUHL1<const Flo64>& a_host_visible_q_r,
                   const ViewUHL1<const Flo64>& a_host_visible_mask_buffer_r,
-                  Flo64                        dt,
                   const ViewUHL2<const Flo64>& a_host_visible_B_norm,
-                  const ViewUHL4<const Flo64>& a_host_visible_Bstar_s);
+                  const ViewUHL4<const Flo64>& a_host_visible_Bstar_s,
+                  Flo64                        dt);
 
             void PrepareNuStar(const Flo64* rg,
                                const Flo64* nustar0_r,
@@ -468,9 +468,9 @@ namespace koliop {
                             const ViewUHL1<const Flo64>& a_host_visible_nustar0_r,
                             const ViewUHL1<const Flo64>& a_host_visible_q_r,
                             const ViewUHL1<const Flo64>& a_host_visible_mask_buffer_r,
-                            Flo64                        dt,
                             const ViewUHL2<const Flo64>& a_host_visible_B_norm,
-                            const ViewUHL4<const Flo64>& a_host_visible_Bstar_s)
+                            const ViewUHL4<const Flo64>& a_host_visible_Bstar_s,
+                            Flo64                        dt)
             : Npolmax_{Npolmax}
             , index_max_{index_max}
             , Nmu_{Nmu}
