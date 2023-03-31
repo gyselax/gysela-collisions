@@ -440,6 +440,8 @@ namespace koliop {
             ViewMDD2<Flo64> B_norm_;
             ViewMDD4<Flo64> Bstar_s_;
 
+            Flo64 dt_;
+
             ViewMDD2<Flo64> C_j_;
             ViewMDD3<Flo64> C_jl_;
         };
@@ -508,6 +510,7 @@ namespace koliop {
                        a_host_visible_Bstar_s.extent(1),
                        a_host_visible_Bstar_s.extent(2),
                        a_host_visible_Bstar_s.extent(3)}
+            , dt_{dt}
 
             // TODO(Etienne M): Compile time code based on Npolmax_ value ?
             , C_j_{Kokkos::view_alloc(Kokkos::WithoutInitializing,
@@ -819,21 +822,22 @@ namespace koliop {
             Kokkos::fence();
         }
 
-        inline void State::ComputeCvCd(uint64_t     Nspace,
-                                       const Flo64* n1d_s,
-                                       const Flo64* T1d_s,
-                                       const Flo64* U_par1d,
-                                       const Flo64* q_par_on_nT1d,
-                                       const Flo64* nu1d,
-                                       Flo64*       RHS_vec,
-                                       Flo64*       N0,
-                                       Flo64*       N1,
-                                       Flo64*       N2,
-                                       Flo64*       D_mat,
-                                       Flo64*       DL_mat,
-                                       Flo64*       DU1_mat,
-                                       Flo64*       DU2_mat,
-                                       Flo64        dt) const {
+        inline void State::ComputeCvCd(uint64_t,     // Nspace,
+                                       const Flo64*, // n1d_s,
+                                       const Flo64*, // T1d_s,
+                                       const Flo64*, // U_par1d,
+                                       const Flo64*, // q_par_on_nT1d,
+                                       const Flo64*, // nu1d,
+                                       Flo64*,       // RHS_vec,
+                                       Flo64*,       // N0,
+                                       Flo64*,       // N1,
+                                       Flo64*,       // N2,
+                                       Flo64*,       // D_mat,
+                                       Flo64*,       // DL_mat,
+                                       Flo64*,       // DU1_mat,
+                                       Flo64*,       // DU2_mat,
+                                       Flo64         // dt
+        ) const {
             const auto a_host_visible_vparg = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{},
                                                                                                      Kokkos::WithoutInitializing),
                                                                                   vparg_);
