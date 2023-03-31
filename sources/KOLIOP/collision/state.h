@@ -148,12 +148,9 @@ namespace koliop {
                   uint64_t                     Nspecies,
                   uint64_t                     pSpecies_id,
                   uint64_t                     mu_id,
-                  uint64_t                     istart,
-                  uint64_t                     iend,
-                  uint64_t                     jstart,
-                  uint64_t                     jend,
-                  int64_t                      collstart,
-                  int64_t                      collend,
+                  uint64_t                     the_r_extent,
+                  uint64_t                     the_theta_extent,
+                  uint64_t                     the_phi_extent,
                   Flo64                        R0,
                   bool                         collision_interspecies,
                   bool                         SOL,
@@ -164,7 +161,14 @@ namespace koliop {
                   const ViewUHL1<const Flo64>& a_host_visible_mug,
                   const ViewUHL1<const Flo64>& a_host_visible_vparg,
                   const ViewUHL1<const Flo64>& a_host_visible_coeff_intdmu,
-                  const ViewUHL1<const Flo64>& a_host_visible_coeff_intdvpar);
+                  const ViewUHL1<const Flo64>& a_host_visible_coeff_intdvpar,
+                  const ViewUHL1<const Flo64>& a_host_visible_rg,
+                  const ViewUHL1<const Flo64>& a_host_visible_nustar0_r,
+                  const ViewUHL1<const Flo64>& a_host_visible_q_r,
+                  const ViewUHL1<const Flo64>& a_host_visible_mask_buffer_r,
+                  Flo64                        dt,
+                  const ViewUHL2<const Flo64>& a_host_visible_B_norm,
+                  const ViewUHL4<const Flo64>& a_host_visible_Bstar_s);
 
             void PrepareNuStar(const Flo64* rg,
                                const Flo64* nustar0_r,
@@ -413,12 +417,10 @@ namespace koliop {
             uint64_t Nspecies_;
             uint64_t pSpecies_id_;
             uint64_t mu_id_;
-            uint64_t istart_;
-            uint64_t iend_; // TODO(Etienne M): INDEX Fortran s***
-            uint64_t jstart_;
-            uint64_t jend_;
-            int64_t  collstart_;
-            int64_t  collend_;
+            uint64_t the_r_extent_;
+            uint64_t the_theta_extent_;
+            uint64_t the_phi_extent_;
+            uint64_t istart_; // TODO(Etienne M): remove start/end indicies
             Flo64    R0_inverse_;
             bool     collision_interspecies_;
             bool     SOL_;
@@ -448,12 +450,9 @@ namespace koliop {
                             uint64_t                     Nspecies,
                             uint64_t                     pSpecies_id,
                             uint64_t                     mu_id,
-                            uint64_t                     istart,
-                            uint64_t                     iend,
-                            uint64_t                     jstart,
-                            uint64_t                     jend,
-                            int64_t                      collstart,
-                            int64_t                      collend,
+                            uint64_t                     the_r_extent,
+                            uint64_t                     the_theta_extent,
+                            uint64_t                     the_phi_extent,
                             Flo64                        R0,
                             bool                         collision_interspecies,
                             bool                         SOL,
@@ -464,7 +463,14 @@ namespace koliop {
                             const ViewUHL1<const Flo64>& a_host_visible_mug,
                             const ViewUHL1<const Flo64>& a_host_visible_vparg,
                             const ViewUHL1<const Flo64>& a_host_visible_coeff_intdmu,
-                            const ViewUHL1<const Flo64>& a_host_visible_coeff_intdvpar)
+                            const ViewUHL1<const Flo64>& a_host_visible_coeff_intdvpar,
+                            const ViewUHL1<const Flo64>& a_host_visible_rg,
+                            const ViewUHL1<const Flo64>& a_host_visible_nustar0_r,
+                            const ViewUHL1<const Flo64>& a_host_visible_q_r,
+                            const ViewUHL1<const Flo64>& a_host_visible_mask_buffer_r,
+                            Flo64                        dt,
+                            const ViewUHL2<const Flo64>& a_host_visible_B_norm,
+                            const ViewUHL4<const Flo64>& a_host_visible_Bstar_s)
             : Npolmax_{Npolmax}
             , index_max_{index_max}
             , Nmu_{Nmu}
@@ -472,12 +478,9 @@ namespace koliop {
             , Nspecies_{Nspecies}
             , pSpecies_id_{pSpecies_id}
             , mu_id_{mu_id}
-            , istart_{istart}
-            , iend_{iend}
-            , jstart_{jstart}
-            , jend_{jend}
-            , collstart_{collstart}
-            , collend_{collend}
+            , the_r_extent_{the_r_extent}
+            , the_theta_extent_{the_theta_extent}
+            , the_phi_extent_{the_phi_extent}
             , R0_inverse_{1.0 / R0}
             , collision_interspecies_{collision_interspecies}
             , SOL_{SOL}
@@ -505,8 +508,9 @@ namespace koliop {
             // thread specific part. The collision operator handles its
             // *threads* autonomously.
 
-            // TODO(Etienne M): Deep or shallow ? On CPU, shallow would be
-            // enough.
+            // TODO(Etienne M): Say we get CPU buffers. Depending on whether
+            // koliop is compiled for CPU or GPU we can either, do a shallow
+            // copy, or we need to do a deep copy across memory spaces.
             koliop::utility::SmartDeepCopy(a_host_visible_comb_mat, comb_mat_);
             koliop::utility::SmartDeepCopy(a_host_visible_hat_As, hat_As_);
             koliop::utility::SmartDeepCopy(a_host_visible_hat_Zs, hat_Zs_);
@@ -523,26 +527,23 @@ namespace koliop {
                                          const Flo64* q_r,
                                          const Flo64* mask_buffer_r,
                                          Flo64*       nustar_coeff) const {
-
-            const uint64_t the_rank_r_range = (iend_ + 1) - istart_;
-
             // NOTE: For nustar_coeff, we assume the whole array is
             // contiguous and that we can discard the istart_ offset. So
             // assuming:
             // real(F64), contiguous, intent(out) :: nustar_coeff(0:,0:,istart_:)
             // We get:
-            // real(F64), contiguous, intent(out) :: nustar_coeff(0:,0:,0:the_rank_r_range - 1)
+            // real(F64), contiguous, intent(out) :: nustar_coeff(0:,0:,0:the_r_extent_ - 1)
 
             DoPrepareNuStar(ViewUHL1<const Flo64>{// "unmanaged_host_rg",
-                                                  rg, the_rank_r_range},
+                                                  rg, the_r_extent_},
                             ViewUHL1<const Flo64>{// "unmanaged_host_nustar0_r",
-                                                  nustar0_r, the_rank_r_range},
+                                                  nustar0_r, the_r_extent_},
                             ViewUHL1<const Flo64>{// "unmanaged_host_q_r",
-                                                  q_r, the_rank_r_range},
+                                                  q_r, the_r_extent_},
                             ViewUHL1<const Flo64>{// "unmanaged_host_mask_buffer_r",
-                                                  mask_buffer_r, the_rank_r_range},
+                                                  mask_buffer_r, the_r_extent_},
                             ViewUHL3<Flo64>{// "unmanaged_host_nustar_coeff",
-                                            nustar_coeff, Nspecies_, Nspecies_, the_rank_r_range});
+                                            nustar_coeff, Nspecies_, Nspecies_, the_r_extent_});
         }
 
         inline void State::ComputeMoments(const Flo64* B_norm,
@@ -551,23 +552,18 @@ namespace koliop {
                                           Flo64*       n_s,
                                           Flo64*       U_par_s,
                                           Flo64*       T_s) const {
-
-            const uint64_t the_rank_r_range     = (iend_ + 1) - istart_;
-            const uint64_t the_rank_theta_range = (jend_ + 1) - jstart_;
-            const uint64_t the_rank_phi_range   = static_cast<uint64_t>((collend_ + 1) - collstart_);
-
             DoComputeMoments(ViewUHL2<const Flo64>{// "unmanaged_host_B_norm",
-                                                   B_norm, the_rank_r_range, the_rank_theta_range + /* This +1 is weird */ 1},
+                                                   B_norm, the_r_extent_, the_theta_extent_ + /* This +1 is weird */ 1},
                              ViewUHL4<const Flo64>{// "unmanaged_host_Bstar_s",
-                                                   Bstar_s, Nvpar_ + 1, the_rank_r_range, the_rank_theta_range, Nspecies_},
+                                                   Bstar_s, Nvpar_ + 1, the_r_extent_, the_theta_extent_, Nspecies_},
                              ViewUHL6<Flo64>{// "unmanaged_host_f5d_s",
-                                             f5d_s, Nmu_ + 1, Nvpar_ + 1, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
+                                             f5d_s, Nmu_ + 1, Nvpar_ + 1, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_},
                              ViewUHL4<Flo64>{// "unmanaged_host_n_s",
-                                             n_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
+                                             n_s, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_},
                              ViewUHL4<Flo64>{// "unmanaged_host_U_par_s",
-                                             U_par_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
+                                             U_par_s, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_},
                              ViewUHL4<Flo64>{// "unmanaged_host_T_s",
-                                             T_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_});
+                                             T_s, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_});
 
             // TODO(Etienne M): ASYNC, relax that constraint ?
             Kokkos::fence();
@@ -600,23 +596,18 @@ namespace koliop {
                                                       const Flo64* U_par_s,
                                                       Flo64*       T_s,
                                                       Flo64        dt) const {
-
-            const uint64_t the_rank_r_range     = (iend_ + 1) - istart_;
-            const uint64_t the_rank_theta_range = (jend_ + 1) - jstart_;
-            const uint64_t the_rank_phi_range   = static_cast<uint64_t>((collend_ + 1) - collstart_);
-
             DoComputeEvolutionMaxwellian(ViewUHL3<const Flo64>{// "unmanaged_host_nustar_coeff",
-                                                               nustar_coeff, Nspecies_, Nspecies_, the_rank_r_range},
+                                                               nustar_coeff, Nspecies_, Nspecies_, the_r_extent_},
                                          ViewUHL2<const Flo64>{// "unmanaged_host_B_norm",
-                                                               B_norm, the_rank_r_range, the_rank_theta_range + /* This +1 is weird */ 1},
+                                                               B_norm, the_r_extent_, the_theta_extent_ + /* This +1 is weird */ 1},
                                          ViewUHL6<Flo64>{// "unmanaged_host_f5d_s",
-                                                         f5d_s, Nmu_ + 1, Nvpar_ + 1, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
+                                                         f5d_s, Nmu_ + 1, Nvpar_ + 1, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_},
                                          ViewUHL4<const Flo64>{// "unmanaged_host_n_s",
-                                                               n_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
+                                                               n_s, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_},
                                          ViewUHL4<const Flo64>{// "unmanaged_host_U_par_s",
-                                                               U_par_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
+                                                               U_par_s, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_},
                                          ViewUHL4<Flo64>{// "unmanaged_host_T_s",
-                                                         T_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
+                                                         T_s, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_},
                                          dt);
 
             // TODO(Etienne M): ASYNC, relax that constraint ?
@@ -630,24 +621,20 @@ namespace koliop {
                                            const Flo64* U_par_s,
                                            const Flo64* T_s,
                                            Flo64*       q_par_on_nT_s) const {
-            const uint64_t the_rank_r_range     = (iend_ + 1) - istart_;
-            const uint64_t the_rank_theta_range = (jend_ + 1) - jstart_;
-            const uint64_t the_rank_phi_range   = static_cast<uint64_t>((collend_ + 1) - collstart_);
-
             DoComputeQparOnNT(ViewUHL2<const Flo64>{// "unmanaged_host_B_norm",
-                                                    B_norm, the_rank_r_range, the_rank_theta_range + /* This +1 is weird */ 1},
+                                                    B_norm, the_r_extent_, the_theta_extent_ + /* This +1 is weird */ 1},
                               ViewUHL4<const Flo64>{// "unmanaged_host_Bstar_s",
-                                                    Bstar_s, Nvpar_ + 1, the_rank_r_range, the_rank_theta_range, Nspecies_},
+                                                    Bstar_s, Nvpar_ + 1, the_r_extent_, the_theta_extent_, Nspecies_},
                               ViewUHL6<const Flo64>{// "unmanaged_host_f5d_s",
-                                                    f5d_s, Nmu_ + 1, Nvpar_ + 1, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
+                                                    f5d_s, Nmu_ + 1, Nvpar_ + 1, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_},
                               ViewUHL4<const Flo64>{// "unmanaged_host_n_s",
-                                                    n_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
+                                                    n_s, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_},
                               ViewUHL4<const Flo64>{// "unmanaged_host_U_par_s",
-                                                    U_par_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
+                                                    U_par_s, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_},
                               ViewUHL4<const Flo64>{// "unmanaged_host_T_s",
-                                                    T_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
+                                                    T_s, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_},
                               ViewUHL4<Flo64>{// "unmanaged_host_q_par_on_nT_s",
-                                              q_par_on_nT_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_});
+                                              q_par_on_nT_s, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_});
 
             // TODO(Etienne M): ASYNC, relax that constraint ?
             Kokkos::fence();
@@ -663,29 +650,24 @@ namespace koliop {
                                        const Flo64* T_s,
                                        const Flo64* q_par_on_nT_s,
                                        Flo64        dt) const {
-
-            const uint64_t the_rank_r_range     = (iend_ + 1) - istart_;
-            const uint64_t the_rank_theta_range = (jend_ + 1) - jstart_;
-            const uint64_t the_rank_phi_range   = static_cast<uint64_t>((collend_ + 1) - collstart_);
-
             DoComputeCpar(ViewUHL1<const Flo64>{// "unmanaged_host_rg",
-                                                rg, the_rank_r_range},
+                                                rg, the_r_extent_},
                           ViewUHL2<const Flo64>{// "unmanaged_host_B_norm",
-                                                B_norm, the_rank_r_range, the_rank_theta_range + /* This +1 is weird */ 1},
+                                                B_norm, the_r_extent_, the_theta_extent_ + /* This +1 is weird */ 1},
                           ViewUHL1<const Flo64>{// "unmanaged_host_q_r",
-                                                q_r, the_rank_r_range},
+                                                q_r, the_r_extent_},
                           ViewUHL1<const Flo64>{// "unmanaged_host_nustar0_r",
-                                                nustar0_r, the_rank_r_range},
+                                                nustar0_r, the_r_extent_},
                           ViewUHL6<Flo64>{// "unmanaged_host_f5d_s",
-                                          f5d_s, Nmu_ + 1, Nvpar_ + 1, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
+                                          f5d_s, Nmu_ + 1, Nvpar_ + 1, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_},
                           ViewUHL4<const Flo64>{// "unmanaged_host_n_s",
-                                                n_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
+                                                n_s, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_},
                           ViewUHL4<const Flo64>{// "unmanaged_host_U_par_s",
-                                                U_par_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
+                                                U_par_s, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_},
                           ViewUHL4<const Flo64>{// "unmanaged_host_T_s",
-                                                T_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
+                                                T_s, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_},
                           ViewUHL4<const Flo64>{// "unmanaged_host_q_par_on_nT_s",
-                                                q_par_on_nT_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
+                                                q_par_on_nT_s, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_},
                           dt);
 
             // TODO(Etienne M): ASYNC, relax that constraint ?
@@ -697,19 +679,14 @@ namespace koliop {
                                                                   const Flo64* n_s,
                                                                   const Flo64* T_s,
                                                                   uint32_t     choice) const {
-
-            const uint64_t the_rank_r_range     = (iend_ + 1) - istart_;
-            const uint64_t the_rank_theta_range = (jend_ + 1) - jstart_;
-            const uint64_t the_rank_phi_range   = static_cast<uint64_t>((collend_ + 1) - collstart_);
-
             DoComputeOperationMaxwellianUnshiftedLoc(ViewUHL2<const Flo64>{// "unmanaged_host_B_norm",
-                                                                           B_norm, the_rank_r_range, the_rank_theta_range + /* This +1 is weird */ 1},
+                                                                           B_norm, the_r_extent_, the_theta_extent_ + /* This +1 is weird */ 1},
                                                      ViewUHL6<Flo64>{// "unmanaged_host_f5d_s",
-                                                                     f5d_s, Nmu_ + 1, Nvpar_ + 1, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
+                                                                     f5d_s, Nmu_ + 1, Nvpar_ + 1, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_},
                                                      ViewUHL4<const Flo64>{// "unmanaged_host_n_s",
-                                                                           n_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
+                                                                           n_s, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_},
                                                      ViewUHL4<const Flo64>{// "unmanaged_host_T_s",
-                                                                           T_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
+                                                                           T_s, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_},
                                                      choice);
 
             // TODO(Etienne M): ASYNC, relax that constraint ?
@@ -734,21 +711,17 @@ namespace koliop {
 
             const uint64_t Nspace = ir_block_size * itheta_block_size * iphi_block_size - 1;
 
-            const uint64_t the_rank_r_range     = (iend_ + 1) - istart_;
-            const uint64_t the_rank_theta_range = (jend_ + 1) - jstart_;
-            const uint64_t the_rank_phi_range   = static_cast<uint64_t>((collend_ + 1) - collstart_);
-
             DoComputeAlphaProjection(ir_block_size,
                                      itheta_block_size,
                                      iphi_block_size,
                                      ViewUHL2<const uint8_t>{// "unmanaged_host_mask_coll",
                                                              mask_coll, ir_block_size, itheta_block_size},
                                      ViewUHL2<const Flo64>{// "unmanaged_host_B_norm",
-                                                           B_norm, the_rank_r_range, the_rank_theta_range + /* This +1 is weird */ 1},
+                                                           B_norm, the_r_extent_, the_theta_extent_ + /* This +1 is weird */ 1},
                                      ViewUHL6<const Flo64>{// "unmanaged_host_f5d_s",
-                                                           f5d_s, Nmu_ + 1, Nvpar_ + 1, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
+                                                           f5d_s, Nmu_ + 1, Nvpar_ + 1, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_},
                                      ViewUHL4<const Flo64>{// "unmanaged_host_T_s",
-                                                           T_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
+                                                           T_s, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_},
                                      ViewUHL3<Flo64>{// "unmanaged_host_RHS_vec",
                                                      RHS_vec, Nspace + 1, Npolmax_, Nvpar_ + 1});
 
@@ -780,25 +753,21 @@ namespace koliop {
 
             const uint64_t Nspace = ir_block_size * itheta_block_size * iphi_block_size - 1;
 
-            const uint64_t the_rank_r_range     = (iend_ + 1) - istart_;
-            const uint64_t the_rank_theta_range = (jend_ + 1) - jstart_;
-            const uint64_t the_rank_phi_range   = static_cast<uint64_t>((collend_ + 1) - collstart_);
-
             DoComputeBlockTo1d(ir_block_size,
                                itheta_block_size,
                                iphi_block_size,
                                ViewUHL2<const uint8_t>{// "unmanaged_host_mask_coll",
                                                        mask_coll, ir_block_size, itheta_block_size},
                                ViewUHL3<const Flo64>{// "unmanaged_host_nustar_coeff",
-                                                     nustar_coeff, Nspecies_, Nspecies_, the_rank_r_range},
+                                                     nustar_coeff, Nspecies_, Nspecies_, the_r_extent_},
                                ViewUHL4<const Flo64>{// "unmanaged_host_n_s",
-                                                     n_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
+                                                     n_s, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_},
                                ViewUHL4<const Flo64>{// "unmanaged_host_U_par_s",
-                                                     U_par_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
+                                                     U_par_s, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_},
                                ViewUHL4<const Flo64>{// "unmanaged_host_T_s",
-                                                     T_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
+                                                     T_s, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_},
                                ViewUHL4<const Flo64>{// "unmanaged_host_q_par_on_nT_s",
-                                                     q_par_on_nT_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
+                                                     q_par_on_nT_s, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_},
                                ViewUHL2<Flo64>{// "unmanaged_host_n1d_s",
                                                n1d_s, Nspecies_, Nspace + 1},
                                ViewUHL2<Flo64>{// "unmanaged_host_T1d_s"
@@ -817,17 +786,12 @@ namespace koliop {
         inline void State::ComputeCorrectionDensity(const Flo64* Bstar_s,
                                                     Flo64*       f5d_s,
                                                     const Flo64* n_s) const {
-
-            const uint64_t the_rank_r_range     = (iend_ + 1) - istart_;
-            const uint64_t the_rank_theta_range = (jend_ + 1) - jstart_;
-            const uint64_t the_rank_phi_range   = static_cast<uint64_t>((collend_ + 1) - collstart_);
-
             DoComputeCorrectionDensity(ViewUHL4<const Flo64>{// "unmanaged_host_Bstar_s",
-                                                             Bstar_s, Nvpar_ + 1, the_rank_r_range, the_rank_theta_range, Nspecies_},
+                                                             Bstar_s, Nvpar_ + 1, the_r_extent_, the_theta_extent_, Nspecies_},
                                        ViewUHL6<Flo64>{// "unmanaged_host_f5d_s",
-                                                       f5d_s, Nmu_ + 1, Nvpar_ + 1, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
+                                                       f5d_s, Nmu_ + 1, Nvpar_ + 1, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_},
                                        ViewUHL4<const Flo64>{// "unmanaged_host_n_s",
-                                                             n_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_});
+                                                             n_s, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_});
 
             // TODO(Etienne M): ASYNC, relax that constraint ?
             Kokkos::fence();
@@ -893,21 +857,17 @@ namespace koliop {
 
             const uint64_t Nspace = ir_block_size * itheta_block_size * iphi_block_size - 1;
 
-            const uint64_t the_rank_r_range     = (iend_ + 1) - istart_;
-            const uint64_t the_rank_theta_range = (jend_ + 1) - jstart_;
-            const uint64_t the_rank_phi_range   = static_cast<uint64_t>((collend_ + 1) - collstart_);
-
             DoComputeReconstruction(ir_block_size,
                                     itheta_block_size,
                                     iphi_block_size,
                                     ViewUHL2<const uint8_t>{// "unmanaged_host_mask_coll",
                                                             mask_coll, ir_block_size, itheta_block_size},
                                     ViewUHL2<const Flo64>{// "unmanaged_host_B_norm",
-                                                          B_norm, the_rank_r_range, the_rank_theta_range + /* This +1 is weird */ 1},
+                                                          B_norm, the_r_extent_, the_theta_extent_ + /* This +1 is weird */ 1},
                                     ViewUHL6<Flo64>{// "unmanaged_host_f5d_s",
-                                                    f5d_s, Nmu_ + 1, Nvpar_ + 1, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
+                                                    f5d_s, Nmu_ + 1, Nvpar_ + 1, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_},
                                     ViewUHL4<const Flo64>{// "unmanaged_host_T_s",
-                                                          T_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
+                                                          T_s, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_},
                                     ViewUHL3<const Flo64>{// "unmanaged_host_RHS_vec",
                                                           RHS_vec, Nspace + 1, Npolmax_, Nvpar_ + 1});
 
@@ -924,27 +884,22 @@ namespace koliop {
                                                   const Flo64* T_s,
                                                   const Flo64* q_par_on_nT_s,
                                                   Flo64        dt) const {
-
-            const uint64_t the_rank_r_range     = (iend_ + 1) - istart_;
-            const uint64_t the_rank_theta_range = (jend_ + 1) - jstart_;
-            const uint64_t the_rank_phi_range   = static_cast<uint64_t>((collend_ + 1) - collstart_);
-
             DoComputeCorrectionUparT(ViewUHL3<const Flo64>{// "unmanaged_host_nustar_coeff",
-                                                           nustar_coeff, Nspecies_, Nspecies_, the_rank_r_range},
+                                                           nustar_coeff, Nspecies_, Nspecies_, the_r_extent_},
                                      ViewUHL2<const Flo64>{// "unmanaged_host_B_norm",
-                                                           B_norm, the_rank_r_range, the_rank_theta_range + /* This +1 is weird */ 1},
+                                                           B_norm, the_r_extent_, the_theta_extent_ + /* This +1 is weird */ 1},
                                      ViewUHL4<const Flo64>{// "unmanaged_host_Bstar_s",
-                                                           Bstar_s, Nvpar_ + 1, the_rank_r_range, the_rank_theta_range, Nspecies_},
+                                                           Bstar_s, Nvpar_ + 1, the_r_extent_, the_theta_extent_, Nspecies_},
                                      ViewUHL6<Flo64>{// "unmanaged_host_f5d_s",
-                                                     f5d_s, Nmu_ + 1, Nvpar_ + 1, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
+                                                     f5d_s, Nmu_ + 1, Nvpar_ + 1, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_},
                                      ViewUHL4<const Flo64>{// "unmanaged_host_n_s",
-                                                           n_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
+                                                           n_s, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_},
                                      ViewUHL4<Flo64>{// "unmanaged_host_U_par_s",
-                                                     U_par_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
+                                                     U_par_s, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_},
                                      ViewUHL4<const Flo64>{// "unmanaged_host_T_s",
-                                                           T_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
+                                                           T_s, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_},
                                      ViewUHL4<const Flo64>{// "unmanaged_host_q_par_on_nT_s",
-                                                           q_par_on_nT_s, the_rank_r_range, the_rank_theta_range, the_rank_phi_range, Nspecies_},
+                                                           q_par_on_nT_s, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_},
                                      dt);
 
             // TODO(Etienne M): ASYNC, relax that constraint ?
@@ -1092,17 +1047,13 @@ namespace koliop {
                 a_host_visible_T_s(ir, itheta, iphi, ispecies)     = Ta;
             };
 
-            const uint64_t the_rank_r_range     = a_host_visible_n_s.extent(0);
-            const uint64_t the_rank_theta_range = a_host_visible_n_s.extent(1);
-            const uint64_t the_rank_phi_range   = a_host_visible_n_s.extent(2);
-
             const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<4,
                                                                      Kokkos::Iterate::Left,
                                                                      Kokkos::Iterate::Left>,
                                                         Kokkos::DefaultHostExecutionSpace>{{0, 0, 0, 0},
-                                                                                           {the_rank_r_range,
-                                                                                            the_rank_theta_range,
-                                                                                            the_rank_phi_range,
+                                                                                           {the_r_extent_,
+                                                                                            the_theta_extent_,
+                                                                                            the_phi_extent_,
                                                                                             Nspecies_}};
 
             Kokkos::parallel_for("DoComputeMoments",
@@ -1138,11 +1089,7 @@ namespace koliop {
 
             using KernelIterationPolicy = Kokkos::TeamPolicy<Kokkos::DefaultHostExecutionSpace>;
 
-            const uint64_t the_rank_r_range     = a_host_visible_n_s.extent(0);
-            const uint64_t the_rank_theta_range = a_host_visible_n_s.extent(1);
-            const uint64_t the_rank_phi_range   = a_host_visible_n_s.extent(2);
-
-            const uint64_t the_team_count = the_rank_theta_range * the_rank_phi_range;
+            const uint64_t the_team_count = the_theta_extent_ * the_phi_extent_;
             // Due to the inherent cuda/HIP threadblock limit.
             KOLIOP_ASSERT(the_team_count <= std::numeric_limits<int>::max());
 
@@ -1211,8 +1158,8 @@ namespace koliop {
 
                 const auto the_team_index = a_team_handle.league_rank();
 
-                const auto iphi   = the_team_index / the_rank_theta_range;
-                const auto itheta = the_team_index % the_rank_theta_range;
+                const auto iphi   = the_team_index / the_theta_extent_;
+                const auto itheta = the_team_index % the_theta_extent_;
 
                 // TODO(Etienne M): Should be put that view allocation in the
                 // parallel_for below ? I dont think so as it would lead to
@@ -1223,7 +1170,7 @@ namespace koliop {
                                                         the_scratch_memory_bytes_per_thread};
 
                 const auto a_policy = Kokkos::TeamThreadRange(a_team_handle,
-                                                              the_rank_r_range);
+                                                              the_r_extent_);
 
                 Kokkos::parallel_for(a_policy,
                                      // Reference to the_kernel's member variable copy.
@@ -1304,17 +1251,13 @@ namespace koliop {
                 a_host_visible_q_par_on_nT_s(ir, itheta, iphi, ispecies) = q_par_on_nT_s_reduction / (na * Ta);
             };
 
-            const uint64_t the_rank_r_range     = a_host_visible_n_s.extent(0);
-            const uint64_t the_rank_theta_range = a_host_visible_n_s.extent(1);
-            const uint64_t the_rank_phi_range   = a_host_visible_n_s.extent(2);
-
             const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<4,
                                                                      Kokkos::Iterate::Left,
                                                                      Kokkos::Iterate::Left>,
                                                         Kokkos::DefaultHostExecutionSpace>{{0, 0, 0, 0},
-                                                                                           {the_rank_r_range,
-                                                                                            the_rank_theta_range,
-                                                                                            the_rank_phi_range,
+                                                                                           {the_r_extent_,
+                                                                                            the_theta_extent_,
+                                                                                            the_phi_extent_,
                                                                                             Nspecies_}};
 
             Kokkos::parallel_for("DoComputeQparOnNT",
@@ -1403,17 +1346,13 @@ namespace koliop {
                 }
             };
 
-            const uint64_t the_rank_r_range     = a_host_visible_n_s.extent(0);
-            const uint64_t the_rank_theta_range = a_host_visible_n_s.extent(1);
-            const uint64_t the_rank_phi_range   = a_host_visible_n_s.extent(2);
-
             const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<3,
                                                                      Kokkos::Iterate::Left,
                                                                      Kokkos::Iterate::Left>,
                                                         Kokkos::DefaultHostExecutionSpace>{{0, 0, 0},
-                                                                                           {the_rank_r_range,
-                                                                                            the_rank_theta_range,
-                                                                                            the_rank_phi_range}};
+                                                                                           {the_r_extent_,
+                                                                                            the_theta_extent_,
+                                                                                            the_phi_extent_}};
 
             Kokkos::parallel_for("DoComputeCpar",
                                  a_policy, the_kernel);
@@ -1470,17 +1409,13 @@ namespace koliop {
                 }
             };
 
-            const uint64_t the_rank_r_range     = a_host_visible_n_s.extent(0);
-            const uint64_t the_rank_theta_range = a_host_visible_n_s.extent(1);
-            const uint64_t the_rank_phi_range   = a_host_visible_n_s.extent(2);
-
             const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<3,
                                                                      Kokkos::Iterate::Left,
                                                                      Kokkos::Iterate::Left>,
                                                         Kokkos::DefaultHostExecutionSpace>{{0, 0, 0},
-                                                                                           {the_rank_r_range,
-                                                                                            the_rank_theta_range,
-                                                                                            the_rank_phi_range}};
+                                                                                           {the_r_extent_,
+                                                                                            the_theta_extent_,
+                                                                                            the_phi_extent_}};
 
             switch(choice) {
                 case 3:
@@ -1706,17 +1641,13 @@ namespace koliop {
                 }
             };
 
-            const uint64_t the_rank_r_range     = a_host_visible_n_s.extent(0);
-            const uint64_t the_rank_theta_range = a_host_visible_n_s.extent(1);
-            const uint64_t the_rank_phi_range   = a_host_visible_n_s.extent(2);
-
             const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<3,
                                                                      Kokkos::Iterate::Left,
                                                                      Kokkos::Iterate::Left>,
                                                         Kokkos::DefaultHostExecutionSpace>{{0, 0, 0},
-                                                                                           {the_rank_r_range,
-                                                                                            the_rank_theta_range,
-                                                                                            the_rank_phi_range}};
+                                                                                           {the_r_extent_,
+                                                                                            the_theta_extent_,
+                                                                                            the_phi_extent_}};
 
             Kokkos::parallel_for("DoComputeCorrectionDensity",
                                  a_policy, the_kernel);
@@ -1841,17 +1772,13 @@ namespace koliop {
                 a_host_visible_U_par_s(ir, itheta, iphi, pSpecies_id_) = U_par_new;
             };
 
-            const uint64_t the_rank_r_range     = a_host_visible_n_s.extent(0);
-            const uint64_t the_rank_theta_range = a_host_visible_n_s.extent(1);
-            const uint64_t the_rank_phi_range   = a_host_visible_n_s.extent(2);
-
             const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<3,
                                                                      Kokkos::Iterate::Left,
                                                                      Kokkos::Iterate::Left>,
                                                         Kokkos::DefaultHostExecutionSpace>{{0, 0, 0},
-                                                                                           {the_rank_r_range,
-                                                                                            the_rank_theta_range,
-                                                                                            the_rank_phi_range}};
+                                                                                           {the_r_extent_,
+                                                                                            the_theta_extent_,
+                                                                                            the_phi_extent_}};
 
             Kokkos::parallel_for("DoComputeCorrectionUparT",
                                  a_policy, the_kernel);

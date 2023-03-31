@@ -64,12 +64,9 @@
                               uint64_t           Nspecies,
                               uint64_t           pSpecies_id,
                               uint64_t           mu_id,
-                              uint64_t           istart,
-                              uint64_t           iend,
-                              uint64_t           jstart,
-                              uint64_t           jend,
-                              int64_t            collstart,
-                              int64_t            collend,
+                              uint64_t           the_r_extent,
+                              uint64_t           the_theta_extent,
+                              uint64_t           the_phi_extent,
                               double             R0,
                               uint32_t           collision_interspecies,
                               uint32_t           SOL,
@@ -80,7 +77,14 @@
                               const double*      mug,
                               const double*      vparg,
                               const double*      coeff_intdmu,
-                              const double*      coeff_intdvpar) {
+                              const double*      coeff_intdvpar,
+                              const double*      rg,
+                              const double*      nustar0_r,
+                              const double*      q_r,
+                              const double*      mask_buffer_r,
+                              double             dt,
+                              const double*      B_norm,
+                              const double*      Bstar_s) {
     return koliop::error::FromException([&]() {
         if(an_operator_handle == nullptr) {
             return KOLIOP_STATUS_INVALID_VALUE;
@@ -95,12 +99,9 @@
                                             Nspecies,
                                             pSpecies_id,
                                             mu_id,
-                                            istart,
-                                            iend,
-                                            jstart,
-                                            jend,
-                                            collstart,
-                                            collend,
+                                            the_r_extent,
+                                            the_theta_extent,
+                                            the_phi_extent,
                                             R0,
                                             static_cast<bool>(collision_interspecies),
                                             static_cast<bool>(SOL),
@@ -118,7 +119,20 @@
                                             koliop::collision::ViewUHL1<const koliop::Flo64>{// "unmanaged_host_coeff_intdmu",
                                                                                              coeff_intdmu, Nmu + 1},
                                             koliop::collision::ViewUHL1<const koliop::Flo64>{// "unmanaged_host_coeff_intdvpar",
-                                                                                             coeff_intdvpar, Nvpar + 1}};
+                                                                                             coeff_intdvpar, Nvpar + 1},
+                                            koliop::collision::ViewUHL1<const koliop::Flo64>{// "unmanaged_host_rg",
+                                                                                             rg, the_r_extent},
+                                            koliop::collision::ViewUHL1<const koliop::Flo64>{// "unmanaged_host_nustar0_r",
+                                                                                             nustar0_r, the_r_extent},
+                                            koliop::collision::ViewUHL1<const koliop::Flo64>{// "unmanaged_host_q_r",
+                                                                                             q_r, the_r_extent},
+                                            koliop::collision::ViewUHL1<const koliop::Flo64>{// "unmanaged_host_mask_buffer_r",
+                                                                                             mask_buffer_r, the_r_extent},
+                                            dt,
+                                            koliop::collision::ViewUHL2<const koliop::Flo64>{// "unmanaged_host_B_norm",
+                                                                                             B_norm, the_r_extent, the_theta_extent + 1 /* Weird +1 */},
+                                            koliop::collision::ViewUHL4<const koliop::Flo64>{// "unmanaged_host_Bstar_s",
+                                                                                             Bstar_s, Nvpar + 1, the_r_extent, the_theta_extent, Nspecies}};
 
         KOLIOP_ASSERT(an_operator != nullptr);
 

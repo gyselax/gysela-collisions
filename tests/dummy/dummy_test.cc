@@ -47,9 +47,9 @@ int main(int, char**) {
     static constexpr uint32_t SOL                    = false;
     static constexpr uint32_t LIM                    = false;
 
-    static constexpr uint64_t the_rank_r_range     = (iend + 1) - istart;
-    static constexpr uint64_t the_rank_theta_range = (jend + 1) - jstart;
-    static constexpr uint64_t the_rank_phi_range   = static_cast<uint64_t>((collend + 1) - collstart);
+    static constexpr uint64_t the_rank_r_extent     = (iend + 1) - istart;
+    static constexpr uint64_t the_rank_theta_extent = (jend + 1) - jstart;
+    static constexpr uint64_t the_rank_phi_extent   = static_cast<uint64_t>((collend + 1) - collstart);
 
     // lbound(comb_mat,1) = 0;
     // ubound(comb_mat,1) = 5;
@@ -102,80 +102,27 @@ int main(int, char**) {
     static constexpr double coeff_intdvpar[Nvpar + 1] = {0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559};
     // static constexpr uint64_t coeff_intdvpar_extent_0 = Nvpar + 1;
 
-    if(::koliop_Create(&an_operator,
-                       Npolmax,
-                       index_max,
-                       Nmu,
-                       Nvpar,
-                       Nspecies,
-                       pSpecies_id,
-                       mu_id,
-                       istart,
-                       iend,
-                       jstart,
-                       jend,
-                       collstart,
-                       collend,
-                       R0,
-                       collision_interspecies,
-                       SOL,
-                       LIM,
-                       &comb_mat[0][0],
-                       &hat_As[0],
-                       &hat_Zs[0],
-                       &mug[0],
-                       &vparg[0],
-                       &coeff_intdmu[0],
-                       &coeff_intdvpar[0]) != KOLIOP_STATUS_SUCCESS) {
-        std::cout << "::koliop_Initialize() failed\n";
-    }
-
-    std::cout << an_operator << "\n";
-
     // rg lbound 1 0
     // rg size   1 32
     // rg ubound 1 31
-    static constexpr double rg[the_rank_r_range] = {1.1111111111111109, 3.333333333333333, 5.5555555555555554, 7.7777777777777777, 10., 12.222222222222223, 14.444444444444445, 16.666666666666668, 18.888888888888889, 21.111111111111111, 23.333333333333336, 25.555555555555557, 27.777777777777779, 30., 32.222222222222221, 34.444444444444443, 36.666666666666671, 38.888888888888893, 41.111111111111114, 43.333333333333336, 45.555555555555557, 47.777777777777779, 50., 52.222222222222221, 54.44444444444445, 56.666666666666671, 58.888888888888893, 61.111111111111114, 63.333333333333336, 65.555555555555557, 67.777777777777786, 70.};
+    static constexpr double rg[the_rank_r_extent] = {1.1111111111111109, 3.333333333333333, 5.5555555555555554, 7.7777777777777777, 10., 12.222222222222223, 14.444444444444445, 16.666666666666668, 18.888888888888889, 21.111111111111111, 23.333333333333336, 25.555555555555557, 27.777777777777779, 30., 32.222222222222221, 34.444444444444443, 36.666666666666671, 38.888888888888893, 41.111111111111114, 43.333333333333336, 45.555555555555557, 47.777777777777779, 50., 52.222222222222221, 54.44444444444445, 56.666666666666671, 58.888888888888893, 61.111111111111114, 63.333333333333336, 65.555555555555557, 67.777777777777786, 70.};
 
     // nustar0_r lbound 1 0
     // nustar0_r size   1 32
     // nustar0_r ubound 1 31
-    static constexpr double nustar0_r[the_rank_r_range] = {184.14192532377947, 35.438257627946825, 16.470573095840162, 9.9436384303559215, 6.8216922873912118, 5.0499247210943716, 3.9323757140844435, 3.1749322066681667, 2.6341170601726076, 2.2324656348072947, 1.9248612708562103, 1.683433142690395, 1.4901327942584295, 1.3328121864064699, 1.2030268309153078, 1.0947441177054502, 1.0035521961829219, 0.92615821431536416, 0.86006031915208092, 0.80332750744392956, 0.7544483832704707, 0.71222508278551266, 0.67569748768476301, 0.64408816936750446, 0.61676178578755858, 0.59319472388759353, 0.57295211649546463, 0.55567024149265165, 0.54104289974809217, 0.52881076911912361, 0.51875300886823839, 0.51068058303590491};
+    static constexpr double nustar0_r[the_rank_r_extent] = {184.14192532377947, 35.438257627946825, 16.470573095840162, 9.9436384303559215, 6.8216922873912118, 5.0499247210943716, 3.9323757140844435, 3.1749322066681667, 2.6341170601726076, 2.2324656348072947, 1.9248612708562103, 1.683433142690395, 1.4901327942584295, 1.3328121864064699, 1.2030268309153078, 1.0947441177054502, 1.0035521961829219, 0.92615821431536416, 0.86006031915208092, 0.80332750744392956, 0.7544483832704707, 0.71222508278551266, 0.67569748768476301, 0.64408816936750446, 0.61676178578755858, 0.59319472388759353, 0.57295211649546463, 0.55567024149265165, 0.54104289974809217, 0.52881076911912361, 0.51875300886823839, 0.51068058303590491};
 
     // nustar0_r lbound 1 0
     // nustar0_r size   1 32
     // nustar0_r ubound 1 31
-    static constexpr double q_r[the_rank_r_range] = {1.2000000674762548, 1.200004387445524, 1.2000305658857675, 1.2001097800745295, 1.2002852807746429, 1.2006115657747147, 1.2011538137443118, 1.2019874570570905, 1.2031978410301916, 1.2048799419166174, 1.2071381273067248, 1.2100859484960278, 1.213845957754154, 1.2185495455007442, 1.224336793733066, 1.231356342953307, 1.2397652704742095, 1.2497289784350696, 1.2614210901940766, 1.2750233540142315, 1.2907255531525996, 1.3087254216125657, 1.3292285649371665, 1.3524483855162783, 1.3786060119570753, 1.4079302321297891, 1.4406574295524956, 1.4770315228216333, 1.517303907831018, 1.5617334025525744, 1.610586194177877, 1.6641357884417383};
+    static constexpr double q_r[the_rank_r_extent] = {1.2000000674762548, 1.200004387445524, 1.2000305658857675, 1.2001097800745295, 1.2002852807746429, 1.2006115657747147, 1.2011538137443118, 1.2019874570570905, 1.2031978410301916, 1.2048799419166174, 1.2071381273067248, 1.2100859484960278, 1.213845957754154, 1.2185495455007442, 1.224336793733066, 1.231356342953307, 1.2397652704742095, 1.2497289784350696, 1.2614210901940766, 1.2750233540142315, 1.2907255531525996, 1.3087254216125657, 1.3292285649371665, 1.3524483855162783, 1.3786060119570753, 1.4079302321297891, 1.4406574295524956, 1.4770315228216333, 1.517303907831018, 1.5617334025525744, 1.610586194177877, 1.6641357884417383};
 
     // nustar0_r lbound 1 0
     // nustar0_r size   1 32
     // nustar0_r ubound 1 31
-    static constexpr double mask_buffer_r[the_rank_r_range] = {0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 2.81000711525697389E-3, 9.85588964179064941E-2, 0.80923908090803054, 0.99396116715554794};
+    static constexpr double mask_buffer_r[the_rank_r_extent] = {0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 2.81000711525697389E-3, 9.85588964179064941E-2, 0.80923908090803054, 0.99396116715554794};
 
-    // nustar_coeff lbound 1 0
-    // nustar_coeff lbound 2 0
-    // nustar_coeff lbound 3 0
-    // nustar_coeff size   1 1
-    // nustar_coeff size   2 1
-    // nustar_coeff size   3 32
-    // nustar_coeff ubound 1 0
-    // nustar_coeff ubound 2 0
-    // nustar_coeff ubound 3 31
-    double                  nustar_coeff[the_rank_r_range][Nspecies][Nspecies]{{{42.0}}};
-    static constexpr double a_nustar_coeff_reference[the_rank_r_range][Nspecies][Nspecies] = {{{2.77509396353926353E-4}}, {{2.77509396353926353E-4}}, {{2.77509396353926407E-4}}, {{2.77509396353926353E-4}}, {{2.77509396353926299E-4}}, {{2.77509396353926353E-4}}, {{2.77509396353926353E-4}}, {{2.77509396353926353E-4}}, {{2.77509396353926353E-4}}, {{2.77509396353926353E-4}}, {{2.77509396353926299E-4}}, {{2.77509396353926353E-4}}, {{2.77509396353926299E-4}}, {{2.77509396353926299E-4}}, {{2.77509396353926299E-4}}, {{2.77509396353926353E-4}}, {{2.77509396353926353E-4}}, {{2.77509396353926299E-4}}, {{2.77509396353926353E-4}}, {{2.77509396353926407E-4}}, {{2.77509396353926299E-4}}, {{2.77509396353926244E-4}}, {{2.77509396353926244E-4}}, {{2.77509396353926244E-4}}, {{2.77509396353926299E-4}}, {{2.77509396353926407E-4}}, {{2.77509396353926299E-4}}, {{2.77509396353926407E-4}}, {{2.76729592975621106E-4}}, {{2.50158376503683969E-4}}, {{5.29379475051326199E-5}}, {{1.67583285734615439E-6}}};
-
-    ::koliop_PrepareNuStar(an_operator,
-                           &rg[0],
-                           &nustar0_r[0],
-                           &q_r[0],
-                           &mask_buffer_r[0],
-                           &nustar_coeff[0][0][0]);
-
-    if(!ValidateAbsoluteError(&a_nustar_coeff_reference[0][0][0],
-                              &nustar_coeff[0][0][0],
-                              sizeof(nustar_coeff) / sizeof(nustar_coeff[0]))) {
-        std::cout << "Validation error: a_nustar_coeff_reference\n";
-    }
+    static constexpr double dt = 50.0;
 
     // mom B_norm lbound 1   1
     // mom B_norm lbound 2   1
@@ -183,7 +130,7 @@ int main(int, char**) {
     // mom B_norm size   2   33 // NOTE: why the 32 + 1 ?
     // mom B_norm ubound 1   32
     // mom B_norm ubound 2   33
-    static constexpr double B_norm[the_rank_theta_range + /* This +1 is weird */ 1][the_rank_r_range]{};
+    static constexpr double B_norm[the_rank_theta_extent + /* This +1 is weird */ 1][the_rank_r_extent]{};
 
     // mom Bstar_s lbound 1   1
     // mom Bstar_s lbound 2   1
@@ -197,7 +144,66 @@ int main(int, char**) {
     // mom Bstar_s ubound 2   32
     // mom Bstar_s ubound 3   32
     // mom Bstar_s ubound 4   1
-    static constexpr double Bstar_s[Nspecies][the_rank_theta_range][the_rank_r_range][Nvpar + 1]{};
+    static constexpr double Bstar_s[Nspecies][the_rank_theta_extent][the_rank_r_extent][Nvpar + 1]{};
+
+    if(::koliop_Create(&an_operator,
+                       Npolmax,
+                       index_max,
+                       Nmu,
+                       Nvpar,
+                       Nspecies,
+                       pSpecies_id,
+                       mu_id,
+                       the_rank_r_extent,
+                       the_rank_theta_extent,
+                       the_rank_phi_extent,
+                       R0,
+                       collision_interspecies,
+                       SOL,
+                       LIM,
+                       &comb_mat[0][0],
+                       &hat_As[0],
+                       &hat_Zs[0],
+                       &mug[0],
+                       &vparg[0],
+                       &coeff_intdmu[0],
+                       &coeff_intdvpar[0],
+                       &rg[0],
+                       &nustar0_r[0],
+                       &q_r[0],
+                       &mask_buffer_r[0],
+                       dt,
+                       &B_norm[0][0],
+                       &Bstar_s[0][0][0][0]) != KOLIOP_STATUS_SUCCESS) {
+        std::cout << "::koliop_Initialize() failed\n";
+    }
+
+    std::cout << an_operator << "\n";
+
+    // nustar_coeff lbound 1 0
+    // nustar_coeff lbound 2 0
+    // nustar_coeff lbound 3 0
+    // nustar_coeff size   1 1
+    // nustar_coeff size   2 1
+    // nustar_coeff size   3 32
+    // nustar_coeff ubound 1 0
+    // nustar_coeff ubound 2 0
+    // nustar_coeff ubound 3 31
+    double                  nustar_coeff[the_rank_r_extent][Nspecies][Nspecies]{{{42.0}}};
+    static constexpr double a_nustar_coeff_reference[the_rank_r_extent][Nspecies][Nspecies] = {{{2.77509396353926353E-4}}, {{2.77509396353926353E-4}}, {{2.77509396353926407E-4}}, {{2.77509396353926353E-4}}, {{2.77509396353926299E-4}}, {{2.77509396353926353E-4}}, {{2.77509396353926353E-4}}, {{2.77509396353926353E-4}}, {{2.77509396353926353E-4}}, {{2.77509396353926353E-4}}, {{2.77509396353926299E-4}}, {{2.77509396353926353E-4}}, {{2.77509396353926299E-4}}, {{2.77509396353926299E-4}}, {{2.77509396353926299E-4}}, {{2.77509396353926353E-4}}, {{2.77509396353926353E-4}}, {{2.77509396353926299E-4}}, {{2.77509396353926353E-4}}, {{2.77509396353926407E-4}}, {{2.77509396353926299E-4}}, {{2.77509396353926244E-4}}, {{2.77509396353926244E-4}}, {{2.77509396353926244E-4}}, {{2.77509396353926299E-4}}, {{2.77509396353926407E-4}}, {{2.77509396353926299E-4}}, {{2.77509396353926407E-4}}, {{2.76729592975621106E-4}}, {{2.50158376503683969E-4}}, {{5.29379475051326199E-5}}, {{1.67583285734615439E-6}}};
+
+    ::koliop_PrepareNuStar(an_operator,
+                           &rg[0],
+                           &nustar0_r[0],
+                           &q_r[0],
+                           &mask_buffer_r[0],
+                           &nustar_coeff[0][0][0]);
+
+    if(!ValidateAbsoluteError(&a_nustar_coeff_reference[0][0][0],
+                              &nustar_coeff[0][0][0],
+                              sizeof(nustar_coeff) / sizeof(nustar_coeff[0]))) {
+        std::cout << "Validation error: a_nustar_coeff_reference\n";
+    }
 
     // mom f5d_s lbound 1   1
     // mom f5d_s lbound 2   1
@@ -217,7 +223,7 @@ int main(int, char**) {
     // mom f5d_s ubound 4   32
     // mom f5d_s ubound 5   1
     // mom f5d_s ubound 6   1
-    double f5d_s[Nspecies][the_rank_phi_range][the_rank_theta_range][the_rank_r_range][Nvpar + 1][Nmu + 1]{};
+    double f5d_s[Nspecies][the_rank_phi_extent][the_rank_theta_extent][the_rank_r_extent][Nvpar + 1][Nmu + 1]{};
 
     // mom n_s lbound 1   1
     // mom n_s lbound 2   1
@@ -231,7 +237,7 @@ int main(int, char**) {
     // mom n_s ubound 2   32
     // mom n_s ubound 3   1
     // mom n_s ubound 4   1
-    double n_s[Nspecies][the_rank_phi_range][the_rank_theta_range][the_rank_r_range]{};
+    double n_s[Nspecies][the_rank_phi_extent][the_rank_theta_extent][the_rank_r_extent]{};
 
     // mom U_par_s lbound 1   1
     // mom U_par_s lbound 2   1
@@ -245,7 +251,7 @@ int main(int, char**) {
     // mom U_par_s ubound 2   32
     // mom U_par_s ubound 3   1
     // mom U_par_s ubound 4   1
-    double U_par_s[Nspecies][the_rank_phi_range][the_rank_theta_range][the_rank_r_range]{};
+    double U_par_s[Nspecies][the_rank_phi_extent][the_rank_theta_extent][the_rank_r_extent]{};
 
     // mom T_s lbound 1   1
     // mom T_s lbound 2   1
@@ -259,7 +265,7 @@ int main(int, char**) {
     // mom T_s ubound 2   32
     // mom T_s ubound 3   1
     // mom T_s ubound 4   1
-    double T_s[Nspecies][the_rank_phi_range][the_rank_theta_range][the_rank_r_range]{};
+    double T_s[Nspecies][the_rank_phi_extent][the_rank_theta_extent][the_rank_r_extent]{};
 
     ::koliop_ComputeMoments(an_operator,
                             &B_norm[0][0],
@@ -269,7 +275,7 @@ int main(int, char**) {
                             &U_par_s[0][0][0][0],
                             &T_s[0][0][0][0]);
 
-    double nu_ab[the_rank_r_range][Nspecies][Nspecies]{};
+    double nu_ab[the_rank_r_extent][Nspecies][Nspecies]{};
 
     ::koliop_ComputeFrequencyNuab(an_operator,
                                   nustar_coeff[0][0][0],
@@ -278,8 +284,6 @@ int main(int, char**) {
                                   n_s[0][0][0][0],
                                   T_s[0][0][0][0],
                                   &nu_ab[0][0][0]);
-
-    static constexpr double dt = 50.0;
 
     ::koliop_ComputeEvolutionMaxwellian(an_operator,
                                         &nustar_coeff[0][0][0],
@@ -302,7 +306,7 @@ int main(int, char**) {
     // qpar q_par_on_nT_s ubound 2   32
     // qpar q_par_on_nT_s ubound 3   1
     // qpar q_par_on_nT_s ubound 4   1
-    double q_par_on_nT_s[Nspecies][the_rank_phi_range][the_rank_theta_range][the_rank_r_range]{};
+    double q_par_on_nT_s[Nspecies][the_rank_phi_extent][the_rank_theta_extent][the_rank_r_extent]{};
 
     ::koliop_ComputeQparOnNT(an_operator,
                              &B_norm[0][0],

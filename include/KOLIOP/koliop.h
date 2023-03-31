@@ -87,32 +87,35 @@ typedef struct _koliop_Operator* koliop_Operator;
 /// @param coeff_intdvpar_extent_0
 /// @return
 koliop_Status koliop_Create(koliop_Operator* an_operator_handle,
-                            uint64_t         Npolmax,                // const external
-                            uint64_t         index_max,              // const external
-                            uint64_t         Nmu,                    // const external
-                            uint64_t         Nvpar,                  // const external
-                            uint64_t         Nspecies,               // const external
-                            uint64_t         pSpecies_id,            // const external
-                            uint64_t         mu_id,                  // const external
-                            uint64_t         istart,                 // const external
-                            uint64_t         iend,                   // const external
-                            uint64_t         jstart,                 // const external
-                            uint64_t         jend,                   // const external
-                            int64_t          collstart,              // const external
-                            int64_t          collend,                // const external
-                            double           R0,                     // const external
-                            uint32_t         collision_interspecies, // const external
-                            uint32_t         SOL,                    // const external
-                            uint32_t         LIM,                    // const external
-                            const double*    comb_mat,               // const external
-                            const double*    hat_As,                 // const external
-                            const double*    hat_Zs,                 // const external
-                            const double*    mug,                    // const external
-                            const double*    vparg,                  // const external
-                            const double*    coeff_intdmu,           // const external
-                            const double*    coeff_intdvpar);           // const external
+                            uint64_t         Npolmax,
+                            uint64_t         index_max,
+                            uint64_t         Nmu,
+                            uint64_t         Nvpar,
+                            uint64_t         Nspecies,
+                            uint64_t         pSpecies_id,
+                            uint64_t         mu_id,
+                            uint64_t         the_r_extent,
+                            uint64_t         the_theta_extent,
+                            uint64_t         the_phi_extent,
+                            double           R0,
+                            uint32_t         collision_interspecies,
+                            uint32_t         SOL,
+                            uint32_t         LIM,
+                            const double*    comb_mat,
+                            const double*    hat_As,
+                            const double*    hat_Zs,
+                            const double*    mug,
+                            const double*    vparg,
+                            const double*    coeff_intdmu,
+                            const double*    coeff_intdvpar,
+                            const double*    rg,
+                            const double*    nustar0_r,
+                            const double*    q_r,
+                            const double*    mask_buffer_r,
+                            double           dt,
+                            const double*    B_norm,
+                            const double*    Bstar_s);
 koliop_Status koliop_Release(koliop_Operator an_operator);
-
 
 // TODO(Etienne M): Put it into the init
 koliop_Status koliop_PrepareNuStar(koliop_Operator an_operator,
