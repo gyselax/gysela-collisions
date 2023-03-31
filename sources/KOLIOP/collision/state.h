@@ -54,6 +54,9 @@ namespace koliop {
         template <typename Float>
         using ViewMDD6 = Kokkos::View<Float******, Kokkos::DefaultExecutionSpace::array_layout, Kokkos::DefaultExecutionSpace::memory_space>;
 
+        template <typename Float>
+        using ViewMHL1 = Kokkos::View<Float*, Kokkos::LayoutLeft, Kokkos::DefaultHostExecutionSpace::memory_space>;
+
 
         ////////////////////////////////////////////////////////////////////////
         // State definition
@@ -138,6 +141,9 @@ namespace koliop {
         ///         }
         ///     }
         ///
+        /// TODO(Etienne M): Convert all these indicies to half open ranges
+        /// counter.
+        ///
         class State {
         public:
         public:
@@ -169,12 +175,6 @@ namespace koliop {
                   const ViewUHL2<const Flo64>& a_host_visible_B_norm,
                   const ViewUHL4<const Flo64>& a_host_visible_Bstar_s,
                   Flo64                        dt);
-
-            void PrepareNuStar(const Flo64* rg,
-                               const Flo64* nustar0_r,
-                               const Flo64* q_r,
-                               const Flo64* mask_buffer_r,
-                               Flo64*       nustar_coeff) const;
 
             void ComputeMoments(const Flo64* B_norm,
                                 const Flo64* Bstar_s,
@@ -297,11 +297,13 @@ namespace koliop {
                                         Flo64        dt) const;
 
         protected:
-            void DoPrepareNuStar(const ViewUHL1<const Flo64>& a_host_visible_rg,
-                                 const ViewUHL1<const Flo64>& a_host_visible_nustar0_r,
-                                 const ViewUHL1<const Flo64>& a_host_visible_q_r,
-                                 const ViewUHL1<const Flo64>& a_host_visible_mask_buffer_r,
-                                 ViewUHL3<Flo64>&&            a_host_visible_nustar_coeff) const;
+            void DoPrepareCj_Cjl(ViewMDD2<Flo64>& C_j,
+                                 ViewMDD3<Flo64>& C_jl) const;
+
+            void DoPrepareCjl(const ViewMDD2<Flo64>::host_mirror_type& a_host_visible_C_j,
+                              ViewMDD3<Flo64>&                         C_jl) const;
+
+            void DoPrepareNuStar(ViewMDD3<Flo64>& nustar_coeff) const;
 
             void DoComputeMoments(const ViewUHL2<const Flo64>& a_host_visible_B_norm,
                                   const ViewUHL4<const Flo64>& a_host_visible_Bstar_s,
@@ -390,12 +392,6 @@ namespace koliop {
                                           const ViewUHL4<const Flo64>& a_host_visible_q_par_on_nT_s,
                                           Flo64                        dt) const;
 
-            static void PrepareCj_Cjl(ViewMDD2<Flo64>& C_j,
-                                      ViewMDD3<Flo64>& C_jl);
-
-            static void PrepareCjl(const ViewMDD2<Flo64>::host_mirror_type& a_host_visible_C_j,
-                                   ViewMDD3<Flo64>&                         C_jl);
-
             static KOKKOS_INLINE_FUNCTION Flo64
             DoComputeFrequencyNuab(Flo64 nustar_coeff,
                                    Flo64 hat_As_speciesA,
@@ -408,10 +404,10 @@ namespace koliop {
             DoComputeLaguerrePol(uint64_t l,
                                  Flo64    x);
 
-            // TODO(Etienne M): Convert all these indicies to half open ranges
-            // counter.
+            // Constant, externally computed values
+
             uint64_t Npolmax_;
-            uint64_t index_max_; // TODO(Etienne M): INDEX Fortran s***
+            uint64_t index_max_;
             uint64_t Nmu_;
             uint64_t Nvpar_;
             uint64_t Nspecies_;
@@ -420,7 +416,6 @@ namespace koliop {
             uint64_t the_r_extent_;
             uint64_t the_theta_extent_;
             uint64_t the_phi_extent_;
-            uint64_t istart_; // TODO(Etienne M): remove start/end indicies
             Flo64    R0_inverse_;
             bool     collision_interspecies_;
             bool     SOL_;
@@ -442,8 +437,13 @@ namespace koliop {
 
             Flo64 dt_;
 
+            // Constant, internally computed values
+
             ViewMDD2<Flo64> C_j_;
             ViewMDD3<Flo64> C_jl_;
+            ViewMDD3<Flo64> nustar_coeff_;
+
+            // Variable, internally computed values
         };
 
 
@@ -493,35 +493,28 @@ namespace koliop {
             , collision_interspecies_{collision_interspecies}
             , SOL_{SOL}
             , LIM_{LIM}
-            , comb_mat_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "comb_mat_"), a_host_visible_comb_mat.extent(0), a_host_visible_comb_mat.extent(1)}
-            , hat_As_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "hat_As_"), a_host_visible_hat_As.extent(0)}
-            , hat_Zs_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "hat_Zs_"), a_host_visible_hat_Zs.extent(0)}
-            , mug_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "mug_"), a_host_visible_mug.extent(0)}
-            , vparg_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "vparg_"), a_host_visible_vparg.extent(0)}
-            , coeff_intdmu_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "coeff_intdmu_"), a_host_visible_coeff_intdmu.extent(0)}
-            , coeff_intdvpar_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "coeff_intdvpar_"), a_host_visible_coeff_intdvpar.extent(0)}
-            , rg_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "rg_"), a_host_visible_rg.extent(0)}
-            , nustar0_r_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "nustar0_r_"), a_host_visible_nustar0_r.extent(0)}
-            , q_r_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "q_r_"), a_host_visible_q_r.extent(0)}
-            , mask_buffer_r_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "mask_buffer_r_"), a_host_visible_mask_buffer_r.extent(0)}
-            , B_norm_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "B_norm_"), a_host_visible_B_norm.extent(0), a_host_visible_B_norm.extent(1)}
-            , Bstar_s_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "Bstar_s_"),
-                       a_host_visible_Bstar_s.extent(0),
-                       a_host_visible_Bstar_s.extent(1),
-                       a_host_visible_Bstar_s.extent(2),
-                       a_host_visible_Bstar_s.extent(3)}
+            , comb_mat_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "comb_mat_"), ((index_max_ + 1) + 1) - 0, ((index_max_ + 1) + 1) - 0}
+            , hat_As_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "hat_As_"), Npolmax_}
+            , hat_Zs_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "hat_Zs_"), Npolmax_}
+            , mug_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "mug_"), Nmu_ + 1}
+            , vparg_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "vparg_"), Nvpar_ + 1}
+            , coeff_intdmu_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "coeff_intdmu_"), Nmu_ + 1}
+            , coeff_intdvpar_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "coeff_intdvpar_"), Nvpar_ + 1}
+            , rg_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "rg_"), the_r_extent_}
+            , nustar0_r_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "nustar0_r_"), the_r_extent_}
+            , q_r_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "q_r_"), the_r_extent_}
+            , mask_buffer_r_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "mask_buffer_r_"), the_r_extent_}
+            , B_norm_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "B_norm_"), the_r_extent_, the_theta_extent_ + 1 /* Weird +1 */}
+            , Bstar_s_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "Bstar_s_"), Nvpar_ + 1, the_r_extent_, the_theta_extent_, Nspecies_}
             , dt_{dt}
 
             // TODO(Etienne M): Compile time code based on Npolmax_ value ?
-            , C_j_{Kokkos::view_alloc(Kokkos::WithoutInitializing,
-                                      "C_j_"),
-                   Npolmax_,
-                   Npolmax_}
-            , C_jl_{Kokkos::view_alloc(Kokkos::WithoutInitializing,
-                                       "C_jl_"),
-                    index_max_ + 1,
-                    Npolmax_,
-                    Npolmax_} {
+            , C_j_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "C_j_"),
+                   Npolmax_, Npolmax_}
+            , C_jl_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "C_jl_"),
+                    index_max_ + 1, Npolmax_, Npolmax_}
+            , nustar_coeff_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "nustar_coeff_"),
+                            Nspecies_, Nspecies_, the_r_extent_} {
 
             // TODO(Etienne M): Make sure, we get ALL the data and not only some
             // thread specific part. The collision operator handles its
@@ -544,31 +537,8 @@ namespace koliop {
             koliop::utility::SmartDeepCopy(a_host_visible_B_norm, B_norm_);
             koliop::utility::SmartDeepCopy(a_host_visible_Bstar_s, Bstar_s_);
 
-            PrepareCj_Cjl(C_j_, C_jl_);
-        }
-
-        inline void State::PrepareNuStar(const Flo64* rg,
-                                         const Flo64* nustar0_r,
-                                         const Flo64* q_r,
-                                         const Flo64* mask_buffer_r,
-                                         Flo64*       nustar_coeff) const {
-            // NOTE: For nustar_coeff, we assume the whole array is
-            // contiguous and that we can discard the istart_ offset. So
-            // assuming:
-            // real(F64), contiguous, intent(out) :: nustar_coeff(0:,0:,istart_:)
-            // We get:
-            // real(F64), contiguous, intent(out) :: nustar_coeff(0:,0:,0:the_r_extent_ - 1)
-
-            DoPrepareNuStar(ViewUHL1<const Flo64>{// "unmanaged_host_rg",
-                                                  rg, the_r_extent_},
-                            ViewUHL1<const Flo64>{// "unmanaged_host_nustar0_r",
-                                                  nustar0_r, the_r_extent_},
-                            ViewUHL1<const Flo64>{// "unmanaged_host_q_r",
-                                                  q_r, the_r_extent_},
-                            ViewUHL1<const Flo64>{// "unmanaged_host_mask_buffer_r",
-                                                  mask_buffer_r, the_r_extent_},
-                            ViewUHL3<Flo64>{// "unmanaged_host_nustar_coeff",
-                                            nustar_coeff, Nspecies_, Nspecies_, the_r_extent_});
+            DoPrepareCj_Cjl(C_j_, C_jl_);
+            DoPrepareNuStar(nustar_coeff_);
         }
 
         inline void State::ComputeMoments(const Flo64* B_norm,
@@ -932,40 +902,98 @@ namespace koliop {
             Kokkos::fence();
         }
 
-        inline void State::DoPrepareNuStar(const ViewUHL1<const Flo64>& a_host_visible_rg,
-                                           const ViewUHL1<const Flo64>& a_host_visible_nustar0_r,
-                                           const ViewUHL1<const Flo64>& a_host_visible_q_r,
-                                           const ViewUHL1<const Flo64>& a_host_visible_mask_buffer_r,
-                                           ViewUHL3<Flo64>&&            a_host_visible_nustar_coeff) const {
+        inline void State::DoPrepareCj_Cjl(ViewMDD2<Flo64>& C_j,
+                                           ViewMDD3<Flo64>& C_jl) const {
+            // a_host_visible_C_j is zero initialized.
+            auto a_host_visible_C_j = Kokkos::create_mirror_view(C_j);
 
-            const uint64_t element_count = a_host_visible_rg.extent(0);
+            for(uint64_t j = 0; j < Npolmax_; ++j) {
+                a_host_visible_C_j(0, j) = 1.0;
+                a_host_visible_C_j(1, j) = static_cast<Flo64>(-static_cast<int64_t>(j));
+            }
 
-            Kokkos::View<Flo64*, Kokkos::LayoutLeft, Kokkos::DefaultHostExecutionSpace::memory_space>
-                mask_space{Kokkos::view_alloc(Kokkos::WithoutInitializing,
-                                              "mask_space"),
-                           element_count};
-
-            if(a_host_visible_q_r(0) < koliop::portability::GyselaConstant<Flo64>::kInfinity) {
-                for(uint64_t i = 0; i < element_count; ++i) {
-                    mask_space(i) = 1.0 / a_host_visible_q_r[i];
+            if(Npolmax_ > 2) {
+                a_host_visible_C_j(2, 2) = 0.5;
+                if(Npolmax_ > 3) {
+                    a_host_visible_C_j(2, 3) = 1.5;
+                    a_host_visible_C_j(3, 3) = -1.0 / 6.0;
                 }
             }
 
+            koliop::utility::SmartDeepCopy(a_host_visible_C_j, C_j);
+
+            DoPrepareCjl(a_host_visible_C_j, C_jl);
+        }
+
+        inline void State::DoPrepareCjl(const ViewMDD2<Flo64>::host_mirror_type& a_host_visible_C_j,
+                                        ViewMDD3<Flo64>&                         C_jl) const {
+            // a_host_visible_C_jl is zero initialized.
+            auto a_host_visible_C_jl = Kokkos::create_mirror_view(C_jl_);
+
+            const auto CoreLoop = [&](auto j_tmp, auto l_tmp) {
+                for(uint64_t i = 0; i <= (j_tmp + l_tmp); ++i) {
+                    // This seems unnecessary ?
+                    a_host_visible_C_jl(i, j_tmp, l_tmp) = 0.0;
+                }
+
+                for(uint64_t alpha = 0; alpha <= j_tmp; ++alpha) {
+                    for(uint64_t beta = 0; beta <= l_tmp; ++beta) {
+                        a_host_visible_C_jl(alpha + beta, j_tmp, l_tmp) = a_host_visible_C_jl(alpha + beta, j_tmp, l_tmp) +
+                                                                          a_host_visible_C_j(alpha, j_tmp) * a_host_visible_C_j(beta, l_tmp);
+                    }
+                }
+            };
+
+            for(uint64_t i = 0; i < Npolmax_; ++i) {
+                for(uint64_t j = 0; j < Npolmax_; ++j) {
+                    CoreLoop(i, j);
+                }
+            }
+
+            koliop::utility::SmartDeepCopy(a_host_visible_C_jl, C_jl);
+        }
+
+        inline void State::DoPrepareNuStar(ViewMDD3<Flo64>& nustar_coeff) const {
+            ViewMHL1<Flo64> a_host_visible_mask_space{Kokkos::view_alloc(Kokkos::WithoutInitializing, "a_host_visible_mask_space"),
+                                                      the_r_extent_};
+
+            const auto a_host_visible_q_r = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{},
+                                                                                                   Kokkos::WithoutInitializing),
+                                                                                q_r_);
+
+            if(a_host_visible_q_r(0) < koliop::portability::GyselaConstant<Flo64>::kInfinity) {
+                for(uint64_t i = 0; i < the_r_extent_; ++i) {
+                    a_host_visible_mask_space(i) = 1.0 / a_host_visible_q_r(i);
+                }
+            }
+
+            const auto a_host_visible_mask_buffer_r = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{},
+                                                                                                             Kokkos::WithoutInitializing),
+                                                                                          mask_buffer_r_);
+
             if(!(LIM_ || SOL_)) {
-                for(uint64_t i = 0; i < element_count; ++i) {
-                    mask_space(i) = mask_space[i] *
-                                    (1.0 - a_host_visible_mask_buffer_r(i));
+                for(uint64_t i = 0; i < the_r_extent_; ++i) {
+                    a_host_visible_mask_space(i) *= (1.0 - a_host_visible_mask_buffer_r(i));
                 }
             }
 
             // TODO(Etienne M): Either we keep the pointer to hat_[A|Z]s or
             // we do a deep copy.
-            const auto a_host_visible_hat_As = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{},
-                                                                                                      Kokkos::WithoutInitializing),
-                                                                                   hat_As_);
-            const auto a_host_visible_hat_Zs = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{},
-                                                                                                      Kokkos::WithoutInitializing),
-                                                                                   hat_Zs_);
+            const auto a_host_visible_hat_As       = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{},
+                                                                                                            Kokkos::WithoutInitializing),
+                                                                                         hat_As_);
+            const auto a_host_visible_hat_Zs       = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{},
+                                                                                                            Kokkos::WithoutInitializing),
+                                                                                         hat_Zs_);
+            const auto a_host_visible_rg           = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{},
+                                                                                                            Kokkos::WithoutInitializing),
+                                                                                         rg_);
+            const auto a_host_visible_nustar0_r    = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{},
+                                                                                                            Kokkos::WithoutInitializing),
+                                                                                         nustar0_r_);
+            const auto a_host_visible_nustar_coeff = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{},
+                                                                                                            Kokkos::WithoutInitializing),
+                                                                                         nustar_coeff);
 
             // TODO(Etienne M): LOOP Obvious loop inter exchange optimization ?
             for(uint64_t ispeciesB = 0; ispeciesB < Nspecies_; ++ispeciesB) {
@@ -979,14 +1007,14 @@ namespace koliop {
                                             (1.0 / hat_Aa) *
                                             (1.0 / hat_Aa + 1.0 / hat_Ab);
 
-                    for(uint64_t ir = 0; ir < element_count; ++ir) {
+                    for(uint64_t ir = 0; ir < the_r_extent_; ++ir) {
                         // Computation of
                         // AD(r) = sqrt(2) * eps ^ (3 / 2) / (q R0_)*nustaR0_(r)
                         // which is independent on the species considered (eps = r/R0_)
                         const Flo64 eps = a_host_visible_rg(ir) * R0_inverse_;
 
                         const Flo64 AD = a_host_visible_nustar0_r(ir) *
-                                         mask_space(ir) *
+                                         a_host_visible_mask_space(ir) *
                                          // TODO(Etienne M): SIMPLIFY
                                          // sqrt(2)*(rg*R0_inverse_)*sqrt(rg*R0_inverse_)*R0_inverse_ =
                                          // sqrt(2)*pow(r, 5/2)*pow(rg, 3/2)
@@ -1004,6 +1032,8 @@ namespace koliop {
                     }
                 }
             }
+
+            koliop::utility::SmartDeepCopy(a_host_visible_nustar_coeff, nustar_coeff);
         }
 
         inline void State::DoComputeMoments(const ViewUHL2<const Flo64>& a_host_visible_B_norm,
@@ -1808,59 +1838,6 @@ namespace koliop {
 
             Kokkos::parallel_for("DoComputeCorrectionUparT",
                                  a_policy, the_kernel);
-        }
-
-        inline void State::PrepareCj_Cjl(ViewMDD2<Flo64>& C_j,
-                                         ViewMDD3<Flo64>& C_jl) {
-            // a_host_visible_C_j is zero initialized.
-            auto a_host_visible_C_j = Kokkos::create_mirror_view(C_j);
-
-            const auto the_polynomial_degree = C_j.extent(1);
-
-            for(uint64_t j = 0; j < the_polynomial_degree; ++j) {
-                a_host_visible_C_j(0, j) = 1.0;
-                a_host_visible_C_j(1, j) = static_cast<Flo64>(-static_cast<int64_t>(j));
-            }
-
-            if(the_polynomial_degree > 2) {
-                a_host_visible_C_j(2, 2) = 0.5;
-                if(the_polynomial_degree > 3) {
-                    a_host_visible_C_j(2, 3) = 1.5;
-                    a_host_visible_C_j(3, 3) = -1.0 / 6.0;
-                }
-            }
-
-            koliop::utility::SmartDeepCopy(a_host_visible_C_j, C_j);
-
-            PrepareCjl(a_host_visible_C_j, C_jl);
-        }
-
-        inline void State::PrepareCjl(const ViewMDD2<Flo64>::host_mirror_type& a_host_visible_C_j,
-                                      ViewMDD3<Flo64>&                         C_jl) {
-            // a_host_visible_C_jl is zero initialized.
-            auto a_host_visible_C_jl = Kokkos::create_mirror_view(C_jl);
-
-            const auto Stuff = [&](auto j_tmp, auto l_tmp) {
-                for(uint64_t i = 0; i <= (j_tmp + l_tmp); ++i) {
-                    // This seems unnecessary ?
-                    a_host_visible_C_jl(i, j_tmp, l_tmp) = 0.0;
-                }
-
-                for(uint64_t alpha = 0; alpha <= j_tmp; ++alpha) {
-                    for(uint64_t beta = 0; beta <= l_tmp; ++beta) {
-                        a_host_visible_C_jl(alpha + beta, j_tmp, l_tmp) = a_host_visible_C_jl(alpha + beta, j_tmp, l_tmp) +
-                                                                          a_host_visible_C_j(alpha, j_tmp) * a_host_visible_C_j(beta, l_tmp);
-                    }
-                }
-            };
-
-            for(uint64_t i = 0; i < a_host_visible_C_jl.extent(1); ++i) {
-                for(uint64_t j = 0; j < a_host_visible_C_jl.extent(2); ++j) {
-                    Stuff(i, j);
-                }
-            }
-
-            koliop::utility::SmartDeepCopy(a_host_visible_C_jl, C_jl);
         }
 
         KOKKOS_INLINE_FUNCTION Flo64

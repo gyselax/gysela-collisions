@@ -153,24 +153,6 @@
     });
 }
 
-::koliop_Status koliop_PrepareNuStar(::koliop_Operator an_operator,
-                                     const double*     rg,
-                                     const double*     nustar0_r,
-                                     const double*     q_r,
-                                     const double*     mask_buffer_r,
-                                     double*           nustar_coeff) {
-    return koliop::error::FromException([&]() {
-        if(an_operator == nullptr) {
-            return KOLIOP_STATUS_INVALID_VALUE;
-        }
-
-        using State = koliop::collision::State;
-        reinterpret_cast<const State*>(an_operator)->PrepareNuStar(rg, nustar0_r, q_r, mask_buffer_r, nustar_coeff);
-
-        return KOLIOP_STATUS_SUCCESS;
-    });
-}
-
 ::koliop_Status koliop_ComputeMoments(::koliop_Operator an_operator,
                                       const double*     B_norm,
                                       const double*     Bstar_s,

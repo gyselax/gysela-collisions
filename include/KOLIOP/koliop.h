@@ -117,14 +117,6 @@ koliop_Status koliop_Create(koliop_Operator* an_operator_handle,
                             double           dt);
 koliop_Status koliop_Release(koliop_Operator an_operator);
 
-// TODO(Etienne M): Put it into the init
-koliop_Status koliop_PrepareNuStar(koliop_Operator an_operator,
-                                   const double*   rg,            // TODO(Etienne M): const external
-                                   const double*   nustar0_r,     // TODO(Etienne M): const external
-                                   const double*   q_r,           // TODO(Etienne M): const external
-                                   const double*   mask_buffer_r, // TODO(Etienne M): const external
-                                   double*         nustar_coeff);         // TODO(Etienne M): internal
-
 koliop_Status koliop_ComputeMoments(koliop_Operator an_operator,
                                     const double*   B_norm,  // TODO(Etienne M): const external
                                     const double*   Bstar_s, // TODO(Etienne M): const external

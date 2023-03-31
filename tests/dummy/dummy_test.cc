@@ -189,21 +189,13 @@ int main(int, char**) {
     // nustar_coeff ubound 1 0
     // nustar_coeff ubound 2 0
     // nustar_coeff ubound 3 31
-    double                  nustar_coeff[the_rank_r_extent][Nspecies][Nspecies]{{{42.0}}};
-    static constexpr double a_nustar_coeff_reference[the_rank_r_extent][Nspecies][Nspecies] = {{{2.77509396353926353E-4}}, {{2.77509396353926353E-4}}, {{2.77509396353926407E-4}}, {{2.77509396353926353E-4}}, {{2.77509396353926299E-4}}, {{2.77509396353926353E-4}}, {{2.77509396353926353E-4}}, {{2.77509396353926353E-4}}, {{2.77509396353926353E-4}}, {{2.77509396353926353E-4}}, {{2.77509396353926299E-4}}, {{2.77509396353926353E-4}}, {{2.77509396353926299E-4}}, {{2.77509396353926299E-4}}, {{2.77509396353926299E-4}}, {{2.77509396353926353E-4}}, {{2.77509396353926353E-4}}, {{2.77509396353926299E-4}}, {{2.77509396353926353E-4}}, {{2.77509396353926407E-4}}, {{2.77509396353926299E-4}}, {{2.77509396353926244E-4}}, {{2.77509396353926244E-4}}, {{2.77509396353926244E-4}}, {{2.77509396353926299E-4}}, {{2.77509396353926407E-4}}, {{2.77509396353926299E-4}}, {{2.77509396353926407E-4}}, {{2.76729592975621106E-4}}, {{2.50158376503683969E-4}}, {{5.29379475051326199E-5}}, {{1.67583285734615439E-6}}};
+    double nustar_coeff[the_rank_r_extent][Nspecies][Nspecies]{{{42.0}}};
 
-    ::koliop_PrepareNuStar(an_operator,
-                           &rg[0],
-                           &nustar0_r[0],
-                           &q_r[0],
-                           &mask_buffer_r[0],
-                           &nustar_coeff[0][0][0]);
-
-    if(!ValidateAbsoluteError(&a_nustar_coeff_reference[0][0][0],
-                              &nustar_coeff[0][0][0],
-                              sizeof(nustar_coeff) / sizeof(nustar_coeff[0]))) {
-        std::cout << "Validation error: a_nustar_coeff_reference\n";
-    }
+    // if(!ValidateAbsoluteError(&a_nustar_coeff_reference[0][0][0],
+    //                           &nustar_coeff[0][0][0],
+    //                           sizeof(nustar_coeff) / sizeof(nustar_coeff[0]))) {
+    //     std::cout << "Validation error: a_nustar_coeff_reference\n";
+    // }
 
     // mom f5d_s lbound 1   1
     // mom f5d_s lbound 2   1
