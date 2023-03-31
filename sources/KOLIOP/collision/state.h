@@ -433,6 +433,12 @@ namespace koliop {
             ViewMDD1<Flo64> vparg_;
             ViewMDD1<Flo64> coeff_intdmu_;
             ViewMDD1<Flo64> coeff_intdvpar_;
+            ViewMDD1<Flo64> rg_;
+            ViewMDD1<Flo64> nustar0_r_;
+            ViewMDD1<Flo64> q_r_;
+            ViewMDD1<Flo64> mask_buffer_r_;
+            ViewMDD2<Flo64> B_norm_;
+            ViewMDD4<Flo64> Bstar_s_;
 
             ViewMDD2<Flo64> C_j_;
             ViewMDD3<Flo64> C_jl_;
@@ -492,6 +498,16 @@ namespace koliop {
             , vparg_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "vparg_"), a_host_visible_vparg.extent(0)}
             , coeff_intdmu_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "coeff_intdmu_"), a_host_visible_coeff_intdmu.extent(0)}
             , coeff_intdvpar_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "coeff_intdvpar_"), a_host_visible_coeff_intdvpar.extent(0)}
+            , rg_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "rg_"), a_host_visible_rg.extent(0)}
+            , nustar0_r_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "nustar0_r_"), a_host_visible_nustar0_r.extent(0)}
+            , q_r_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "q_r_"), a_host_visible_q_r.extent(0)}
+            , mask_buffer_r_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "mask_buffer_r_"), a_host_visible_mask_buffer_r.extent(0)}
+            , B_norm_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "B_norm_"), a_host_visible_B_norm.extent(0), a_host_visible_B_norm.extent(1)}
+            , Bstar_s_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "Bstar_s_"),
+                       a_host_visible_Bstar_s.extent(0),
+                       a_host_visible_Bstar_s.extent(1),
+                       a_host_visible_Bstar_s.extent(2),
+                       a_host_visible_Bstar_s.extent(3)}
 
             // TODO(Etienne M): Compile time code based on Npolmax_ value ?
             , C_j_{Kokkos::view_alloc(Kokkos::WithoutInitializing,
@@ -518,6 +534,12 @@ namespace koliop {
             koliop::utility::SmartDeepCopy(a_host_visible_vparg, vparg_);
             koliop::utility::SmartDeepCopy(a_host_visible_coeff_intdmu, coeff_intdmu_);
             koliop::utility::SmartDeepCopy(a_host_visible_coeff_intdvpar, coeff_intdvpar_);
+            koliop::utility::SmartDeepCopy(a_host_visible_rg, rg_);
+            koliop::utility::SmartDeepCopy(a_host_visible_nustar0_r, nustar0_r_);
+            koliop::utility::SmartDeepCopy(a_host_visible_q_r, q_r_);
+            koliop::utility::SmartDeepCopy(a_host_visible_mask_buffer_r, mask_buffer_r_);
+            koliop::utility::SmartDeepCopy(a_host_visible_B_norm, B_norm_);
+            koliop::utility::SmartDeepCopy(a_host_visible_Bstar_s, Bstar_s_);
 
             PrepareCj_Cjl(C_j_, C_jl_);
         }
