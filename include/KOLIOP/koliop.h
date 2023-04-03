@@ -181,9 +181,7 @@ koliop_Status koliop_ComputeReconstruction(koliop_Operator an_operator,
                                            const double*   RHS_vec);
 
 koliop_Status koliop_ComputeCorrectionDensity(koliop_Operator an_operator,
-                                              const double*   Bstar_s,
-                                              double*         f5d_s,
-                                              const double*   n_s);
+                                              double*         f5d_s);
 
 koliop_Status koliop_ComputeCorrectionUparT(koliop_Operator an_operator,
                                             double*         f5d_s);

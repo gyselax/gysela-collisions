@@ -253,9 +253,7 @@ namespace koliop {
                                        const Flo64*   T_s,
                                        const Flo64*   RHS_vec) const;
 
-            void ComputeCorrectionDensity(const Flo64* Bstar_s,
-                                          Flo64*       f5d_s,
-                                          const Flo64* n_s) const;
+            void ComputeCorrectionDensity(Flo64* f5d_s) const;
 
             void ComputeCorrectionUparT(Flo64* f5d_s) const;
 
@@ -335,9 +333,10 @@ namespace koliop {
                                          const ViewUHL4<const Flo64>&   a_host_visible_T_s,
                                          const ViewUHL3<const Flo64>&   a_host_visible_RHS_vec) const;
 
-            void DoComputeCorrectionDensity(const ViewUHL4<const Flo64>& a_host_visible_Bstar_s,
-                                            ViewUHL6<Flo64>&&            a_host_visible_f5d_s,
-                                            const ViewUHL4<const Flo64>& a_host_visible_n_s) const;
+            template <typename Array6D>
+            static void
+            DoComputeCorrectionDensity(const State& a_state,
+                                       Array6D&&    f5d_s);
 
             template <typename Array6D,
                       typename Array4D>
@@ -728,15 +727,20 @@ namespace koliop {
             Kokkos::fence();
         }
 
-        inline void State::ComputeCorrectionDensity(const Flo64* Bstar_s,
-                                                    Flo64*       f5d_s,
-                                                    const Flo64* n_s) const {
-            DoComputeCorrectionDensity(ViewUHL4<const Flo64>{// "unmanaged_host_Bstar_s",
-                                                             Bstar_s, Nvpar_ + 1, the_r_extent_, the_theta_extent_, Nspecies_},
-                                       ViewUHL6<Flo64>{// "unmanaged_host_f5d_s",
-                                                       f5d_s, Nmu_ + 1, Nvpar_ + 1, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_},
-                                       ViewUHL4<const Flo64>{// "unmanaged_host_n_s",
-                                                             n_s, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_});
+        inline void State::ComputeCorrectionDensity(Flo64* f5d_s) const {
+            // TODO(Etienne M): COPY redundant.
+
+            auto a_device_visible_f5d_s = ViewMDL6<Flo64>{Kokkos::view_alloc(Kokkos::WithoutInitializing, "f5d_s"),
+                                                          Nmu_ + 1, Nvpar_ + 1, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_};
+
+            auto a_host_visible_f5d_s = ViewUHL6<Flo64>{// "unmanaged_host_f5d_s",
+                                                        f5d_s, Nmu_ + 1, Nvpar_ + 1, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_};
+
+            koliop::utility::SmartDeepCopy(a_host_visible_f5d_s, a_device_visible_f5d_s);
+
+            DoComputeCorrectionDensity(*this, a_device_visible_f5d_s);
+
+            koliop::utility::SmartDeepCopy(a_device_visible_f5d_s, a_host_visible_f5d_s);
 
             // TODO(Etienne M): ASYNC, relax that constraint ?
             Kokkos::fence();
@@ -1622,49 +1626,54 @@ namespace koliop {
                                  a_policy, the_kernel);
         }
 
-        inline void State::DoComputeCorrectionDensity(const ViewUHL4<const Flo64>& a_host_visible_Bstar_s,
-                                                      ViewUHL6<Flo64>&&            a_host_visible_f5d_s,
-                                                      const ViewUHL4<const Flo64>& a_host_visible_n_s) const {
+        template <typename Array6D>
+        void State::DoComputeCorrectionDensity(const State& a_state,
+                                               Array6D&&    f5d_s) {
 
-            const auto a_host_visible_coeff_intdmu   = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{},
-                                                                                                              Kokkos::WithoutInitializing),
-                                                                                           coeff_intdmu_);
-            const auto a_host_visible_coeff_intdvpar = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{},
-                                                                                                              Kokkos::WithoutInitializing),
-                                                                                           coeff_intdvpar_);
+            const auto& the_mu_extent    = a_state.the_mu_extent_;
+            const auto& the_vpar_extent  = a_state.the_vpar_extent_;
+            const auto& the_r_extent     = a_state.the_r_extent_;
+            const auto& the_theta_extent = a_state.the_theta_extent_;
+            const auto& the_phi_extent   = a_state.the_phi_extent_;
+
+            const auto& coeff_intdmu   = a_state.coeff_intdmu_;
+            const auto& coeff_intdvpar = a_state.coeff_intdvpar_;
+            const auto& Bstar_s        = a_state.Bstar_s_;
+            const auto& n_s            = a_state.n_s_;
+
+            const auto pSpecies_id = a_state.pSpecies_id_;
 
             const auto the_kernel = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi) {
                 // TODO(Etienne M): INDEX not coalesced.
 
                 Flo64 na = 0.0;
-                for(uint64_t ivpar = 0; ivpar <= Nvpar_; ++ivpar) {
-                    const Flo64 jacob_vel = koliop::portability::MathematicalConstant<Flo64>::k2Pi * a_host_visible_Bstar_s(ivpar, ir, itheta, pSpecies_id_);
-                    for(uint64_t imu = 0; imu <= Nmu_; ++imu) {
-                        const Flo64 ftmp = Kokkos::max(a_host_visible_f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id_),
+                for(uint64_t ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
+                    const Flo64 jacob_vel = koliop::portability::MathematicalConstant<Flo64>::k2Pi * Bstar_s(ivpar, ir, itheta, pSpecies_id);
+                    for(uint64_t imu = 0; imu < the_mu_extent; ++imu) {
+                        const Flo64 ftmp = Kokkos::max(f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id),
                                                        0.0);
 
-                        na += jacob_vel * a_host_visible_coeff_intdmu(imu) * a_host_visible_coeff_intdvpar(ivpar) * ftmp;
+                        na += jacob_vel * coeff_intdmu(imu) * coeff_intdvpar(ivpar) * ftmp;
 
-                        a_host_visible_f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id_) = ftmp;
+                        f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id) = ftmp;
                     }
                 }
 
-                const Flo64 invna = 1.0 / na;
+                const Flo64 na_inverse = 1.0 / na;
 
-                for(uint64_t ivpar = 0; ivpar <= Nvpar_; ++ivpar) {
-                    for(uint64_t imu = 0; imu <= Nmu_; ++imu) {
-                        a_host_visible_f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id_) *= a_host_visible_n_s(ir, itheta, iphi, pSpecies_id_) * invna;
+                for(uint64_t ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
+                    for(uint64_t imu = 0; imu < the_mu_extent; ++imu) {
+                        f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id) *= n_s(ir, itheta, iphi, pSpecies_id) * na_inverse;
                     }
                 }
             };
 
             const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<3,
                                                                      Kokkos::Iterate::Left,
-                                                                     Kokkos::Iterate::Left>,
-                                                        Kokkos::DefaultHostExecutionSpace>{{0, 0, 0},
-                                                                                           {the_r_extent_,
-                                                                                            the_theta_extent_,
-                                                                                            the_phi_extent_}};
+                                                                     Kokkos::Iterate::Left>>{{0, 0, 0},
+                                                                                             {the_r_extent,
+                                                                                              the_theta_extent,
+                                                                                              the_phi_extent}};
 
             Kokkos::parallel_for("DoComputeCorrectionDensity",
                                  a_policy, the_kernel);

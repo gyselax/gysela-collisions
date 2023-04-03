@@ -398,9 +398,7 @@ int main(int, char**) {
                                    &RHS_vec[0][0][0]);
 
     ::koliop_ComputeCorrectionDensity(an_operator,
-                                      &Bstar_s[0][0][0][0],
-                                      &f5d_s[0][0][0][0][0][0],
-                                      &n_s[0][0][0][0]);
+                                      &f5d_s[0][0][0][0][0][0]);
 
     ::koliop_ComputeCorrectionUparT(an_operator,
                                     &f5d_s[0][0][0][0][0][0]);
