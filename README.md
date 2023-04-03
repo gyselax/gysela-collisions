@@ -56,7 +56,7 @@ Total Test time (real) =   0.63 sec
 ## Coding style
 
 <!--
-TODO(): [LOOP|LOAD|SIMPLIFY|INDEX]
+TODO(): [LOOP|LOAD|SIMPLIFY|INDEX|ASYNC|COPY]
 NOTE:
 -->
 

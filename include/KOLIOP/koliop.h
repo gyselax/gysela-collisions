@@ -118,12 +118,7 @@ koliop_Status koliop_Create(koliop_Operator* an_operator_handle,
 koliop_Status koliop_Release(koliop_Operator an_operator);
 
 koliop_Status koliop_ComputeMoments(koliop_Operator an_operator,
-                                    const double*   B_norm,  // TODO(Etienne M): const external
-                                    const double*   Bstar_s, // TODO(Etienne M): const external
-                                    double*         f5d_s,
-                                    double*         n_s,     // TODO(Etienne M): internal
-                                    double*         U_par_s, // TODO(Etienne M): internal
-                                    double*         T_s);            // TODO(Etienne M): internal
+                                    double*         f5d_s);
 
 // TODO(Etienne M): nu_ab becomes internal
 

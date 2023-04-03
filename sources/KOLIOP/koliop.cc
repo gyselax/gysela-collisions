@@ -59,11 +59,11 @@
 ::koliop_Status koliop_Create(::koliop_Operator* an_operator_handle,
                               uint64_t           Npolmax,
                               uint64_t           index_max,
-                              uint64_t           Nmu,
-                              uint64_t           Nvpar,
                               uint64_t           Nspecies,
                               uint64_t           pSpecies_id,
                               uint64_t           mu_id,
+                              uint64_t           Nmu,
+                              uint64_t           Nvpar,
                               uint64_t           the_r_extent,
                               uint64_t           the_theta_extent,
                               uint64_t           the_phi_extent,
@@ -94,11 +94,11 @@
 
         auto* const an_operator = new State{Npolmax,
                                             index_max,
-                                            Nmu,
-                                            Nvpar,
                                             Nspecies,
                                             pSpecies_id,
                                             mu_id,
+                                            Nmu,
+                                            Nvpar,
                                             the_r_extent,
                                             the_theta_extent,
                                             the_phi_extent,
@@ -154,19 +154,14 @@
 }
 
 ::koliop_Status koliop_ComputeMoments(::koliop_Operator an_operator,
-                                      const double*     B_norm,
-                                      const double*     Bstar_s,
-                                      double*           f5d_s,
-                                      double*           n_s,
-                                      double*           U_par_s,
-                                      double*           T_s) {
+                                      double*           f5d_s) {
     return koliop::error::FromException([&]() {
         if(an_operator == nullptr) {
             return KOLIOP_STATUS_INVALID_VALUE;
         }
 
         using State = koliop::collision::State;
-        reinterpret_cast<const State*>(an_operator)->ComputeMoments(B_norm, Bstar_s, f5d_s, n_s, U_par_s, T_s);
+        reinterpret_cast<State*>(an_operator)->ComputeMoments(f5d_s);
 
         return KOLIOP_STATUS_SUCCESS;
     });
