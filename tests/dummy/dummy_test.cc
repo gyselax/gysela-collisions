@@ -10,11 +10,13 @@ bool ValidateAbsoluteError(const T* a_reference,
                            T        the_tolerance = 1E-16) {
     for(uint64_t i = 0; i < the_length; ++i) {
         const auto the_absolute_error = std::abs(a_reference[i] - an_array[i]);
-        if(the_absolute_error >= the_tolerance) {
+        const auto the_relative_error = the_absolute_error / std::abs(a_reference[i]);
+        if(the_relative_error >= the_tolerance) {
             std::cout << "Validation failed absolute error: |" << a_reference[i] << " - " << an_array[i] << "| = " << the_absolute_error << "\n";
-            std::cout << "Relative error: " << the_absolute_error / std::abs(a_reference[i]) << "\n";
+            std::cout << "Relative error: " << the_relative_error << "\n";
             return false;
         }
+        // What about nans or +-inf ?
     }
     return true;
 }
@@ -194,7 +196,8 @@ int main(int, char**) {
     // if(!ValidateAbsoluteError(&a_nustar_coeff_reference[0][0][0],
     //                           &nustar_coeff[0][0][0],
     //                           sizeof(nustar_coeff) / sizeof(nustar_coeff[0]))) {
-    //     std::cout << "Validation error: a_nustar_coeff_reference\n";
+    //     std::cout << "Validation error: a_nustar_coeff_reference\n"
+    //               << std::flush;
     // }
 
     // mom f5d_s lbound 1   1
