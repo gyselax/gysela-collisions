@@ -135,13 +135,7 @@ koliop_Status koliop_ComputeEvolutionMaxwellian(koliop_Operator an_operator,
                                                 double*         f5d_s);
 
 koliop_Status koliop_ComputeQparOnNT(koliop_Operator an_operator,
-                                     const double*   B_norm,  // TODO(Etienne M): const external
-                                     const double*   Bstar_s, // TODO(Etienne M): const external
-                                     const double*   f5d_s,
-                                     const double*   n_s,     // TODO(Etienne M): const external
-                                     const double*   U_par_s, // TODO(Etienne M): const external
-                                     const double*   T_s,     // TODO(Etienne M): const external
-                                     double*         q_par_on_nT_s);  // TODO(Etienne M): internal
+                                     const double* f5d_s);
 
 koliop_Status koliop_ComputeCpar(koliop_Operator an_operator,
                                  const double*   rg,        // TODO(Etienne M): const external

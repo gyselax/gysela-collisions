@@ -293,13 +293,7 @@ int main(int, char**) {
     double q_par_on_nT_s[Nspecies][the_rank_phi_extent][the_rank_theta_extent][the_rank_r_extent]{};
 
     ::koliop_ComputeQparOnNT(an_operator,
-                             &B_norm[0][0],
-                             &Bstar_s[0][0][0][0],
-                             &f5d_s[0][0][0][0][0][0],
-                             &n_s[0][0][0][0],
-                             &U_par_s[0][0][0][0],
-                             &T_s[0][0][0][0],
-                             &q_par_on_nT_s[0][0][0][0]);
+                             &f5d_s[0][0][0][0][0][0]);
 
     ::koliop_ComputeCpar(an_operator,
                          &rg[0],

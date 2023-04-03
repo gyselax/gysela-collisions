@@ -202,20 +202,14 @@
 }
 
 ::koliop_Status koliop_ComputeQparOnNT(::koliop_Operator an_operator,
-                                       const double*     B_norm,
-                                       const double*     Bstar_s,
-                                       const double*     f5d_s,
-                                       const double*     n_s,
-                                       const double*     U_par_s,
-                                       const double*     T_s,
-                                       double*           q_par_on_nT_s) {
+                                       const double*     f5d_s) {
     return koliop::error::FromException([&]() {
         if(an_operator == nullptr) {
             return KOLIOP_STATUS_INVALID_VALUE;
         }
 
         using State = koliop::collision::State;
-        reinterpret_cast<const State*>(an_operator)->ComputeQparOnNT(B_norm, Bstar_s, f5d_s, n_s, U_par_s, T_s, q_par_on_nT_s);
+        reinterpret_cast<State*>(an_operator)->ComputeQparOnNT(f5d_s);
 
         return KOLIOP_STATUS_SUCCESS;
     });
