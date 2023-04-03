@@ -257,15 +257,7 @@ namespace koliop {
                                           Flo64*       f5d_s,
                                           const Flo64* n_s) const;
 
-            void ComputeCorrectionUparT(const Flo64* nustar_coeff,
-                                        const Flo64* B_norm,
-                                        const Flo64* Bstar_s,
-                                        Flo64*       f5d_s,
-                                        const Flo64* n_s,
-                                        Flo64*       U_par_s,
-                                        const Flo64* T_s,
-                                        const Flo64* q_par_on_nT_s,
-                                        Flo64        dt) const;
+            void ComputeCorrectionUparT(Flo64* f5d_s) const;
 
         protected:
             void DoPrepareCj_Cjl(ViewMDD2<Flo64>& C_j,
@@ -347,15 +339,12 @@ namespace koliop {
                                             ViewUHL6<Flo64>&&            a_host_visible_f5d_s,
                                             const ViewUHL4<const Flo64>& a_host_visible_n_s) const;
 
-            void DoComputeCorrectionUparT(const ViewUHL3<const Flo64>& a_host_visible_nustar_coeff,
-                                          const ViewUHL2<const Flo64>& a_host_visible_B_norm,
-                                          const ViewUHL4<const Flo64>& a_host_visible_Bstar_s,
-                                          ViewUHL6<Flo64>&&            a_host_visible_f5d_s,
-                                          const ViewUHL4<const Flo64>& a_host_visible_n_s,
-                                          ViewUHL4<Flo64>&&            a_host_visible_U_par_s,
-                                          const ViewUHL4<const Flo64>& a_host_visible_T_s,
-                                          const ViewUHL4<const Flo64>& a_host_visible_q_par_on_nT_s,
-                                          Flo64                        dt) const;
+            template <typename Array6D,
+                      typename Array4D>
+            static void
+            DoComputeCorrectionUparT(const State& a_state,
+                                     Array6D&&    f5d_s,
+                                     Array4D&&    U_par_s);
 
             static KOKKOS_INLINE_FUNCTION Flo64
             DoComputeFrequencyNuab(Flo64 nustar_coeff,
@@ -832,32 +821,20 @@ namespace koliop {
             Kokkos::fence();
         }
 
-        inline void State::ComputeCorrectionUparT(const Flo64* nustar_coeff,
-                                                  const Flo64* B_norm,
-                                                  const Flo64* Bstar_s,
-                                                  Flo64*       f5d_s,
-                                                  const Flo64* n_s,
-                                                  Flo64*       U_par_s,
-                                                  const Flo64* T_s,
-                                                  const Flo64* q_par_on_nT_s,
-                                                  Flo64        dt) const {
-            DoComputeCorrectionUparT(ViewUHL3<const Flo64>{// "unmanaged_host_nustar_coeff",
-                                                           nustar_coeff, Nspecies_, Nspecies_, the_r_extent_},
-                                     ViewUHL2<const Flo64>{// "unmanaged_host_B_norm",
-                                                           B_norm, the_r_extent_, the_theta_extent_ + /* This +1 is weird */ 1},
-                                     ViewUHL4<const Flo64>{// "unmanaged_host_Bstar_s",
-                                                           Bstar_s, Nvpar_ + 1, the_r_extent_, the_theta_extent_, Nspecies_},
-                                     ViewUHL6<Flo64>{// "unmanaged_host_f5d_s",
-                                                     f5d_s, Nmu_ + 1, Nvpar_ + 1, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_},
-                                     ViewUHL4<const Flo64>{// "unmanaged_host_n_s",
-                                                           n_s, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_},
-                                     ViewUHL4<Flo64>{// "unmanaged_host_U_par_s",
-                                                     U_par_s, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_},
-                                     ViewUHL4<const Flo64>{// "unmanaged_host_T_s",
-                                                           T_s, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_},
-                                     ViewUHL4<const Flo64>{// "unmanaged_host_q_par_on_nT_s",
-                                                           q_par_on_nT_s, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_},
-                                     dt);
+        inline void State::ComputeCorrectionUparT(Flo64* f5d_s) const {
+            // TODO(Etienne M): COPY redundant.
+
+            auto a_device_visible_f5d_s = ViewMDL6<Flo64>{Kokkos::view_alloc(Kokkos::WithoutInitializing, "f5d_s"),
+                                                          Nmu_ + 1, Nvpar_ + 1, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_};
+
+            auto a_host_visible_f5d_s = ViewUHL6<Flo64>{// "unmanaged_host_f5d_s",
+                                                        f5d_s, Nmu_ + 1, Nvpar_ + 1, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_};
+
+            koliop::utility::SmartDeepCopy(a_host_visible_f5d_s, a_device_visible_f5d_s);
+
+            DoComputeCorrectionUparT(*this, a_device_visible_f5d_s, U_par_s_);
+
+            koliop::utility::SmartDeepCopy(a_device_visible_f5d_s, a_host_visible_f5d_s);
 
             // TODO(Etienne M): ASYNC, relax that constraint ?
             Kokkos::fence();
@@ -1007,8 +984,8 @@ namespace koliop {
                                      Array4D&&    U_par_s,
                                      Array4D&&    T_s) {
 
-            const auto& the_vpar_extent    = a_state.the_vpar_extent_;
             const auto& the_mu_extent      = a_state.the_mu_extent_;
+            const auto& the_vpar_extent    = a_state.the_vpar_extent_;
             const auto& the_r_extent       = a_state.the_r_extent_;
             const auto& the_theta_extent   = a_state.the_theta_extent_;
             const auto& the_phi_extent     = a_state.the_phi_extent_;
@@ -1086,8 +1063,8 @@ namespace koliop {
                                                  Array6D&&    f5d_s,
                                                  Array4D&&    T_s) {
 
-            const auto& the_vpar_extent    = a_state.the_vpar_extent_;
             const auto& the_mu_extent      = a_state.the_mu_extent_;
+            const auto& the_vpar_extent    = a_state.the_vpar_extent_;
             const auto& the_r_extent       = a_state.the_r_extent_;
             const auto& the_theta_extent   = a_state.the_theta_extent_;
             const auto& the_phi_extent     = a_state.the_phi_extent_;
@@ -1220,8 +1197,8 @@ namespace koliop {
                                       const Array6D& f5d_s,
                                       Array4D&&      q_par_on_nT_s) {
 
-            const auto& the_vpar_extent    = a_state.the_vpar_extent_;
             const auto& the_mu_extent      = a_state.the_mu_extent_;
+            const auto& the_vpar_extent    = a_state.the_vpar_extent_;
             const auto& the_r_extent       = a_state.the_r_extent_;
             const auto& the_theta_extent   = a_state.the_theta_extent_;
             const auto& the_phi_extent     = a_state.the_phi_extent_;
@@ -1294,8 +1271,8 @@ namespace koliop {
         void State::DoComputeCpar(const State& a_state,
                                   Array6D&&    f5d_s) {
 
-            const auto& the_vpar_extent    = a_state.the_vpar_extent_;
             const auto& the_mu_extent      = a_state.the_mu_extent_;
+            const auto& the_vpar_extent    = a_state.the_vpar_extent_;
             const auto& the_r_extent       = a_state.the_r_extent_;
             const auto& the_theta_extent   = a_state.the_theta_extent_;
             const auto& the_phi_extent     = a_state.the_phi_extent_;
@@ -1391,17 +1368,17 @@ namespace koliop {
                                                              Array6D&&    f5d_s,
                                                              uint32_t     choice) {
 
-            const auto& the_vpar_extent    = a_state.the_vpar_extent_;
-            const auto& the_mu_extent      = a_state.the_mu_extent_;
-            const auto& the_r_extent       = a_state.the_r_extent_;
-            const auto& the_theta_extent   = a_state.the_theta_extent_;
-            const auto& the_phi_extent     = a_state.the_phi_extent_;
+            const auto& the_mu_extent    = a_state.the_mu_extent_;
+            const auto& the_vpar_extent  = a_state.the_vpar_extent_;
+            const auto& the_r_extent     = a_state.the_r_extent_;
+            const auto& the_theta_extent = a_state.the_theta_extent_;
+            const auto& the_phi_extent   = a_state.the_phi_extent_;
 
-            const auto& mug           = a_state.mug_;
-            const auto& vparg         = a_state.vparg_;
-            const auto& B_norm        = a_state.B_norm_;
-            const auto& n_s           = a_state.n_s_;
-            const auto& T_s           = a_state.T_s_;
+            const auto& mug    = a_state.mug_;
+            const auto& vparg  = a_state.vparg_;
+            const auto& B_norm = a_state.B_norm_;
+            const auto& n_s    = a_state.n_s_;
+            const auto& T_s    = a_state.T_s_;
 
             const auto pSpecies_id = a_state.pSpecies_id_;
 
@@ -1693,90 +1670,93 @@ namespace koliop {
                                  a_policy, the_kernel);
         }
 
-        inline void State::DoComputeCorrectionUparT(const ViewUHL3<const Flo64>& a_host_visible_nustar_coeff,
-                                                    const ViewUHL2<const Flo64>& a_host_visible_B_norm,
-                                                    const ViewUHL4<const Flo64>& a_host_visible_Bstar_s,
-                                                    ViewUHL6<Flo64>&&            a_host_visible_f5d_s,
-                                                    const ViewUHL4<const Flo64>& a_host_visible_n_s,
-                                                    ViewUHL4<Flo64>&&            a_host_visible_U_par_s,
-                                                    const ViewUHL4<const Flo64>& a_host_visible_T_s,
-                                                    const ViewUHL4<const Flo64>& a_host_visible_q_par_on_nT_s,
-                                                    Flo64                        dt) const {
+        template <typename Array6D,
+                  typename Array4D>
+        void State::DoComputeCorrectionUparT(const State& a_state,
+                                             Array6D&&    f5d_s,
+                                             Array4D&&    U_par_s) {
 
-            const auto a_host_visible_hat_As         = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{},
-                                                                                                              Kokkos::WithoutInitializing),
-                                                                                           hat_As_);
-            const auto a_host_visible_mug            = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{},
-                                                                                                              Kokkos::WithoutInitializing),
-                                                                                           mug_);
-            const auto a_host_visible_vparg          = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{},
-                                                                                                              Kokkos::WithoutInitializing),
-                                                                                           vparg_);
-            const auto a_host_visible_coeff_intdmu   = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{},
-                                                                                                              Kokkos::WithoutInitializing),
-                                                                                           coeff_intdmu_);
-            const auto a_host_visible_coeff_intdvpar = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{},
-                                                                                                              Kokkos::WithoutInitializing),
-                                                                                           coeff_intdvpar_);
+            const auto& the_mu_extent      = a_state.the_mu_extent_;
+            const auto& the_vpar_extent    = a_state.the_vpar_extent_;
+            const auto& the_r_extent       = a_state.the_r_extent_;
+            const auto& the_theta_extent   = a_state.the_theta_extent_;
+            const auto& the_phi_extent     = a_state.the_phi_extent_;
+            const auto& the_species_extent = a_state.Nspecies_;
+
+            const auto& hat_As         = a_state.hat_As_;
+            const auto& mug            = a_state.mug_;
+            const auto& vparg          = a_state.vparg_;
+            const auto& coeff_intdmu   = a_state.coeff_intdmu_;
+            const auto& coeff_intdvpar = a_state.coeff_intdvpar_;
+            const auto& B_norm         = a_state.B_norm_;
+            const auto& Bstar_s        = a_state.Bstar_s_;
+            const auto& nustar_coeff   = a_state.nustar_coeff_;
+            const auto& n_s            = a_state.n_s_;
+            const auto& T_s            = a_state.T_s_;
+            const auto& q_par_on_nT_s  = a_state.q_par_on_nT_s_;
+
+            const auto  pSpecies_id            = a_state.pSpecies_id_;
+            const auto  collision_interspecies = a_state.collision_interspecies_;
+            const Flo64 dt                     = a_state.dt_;
 
             const auto the_kernel = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi) {
                 // TODO(Etienne M): INDEX not coalesced.
-                const Flo64 Bij            = a_host_visible_B_norm(ir, itheta);
-                const Flo64 na             = a_host_visible_n_s(ir, itheta, iphi, pSpecies_id_);
+                const Flo64 Bij            = B_norm(ir, itheta);
+                const Flo64 na             = n_s(ir, itheta, iphi, pSpecies_id);
                 Flo64       impulsion_coll = 0.0;
 
-                for(uint64_t ivpar = 0; ivpar <= Nvpar_; ++ivpar) {
-                    const Flo64 jacob_vel = koliop::portability::MathematicalConstant<Flo64>::k2Pi * a_host_visible_Bstar_s(ivpar, ir, itheta, pSpecies_id_);
-                    for(uint64_t imu = 0; imu <= Nmu_; ++imu) {
-                        impulsion_coll += a_host_visible_coeff_intdvpar(ivpar) *
-                                          a_host_visible_coeff_intdmu(imu) *
+                for(uint64_t ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
+                    const Flo64 jacob_vel = koliop::portability::MathematicalConstant<Flo64>::k2Pi * Bstar_s(ivpar, ir, itheta, pSpecies_id);
+                    for(uint64_t imu = 0; imu < the_mu_extent; ++imu) {
+                        impulsion_coll += coeff_intdvpar(ivpar) *
+                                          coeff_intdmu(imu) *
                                           jacob_vel *
-                                          a_host_visible_vparg(ivpar) *
-                                          a_host_visible_f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id_);
+                                          vparg(ivpar) *
+                                          f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id);
                     }
                 }
 
                 const Flo64 U_par_coll = impulsion_coll / na;
                 Flo64       T_coll     = 0.0;
 
-                for(uint64_t ivpar = 0; ivpar <= Nvpar_; ++ivpar) {
-                    const Flo64 jacob_vel = koliop::portability::MathematicalConstant<Flo64>::k2Pi * a_host_visible_Bstar_s(ivpar, ir, itheta, pSpecies_id_) / na;
-                    for(uint64_t imu = 0; imu <= Nmu_; ++imu) {
-                        T_coll += a_host_visible_coeff_intdvpar(ivpar) *
-                                  a_host_visible_coeff_intdmu(imu) *
+                for(uint64_t ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
+                    const Flo64 jacob_vel = koliop::portability::MathematicalConstant<Flo64>::k2Pi * Bstar_s(ivpar, ir, itheta, pSpecies_id) / na;
+                    for(uint64_t imu = 0; imu < the_mu_extent; ++imu) {
+                        T_coll += coeff_intdvpar(ivpar) *
+                                  coeff_intdmu(imu) *
                                   (jacob_vel / 3.0) *
-                                  ((a_host_visible_vparg(ivpar) - U_par_coll) * (a_host_visible_vparg(ivpar) - U_par_coll) +
-                                   2 * a_host_visible_mug(imu) * Bij) *
-                                  a_host_visible_f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id_);
+                                  ((vparg(ivpar) - U_par_coll) * (vparg(ivpar) - U_par_coll) +
+                                   2 * mug(imu) * Bij) *
+                                  f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id);
                     }
                 }
 
-                const Flo64 hat_Aa      = (pSpecies_id_);
-                const Flo64 Vpara       = a_host_visible_U_par_s(ir, itheta, iphi, pSpecies_id_);
-                Flo64       U_par_new   = a_host_visible_U_par_s(ir, itheta, iphi, pSpecies_id_);
-                const Flo64 q_par_on_nT = a_host_visible_q_par_on_nT_s(ir, itheta, iphi, pSpecies_id_);
-                const Flo64 T_new       = a_host_visible_T_s(ir, itheta, iphi, pSpecies_id_);
+                const Flo64 hat_Aa      = (pSpecies_id);
+                const Flo64 Vpara       = U_par_s(ir, itheta, iphi, pSpecies_id);
+                Flo64       U_par_new   = U_par_s(ir, itheta, iphi, pSpecies_id);
+                const Flo64 q_par_on_nT = q_par_on_nT_s(ir, itheta, iphi, pSpecies_id);
+                const Flo64 T_new       = T_s(ir, itheta, iphi, pSpecies_id);
 
-                for(uint64_t ispecies = 0; ispecies < Nspecies_; ++ispecies) {
-                    if((ispecies != pSpecies_id_) && collision_interspecies_) {
-                        const Flo64 hat_Ab         = a_host_visible_hat_As(ispecies);
+                for(uint64_t ispecies = 0; ispecies < the_species_extent; ++ispecies) {
+                    if((ispecies != pSpecies_id) && collision_interspecies) {
+                        const Flo64 hat_Ab         = hat_As(ispecies);
                         const Flo64 Rat            = Kokkos::sqrt(hat_Aa / hat_Ab);
-                        const Flo64 Vparb          = a_host_visible_U_par_s(ir, itheta, iphi, ispecies);
-                        const Flo64 q_parb_on_nbTb = a_host_visible_q_par_on_nT_s(ir, itheta, iphi, ispecies);
+                        const Flo64 Vparb          = U_par_s(ir, itheta, iphi, ispecies);
+                        const Flo64 q_parb_on_nbTb = q_par_on_nT_s(ir, itheta, iphi, ispecies);
 
                         const Flo64 k_ab = 1.0 / (1.0 +
-                                                  hat_Aa * a_host_visible_T_s(ir, itheta, iphi, ispecies) /
-                                                      (hat_Ab * a_host_visible_T_s(ir, itheta, iphi, pSpecies_id_)));
+                                                  hat_Aa * T_s(ir, itheta, iphi, ispecies) /
+                                                      (hat_Ab * T_s(ir, itheta, iphi, pSpecies_id)));
                         const Flo64 k_ba = 1.0 / (1.0 +
-                                                  hat_Ab * a_host_visible_T_s(ir, itheta, iphi, pSpecies_id_) /
-                                                      (hat_Aa * a_host_visible_T_s(ir, itheta, iphi, ispecies)));
+                                                  hat_Ab * T_s(ir, itheta, iphi, pSpecies_id) /
+                                                      (hat_Aa * T_s(ir, itheta, iphi, ispecies)));
 
-                        const Flo64 nu_ab = DoComputeFrequencyNuab(a_host_visible_nustar_coeff(pSpecies_id_, ispecies, ir),
-                                                                   a_host_visible_hat_As(pSpecies_id_),
-                                                                   a_host_visible_hat_As(ispecies),
-                                                                   a_host_visible_T_s(ir, itheta, iphi, pSpecies_id_),
-                                                                   a_host_visible_n_s(ir, itheta, iphi, ispecies),
-                                                                   a_host_visible_T_s(ir, itheta, iphi, ispecies));
+                        const Flo64 nu_ab = DoComputeFrequencyNuab(nustar_coeff(pSpecies_id, ispecies, ir),
+                                                                   hat_As(pSpecies_id),
+                                                                   hat_As(ispecies),
+                                                                   T_s(ir, itheta, iphi, pSpecies_id),
+                                                                   n_s(ir, itheta, iphi, ispecies),
+                                                                   T_s(ir, itheta, iphi, ispecies));
 
                         const Flo64 R_ab = -nu_ab * (Vpara - Rat * Vparb -
                                                      0.6 * k_ab * q_par_on_nT +
@@ -1793,32 +1773,31 @@ namespace koliop {
                                                   T_new *
                                                   Kokkos::sqrt(koliop::portability::MathematicalConstant<Flo64>::k2Pi * T_new));
 
-                for(uint64_t ivpar = 0; ivpar <= Nvpar_; ++ivpar) {
-                    for(uint64_t imu = 0; imu <= Nmu_; ++imu) {
-                        const Flo64 u_coll = a_host_visible_mug(imu) * Bij / T_coll;
-                        const Flo64 u_new  = a_host_visible_mug(imu) * Bij / T_new;
+                for(uint64_t ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
+                    for(uint64_t imu = 0; imu < the_mu_extent; ++imu) {
+                        const Flo64 u_coll = mug(imu) * Bij / T_coll;
+                        const Flo64 u_new  = mug(imu) * Bij / T_new;
 
                         const Flo64 FMa_coll = coeff_Max_coll * Kokkos::exp(-u_coll -
-                                                                            (a_host_visible_vparg(ivpar) - U_par_coll) *
-                                                                                (a_host_visible_vparg(ivpar) - U_par_coll) / (2 * T_coll));
+                                                                            (vparg(ivpar) - U_par_coll) *
+                                                                                (vparg(ivpar) - U_par_coll) / (2 * T_coll));
                         const Flo64 FMa_new  = coeff_Max_new * Kokkos::exp(-u_new -
-                                                                           (a_host_visible_vparg(ivpar) - U_par_new) *
-                                                                               (a_host_visible_vparg(ivpar) - U_par_new) / (2 * T_new));
+                                                                           (vparg(ivpar) - U_par_new) *
+                                                                               (vparg(ivpar) - U_par_new) / (2 * T_new));
 
-                        a_host_visible_f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id_) += FMa_new - FMa_coll;
+                        f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id) += FMa_new - FMa_coll;
                     }
                 }
 
-                a_host_visible_U_par_s(ir, itheta, iphi, pSpecies_id_) = U_par_new;
+                U_par_s(ir, itheta, iphi, pSpecies_id) = U_par_new;
             };
 
             const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<3,
                                                                      Kokkos::Iterate::Left,
-                                                                     Kokkos::Iterate::Left>,
-                                                        Kokkos::DefaultHostExecutionSpace>{{0, 0, 0},
-                                                                                           {the_r_extent_,
-                                                                                            the_theta_extent_,
-                                                                                            the_phi_extent_}};
+                                                                     Kokkos::Iterate::Left>>{{0, 0, 0},
+                                                                                             {the_r_extent,
+                                                                                              the_theta_extent,
+                                                                                              the_phi_extent}};
 
             Kokkos::parallel_for("DoComputeCorrectionUparT",
                                  a_policy, the_kernel);

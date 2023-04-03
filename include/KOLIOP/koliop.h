@@ -50,42 +50,8 @@ koliop_Status koliop_Deinitialize(void);
 ///
 typedef struct _koliop_Operator* koliop_Operator;
 
-/// @brief The values given below are expected NOT to change during the lifetime
-/// of the operator. Notably, comb_mat, hat_As, hat_Zs, mug, vparg etc.
-/// @param an_operator_handle
-/// @param Npolmax
-/// @param index_max
-/// @param Nmu
-/// @param Nvpar
-/// @param Nspecies
-/// @param pSpecies_id
-/// @param mu_id
-/// @param istart
-/// @param iend
-/// @param jstart
-/// @param jend
-/// @param collstart
-/// @param collend
-/// @param R0
-/// @param collision_interspecies
-/// @param SOL
-/// @param LIM
-/// @param comb_mat
-/// @param comb_mat_extent_0
-/// @param comb_mat_extent_1
-/// @param hat_As
-/// @param hat_As_extent_0
-/// @param hat_Zs
-/// @param hat_Zs_extent_0
-/// @param mug
-/// @param mug_extent_0
-/// @param vparg
-/// @param vparg_extent_0
-/// @param coeff_intdmu
-/// @param coeff_intdmu_extent_0
-/// @param coeff_intdvpar
-/// @param coeff_intdvpar_extent_0
-/// @return
+/// The values given below are expected NOT to change during the lifetime
+/// of the operator.
 koliop_Status koliop_Create(koliop_Operator* an_operator_handle,
                             uint64_t         Npolmax,
                             uint64_t         index_max,
@@ -220,15 +186,7 @@ koliop_Status koliop_ComputeCorrectionDensity(koliop_Operator an_operator,
                                               const double*   n_s);
 
 koliop_Status koliop_ComputeCorrectionUparT(koliop_Operator an_operator,
-                                            const double*   nustar_coeff,
-                                            const double*   B_norm,
-                                            const double*   Bstar_s,
-                                            double*         f5d_s,
-                                            const double*   n_s,
-                                            double*         U_par_s,
-                                            const double*   T_s,
-                                            const double*   q_par_on_nT_s,
-                                            double          dt);
+                                            double*         f5d_s);
 
 // TODO(Etienne M): diags.
 
