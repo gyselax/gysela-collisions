@@ -101,6 +101,7 @@ koliop_Status koliop_Create(koliop_Operator* an_operator_handle,
                             uint32_t         collision_interspecies,
                             uint32_t         SOL,
                             uint32_t         LIM,
+                            double           dt,
                             const double*    comb_mat,
                             const double*    hat_As,
                             const double*    hat_Zs,
@@ -113,8 +114,7 @@ koliop_Status koliop_Create(koliop_Operator* an_operator_handle,
                             const double*    q_r,
                             const double*    mask_buffer_r,
                             const double*    B_norm,
-                            const double*    Bstar_s,
-                            double           dt);
+                            const double*    Bstar_s);
 koliop_Status koliop_Release(koliop_Operator an_operator);
 
 koliop_Status koliop_ComputeMoments(koliop_Operator an_operator,
@@ -138,16 +138,7 @@ koliop_Status koliop_ComputeQparOnNT(koliop_Operator an_operator,
                                      const double* f5d_s);
 
 koliop_Status koliop_ComputeCpar(koliop_Operator an_operator,
-                                 const double*   rg,        // TODO(Etienne M): const external
-                                 const double*   B_norm,    // TODO(Etienne M): const external
-                                 const double*   q_r,       // TODO(Etienne M): const external
-                                 const double*   nustar0_r, // TODO(Etienne M): const external
-                                 double*         f5d_s,
-                                 const double*   n_s,           // TODO(Etienne M): const external
-                                 const double*   U_par_s,       // TODO(Etienne M): const external
-                                 const double*   T_s,           // TODO(Etienne M): const external
-                                 const double*   q_par_on_nT_s, // TODO(Etienne M): internal
-                                 double          dt);                    // const external
+                                 double*         f5d_s);
 
 koliop_Status koliop_ComputeOperationMaxwellianUnshiftedLoc(koliop_Operator an_operator,
                                                             const double*   B_norm, // TODO(Etienne M): const external

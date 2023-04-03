@@ -48,6 +48,7 @@ int main(int, char**) {
     static constexpr uint32_t collision_interspecies = true;
     static constexpr uint32_t SOL                    = false;
     static constexpr uint32_t LIM                    = false;
+    static constexpr double   dt                     = 50.0;
 
     static constexpr uint64_t the_rank_r_extent     = (iend + 1) - istart;
     static constexpr uint64_t the_rank_theta_extent = (jend + 1) - jstart;
@@ -124,8 +125,6 @@ int main(int, char**) {
     // nustar0_r ubound 1 31
     static constexpr double mask_buffer_r[the_rank_r_extent] = {0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 2.81000711525697389E-3, 9.85588964179064941E-2, 0.80923908090803054, 0.99396116715554794};
 
-    static constexpr double dt = 50.0;
-
     // mom B_norm lbound 1   1
     // mom B_norm lbound 2   1
     // mom B_norm size   1   32
@@ -163,6 +162,7 @@ int main(int, char**) {
                        collision_interspecies,
                        SOL,
                        LIM,
+                       dt,
                        &comb_mat[0][0],
                        &hat_As[0],
                        &hat_Zs[0],
@@ -175,8 +175,7 @@ int main(int, char**) {
                        &q_r[0],
                        &mask_buffer_r[0],
                        &B_norm[0][0],
-                       &Bstar_s[0][0][0][0],
-                       dt) != KOLIOP_STATUS_SUCCESS) {
+                       &Bstar_s[0][0][0][0]) != KOLIOP_STATUS_SUCCESS) {
         std::cout << "::koliop_Initialize() failed\n";
     }
 
@@ -296,16 +295,7 @@ int main(int, char**) {
                              &f5d_s[0][0][0][0][0][0]);
 
     ::koliop_ComputeCpar(an_operator,
-                         &rg[0],
-                         &B_norm[0][0],
-                         &q_r[0],
-                         &nustar0_r[0],
-                         &f5d_s[0][0][0][0][0][0],
-                         &n_s[0][0][0][0],
-                         &U_par_s[0][0][0][0],
-                         &T_s[0][0][0][0],
-                         &q_par_on_nT_s[0][0][0][0],
-                         dt / 2.0);
+                         &f5d_s[0][0][0][0][0][0]);
 
     static constexpr uint32_t choice = 4;
 

@@ -71,6 +71,7 @@
                               uint32_t           collision_interspecies,
                               uint32_t           SOL,
                               uint32_t           LIM,
+                              double             dt,
                               const double*      comb_mat,
                               const double*      hat_As,
                               const double*      hat_Zs,
@@ -83,8 +84,7 @@
                               const double*      q_r,
                               const double*      mask_buffer_r,
                               const double*      B_norm,
-                              const double*      Bstar_s,
-                              double             dt) {
+                              const double*      Bstar_s) {
     return koliop::error::FromException([&]() {
         if(an_operator_handle == nullptr) {
             return KOLIOP_STATUS_INVALID_VALUE;
@@ -106,6 +106,7 @@
                                             static_cast<bool>(collision_interspecies),
                                             static_cast<bool>(SOL),
                                             static_cast<bool>(LIM),
+                                            dt,
                                             koliop::collision::ViewUHL2<const koliop::Flo64>{// "unmanaged_host_comb_mat",
                                                                                              comb_mat, ((index_max + 1) + 1) - 0, ((index_max + 1) + 1) - 0},
                                             koliop::collision::ViewUHL1<const koliop::Flo64>{// "unmanaged_host_hat_As",
@@ -131,8 +132,7 @@
                                             koliop::collision::ViewUHL2<const koliop::Flo64>{// "unmanaged_host_B_norm",
                                                                                              B_norm, the_r_extent, the_theta_extent + 1 /* Weird +1 */},
                                             koliop::collision::ViewUHL4<const koliop::Flo64>{// "unmanaged_host_Bstar_s",
-                                                                                             Bstar_s, Nvpar + 1, the_r_extent, the_theta_extent, Nspecies},
-                                            dt};
+                                                                                             Bstar_s, Nvpar + 1, the_r_extent, the_theta_extent, Nspecies}};
 
         KOLIOP_ASSERT(an_operator != nullptr);
 
@@ -216,23 +216,14 @@
 }
 
 ::koliop_Status koliop_ComputeCpar(::koliop_Operator an_operator,
-                                   const double*     rg,
-                                   const double*     B_norm,
-                                   const double*     q_r,
-                                   const double*     nustar0_r,
-                                   double*           f5d_s,
-                                   const double*     n_s,
-                                   const double*     U_par_s,
-                                   const double*     T_s,
-                                   const double*     q_par_on_nT_s,
-                                   double            dt) {
+                                   double*           f5d_s) {
     return koliop::error::FromException([&]() {
         if(an_operator == nullptr) {
             return KOLIOP_STATUS_INVALID_VALUE;
         }
 
         using State = koliop::collision::State;
-        reinterpret_cast<const State*>(an_operator)->ComputeCpar(rg, B_norm, q_r, nustar0_r, f5d_s, n_s, U_par_s, T_s, q_par_on_nT_s, dt);
+        reinterpret_cast<const State*>(an_operator)->ComputeCpar(f5d_s);
 
         return KOLIOP_STATUS_SUCCESS;
     });
