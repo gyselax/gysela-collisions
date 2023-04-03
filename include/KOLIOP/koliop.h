@@ -140,12 +140,10 @@ koliop_Status koliop_ComputeQparOnNT(koliop_Operator an_operator,
 koliop_Status koliop_ComputeCpar(koliop_Operator an_operator,
                                  double*         f5d_s);
 
+// TODO(Etienne M): Document choice
 koliop_Status koliop_ComputeOperationMaxwellianUnshiftedLoc(koliop_Operator an_operator,
-                                                            const double*   B_norm, // TODO(Etienne M): const external
                                                             double*         f5d_s,
-                                                            const double*   n_s,
-                                                            const double*   T_s,
-                                                            uint32_t        choice); // external
+                                                            uint32_t        choice);
 
 // TODO(Etienne M): The blocking is mainly done for memory consumption reasons,
 // we have to do something similar.

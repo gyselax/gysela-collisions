@@ -192,11 +192,8 @@ namespace koliop {
 
             void ComputeCpar(Flo64* f5d_s) const;
 
-            void ComputeOperationMaxwellianUnshiftedLoc(const Flo64* B_norm,
-                                                        Flo64*       f5d_s,
-                                                        const Flo64* n_s,
-                                                        const Flo64* T_s,
-                                                        uint32_t     choice) const;
+            void ComputeOperationMaxwellianUnshiftedLoc(Flo64*   f5d_s,
+                                                        uint32_t choice) const;
 
             void ComputeAlphaProjection(uint64_t       ir_start,
                                         uint64_t       ir_end,
@@ -307,11 +304,11 @@ namespace koliop {
             DoComputeCpar(const State& a_state,
                           Array6D&&    f5d_s);
 
-            void DoComputeOperationMaxwellianUnshiftedLoc(const ViewUHL2<const Flo64>& a_host_visible_B_norm,
-                                                          ViewUHL6<Flo64>&&            a_host_visible_f5d_s,
-                                                          const ViewUHL4<const Flo64>& a_host_visible_n_s,
-                                                          const ViewUHL4<const Flo64>& a_host_visible_T_s,
-                                                          uint32_t                     choice) const;
+            template <typename Array6D>
+            static void
+            DoComputeOperationMaxwellianUnshiftedLoc(const State& a_state,
+                                                     Array6D&&    f5d_s,
+                                                     uint32_t     choice);
 
             void DoComputeAlphaProjection(uint64_t                       ir_block_size,
                                           uint64_t                       itheta_block_size,
@@ -632,20 +629,21 @@ namespace koliop {
             Kokkos::fence();
         }
 
-        inline void State::ComputeOperationMaxwellianUnshiftedLoc(const Flo64* B_norm,
-                                                                  Flo64*       f5d_s,
-                                                                  const Flo64* n_s,
-                                                                  const Flo64* T_s,
-                                                                  uint32_t     choice) const {
-            DoComputeOperationMaxwellianUnshiftedLoc(ViewUHL2<const Flo64>{// "unmanaged_host_B_norm",
-                                                                           B_norm, the_r_extent_, the_theta_extent_ + /* This +1 is weird */ 1},
-                                                     ViewUHL6<Flo64>{// "unmanaged_host_f5d_s",
-                                                                     f5d_s, Nmu_ + 1, Nvpar_ + 1, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_},
-                                                     ViewUHL4<const Flo64>{// "unmanaged_host_n_s",
-                                                                           n_s, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_},
-                                                     ViewUHL4<const Flo64>{// "unmanaged_host_T_s",
-                                                                           T_s, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_},
-                                                     choice);
+        inline void State::ComputeOperationMaxwellianUnshiftedLoc(Flo64*   f5d_s,
+                                                                  uint32_t choice) const {
+            // TODO(Etienne M): COPY redundant.
+
+            auto a_device_visible_f5d_s = ViewMDL6<Flo64>{Kokkos::view_alloc(Kokkos::WithoutInitializing, "f5d_s"),
+                                                          Nmu_ + 1, Nvpar_ + 1, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_};
+
+            auto a_host_visible_f5d_s = ViewUHL6<Flo64>{// "unmanaged_host_f5d_s",
+                                                        f5d_s, Nmu_ + 1, Nvpar_ + 1, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_};
+
+            koliop::utility::SmartDeepCopy(a_host_visible_f5d_s, a_device_visible_f5d_s);
+
+            DoComputeOperationMaxwellianUnshiftedLoc(*this, a_device_visible_f5d_s, choice);
+
+            koliop::utility::SmartDeepCopy(a_device_visible_f5d_s, a_host_visible_f5d_s);
 
             // TODO(Etienne M): ASYNC, relax that constraint ?
             Kokkos::fence();
@@ -1388,74 +1386,86 @@ namespace koliop {
                                  a_policy, the_kernel);
         }
 
-        inline void State::DoComputeOperationMaxwellianUnshiftedLoc(const ViewUHL2<const Flo64>& a_host_visible_B_norm,
-                                                                    ViewUHL6<Flo64>&&            a_host_visible_f5d_s,
-                                                                    const ViewUHL4<const Flo64>& a_host_visible_n_s,
-                                                                    const ViewUHL4<const Flo64>& a_host_visible_T_s,
-                                                                    uint32_t                     choice) const {
+        template <typename Array6D>
+        void State::DoComputeOperationMaxwellianUnshiftedLoc(const State& a_state,
+                                                             Array6D&&    f5d_s,
+                                                             uint32_t     choice) {
 
-            const auto a_host_visible_mug   = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{},
-                                                                                                     Kokkos::WithoutInitializing),
-                                                                                  mug_);
-            const auto a_host_visible_vparg = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{},
-                                                                                                     Kokkos::WithoutInitializing),
-                                                                                  vparg_);
+            const auto& the_vpar_extent    = a_state.the_vpar_extent_;
+            const auto& the_mu_extent      = a_state.the_mu_extent_;
+            const auto& the_r_extent       = a_state.the_r_extent_;
+            const auto& the_theta_extent   = a_state.the_theta_extent_;
+            const auto& the_phi_extent     = a_state.the_phi_extent_;
 
-            const auto the_kernel_choice_3 = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi) {
-                // TODO(Etienne M): INDEX not coalesced. Flatten more ?
-                const Flo64 Bij    = a_host_visible_B_norm(ir, itheta);
-                const Flo64 na     = a_host_visible_n_s(ir, itheta, iphi, pSpecies_id_);
-                const Flo64 Ta     = a_host_visible_T_s(ir, itheta, iphi, pSpecies_id_);
-                const Flo64 BijoTa = Bij / Ta;
-                const Flo64 f2oTa  = 0.5 / Ta;
-                const Flo64 coeff  = na / (koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta * Kokkos::sqrt(koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta));
+            const auto& mug           = a_state.mug_;
+            const auto& vparg         = a_state.vparg_;
+            const auto& B_norm        = a_state.B_norm_;
+            const auto& n_s           = a_state.n_s_;
+            const auto& T_s           = a_state.T_s_;
 
-                for(uint64_t ivpar = 0; ivpar <= Nvpar_; ++ivpar) {
-                    for(uint64_t imu = 0; imu <= Nmu_; ++imu) {
-                        const Flo64 v2oTa = a_host_visible_mug(imu) * BijoTa + a_host_visible_vparg(ivpar) * a_host_visible_vparg(ivpar) * f2oTa;
-
-                        a_host_visible_f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id_) = std::max(0.0,
-                                                                                                    coeff * exp(-v2oTa) * a_host_visible_f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id_));
-                    }
-                }
-            };
-
-            const auto the_kernel_choice_4 = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi) {
-                // TODO(Etienne M): INDEX not coalesced. Flatten more ?
-                const Flo64 Bij    = a_host_visible_B_norm(ir, itheta);
-                const Flo64 na     = a_host_visible_n_s(ir, itheta, iphi, pSpecies_id_);
-                const Flo64 Ta     = a_host_visible_T_s(ir, itheta, iphi, pSpecies_id_);
-                const Flo64 BijoTa = Bij / Ta;
-                const Flo64 f2oTa  = 0.5 / Ta;
-                const Flo64 coeff  = (koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta * Kokkos::sqrt(koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta)) / na;
-                for(uint64_t ivpar = 0; ivpar <= Nvpar_; ++ivpar) {
-                    for(uint64_t imu = 0; imu <= Nmu_; ++imu) {
-                        const Flo64 v2oTa = a_host_visible_mug(imu) * BijoTa + a_host_visible_vparg(ivpar) * a_host_visible_vparg(ivpar) * f2oTa;
-
-                        a_host_visible_f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id_) = std::max(0.001,
-                                                                                                    std::min(1000.0,
-                                                                                                             coeff * exp(v2oTa) * a_host_visible_f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id_)));
-                    }
-                }
-            };
+            const auto pSpecies_id = a_state.pSpecies_id_;
 
             const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<3,
                                                                      Kokkos::Iterate::Left,
-                                                                     Kokkos::Iterate::Left>,
-                                                        Kokkos::DefaultHostExecutionSpace>{{0, 0, 0},
-                                                                                           {the_r_extent_,
-                                                                                            the_theta_extent_,
-                                                                                            the_phi_extent_}};
+                                                                     Kokkos::Iterate::Left>>{{0, 0, 0},
+                                                                                             {the_r_extent,
+                                                                                              the_theta_extent,
+                                                                                              the_phi_extent}};
+
+            // TODO(Etienne M): We could use a single kernel but know that
+            // flattening means recomputation, and thus, due to the slight
+            // discrepancies in the two kernels below, we would need many
+            // branches. Should we keep 2 flattened kernels ?
 
             switch(choice) {
-                case 3:
+                case 3: {
+                    const auto the_kernel_choice_3 = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi) {
+                        // TODO(Etienne M): INDEX not coalesced. Flatten more ?
+                        const Flo64 Bij    = B_norm(ir, itheta);
+                        const Flo64 na     = n_s(ir, itheta, iphi, pSpecies_id);
+                        const Flo64 Ta     = T_s(ir, itheta, iphi, pSpecies_id);
+                        const Flo64 BijoTa = Bij / Ta;
+                        const Flo64 f2oTa  = 0.5 / Ta;
+                        const Flo64 coeff  = na / (koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta * Kokkos::sqrt(koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta));
+
+                        for(uint64_t ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
+                            for(uint64_t imu = 0; imu < the_mu_extent; ++imu) {
+                                const Flo64 v2oTa = mug(imu) * BijoTa + vparg(ivpar) * vparg(ivpar) * f2oTa;
+
+                                f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id) = Kokkos::max(0.0,
+                                                                                               coeff * Kokkos::exp(-v2oTa) * f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id));
+                            }
+                        }
+                    };
+
                     Kokkos::parallel_for("DoComputeOperationMaxwellianUnshiftedLoc3",
                                          a_policy, the_kernel_choice_3);
                     break;
-                case 4:
+                }
+                case 4: {
+                    const auto the_kernel_choice_4 = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi) {
+                        // TODO(Etienne M): INDEX not coalesced. Flatten more ?
+                        const Flo64 Bij    = B_norm(ir, itheta);
+                        const Flo64 na     = n_s(ir, itheta, iphi, pSpecies_id);
+                        const Flo64 Ta     = T_s(ir, itheta, iphi, pSpecies_id);
+                        const Flo64 BijoTa = Bij / Ta;
+                        const Flo64 f2oTa  = 0.5 / Ta;
+                        const Flo64 coeff  = (koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta * Kokkos::sqrt(koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta)) / na;
+                        for(uint64_t ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
+                            for(uint64_t imu = 0; imu < the_mu_extent; ++imu) {
+                                const Flo64 v2oTa = mug(imu) * BijoTa + vparg(ivpar) * vparg(ivpar) * f2oTa;
+
+                                f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id) = Kokkos::max(0.001,
+                                                                                               Kokkos::min(1000.0,
+                                                                                                           coeff * exp(v2oTa) * f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id)));
+                            }
+                        }
+                    };
+
                     Kokkos::parallel_for("DoComputeOperationMaxwellianUnshiftedLoc4",
                                          a_policy, the_kernel_choice_4);
                     break;
+                }
                 default:
                     // TODO(Etienne M): Should this case be reachable ?
                     KOLIOP_ASSERT(false);
@@ -1653,8 +1663,8 @@ namespace koliop {
                 for(uint64_t ivpar = 0; ivpar <= Nvpar_; ++ivpar) {
                     const Flo64 jacob_vel = koliop::portability::MathematicalConstant<Flo64>::k2Pi * a_host_visible_Bstar_s(ivpar, ir, itheta, pSpecies_id_);
                     for(uint64_t imu = 0; imu <= Nmu_; ++imu) {
-                        const Flo64 ftmp = std::max(a_host_visible_f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id_),
-                                                    0.0);
+                        const Flo64 ftmp = Kokkos::max(a_host_visible_f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id_),
+                                                       0.0);
 
                         na += jacob_vel * a_host_visible_coeff_intdmu(imu) * a_host_visible_coeff_intdvpar(ivpar) * ftmp;
 

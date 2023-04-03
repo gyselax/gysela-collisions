@@ -300,10 +300,7 @@ int main(int, char**) {
     static constexpr uint32_t choice = 4;
 
     ::koliop_ComputeOperationMaxwellianUnshiftedLoc(an_operator,
-                                                    &B_norm[0][0],
                                                     &f5d_s[0][0][0][0][0][0],
-                                                    &n_s[0][0][0][0],
-                                                    &T_s[0][0][0][0],
                                                     choice);
 
     static constexpr uint64_t ir_block_size     = 8;

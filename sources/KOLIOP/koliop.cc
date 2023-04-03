@@ -230,10 +230,7 @@
 }
 
 ::koliop_Status koliop_ComputeOperationMaxwellianUnshiftedLoc(::koliop_Operator an_operator,
-                                                              const double*     B_norm,
                                                               double*           f5d_s,
-                                                              const double*     n_s,
-                                                              const double*     T_s,
                                                               uint32_t          choice) {
     return koliop::error::FromException([&]() {
         if(an_operator == nullptr) {
@@ -241,7 +238,7 @@
         }
 
         using State = koliop::collision::State;
-        reinterpret_cast<const State*>(an_operator)->ComputeOperationMaxwellianUnshiftedLoc(B_norm, f5d_s, n_s, T_s, choice);
+        reinterpret_cast<const State*>(an_operator)->ComputeOperationMaxwellianUnshiftedLoc(f5d_s, choice);
 
         return KOLIOP_STATUS_SUCCESS;
     });
