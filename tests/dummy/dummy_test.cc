@@ -276,13 +276,7 @@ int main(int, char**) {
                                   &nu_ab[0][0][0]);
 
     ::koliop_ComputeEvolutionMaxwellian(an_operator,
-                                        &nustar_coeff[0][0][0],
-                                        &B_norm[0][0],
-                                        &f5d_s[0][0][0][0][0][0],
-                                        &n_s[0][0][0][0],
-                                        &U_par_s[0][0][0][0],
-                                        &T_s[0][0][0][0],
-                                        dt / 2.0);
+                                        &f5d_s[0][0][0][0][0][0]);
 
     // qpar q_par_on_nT_s lbound 1   1
     // qpar q_par_on_nT_s lbound 2   1

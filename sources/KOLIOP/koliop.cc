@@ -188,20 +188,14 @@
 }
 
 ::koliop_Status koliop_ComputeEvolutionMaxwellian(::koliop_Operator an_operator,
-                                                  const double*     nustar_coeff,
-                                                  const double*     B_norm,
-                                                  double*           f5d_s,
-                                                  const double*     n_s,
-                                                  const double*     U_par_s,
-                                                  double*           T_s,
-                                                  double            dt) {
+                                                  double*           f5d_s) {
     return koliop::error::FromException([&]() {
         if(an_operator == nullptr) {
             return KOLIOP_STATUS_INVALID_VALUE;
         }
 
         using State = koliop::collision::State;
-        reinterpret_cast<const State*>(an_operator)->ComputeEvolutionMaxwellian(nustar_coeff, B_norm, f5d_s, n_s, U_par_s, T_s, dt);
+        reinterpret_cast<State*>(an_operator)->ComputeEvolutionMaxwellian(f5d_s);
 
         return KOLIOP_STATUS_SUCCESS;
     });

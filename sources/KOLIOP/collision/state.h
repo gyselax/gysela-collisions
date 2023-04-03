@@ -186,13 +186,7 @@ namespace koliop {
                                       Flo64    Tb,
                                       Flo64*   nu_ab) const;
 
-            void ComputeEvolutionMaxwellian(const Flo64* nustar_coeff,
-                                            const Flo64* B_norm,
-                                            Flo64*       f5d_s,
-                                            const Flo64* n_s,
-                                            const Flo64* U_par_s,
-                                            Flo64*       T_s,
-                                            Flo64        dt) const;
+            void ComputeEvolutionMaxwellian(Flo64* f5d_s);
 
             void ComputeQparOnNT(const Flo64* B_norm,
                                  const Flo64* Bstar_s,
@@ -309,13 +303,12 @@ namespace koliop {
                              Array4D&&    U_par_s,
                              Array4D&&    T_s);
 
-            void DoComputeEvolutionMaxwellian(const ViewUHL3<const Flo64>& a_host_visible_nustar_coeff,
-                                              const ViewUHL2<const Flo64>& a_host_visible_B_norm,
-                                              ViewUHL6<Flo64>&&            a_host_visible_f5d_s,
-                                              const ViewUHL4<const Flo64>& a_host_visible_n_s,
-                                              const ViewUHL4<const Flo64>& a_host_visible_U_par_s,
-                                              ViewUHL4<Flo64>&&            a_host_visible_T_s,
-                                              Flo64                        dt) const;
+            template <typename Array6D,
+                      typename Array4D>
+            static void
+            DoComputeEvolutionMaxwellian(const State& a_state,
+                                         Array6D&&    f5d_s,
+                                         Array4D&&    T_s);
 
             void DoComputeQparOnNT(const ViewUHL2<const Flo64>& a_host_visible_B_norm,
                                    const ViewUHL4<const Flo64>& a_host_visible_Bstar_s,
@@ -604,26 +597,20 @@ namespace koliop {
                                             Tb);
         }
 
-        inline void State::ComputeEvolutionMaxwellian(const Flo64* nustar_coeff,
-                                                      const Flo64* B_norm,
-                                                      Flo64*       f5d_s,
-                                                      const Flo64* n_s,
-                                                      const Flo64* U_par_s,
-                                                      Flo64*       T_s,
-                                                      Flo64        dt) const {
-            DoComputeEvolutionMaxwellian(ViewUHL3<const Flo64>{// "unmanaged_host_nustar_coeff",
-                                                               nustar_coeff, Nspecies_, Nspecies_, the_r_extent_},
-                                         ViewUHL2<const Flo64>{// "unmanaged_host_B_norm",
-                                                               B_norm, the_r_extent_, the_theta_extent_ + /* This +1 is weird */ 1},
-                                         ViewUHL6<Flo64>{// "unmanaged_host_f5d_s",
-                                                         f5d_s, Nmu_ + 1, Nvpar_ + 1, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_},
-                                         ViewUHL4<const Flo64>{// "unmanaged_host_n_s",
-                                                               n_s, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_},
-                                         ViewUHL4<const Flo64>{// "unmanaged_host_U_par_s",
-                                                               U_par_s, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_},
-                                         ViewUHL4<Flo64>{// "unmanaged_host_T_s",
-                                                         T_s, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_},
-                                         dt);
+        inline void State::ComputeEvolutionMaxwellian(Flo64* f5d_s) {
+            // TODO(Etienne M): COPY redundant.
+
+            auto a_device_visible_f5d_s = ViewMDL6<Flo64>{Kokkos::view_alloc(Kokkos::WithoutInitializing, "f5d_s"),
+                                                          Nmu_ + 1, Nvpar_ + 1, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_};
+
+            auto a_host_visible_f5d_s = ViewUHL6<Flo64>{// "unmanaged_host_f5d_s",
+                                                        f5d_s, Nmu_ + 1, Nvpar_ + 1, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_};
+
+            koliop::utility::SmartDeepCopy(a_host_visible_f5d_s, a_device_visible_f5d_s);
+
+            DoComputeEvolutionMaxwellian(*this, a_device_visible_f5d_s, T_s_);
+
+            koliop::utility::SmartDeepCopy(a_device_visible_f5d_s, a_host_visible_f5d_s);
 
             // TODO(Etienne M): ASYNC, relax that constraint ?
             Kokkos::fence();
@@ -1137,36 +1124,41 @@ namespace koliop {
                                  a_policy, the_kernel);
         }
 
-        inline void State::DoComputeEvolutionMaxwellian(const ViewUHL3<const Flo64>& a_host_visible_nustar_coeff,
-                                                        const ViewUHL2<const Flo64>& a_host_visible_B_norm,
-                                                        ViewUHL6<Flo64>&&            a_host_visible_f5d_s,
-                                                        const ViewUHL4<const Flo64>& a_host_visible_n_s,
-                                                        const ViewUHL4<const Flo64>& a_host_visible_U_par_s,
-                                                        ViewUHL4<Flo64>&&            a_host_visible_T_s,
-                                                        Flo64                        dt) const {
+        template <typename Array6D,
+                  typename Array4D>
+        void State::DoComputeEvolutionMaxwellian(const State& a_state,
+                                                 Array6D&&    f5d_s,
+                                                 Array4D&&    T_s) {
 
-            const auto a_host_visible_hat_As = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{},
-                                                                                                      Kokkos::WithoutInitializing),
-                                                                                   hat_As_);
-            const auto a_host_visible_mug    = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{},
-                                                                                                      Kokkos::WithoutInitializing),
-                                                                                   mug_);
-            const auto a_host_visible_vparg  = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{},
-                                                                                                      Kokkos::WithoutInitializing),
-                                                                                   vparg_);
+            const auto& the_vpar_extent    = a_state.the_vpar_extent_;
+            const auto& the_mu_extent      = a_state.the_mu_extent_;
+            const auto& the_r_extent       = a_state.the_r_extent_;
+            const auto& the_theta_extent   = a_state.the_theta_extent_;
+            const auto& the_phi_extent     = a_state.the_phi_extent_;
+            const auto& the_species_extent = a_state.Nspecies_;
+
+            const auto& hat_As       = a_state.hat_As_;
+            const auto& mug          = a_state.mug_;
+            const auto& vparg        = a_state.vparg_;
+            const auto& B_norm       = a_state.B_norm_;
+            const auto& nustar_coeff = a_state.nustar_coeff_;
+            const auto& n_s          = a_state.n_s_;
+            const auto& U_par_s      = a_state.U_par_s_;
+
+            const auto dt = a_state.dt_ / 2.0;
 
             // TODO(Etienne M): I wish we had MDRange with scratch memory.
             // Instead of having to use a TeamPolicy and computing MDRange index
             // by hand.
 
             // NOTE: We use scratch memory to avoid overwriting the T_s.
-            using ScratchMemory = Kokkos::View<Flo64*, Kokkos::DefaultHostExecutionSpace::scratch_memory_space>;
+            using ScratchMemory = Kokkos::View<Flo64*, Kokkos::DefaultExecutionSpace::scratch_memory_space>;
 
-            const uint64_t the_scratch_memory_bytes_per_thread = Nspecies_ * sizeof(Flo64);
+            const uint64_t the_scratch_memory_bytes_per_thread = the_species_extent * sizeof(Flo64);
 
-            using KernelIterationPolicy = Kokkos::TeamPolicy<Kokkos::DefaultHostExecutionSpace>;
+            using KernelIterationPolicy = Kokkos::TeamPolicy<Kokkos::DefaultExecutionSpace>;
 
-            const uint64_t the_team_count = the_theta_extent_ * the_phi_extent_;
+            const uint64_t the_team_count = the_theta_extent * the_phi_extent;
             // Due to the inherent cuda/HIP threadblock limit.
             KOLIOP_ASSERT(the_team_count <= std::numeric_limits<int>::max());
 
@@ -1178,29 +1170,29 @@ namespace koliop {
                     // CPU. This behavior done to avoid copying the whole Ts_.
                     // TODO(Etienne M): INDEX not coalesced. Flatten more ?
 
-                    for(uint64_t ispeciesA = 0; ispeciesA < Nspecies_; ++ispeciesA) {
-                        const Flo64 hat_Aa = a_host_visible_hat_As(ispeciesA);
-                        const Flo64 na     = a_host_visible_n_s(ir, itheta, iphi, ispeciesA);
-                        const Flo64 Vpara  = a_host_visible_U_par_s(ir, itheta, iphi, ispeciesA);
-                        const Flo64 Ta     = a_host_visible_T_s(ir, itheta, iphi, ispeciesA);
+                    for(uint64_t ispeciesA = 0; ispeciesA < the_species_extent; ++ispeciesA) {
+                        const Flo64 hat_Aa = hat_As(ispeciesA);
+                        const Flo64 na     = n_s(ir, itheta, iphi, ispeciesA);
+                        const Flo64 Vpara  = U_par_s(ir, itheta, iphi, ispeciesA);
+                        const Flo64 Ta     = T_s(ir, itheta, iphi, ispeciesA);
 
                         Flo64 Ta_new = Ta;
 
                         // TODO(Etienne M): Split into two loops to avoid the if ?
 
-                        for(uint64_t ispeciesB = 0; ispeciesB < Nspecies_; ++ispeciesB) {
+                        for(uint64_t ispeciesB = 0; ispeciesB < the_species_extent; ++ispeciesB) {
                             if(ispeciesA == ispeciesB) {
                                 continue;
                             }
 
-                            const Flo64 hat_Ab = a_host_visible_hat_As(ispeciesB);
-                            const Flo64 nb     = a_host_visible_n_s(ir, itheta, iphi, ispeciesB);
-                            const Flo64 Vparb  = a_host_visible_U_par_s(ir, itheta, iphi, ispeciesB);
-                            const Flo64 Tb     = a_host_visible_T_s(ir, itheta, iphi, ispeciesB);
+                            const Flo64 hat_Ab = hat_As(ispeciesB);
+                            const Flo64 nb     = n_s(ir, itheta, iphi, ispeciesB);
+                            const Flo64 Vparb  = U_par_s(ir, itheta, iphi, ispeciesB);
+                            const Flo64 Tb     = T_s(ir, itheta, iphi, ispeciesB);
 
-                            const Flo64 nu_ab = DoComputeFrequencyNuab(a_host_visible_nustar_coeff(ispeciesA, ispeciesB, ir),
-                                                                       a_host_visible_hat_As(ispeciesA),
-                                                                       a_host_visible_hat_As(ispeciesB),
+                            const Flo64 nu_ab = DoComputeFrequencyNuab(nustar_coeff(ispeciesA, ispeciesB, ir),
+                                                                       hat_As(ispeciesA),
+                                                                       hat_As(ispeciesB),
                                                                        Ta, nb, Tb);
 
                             Ta_new += dt * nu_ab * (2.0 * hat_Aa * (Tb - Ta) / (hat_Aa + hat_Ab) + (2.0 / 3.0) * Vpara * (Vpara - sqrt(hat_Aa / hat_Ab) * Vparb));
@@ -1214,29 +1206,29 @@ namespace koliop {
                                                       Kokkos::sqrt(koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta));
                         const Flo64 coeff_new = na / (koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta_new *
                                                       Kokkos::sqrt(koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta_new));
-                        const Flo64 Bij       = a_host_visible_B_norm(ir, itheta);
+                        const Flo64 Bij       = B_norm(ir, itheta);
                         const Flo64 bot_old   = Bij / Ta;
                         const Flo64 bot_new   = Bij / Ta_new;
 
-                        for(uint64_t ivpar = 0; ivpar <= Nvpar_; ++ivpar) {
-                            const Flo64 vp2_old = (a_host_visible_vparg(ivpar) - Vpara) * (a_host_visible_vparg(ivpar) - Vpara) / (2.0 * Ta);
-                            const Flo64 vp2_new = (a_host_visible_vparg(ivpar) - Vpara) * (a_host_visible_vparg(ivpar) - Vpara) / (2.0 * Ta_new);
-                            for(uint64_t imu = 0; imu <= Nmu_; ++imu) {
-                                a_host_visible_f5d_s(imu, ivpar, ir, itheta, iphi, ispeciesA) -= coeff_old * Kokkos::exp(-bot_old * a_host_visible_mug(imu) - vp2_old) +
-                                                                                                 coeff_new * Kokkos::exp(-bot_new * a_host_visible_mug(imu) - vp2_new);
+                        for(uint64_t ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
+                            const Flo64 vp2_old = (vparg(ivpar) - Vpara) * (vparg(ivpar) - Vpara) / (2.0 * Ta);
+                            const Flo64 vp2_new = (vparg(ivpar) - Vpara) * (vparg(ivpar) - Vpara) / (2.0 * Ta_new);
+                            for(uint64_t imu = 0; imu < the_mu_extent; ++imu) {
+                                f5d_s(imu, ivpar, ir, itheta, iphi, ispeciesA) -= coeff_old * Kokkos::exp(-bot_old * mug(imu) - vp2_old) +
+                                                                                  coeff_new * Kokkos::exp(-bot_new * mug(imu) - vp2_new);
                             }
                         }
                     }
 
-                    for(uint64_t ispeciesA = 0; ispeciesA < Nspecies_; ++ispeciesA) {
-                        a_host_visible_T_s(ir, itheta, iphi, ispeciesA) = Ta_tmp(ispeciesA);
+                    for(uint64_t ispeciesA = 0; ispeciesA < the_species_extent; ++ispeciesA) {
+                        T_s(ir, itheta, iphi, ispeciesA) = Ta_tmp(ispeciesA);
                     }
                 };
 
                 const auto the_team_index = a_team_handle.league_rank();
 
-                const auto iphi   = the_team_index / the_theta_extent_;
-                const auto itheta = the_team_index % the_theta_extent_;
+                const auto iphi   = the_team_index / the_theta_extent;
+                const auto itheta = the_team_index % the_theta_extent;
 
                 // TODO(Etienne M): Should be put that view allocation in the
                 // parallel_for below ? I dont think so as it would lead to
@@ -1247,7 +1239,7 @@ namespace koliop {
                                                         the_scratch_memory_bytes_per_thread};
 
                 const auto a_policy = Kokkos::TeamThreadRange(a_team_handle,
-                                                              the_r_extent_);
+                                                              the_r_extent);
 
                 Kokkos::parallel_for(a_policy,
                                      // Reference to the_kernel's member variable copy.
