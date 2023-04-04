@@ -161,6 +161,7 @@ namespace koliop {
                   bool                         collision_interspecies,
                   bool                         SOL,
                   bool                         LIM,
+                  uint64_t                     ir_SOL_separatrix,
                   Flo64                        dt,
                   const ViewUHL2<const Flo64>& a_host_visible_comb_mat,
                   const ViewUHL1<const Flo64>& a_host_visible_hat_As,
@@ -377,6 +378,7 @@ namespace koliop {
             bool     collision_interspecies_;
             bool     SOL_;
             bool     LIM_;
+            uint64_t ir_SOL_separatrix_;
             Flo64    dt_;
 
             ViewMDD2<Flo64> comb_mat_;
@@ -426,6 +428,7 @@ namespace koliop {
                             bool                         collision_interspecies,
                             bool                         SOL,
                             bool                         LIM,
+                            uint64_t                     ir_SOL_separatrix,
                             Flo64                        dt,
                             const ViewUHL2<const Flo64>& a_host_visible_comb_mat,
                             const ViewUHL1<const Flo64>& a_host_visible_hat_As,
@@ -459,6 +462,7 @@ namespace koliop {
             , collision_interspecies_{collision_interspecies}
             , SOL_{SOL}
             , LIM_{LIM}
+            , ir_SOL_separatrix_{ir_SOL_separatrix}
             , dt_{dt}
             , comb_mat_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "comb_mat_"), ((index_max_ + 1) + 1) - 0, ((index_max_ + 1) + 1) - 0}
             , hat_As_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "hat_As_"), Npolmax_}
@@ -896,6 +900,9 @@ namespace koliop {
         }
 
         inline void State::DoPrepareNuStar(ViewMDD3<Flo64>& nustar_coeff) const {
+            // TODO(Etienne M): I observe some slight numerical discrepancy
+            // (1e-14 ~ ) when comparing the result of Gysela and koliop.
+
             ViewMHL1<Flo64> a_host_visible_mask_space{Kokkos::view_alloc(Kokkos::WithoutInitializing, "a_host_visible_mask_space"),
                                                       the_r_extent_};
 

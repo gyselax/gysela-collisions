@@ -31,6 +31,8 @@ int main(int, char**) {
 
     ::koliop_Operator an_operator;
 
+    // TODO(Etienne M): Use small values for non indexing integer ?
+
     static constexpr uint64_t Npolmax                = 3;
     static constexpr uint64_t index_max              = 4;
     static constexpr uint64_t Nmu                    = 47;
@@ -48,6 +50,7 @@ int main(int, char**) {
     static constexpr uint32_t collision_interspecies = true;
     static constexpr uint32_t SOL                    = false;
     static constexpr uint32_t LIM                    = false;
+    static constexpr uint64_t ir_SOL_separatrix      = 32;
     static constexpr double   dt                     = 50.0;
 
     static constexpr uint64_t the_rank_r_extent     = (iend + 1) - istart;
@@ -162,6 +165,7 @@ int main(int, char**) {
                        collision_interspecies,
                        SOL,
                        LIM,
+                       ir_SOL_separatrix,
                        dt,
                        &comb_mat[0][0],
                        &hat_As[0],
