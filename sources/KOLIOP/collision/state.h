@@ -149,14 +149,14 @@ namespace koliop {
         public:
             State(uint64_t                     Npolmax,
                   uint64_t                     index_max,
-                  uint64_t                     Nspecies,
                   uint64_t                     pSpecies_id,
                   uint64_t                     mu_id,
-                  uint64_t                     Nmu,
-                  uint64_t                     Nvpar,
+                  uint64_t                     the_mu_extent,
+                  uint64_t                     the_vpar_extent,
                   uint64_t                     the_r_extent,
                   uint64_t                     the_theta_extent,
                   uint64_t                     the_phi_extent,
+                  uint64_t                     the_species_extent,
                   Flo64                        R0,
                   bool                         collision_interspecies,
                   bool                         SOL,
@@ -416,14 +416,14 @@ namespace koliop {
 
         inline State::State(uint64_t                     Npolmax,
                             uint64_t                     index_max,
-                            uint64_t                     Nspecies,
                             uint64_t                     pSpecies_id,
                             uint64_t                     mu_id,
-                            uint64_t                     Nmu,
-                            uint64_t                     Nvpar,
+                            uint64_t                     the_mu_extent,
+                            uint64_t                     the_vpar_extent,
                             uint64_t                     the_r_extent,
                             uint64_t                     the_theta_extent,
                             uint64_t                     the_phi_extent,
+                            uint64_t                     the_species_extent,
                             Flo64                        R0,
                             bool                         collision_interspecies,
                             bool                         SOL,
@@ -447,17 +447,17 @@ namespace koliop {
 
             Npolmax_{Npolmax}
             , index_max_{index_max}
-            , Nspecies_{Nspecies}
+            , Nspecies_{the_species_extent}
             , pSpecies_id_{pSpecies_id}
             , mu_id_{mu_id}
-            , Nmu_{Nmu}
-            , Nvpar_{Nvpar}
-            , the_mu_extent_{Nmu_ + 1}
-            , the_vpar_extent_{Nvpar_ + 1}
+            , Nmu_{the_mu_extent - 1}
+            , Nvpar_{the_vpar_extent - 1}
+            , the_mu_extent_{the_mu_extent}
+            , the_vpar_extent_{the_vpar_extent}
             , the_r_extent_{the_r_extent}
             , the_theta_extent_{the_theta_extent}
             , the_phi_extent_{the_phi_extent}
-            , the_species_extent_{Nspecies_}
+            , the_species_extent_{the_species_extent}
             , R0_{R0}
             , collision_interspecies_{collision_interspecies}
             , SOL_{SOL}
@@ -467,16 +467,16 @@ namespace koliop {
             , comb_mat_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "comb_mat_"), ((index_max_ + 1) + 1) - 0, ((index_max_ + 1) + 1) - 0}
             , hat_As_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "hat_As_"), Npolmax_}
             , hat_Zs_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "hat_Zs_"), Npolmax_}
-            , mug_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "mug_"), Nmu_ + 1}
-            , vparg_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "vparg_"), Nvpar_ + 1}
-            , coeff_intdmu_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "coeff_intdmu_"), Nmu_ + 1}
-            , coeff_intdvpar_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "coeff_intdvpar_"), Nvpar_ + 1}
+            , mug_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "mug_"), the_mu_extent_}
+            , vparg_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "vparg_"), the_vpar_extent_}
+            , coeff_intdmu_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "coeff_intdmu_"), the_mu_extent_}
+            , coeff_intdvpar_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "coeff_intdvpar_"), the_vpar_extent_}
             , rg_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "rg_"), the_r_extent_}
             , nustar0_r_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "nustar0_r_"), the_r_extent_}
             , q_r_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "q_r_"), the_r_extent_}
             , mask_buffer_r_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "mask_buffer_r_"), the_r_extent_}
             , B_norm_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "B_norm_"), the_r_extent_, the_theta_extent_ + 1 /* Weird +1 */}
-            , Bstar_s_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "Bstar_s_"), Nvpar_ + 1, the_r_extent_, the_theta_extent_, Nspecies_}
+            , Bstar_s_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "Bstar_s_"), the_vpar_extent_, the_r_extent_, the_theta_extent_, the_species_extent_}
 
             // Constant, internally computed values
 
@@ -486,18 +486,18 @@ namespace koliop {
             , C_jl_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "C_jl_"),
                     index_max_ + 1, Npolmax_, Npolmax_}
             , nustar_coeff_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "nustar_coeff_"),
-                            Nspecies_, Nspecies_, the_r_extent_}
+                            the_species_extent_, the_species_extent_, the_r_extent_}
 
             // Variable, internally computed values
 
             , n_s_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "n_s_"),
-                   the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_}
+                   the_r_extent_, the_theta_extent_, the_phi_extent_, the_species_extent_}
             , U_par_s_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "U_par_s_"),
-                       the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_}
+                       the_r_extent_, the_theta_extent_, the_phi_extent_, the_species_extent_}
             , T_s_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "T_s_"),
-                   the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_}
+                   the_r_extent_, the_theta_extent_, the_phi_extent_, the_species_extent_}
             , q_par_on_nT_s_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "q_par_on_nT_s_"),
-                             the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_} {
+                             the_r_extent_, the_theta_extent_, the_phi_extent_, the_species_extent_} {
 
             // TODO(Etienne M): Make sure, we get ALL the data and not only some
             // thread specific part. The collision operator handles its

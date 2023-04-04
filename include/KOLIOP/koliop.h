@@ -55,14 +55,14 @@ typedef struct _koliop_Operator* koliop_Operator;
 koliop_Status koliop_Create(koliop_Operator* an_operator_handle,
                             uint64_t         Npolmax,
                             uint64_t         index_max,
-                            uint64_t         Nmu,
-                            uint64_t         Nvpar,
-                            uint64_t         Nspecies,
                             uint64_t         pSpecies_id,
                             uint64_t         mu_id,
+                            uint64_t         the_mu_extent,
+                            uint64_t         the_vpar_extent,
                             uint64_t         the_r_extent,
                             uint64_t         the_theta_extent,
                             uint64_t         the_phi_extent,
+                            uint64_t         the_species_extent,
                             double           R0,
                             uint32_t         collision_interspecies,
                             uint32_t         SOL,
@@ -87,16 +87,9 @@ koliop_Status koliop_Release(koliop_Operator an_operator);
 koliop_Status koliop_ComputeMoments(koliop_Operator an_operator,
                                     double*         f5d_s);
 
-// TODO(Etienne M): nu_ab becomes internal
-
-koliop_Status koliop_ComputeFrequencyNuab(koliop_Operator an_operator,
-                                          double          nustar_coeff,
-                                          uint64_t        speciesA,
-                                          uint64_t        speciesB,
-                                          double          Ta,
-                                          double          nb,
-                                          double          Tb,
-                                          double*         nu_ab);
+// NOTE: extract on r.
+koliop_Status koliop_ExtractNuab(koliop_Operator an_operator,
+                                 double*         nu_ab_r);
 
 koliop_Status koliop_ComputeEvolutionMaxwellian(koliop_Operator an_operator,
                                                 double*         f5d_s);
