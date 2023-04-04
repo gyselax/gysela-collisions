@@ -106,3 +106,4 @@ NOTE:
 - Split the implementation in more files (one per function ?)
 - Document the C interface
 - Make sure the C interface does not leak (exception et al.)
+- auto should not be used in computations (Flo64 or an other alias)

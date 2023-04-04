@@ -169,21 +169,14 @@
     });
 }
 
-::koliop_Status koliop_ComputeFrequencyNuab(::koliop_Operator an_operator,
-                                            double            nustar_coeff,
-                                            uint64_t          speciesA,
-                                            uint64_t          speciesB,
-                                            double            Ta,
-                                            double            nb,
-                                            double            Tb,
-                                            double*           nu_ab) {
+::koliop_Status koliop_PrecomputeNu(::koliop_Operator an_operator) {
     return koliop::error::FromException([&]() {
         if(an_operator == nullptr) {
             return KOLIOP_STATUS_INVALID_VALUE;
         }
 
         using State = koliop::collision::State;
-        reinterpret_cast<const State*>(an_operator)->ComputeFrequencyNuab(nustar_coeff, speciesA, speciesB, Ta, nb, Tb, nu_ab);
+        reinterpret_cast<State*>(an_operator)->PrecomputeNu();
 
         return KOLIOP_STATUS_SUCCESS;
     });
@@ -278,7 +271,6 @@
                                         uint64_t          iphi_start,
                                         uint64_t          iphi_end,
                                         const uint8_t*    mask_coll,
-                                        const double*     nustar_coeff,
                                         const double*     n_s,
                                         const double*     U_par_s,
                                         const double*     T_s,
@@ -294,7 +286,7 @@
         }
 
         using State = koliop::collision::State;
-        reinterpret_cast<const State*>(an_operator)->ComputeBlockTo1d(ir_start, ir_end, itheta_start, itheta_end, iphi_start, iphi_end, mask_coll, nustar_coeff, n_s, U_par_s, T_s, q_par_on_nT_s, n1d_s, T1d_s, U_par1d, q_par_on_nT1d, nu1d);
+        reinterpret_cast<const State*>(an_operator)->ComputeBlockTo1d(ir_start, ir_end, itheta_start, itheta_end, iphi_start, iphi_end, mask_coll, n_s, U_par_s, T_s, q_par_on_nT_s, n1d_s, T1d_s, U_par1d, q_par_on_nT1d, nu1d);
 
         return KOLIOP_STATUS_SUCCESS;
     });

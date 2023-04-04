@@ -188,17 +188,6 @@ int main(int, char**) {
 
     std::cout << an_operator << "\n";
 
-    // nustar_coeff lbound 1 0
-    // nustar_coeff lbound 2 0
-    // nustar_coeff lbound 3 0
-    // nustar_coeff size   1 1
-    // nustar_coeff size   2 1
-    // nustar_coeff size   3 32
-    // nustar_coeff ubound 1 0
-    // nustar_coeff ubound 2 0
-    // nustar_coeff ubound 3 31
-    double nustar_coeff[the_r_extent][the_species_extent][the_species_extent]{{{42.0}}};
-
     // mom f5d_s lbound 1   1
     // mom f5d_s lbound 2   1
     // mom f5d_s lbound 3   1
@@ -264,12 +253,7 @@ int main(int, char**) {
     ::koliop_ComputeMoments(an_operator,
                             &f5d_s[0][0][0][0][0][0]);
 
-    // ::koliop_ComputeNuab(an_operator);
-
-    // double nu_ab_r[the_r_extent][the_species_extent][the_species_extent]{{{42.0}}};
-
-    // ::koliop_ExtractNuab(koliop_Operator an_operator,
-    //                      &nu_ab_r[0][0][0]);
+    ::koliop_PrecomputeNu(an_operator);
 
     ::koliop_ComputeEvolutionMaxwellian(an_operator,
                                         &f5d_s[0][0][0][0][0][0]);
@@ -351,7 +335,6 @@ int main(int, char**) {
                               iphi_start,
                               iphi_end,
                               &mask_coll[0][0],
-                              &nustar_coeff[0][0][0],
                               &n_s[0][0][0][0],
                               &U_par_s[0][0][0][0],
                               &T_s[0][0][0][0],
@@ -399,6 +382,12 @@ int main(int, char**) {
 
     ::koliop_ComputeCorrectionUparT(an_operator,
                                     &f5d_s[0][0][0][0][0][0]);
+
+    // TODO(Etienne M):
+    // double nu_ab_r[the_r_extent][the_species_extent][the_species_extent]{{{42.0}}};
+
+    // ::koliop_ExtractNuab(koliop_Operator an_operator,
+    //                      &nu_ab_r[0][0][0]);
 
     if(::koliop_Release(an_operator) != KOLIOP_STATUS_SUCCESS) {
         std::cout << "::koliop_Release() failed\n";

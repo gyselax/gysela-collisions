@@ -87,9 +87,7 @@ koliop_Status koliop_Release(koliop_Operator an_operator);
 koliop_Status koliop_ComputeMoments(koliop_Operator an_operator,
                                     double*         f5d_s);
 
-// NOTE: extract on r.
-koliop_Status koliop_ExtractNuab(koliop_Operator an_operator,
-                                 double*         nu_ab_r);
+koliop_Status koliop_PrecomputeNu(koliop_Operator an_operator);
 
 koliop_Status koliop_ComputeEvolutionMaxwellian(koliop_Operator an_operator,
                                                 double*         f5d_s);
@@ -133,7 +131,6 @@ koliop_Status koliop_ComputeBlockTo1d(koliop_Operator an_operator,
                                       uint64_t        iphi_start,
                                       uint64_t        iphi_end,
                                       const uint8_t*  mask_coll,
-                                      const double*   nustar_coeff,
                                       const double*   n_s,
                                       const double*   U_par_s,
                                       const double*   T_s,

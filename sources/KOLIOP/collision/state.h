@@ -179,13 +179,7 @@ namespace koliop {
 
             void ComputeMoments(Flo64* f5d_s);
 
-            void ComputeFrequencyNuab(Flo64    nustar_coeff,
-                                      uint64_t speciesA,
-                                      uint64_t speciesB,
-                                      Flo64    Ta,
-                                      Flo64    nb,
-                                      Flo64    Tb,
-                                      Flo64*   nu_ab) const;
+            void PrecomputeNu();
 
             void ComputeEvolutionMaxwellian(Flo64* f5d_s);
 
@@ -215,7 +209,6 @@ namespace koliop {
                                   uint64_t       iphi_start,
                                   uint64_t       iphi_end,
                                   const uint8_t* mask_coll,
-                                  const Flo64*   nustar_coeff,
                                   const Flo64*   n_s,
                                   const Flo64*   U_par_s,
                                   const Flo64*   T_s,
@@ -276,6 +269,19 @@ namespace koliop {
                              Array4D&&    U_par_s,
                              Array4D&&    T_s);
 
+            static KOKKOS_INLINE_FUNCTION Flo64
+            DoComputeFrequencyNuab(Flo64 nustar_coeff,
+                                   Flo64 hat_As_speciesA,
+                                   Flo64 hat_As_speciesB,
+                                   Flo64 Ta,
+                                   Flo64 nb,
+                                   Flo64 Tb);
+
+            template <typename Array5D>
+            static void
+            DoPrecomputeNu(const State& a_state,
+                           Array5D&&    nu_ab);
+
             template <typename Array6D,
                       typename Array4D>
             static void
@@ -314,7 +320,6 @@ namespace koliop {
                                     uint64_t                       itheta_block_size,
                                     uint64_t                       iphi_block_size,
                                     const ViewUHL2<const uint8_t>& a_host_visible_mask_coll,
-                                    const ViewUHL3<const Flo64>&   a_host_visible_nustar_coeff,
                                     const ViewUHL4<const Flo64>&   a_host_visible_n_s,
                                     const ViewUHL4<const Flo64>&   a_host_visible_U_par_s,
                                     const ViewUHL4<const Flo64>&   a_host_visible_T_s,
@@ -345,14 +350,6 @@ namespace koliop {
             DoComputeCorrectionUparT(const State& a_state,
                                      Array6D&&    f5d_s,
                                      Array4D&&    U_par_s);
-
-            static KOKKOS_INLINE_FUNCTION Flo64
-            DoComputeFrequencyNuab(Flo64 nustar_coeff,
-                                   Flo64 hat_As_speciesA,
-                                   Flo64 hat_As_speciesB,
-                                   Flo64 Ta,
-                                   Flo64 nb,
-                                   Flo64 Tb);
 
             static KOKKOS_INLINE_FUNCTION Flo64
             DoComputeLaguerrePol(uint64_t l,
@@ -406,6 +403,7 @@ namespace koliop {
             ViewMDD4<Flo64> n_s_;
             ViewMDD4<Flo64> U_par_s_;
             ViewMDD4<Flo64> T_s_;
+            ViewMDD5<Flo64> nu_ab_;
             ViewMDD4<Flo64> q_par_on_nT_s_;
         };
 
@@ -496,6 +494,8 @@ namespace koliop {
                        the_r_extent_, the_theta_extent_, the_phi_extent_, the_species_extent_}
             , T_s_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "T_s_"),
                    the_r_extent_, the_theta_extent_, the_phi_extent_, the_species_extent_}
+            , nu_ab_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "nu_ab_"),
+                     the_r_extent_, the_theta_extent_, the_phi_extent_, the_species_extent_, the_species_extent_}
             , q_par_on_nT_s_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "q_par_on_nT_s_"),
                              the_r_extent_, the_theta_extent_, the_phi_extent_, the_species_extent_} {
 
@@ -546,24 +546,11 @@ namespace koliop {
             Kokkos::fence();
         }
 
-        inline void State::ComputeFrequencyNuab(Flo64    nustar_coeff,
-                                                uint64_t speciesA,
-                                                uint64_t speciesB,
-                                                Flo64    Ta,
-                                                Flo64    nb,
-                                                Flo64    Tb,
-                                                Flo64*   nu_ab) const {
+        inline void State::PrecomputeNu() {
+            DoPrecomputeNu(*this, nu_ab_);
 
-            const auto a_host_visible_hat_As = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{},
-                                                                                                      Kokkos::WithoutInitializing),
-                                                                                   hat_As_);
-
-            *nu_ab = DoComputeFrequencyNuab(nustar_coeff,
-                                            a_host_visible_hat_As(speciesA),
-                                            a_host_visible_hat_As(speciesB),
-                                            Ta,
-                                            nb,
-                                            Tb);
+            // TODO(Etienne M): ASYNC, relax that constraint ?
+            Kokkos::fence();
         }
 
         inline void State::ComputeEvolutionMaxwellian(Flo64* f5d_s) {
@@ -684,7 +671,6 @@ namespace koliop {
                                             uint64_t       iphi_start,
                                             uint64_t       iphi_end,
                                             const uint8_t* mask_coll,
-                                            const Flo64*   nustar_coeff,
                                             const Flo64*   n_s,
                                             const Flo64*   U_par_s,
                                             const Flo64*   T_s,
@@ -706,8 +692,6 @@ namespace koliop {
                                iphi_block_size,
                                ViewUHL2<const uint8_t>{// "unmanaged_host_mask_coll",
                                                        mask_coll, ir_block_size, itheta_block_size},
-                               ViewUHL3<const Flo64>{// "unmanaged_host_nustar_coeff",
-                                                     nustar_coeff, Nspecies_, Nspecies_, the_r_extent_},
                                ViewUHL4<const Flo64>{// "unmanaged_host_n_s",
                                                      n_s, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_},
                                ViewUHL4<const Flo64>{// "unmanaged_host_U_par_s",
@@ -1068,6 +1052,74 @@ namespace koliop {
                                  a_policy, the_kernel);
         }
 
+        KOKKOS_INLINE_FUNCTION Flo64
+        State::DoComputeFrequencyNuab(Flo64 nustar_coeff,
+                                      Flo64 hat_As_speciesA,
+                                      Flo64 hat_As_speciesB,
+                                      Flo64 Ta,
+                                      Flo64 nb,
+                                      Flo64 Tb) {
+
+            const Flo64 vTa = Kokkos::sqrt(Ta / hat_As_speciesA);
+            const Flo64 vTb = Kokkos::sqrt(Tb / hat_As_speciesB);
+
+            // TODO(Etienne M): SIMPLIFY We could do:
+            // (nustar_coeff * nb) *
+            //     std::pow((Tb * hat_As_speciesA +
+            //               Ta * hat_As_speciesB) /
+            //                  (hat_As_speciesA * hat_As_speciesB),
+            //              -3.0 / 2.0);
+            return (nustar_coeff * nb) / ((vTa * vTa + vTb * vTb) * Kokkos::sqrt(vTa * vTa + vTb * vTb));
+        }
+
+        template <typename Array5D>
+        void State::DoPrecomputeNu(const State& a_state,
+                                   Array5D&&    nu_ab) {
+
+            const auto& the_r_extent       = a_state.the_r_extent_;
+            const auto& the_theta_extent   = a_state.the_theta_extent_;
+            const auto& the_phi_extent     = a_state.the_phi_extent_;
+            const auto& the_species_extent = a_state.Nspecies_;
+
+            const auto& hat_As       = a_state.hat_As_;
+            const auto& nustar_coeff = a_state.nustar_coeff_;
+            const auto& n_s          = a_state.n_s_;
+            const auto& T_s          = a_state.T_s_;
+
+            const auto& ir_SOL_separatrix = a_state.ir_SOL_separatrix_;
+
+            const auto the_kernel = KOKKOS_LAMBDA(auto itheta, auto iphi, auto ispeciesA, auto ispeciesB) {
+                // TODO(Etienne M): INDEX not coalesced. Flatten more ?
+
+                const uint64_t the_local_r_extent = Kokkos::min(the_r_extent, ir_SOL_separatrix + 1);
+
+                for(uint64_t ir = 0; ir < the_local_r_extent; ++ir) {
+                    nu_ab(ir, itheta, iphi, ispeciesA, ispeciesB) = DoComputeFrequencyNuab(nustar_coeff(ispeciesA, ispeciesB, ir),
+                                                                                           hat_As(ispeciesA), hat_As(ispeciesB),
+                                                                                           T_s(ir, itheta, iphi, ispeciesA),
+                                                                                           n_s(ir, itheta, iphi, ispeciesB),
+                                                                                           T_s(ir, itheta, iphi, ispeciesB));
+                }
+
+                for(uint64_t ir = the_local_r_extent; ir < the_r_extent; ++ir) {
+                    // Propagate the value at nu_ab(ir_SOL_separatrix_, itheta, iphi, ispeciesA, ispeciesB) or
+                    // nu_ab(the_local_r_extent - 1, itheta, iphi, ispeciesA, ispeciesB)
+                    nu_ab(ir, itheta, iphi, ispeciesA, ispeciesB) = nu_ab(ir_SOL_separatrix, itheta, iphi, ispeciesA, ispeciesB);
+                }
+            };
+
+            const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<4,
+                                                                     Kokkos::Iterate::Left,
+                                                                     Kokkos::Iterate::Left>>{{0, 0, 0, 0},
+                                                                                             {the_theta_extent,
+                                                                                              the_phi_extent,
+                                                                                              the_species_extent,
+                                                                                              the_species_extent}};
+
+            Kokkos::parallel_for("DoPrecomputeNu",
+                                 a_policy, the_kernel);
+        }
+
         template <typename Array6D,
                   typename Array4D>
         void State::DoComputeEvolutionMaxwellian(const State& a_state,
@@ -1081,13 +1133,13 @@ namespace koliop {
             const auto& the_phi_extent     = a_state.the_phi_extent_;
             const auto& the_species_extent = a_state.Nspecies_;
 
-            const auto& hat_As       = a_state.hat_As_;
-            const auto& mug          = a_state.mug_;
-            const auto& vparg        = a_state.vparg_;
-            const auto& B_norm       = a_state.B_norm_;
-            const auto& nustar_coeff = a_state.nustar_coeff_;
-            const auto& n_s          = a_state.n_s_;
-            const auto& U_par_s      = a_state.U_par_s_;
+            const auto& hat_As  = a_state.hat_As_;
+            const auto& mug     = a_state.mug_;
+            const auto& vparg   = a_state.vparg_;
+            const auto& B_norm  = a_state.B_norm_;
+            const auto& n_s     = a_state.n_s_;
+            const auto& U_par_s = a_state.U_par_s_;
+            const auto& nu_ab   = a_state.nu_ab_;
 
             const Flo64 dt = a_state.dt_ / 2.0;
 
@@ -1130,16 +1182,12 @@ namespace koliop {
                             }
 
                             const Flo64 hat_Ab = hat_As(ispeciesB);
-                            const Flo64 nb     = n_s(ir, itheta, iphi, ispeciesB);
                             const Flo64 Vparb  = U_par_s(ir, itheta, iphi, ispeciesB);
                             const Flo64 Tb     = T_s(ir, itheta, iphi, ispeciesB);
 
-                            const Flo64 nu_ab = DoComputeFrequencyNuab(nustar_coeff(ispeciesA, ispeciesB, ir),
-                                                                       hat_As(ispeciesA),
-                                                                       hat_As(ispeciesB),
-                                                                       Ta, nb, Tb);
+                            const Flo64 nu = nu_ab(ir, itheta, iphi, ispeciesA, ispeciesB);
 
-                            Ta_new += dt * nu_ab * (2.0 * hat_Aa * (Tb - Ta) / (hat_Aa + hat_Ab) + (2.0 / 3.0) * Vpara * (Vpara - sqrt(hat_Aa / hat_Ab) * Vparb));
+                            Ta_new += dt * nu * (2.0 * hat_Aa * (Tb - Ta) / (hat_Aa + hat_Ab) + (2.0 / 3.0) * Vpara * (Vpara - sqrt(hat_Aa / hat_Ab) * Vparb));
                         }
 
                         // We can not overwrite the T_s until all the new_T_s are
@@ -1524,7 +1572,6 @@ namespace koliop {
                                               uint64_t                       itheta_block_size,
                                               uint64_t                       iphi_block_size,
                                               const ViewUHL2<const uint8_t>& a_host_visible_mask_coll,
-                                              const ViewUHL3<const Flo64>&   a_host_visible_nustar_coeff,
                                               const ViewUHL4<const Flo64>&   a_host_visible_n_s,
                                               const ViewUHL4<const Flo64>&   a_host_visible_U_par_s,
                                               const ViewUHL4<const Flo64>&   a_host_visible_T_s,
@@ -1557,12 +1604,7 @@ namespace koliop {
                 a_host_visible_U_par1d(ispace)       = a_host_visible_U_par_s(ir, itheta, iphi, pSpecies_id_);
                 a_host_visible_q_par_on_nT1d(ispace) = a_host_visible_q_par_on_nT_s(ir, itheta, iphi, pSpecies_id_);
 
-                a_host_visible_nu1d(ispace) = DoComputeFrequencyNuab(a_host_visible_nustar_coeff(pSpecies_id_, pSpecies_id_, ir),
-                                                                     a_host_visible_hat_As(pSpecies_id_),
-                                                                     a_host_visible_hat_As(pSpecies_id_),
-                                                                     a_host_visible_T1d_s(ispace, pSpecies_id_),
-                                                                     a_host_visible_n1d_s(ispace, pSpecies_id_),
-                                                                     a_host_visible_T1d_s(ispace, pSpecies_id_));
+                a_host_visible_nu1d(ispace) = nu_ab_(ir, itheta, iphi, pSpecies_id_, pSpecies_id_);
             };
 
             const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<3,
@@ -1817,26 +1859,6 @@ namespace koliop {
 
             Kokkos::parallel_for("DoComputeCorrectionUparT",
                                  a_policy, the_kernel);
-        }
-
-        KOKKOS_INLINE_FUNCTION Flo64
-        State::DoComputeFrequencyNuab(Flo64 nustar_coeff,
-                                      Flo64 hat_As_speciesA,
-                                      Flo64 hat_As_speciesB,
-                                      Flo64 Ta,
-                                      Flo64 nb,
-                                      Flo64 Tb) {
-
-            const Flo64 vTa = Kokkos::sqrt(Ta / hat_As_speciesA);
-            const Flo64 vTb = Kokkos::sqrt(Tb / hat_As_speciesB);
-
-            // TODO(Etienne M): SIMPLIFY We could do:
-            // (nustar_coeff * nb) *
-            //     std::pow((Tb * hat_As_speciesA +
-            //               Ta * hat_As_speciesB) /
-            //                  (hat_As_speciesA * hat_As_speciesB),
-            //              -3.0 / 2.0);
-            return (nustar_coeff * nb) / ((vTa * vTa + vTb * vTb) * Kokkos::sqrt(vTa * vTa + vTb * vTb));
         }
 
         KOKKOS_INLINE_FUNCTION Flo64
