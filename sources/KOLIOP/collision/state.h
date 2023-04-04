@@ -754,7 +754,7 @@ namespace koliop {
                                                                                                      Kokkos::WithoutInitializing),
                                                                                   vparg_);
 
-            const Flo64 dvpar = vparg_(1) - vparg_(0);
+            // const Flo64 dvpar = vparg_(1) - vparg_(0);
 
             // // ! Computation of the N_i,a ^ jl = sum_b M_i,ab ^ jl
             // call libcoll_N_a_jl(Nspace, Npolmax_, vparg, C_jl_, n_allspecies, T_allspecies, nu, N0, N1, N2);
@@ -1751,6 +1751,7 @@ namespace koliop {
             const auto& nustar_coeff   = a_state.nustar_coeff_;
             const auto& n_s            = a_state.n_s_;
             const auto& T_s            = a_state.T_s_;
+            const auto& nu_ab          = a_state.nu_ab_;
             const auto& q_par_on_nT_s  = a_state.q_par_on_nT_s_;
 
             const auto  pSpecies_id            = a_state.pSpecies_id_;
@@ -1809,16 +1810,11 @@ namespace koliop {
                                                   hat_Ab * T_s(ir, itheta, iphi, pSpecies_id) /
                                                       (hat_Aa * T_s(ir, itheta, iphi, ispecies)));
 
-                        const Flo64 nu_ab = DoComputeFrequencyNuab(nustar_coeff(pSpecies_id, ispecies, ir),
-                                                                   hat_As(pSpecies_id),
-                                                                   hat_As(ispecies),
-                                                                   T_s(ir, itheta, iphi, pSpecies_id),
-                                                                   n_s(ir, itheta, iphi, ispecies),
-                                                                   T_s(ir, itheta, iphi, ispecies));
+                        const Flo64 nu = nu_ab(ir, itheta, iphi, pSpecies_id, ispecies);
 
-                        const Flo64 R_ab = -nu_ab * (Vpara - Rat * Vparb -
-                                                     0.6 * k_ab * q_par_on_nT +
-                                                     Rat * 0.6 * k_ba * q_parb_on_nbTb);
+                        const Flo64 R_ab = -nu * (Vpara - Rat * Vparb -
+                                                  0.6 * k_ab * q_par_on_nT +
+                                                  Rat * 0.6 * k_ba * q_parb_on_nbTb);
                         U_par_new += dt * R_ab;
                     }
                 }
