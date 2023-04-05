@@ -90,6 +90,8 @@ namespace koliop {
                 //         }
                 //     }
                 // }
+
+                // Else we do a linpack based, recursive LU decomposition.
             }
         };
 

@@ -80,6 +80,7 @@ koliop_Status koliop_Create(koliop_Operator* an_operator_handle,
                             const double*    nustar0_r,
                             const double*    q_r,
                             const double*    mask_buffer_r,
+                            const double*    mask_LIM,
                             const double*    B_norm,
                             const double*    Bstar_s);
 koliop_Status koliop_Release(koliop_Operator an_operator);
@@ -104,8 +105,7 @@ koliop_Status koliop_ComputeOperationMaxwellianUnshiftedLoc(koliop_Operator an_o
                                                             uint32_t        choice);
 
 koliop_Status koliop_ApplyCollisions(koliop_Operator an_operator,
-                                     double*         f5d_s,
-                                     const double*   mask_LIM);
+                                     double*         f5d_s);
 
 koliop_Status koliop_ComputeCorrectionDensity(koliop_Operator an_operator,
                                               double*         f5d_s);

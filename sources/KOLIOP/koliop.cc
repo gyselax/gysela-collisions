@@ -84,10 +84,27 @@
                               const double*      nustar0_r,
                               const double*      q_r,
                               const double*      mask_buffer_r,
+                              const double*      mask_LIM,
                               const double*      B_norm,
                               const double*      Bstar_s) {
     return koliop::error::FromException([&]() {
-        if(an_operator_handle == nullptr) {
+        if(an_operator_handle == nullptr ||
+           comb_mat == nullptr ||
+           hat_As == nullptr ||
+           hat_Zs == nullptr ||
+           mug == nullptr ||
+           vparg == nullptr ||
+           coeff_intdmu == nullptr ||
+           coeff_intdvpar == nullptr ||
+           rg == nullptr ||
+           nustar0_r == nullptr ||
+           q_r == nullptr ||
+           mask_buffer_r == nullptr ||
+           // TODO(Etienne M): Is that nullptr when LIM is false ?
+           (static_cast<bool>(LIM) && mask_LIM == nullptr) ||
+           B_norm == nullptr ||
+           Bstar_s == nullptr) {
+            // TODO(Etienne M): More checks
             return KOLIOP_STATUS_INVALID_VALUE;
         }
 
@@ -131,6 +148,9 @@
                                                                                              q_r, the_r_extent},
                                             koliop::collision::ViewUHL1<const koliop::Flo64>{// "unmanaged_host_mask_buffer_r",
                                                                                              mask_buffer_r, the_r_extent},
+                                            static_cast<bool>(LIM) ? koliop::collision::ViewUHL2<const koliop::Flo64>{// "unmanaged_host_mask_LIM",
+                                                                                                                      mask_LIM, the_r_extent, the_theta_extent} :
+                                                                     koliop::collision::ViewUHL2<const koliop::Flo64>{/* "unmanaged_host_mask_LIM" */},
                                             koliop::collision::ViewUHL2<const koliop::Flo64>{// "unmanaged_host_B_norm",
                                                                                              B_norm, the_r_extent, the_theta_extent + 1 /* Weird +1 */},
                                             koliop::collision::ViewUHL4<const koliop::Flo64>{// "unmanaged_host_Bstar_s",
@@ -158,7 +178,8 @@
 ::koliop_Status koliop_ComputeMoments(::koliop_Operator an_operator,
                                       double*           f5d_s) {
     return koliop::error::FromException([&]() {
-        if(an_operator == nullptr) {
+        if(an_operator == nullptr ||
+           f5d_s == nullptr) {
             return KOLIOP_STATUS_INVALID_VALUE;
         }
 
@@ -185,7 +206,8 @@
 ::koliop_Status koliop_ComputeEvolutionMaxwellian(::koliop_Operator an_operator,
                                                   double*           f5d_s) {
     return koliop::error::FromException([&]() {
-        if(an_operator == nullptr) {
+        if(an_operator == nullptr ||
+           f5d_s == nullptr) {
             return KOLIOP_STATUS_INVALID_VALUE;
         }
 
@@ -199,7 +221,8 @@
 ::koliop_Status koliop_ComputeQparOnNT(::koliop_Operator an_operator,
                                        const double*     f5d_s) {
     return koliop::error::FromException([&]() {
-        if(an_operator == nullptr) {
+        if(an_operator == nullptr ||
+           f5d_s == nullptr) {
             return KOLIOP_STATUS_INVALID_VALUE;
         }
 
@@ -213,7 +236,8 @@
 ::koliop_Status koliop_ComputeCpar(::koliop_Operator an_operator,
                                    double*           f5d_s) {
     return koliop::error::FromException([&]() {
-        if(an_operator == nullptr) {
+        if(an_operator == nullptr ||
+           f5d_s == nullptr) {
             return KOLIOP_STATUS_INVALID_VALUE;
         }
 
@@ -228,7 +252,9 @@
                                                               double*           f5d_s,
                                                               uint32_t          choice) {
     return koliop::error::FromException([&]() {
-        if(an_operator == nullptr) {
+        if(an_operator == nullptr ||
+           f5d_s == nullptr ||
+           (choice == 3 || choice == 4)) {
             return KOLIOP_STATUS_INVALID_VALUE;
         }
 
@@ -240,15 +266,15 @@
 }
 
 ::koliop_Status koliop_ApplyCollisions(::koliop_Operator an_operator,
-                                       double*           f5d_s,
-                                       const double*     mask_LIM) {
+                                       double*           f5d_s) {
     return koliop::error::FromException([&]() {
-        if(an_operator == nullptr) {
+        if(an_operator == nullptr ||
+           f5d_s == nullptr) {
             return KOLIOP_STATUS_INVALID_VALUE;
         }
 
         using State = koliop::collision::State;
-        reinterpret_cast<const State*>(an_operator)->ApplyCollisions(f5d_s, mask_LIM);
+        reinterpret_cast<const State*>(an_operator)->ApplyCollisions(f5d_s);
 
         return KOLIOP_STATUS_SUCCESS;
     });
@@ -257,7 +283,8 @@
 ::koliop_Status koliop_ComputeCorrectionDensity(::koliop_Operator an_operator,
                                                 double*           f5d_s) {
     return koliop::error::FromException([&]() {
-        if(an_operator == nullptr) {
+        if(an_operator == nullptr ||
+           f5d_s == nullptr) {
             return KOLIOP_STATUS_INVALID_VALUE;
         }
 
@@ -271,7 +298,8 @@
 ::koliop_Status koliop_ComputeCorrectionUparT(::koliop_Operator an_operator,
                                               double*           f5d_s) {
     return koliop::error::FromException([&]() {
-        if(an_operator == nullptr) {
+        if(an_operator == nullptr ||
+           f5d_s == nullptr) {
             return KOLIOP_STATUS_INVALID_VALUE;
         }
 

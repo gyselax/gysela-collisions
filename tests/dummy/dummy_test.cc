@@ -131,6 +131,9 @@ int main(int, char**) {
     // nustar0_r ubound 1 31
     static constexpr double mask_buffer_r[the_r_extent] = {0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 2.81000711525697389E-3, 9.85588964179064941E-2, 0.80923908090803054, 0.99396116715554794};
 
+    // NOTE: May not always be allocated.
+    static constexpr double mask_LIM[the_theta_extent][the_r_extent]{};
+
     // mom B_norm lbound 1   1
     // mom B_norm lbound 2   1
     // mom B_norm size   1   32
@@ -181,6 +184,7 @@ int main(int, char**) {
                        &nustar0_r[0],
                        &q_r[0],
                        &mask_buffer_r[0],
+                       &mask_LIM[0][0],
                        &B_norm[0][0],
                        &Bstar_s[0][0][0][0]) != KOLIOP_STATUS_SUCCESS) {
         std::cout << "::koliop_Initialize() failed\n";
@@ -228,12 +232,8 @@ int main(int, char**) {
                                                     &f5d_s[0][0][0][0][0][0],
                                                     choice);
 
-    // TODO(Etienne M): Should that be const external ?
-    static constexpr double mask_LIM[the_theta_extent][the_r_extent]{};
-
     ::koliop_ApplyCollisions(an_operator,
-                             &f5d_s[0][0][0][0][0][0],
-                             &mask_LIM[0][0]);
+                             &f5d_s[0][0][0][0][0][0]);
 
     ::koliop_ComputeCorrectionDensity(an_operator,
                                       &f5d_s[0][0][0][0][0][0]);
