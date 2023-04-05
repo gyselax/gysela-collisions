@@ -103,73 +103,9 @@ koliop_Status koliop_ComputeOperationMaxwellianUnshiftedLoc(koliop_Operator an_o
                                                             double*         f5d_s,
                                                             uint32_t        choice);
 
-// TODO(Etienne M): The blocking is mainly done for memory consumption reasons,
-// we have to do something similar.
-
-// TODO(Etienne M): we can drop the ir_start/ir_end and just pass the range as
-// the arrays are not subarrays.
-
-koliop_Status koliop_ComputeAlphaProjection(koliop_Operator an_operator,
-                                            uint64_t        ir_start,
-                                            uint64_t        ir_end,
-                                            uint64_t        itheta_start,
-                                            uint64_t        itheta_end,
-                                            uint64_t        iphi_start,
-                                            uint64_t        iphi_end,
-                                            // mask_LIM, // const external
-                                            const uint8_t* mask_coll, // TODO(Etienne M): internal but needs mask_LIM
-                                            const double*  B_norm,    // TODO(Etienne M): const external
-                                            const double*  f5d_s,
-                                            const double*  T_s, // TODO(Etienne M): const external
-                                            double*        RHS_vec);   // TODO(Etienne M): internal
-
-koliop_Status koliop_ComputeBlockTo1d(koliop_Operator an_operator,
-                                      uint64_t        ir_start,
-                                      uint64_t        ir_end,
-                                      uint64_t        itheta_start,
-                                      uint64_t        itheta_end,
-                                      uint64_t        iphi_start,
-                                      uint64_t        iphi_end,
-                                      const uint8_t*  mask_coll,
-                                      const double*   n_s,
-                                      const double*   U_par_s,
-                                      const double*   T_s,
-                                      const double*   q_par_on_nT_s,
-                                      double*         n1d_s,         // TODO(Etienne M): internal
-                                      double*         T1d_s,         // TODO(Etienne M): internal
-                                      double*         U_par1d,       // TODO(Etienne M): internal
-                                      double*         q_par_on_nT1d, // TODO(Etienne M): internal
-                                      double*         nu1d);                 // TODO(Etienne M): internal
-
-koliop_Status koliop_ComputeCvCd(koliop_Operator an_operator,
-                                 uint64_t        Nspace,
-                                 const double*   n1d_s,
-                                 const double*   T1d_s,
-                                 const double*   U_par1d,
-                                 const double*   q_par_on_nT1d,
-                                 const double*   nu1d,
-                                 double*         RHS_vec,
-                                 double*         N0,      // TODO(Etienne M): internal
-                                 double*         N1,      // TODO(Etienne M): internal
-                                 double*         N2,      // TODO(Etienne M): internal
-                                 double*         D_mat,   // TODO(Etienne M): internal
-                                 double*         DL_mat,  // TODO(Etienne M): internal
-                                 double*         DU1_mat, // TODO(Etienne M): internal
-                                 double*         DU2_mat, // TODO(Etienne M): internal
-                                 double          dt);
-
-koliop_Status koliop_ComputeReconstruction(koliop_Operator an_operator,
-                                           uint64_t        ir_start,
-                                           uint64_t        ir_end,
-                                           uint64_t        itheta_start,
-                                           uint64_t        itheta_end,
-                                           uint64_t        iphi_start,
-                                           uint64_t        iphi_end,
-                                           const uint8_t*  mask_coll,
-                                           const double*   B_norm,
-                                           double*         f5d_s,
-                                           const double*   T_s,
-                                           const double*   RHS_vec);
+koliop_Status koliop_ApplyCollisions(koliop_Operator an_operator,
+                                     double*         f5d_s,
+                                     const double*   mask_LIM);
 
 koliop_Status koliop_ComputeCorrectionDensity(koliop_Operator an_operator,
                                               double*         f5d_s);

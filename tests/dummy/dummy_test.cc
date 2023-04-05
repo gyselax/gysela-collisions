@@ -208,48 +208,6 @@ int main(int, char**) {
     // mom f5d_s ubound 6   1
     double f5d_s[the_species_extent][the_phi_extent][the_theta_extent][the_r_extent][the_vpar_extent][the_mu_extent]{};
 
-    // mom n_s lbound 1   1
-    // mom n_s lbound 2   1
-    // mom n_s lbound 3   1
-    // mom n_s lbound 4   1
-    // mom n_s size   1   32
-    // mom n_s size   2   32
-    // mom n_s size   3   1
-    // mom n_s size   4   1
-    // mom n_s ubound 1   32
-    // mom n_s ubound 2   32
-    // mom n_s ubound 3   1
-    // mom n_s ubound 4   1
-    double n_s[the_species_extent][the_phi_extent][the_theta_extent][the_r_extent]{};
-
-    // mom U_par_s lbound 1   1
-    // mom U_par_s lbound 2   1
-    // mom U_par_s lbound 3   1
-    // mom U_par_s lbound 4   1
-    // mom U_par_s size   1   32
-    // mom U_par_s size   2   32
-    // mom U_par_s size   3   1
-    // mom U_par_s size   4   1
-    // mom U_par_s ubound 1   32
-    // mom U_par_s ubound 2   32
-    // mom U_par_s ubound 3   1
-    // mom U_par_s ubound 4   1
-    double U_par_s[the_species_extent][the_phi_extent][the_theta_extent][the_r_extent]{};
-
-    // mom T_s lbound 1   1
-    // mom T_s lbound 2   1
-    // mom T_s lbound 3   1
-    // mom T_s lbound 4   1
-    // mom T_s size   1   32
-    // mom T_s size   2   32
-    // mom T_s size   3   1
-    // mom T_s size   4   1
-    // mom T_s ubound 1   32
-    // mom T_s ubound 2   32
-    // mom T_s ubound 3   1
-    // mom T_s ubound 4   1
-    double T_s[the_species_extent][the_phi_extent][the_theta_extent][the_r_extent]{};
-
     ::koliop_ComputeMoments(an_operator,
                             &f5d_s[0][0][0][0][0][0]);
 
@@ -257,20 +215,6 @@ int main(int, char**) {
 
     ::koliop_ComputeEvolutionMaxwellian(an_operator,
                                         &f5d_s[0][0][0][0][0][0]);
-
-    // qpar q_par_on_nT_s lbound 1   1
-    // qpar q_par_on_nT_s lbound 2   1
-    // qpar q_par_on_nT_s lbound 3   1
-    // qpar q_par_on_nT_s lbound 4   1
-    // qpar q_par_on_nT_s size   1   32
-    // qpar q_par_on_nT_s size   2   32
-    // qpar q_par_on_nT_s size   3   1
-    // qpar q_par_on_nT_s size   4   1
-    // qpar q_par_on_nT_s ubound 1   32
-    // qpar q_par_on_nT_s ubound 2   32
-    // qpar q_par_on_nT_s ubound 3   1
-    // qpar q_par_on_nT_s ubound 4   1
-    double q_par_on_nT_s[the_species_extent][the_phi_extent][the_theta_extent][the_r_extent]{};
 
     ::koliop_ComputeQparOnNT(an_operator,
                              &f5d_s[0][0][0][0][0][0]);
@@ -284,98 +228,12 @@ int main(int, char**) {
                                                     &f5d_s[0][0][0][0][0][0],
                                                     choice);
 
-    static constexpr uint64_t ir_block_size     = 8;
-    static constexpr uint64_t itheta_block_size = 1;
-    static constexpr uint64_t iphi_block_size   = 1;
+    // TODO(Etienne M): Should that be const external ?
+    static constexpr double mask_LIM[the_theta_extent][the_r_extent]{};
 
-    static constexpr uint64_t Nspace = ir_block_size * itheta_block_size * iphi_block_size - 1;
-
-    double n1d_s[the_species_extent][Nspace + 1]{};
-    double T1d_s[the_species_extent][Nspace + 1]{};
-    double U_par1d[Nspace + 1]{};
-    double q_par_on_nT1d[Nspace + 1]{};
-    double nu1d[Nspace + 1]{};
-
-    double RHS_vec[the_vpar_extent][Npolmax][Nspace + 1]{};
-    double N0[Npolmax][Npolmax][Nspace + 1][the_vpar_extent]{};
-    double N1[Npolmax][Npolmax][Nspace + 1][the_vpar_extent]{};
-    double N2[Npolmax][Npolmax][Nspace + 1][the_vpar_extent]{};
-    double D_mat[Nspace + 1][Npolmax][Npolmax * (the_vpar_extent)]{};
-    double DL_mat[Nspace + 1][Npolmax][Npolmax * Nvpar]{};
-    double DU1_mat[Nspace + 1][Npolmax][Npolmax * Nvpar]{};
-    double DU2_mat[Nspace + 1][Npolmax][Npolmax * (Nvpar - 1)]{};
-
-    static constexpr uint64_t ir_start     = 0;
-    static constexpr uint64_t ir_end       = ir_start + ir_block_size - 1;
-    static constexpr uint64_t itheta_start = 0;
-    static constexpr uint64_t itheta_end   = itheta_start + itheta_block_size - 1;
-    static constexpr uint64_t iphi_start   = 0;
-    static constexpr uint64_t iphi_end     = iphi_start + iphi_block_size - 1;
-
-    static constexpr uint8_t mask_coll[itheta_block_size][ir_block_size]{};
-
-    ::koliop_ComputeAlphaProjection(an_operator,
-                                    ir_start,
-                                    ir_end,
-                                    itheta_start,
-                                    itheta_end,
-                                    iphi_start,
-                                    iphi_end,
-                                    &mask_coll[0][0],
-                                    &B_norm[0][0],
-                                    &f5d_s[0][0][0][0][0][0],
-                                    &T_s[0][0][0][0],
-                                    &RHS_vec[0][0][0]);
-
-    ::koliop_ComputeBlockTo1d(an_operator,
-                              ir_start,
-                              ir_end,
-                              itheta_start,
-                              itheta_end,
-                              iphi_start,
-                              iphi_end,
-                              &mask_coll[0][0],
-                              &n_s[0][0][0][0],
-                              &U_par_s[0][0][0][0],
-                              &T_s[0][0][0][0],
-                              &q_par_on_nT_s[0][0][0][0],
-                              &n1d_s[0][0],
-                              &T1d_s[0][0],
-                              &U_par1d[0],
-                              &q_par_on_nT1d[0],
-                              &nu1d[0]);
-
-    ::koliop_ComputeCvCd(an_operator,
-                         Nspace,
-                         &n1d_s[0][0],
-                         &T1d_s[0][0],
-                         &U_par1d[0],
-                         &q_par_on_nT1d[0],
-                         &nu1d[0],
-                         &RHS_vec[0][0][0],
-                         // TODO(Etienne M): These ar just tmp arrays. They
-                         // could be allocated by the operator ?
-                         &N0[0][0][0][0],
-                         &N1[0][0][0][0],
-                         &N2[0][0][0][0],
-                         &D_mat[0][0][0],
-                         &DL_mat[0][0][0],
-                         &DU1_mat[0][0][0],
-                         &DU2_mat[0][0][0],
-                         dt);
-
-    ::koliop_ComputeReconstruction(an_operator,
-                                   ir_start,
-                                   ir_end,
-                                   itheta_start,
-                                   itheta_end,
-                                   iphi_start,
-                                   iphi_end,
-                                   &mask_coll[0][0],
-                                   &B_norm[0][0],
-                                   &f5d_s[0][0][0][0][0][0],
-                                   &T_s[0][0][0][0],
-                                   &RHS_vec[0][0][0]);
+    ::koliop_ApplyCollisions(an_operator,
+                             &f5d_s[0][0][0][0][0][0],
+                             &mask_LIM[0][0]);
 
     ::koliop_ComputeCorrectionDensity(an_operator,
                                       &f5d_s[0][0][0][0][0][0]);

@@ -190,62 +190,8 @@ namespace koliop {
             void ComputeOperationMaxwellianUnshiftedLoc(Flo64*   f5d_s,
                                                         uint32_t choice) const;
 
-            void ComputeAlphaProjection(uint64_t       ir_start,
-                                        uint64_t       ir_end,
-                                        uint64_t       itheta_start,
-                                        uint64_t       itheta_end,
-                                        uint64_t       iphi_start,
-                                        uint64_t       iphi_end,
-                                        const uint8_t* mask_coll,
-                                        const Flo64*   B_norm,
-                                        const Flo64*   f5d_s,
-                                        const Flo64*   T_s,
-                                        Flo64*         RHS_vec) const;
-
-            void ComputeBlockTo1d(uint64_t       ir_start,
-                                  uint64_t       ir_end,
-                                  uint64_t       itheta_start,
-                                  uint64_t       itheta_end,
-                                  uint64_t       iphi_start,
-                                  uint64_t       iphi_end,
-                                  const uint8_t* mask_coll,
-                                  const Flo64*   n_s,
-                                  const Flo64*   U_par_s,
-                                  const Flo64*   T_s,
-                                  const Flo64*   q_par_on_nT_s,
-                                  Flo64*         n1d_s,
-                                  Flo64*         T1d_s,
-                                  Flo64*         U_par1d,
-                                  Flo64*         q_par_on_nT1d,
-                                  Flo64*         nu1d) const;
-
-            void ComputeCvCd(uint64_t     Nspace,
-                             const Flo64* n1d_s,
-                             const Flo64* T1d_s,
-                             const Flo64* U_par1d,
-                             const Flo64* q_par_on_nT1d,
-                             const Flo64* nu1d,
-                             Flo64*       RHS_vec,
-                             Flo64*       N0,
-                             Flo64*       N1,
-                             Flo64*       N2,
-                             Flo64*       D_mat,
-                             Flo64*       DL_mat,
-                             Flo64*       DU1_mat,
-                             Flo64*       DU2_mat,
-                             Flo64        dt) const;
-
-            void ComputeReconstruction(uint64_t       ir_start,
-                                       uint64_t       ir_end,
-                                       uint64_t       itheta_start,
-                                       uint64_t       itheta_end,
-                                       uint64_t       iphi_start,
-                                       uint64_t       iphi_end,
-                                       const uint8_t* mask_coll,
-                                       const Flo64*   B_norm,
-                                       Flo64*         f5d_s,
-                                       const Flo64*   T_s,
-                                       const Flo64*   RHS_vec) const;
+            void ApplyCollisions(Flo64*       f5d_s,
+                                 const Flo64* mask_LIM) const;
 
             void ComputeCorrectionDensity(Flo64* f5d_s) const;
 
@@ -306,6 +252,11 @@ namespace koliop {
             DoComputeOperationMaxwellianUnshiftedLoc(const State& a_state,
                                                      Array6D&&    f5d_s,
                                                      uint32_t     choice);
+
+            template <typename Array6D>
+            static void
+            DoApplyCollisions(const State& a_state,
+                              Array6D&&    f5d_s);
 
             void DoComputeAlphaProjection(uint64_t                       ir_block_size,
                                           uint64_t                       itheta_block_size,
@@ -531,10 +482,10 @@ namespace koliop {
             // TODO(Etienne M): COPY redundant.
 
             auto a_device_visible_f5d_s = ViewMDL6<Flo64>{Kokkos::view_alloc(Kokkos::WithoutInitializing, "f5d_s"),
-                                                          Nmu_ + 1, Nvpar_ + 1, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_};
+                                                          the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_};
 
             auto a_host_visible_f5d_s = ViewUHL6<Flo64>{// "unmanaged_host_f5d_s",
-                                                        f5d_s, Nmu_ + 1, Nvpar_ + 1, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_};
+                                                        f5d_s, the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_};
 
             koliop::utility::SmartDeepCopy(a_host_visible_f5d_s, a_device_visible_f5d_s);
 
@@ -557,10 +508,10 @@ namespace koliop {
             // TODO(Etienne M): COPY redundant.
 
             auto a_device_visible_f5d_s = ViewMDL6<Flo64>{Kokkos::view_alloc(Kokkos::WithoutInitializing, "f5d_s"),
-                                                          Nmu_ + 1, Nvpar_ + 1, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_};
+                                                          the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_};
 
             auto a_host_visible_f5d_s = ViewUHL6<Flo64>{// "unmanaged_host_f5d_s",
-                                                        f5d_s, Nmu_ + 1, Nvpar_ + 1, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_};
+                                                        f5d_s, the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_};
 
             koliop::utility::SmartDeepCopy(a_host_visible_f5d_s, a_device_visible_f5d_s);
 
@@ -576,10 +527,10 @@ namespace koliop {
             // TODO(Etienne M): COPY redundant.
 
             auto a_device_visible_f5d_s = ViewMDL6<Flo64>{Kokkos::view_alloc(Kokkos::WithoutInitializing, "f5d_s"),
-                                                          Nmu_ + 1, Nvpar_ + 1, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_};
+                                                          the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_};
 
             auto a_host_visible_f5d_s = ViewUHL6<const Flo64>{// "unmanaged_host_f5d_s",
-                                                              f5d_s, Nmu_ + 1, Nvpar_ + 1, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_};
+                                                              f5d_s, the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_};
 
             koliop::utility::SmartDeepCopy(a_host_visible_f5d_s, a_device_visible_f5d_s);
 
@@ -593,10 +544,10 @@ namespace koliop {
             // TODO(Etienne M): COPY redundant.
 
             auto a_device_visible_f5d_s = ViewMDL6<Flo64>{Kokkos::view_alloc(Kokkos::WithoutInitializing, "f5d_s"),
-                                                          Nmu_ + 1, Nvpar_ + 1, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_};
+                                                          the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_};
 
             auto a_host_visible_f5d_s = ViewUHL6<Flo64>{// "unmanaged_host_f5d_s",
-                                                        f5d_s, Nmu_ + 1, Nvpar_ + 1, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_};
+                                                        f5d_s, the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_};
 
             koliop::utility::SmartDeepCopy(a_host_visible_f5d_s, a_device_visible_f5d_s);
 
@@ -613,10 +564,10 @@ namespace koliop {
             // TODO(Etienne M): COPY redundant.
 
             auto a_device_visible_f5d_s = ViewMDL6<Flo64>{Kokkos::view_alloc(Kokkos::WithoutInitializing, "f5d_s"),
-                                                          Nmu_ + 1, Nvpar_ + 1, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_};
+                                                          the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_};
 
             auto a_host_visible_f5d_s = ViewUHL6<Flo64>{// "unmanaged_host_f5d_s",
-                                                        f5d_s, Nmu_ + 1, Nvpar_ + 1, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_};
+                                                        f5d_s, the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_};
 
             koliop::utility::SmartDeepCopy(a_host_visible_f5d_s, a_device_visible_f5d_s);
 
@@ -628,88 +579,23 @@ namespace koliop {
             Kokkos::fence();
         }
 
-        inline void State::ComputeAlphaProjection(uint64_t       ir_start,
-                                                  uint64_t       ir_end,
-                                                  uint64_t       itheta_start,
-                                                  uint64_t       itheta_end,
-                                                  uint64_t       iphi_start,
-                                                  uint64_t       iphi_end,
-                                                  const uint8_t* mask_coll,
-                                                  const Flo64*   B_norm,
-                                                  const Flo64*   f5d_s,
-                                                  const Flo64*   T_s,
-                                                  Flo64*         RHS_vec) const {
+        inline void State::ApplyCollisions(Flo64*       f5d_s,
+                                           const Flo64* mask_LIM) const {
+            // TODO(Etienne M): mask_LIM is not always used, and not always
+            // allocated.
+            // TODO(Etienne M): COPY redundant.
 
-            const uint64_t ir_block_size     = (ir_end + 1) - ir_start;
-            const uint64_t itheta_block_size = (itheta_end + 1) - itheta_start;
-            const uint64_t iphi_block_size   = (iphi_end + 1) - iphi_start;
+            auto a_device_visible_f5d_s = ViewMDL6<Flo64>{Kokkos::view_alloc(Kokkos::WithoutInitializing, "f5d_s"),
+                                                          the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_};
 
-            const uint64_t Nspace = ir_block_size * itheta_block_size * iphi_block_size - 1;
+            auto a_host_visible_f5d_s = ViewUHL6<Flo64>{// "unmanaged_host_f5d_s",
+                                                        f5d_s, the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_};
 
-            DoComputeAlphaProjection(ir_block_size,
-                                     itheta_block_size,
-                                     iphi_block_size,
-                                     ViewUHL2<const uint8_t>{// "unmanaged_host_mask_coll",
-                                                             mask_coll, ir_block_size, itheta_block_size},
-                                     ViewUHL2<const Flo64>{// "unmanaged_host_B_norm",
-                                                           B_norm, the_r_extent_, the_theta_extent_ + /* This +1 is weird */ 1},
-                                     ViewUHL6<const Flo64>{// "unmanaged_host_f5d_s",
-                                                           f5d_s, Nmu_ + 1, Nvpar_ + 1, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_},
-                                     ViewUHL4<const Flo64>{// "unmanaged_host_T_s",
-                                                           T_s, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_},
-                                     ViewUHL3<Flo64>{// "unmanaged_host_RHS_vec",
-                                                     RHS_vec, Nspace + 1, Npolmax_, Nvpar_ + 1});
+            koliop::utility::SmartDeepCopy(a_host_visible_f5d_s, a_device_visible_f5d_s);
 
-            // TODO(Etienne M): ASYNC, relax that constraint ?
-            Kokkos::fence();
-        }
+            DoApplyCollisions(*this, a_device_visible_f5d_s);
 
-        inline void State::ComputeBlockTo1d(uint64_t       ir_start,
-                                            uint64_t       ir_end,
-                                            uint64_t       itheta_start,
-                                            uint64_t       itheta_end,
-                                            uint64_t       iphi_start,
-                                            uint64_t       iphi_end,
-                                            const uint8_t* mask_coll,
-                                            const Flo64*   n_s,
-                                            const Flo64*   U_par_s,
-                                            const Flo64*   T_s,
-                                            const Flo64*   q_par_on_nT_s,
-                                            Flo64*         n1d_s,
-                                            Flo64*         T1d_s,
-                                            Flo64*         U_par1d,
-                                            Flo64*         q_par_on_nT1d,
-                                            Flo64*         nu1d) const {
-
-            const uint64_t ir_block_size     = (ir_end + 1) - ir_start;
-            const uint64_t itheta_block_size = (itheta_end + 1) - itheta_start;
-            const uint64_t iphi_block_size   = (iphi_end + 1) - iphi_start;
-
-            const uint64_t Nspace = ir_block_size * itheta_block_size * iphi_block_size - 1;
-
-            DoComputeBlockTo1d(ir_block_size,
-                               itheta_block_size,
-                               iphi_block_size,
-                               ViewUHL2<const uint8_t>{// "unmanaged_host_mask_coll",
-                                                       mask_coll, ir_block_size, itheta_block_size},
-                               ViewUHL4<const Flo64>{// "unmanaged_host_n_s",
-                                                     n_s, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_},
-                               ViewUHL4<const Flo64>{// "unmanaged_host_U_par_s",
-                                                     U_par_s, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_},
-                               ViewUHL4<const Flo64>{// "unmanaged_host_T_s",
-                                                     T_s, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_},
-                               ViewUHL4<const Flo64>{// "unmanaged_host_q_par_on_nT_s",
-                                                     q_par_on_nT_s, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_},
-                               ViewUHL2<Flo64>{// "unmanaged_host_n1d_s",
-                                               n1d_s, Nspecies_, Nspace + 1},
-                               ViewUHL2<Flo64>{// "unmanaged_host_T1d_s"
-                                               T1d_s, Nspecies_, Nspace + 1},
-                               ViewUHL1<Flo64>{// "unmanaged_host_U_par1d"
-                                               U_par1d, Nspace + 1},
-                               ViewUHL1<Flo64>{// "unmanaged_host_q_par_on_nT1d"
-                                               q_par_on_nT1d, Nspace + 1},
-                               ViewUHL1<Flo64>{// "unmanaged_host_nu1d"
-                                               nu1d, Nspace + 1});
+            koliop::utility::SmartDeepCopy(a_device_visible_f5d_s, a_host_visible_f5d_s);
 
             // TODO(Etienne M): ASYNC, relax that constraint ?
             Kokkos::fence();
@@ -719,10 +605,10 @@ namespace koliop {
             // TODO(Etienne M): COPY redundant.
 
             auto a_device_visible_f5d_s = ViewMDL6<Flo64>{Kokkos::view_alloc(Kokkos::WithoutInitializing, "f5d_s"),
-                                                          Nmu_ + 1, Nvpar_ + 1, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_};
+                                                          the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_};
 
             auto a_host_visible_f5d_s = ViewUHL6<Flo64>{// "unmanaged_host_f5d_s",
-                                                        f5d_s, Nmu_ + 1, Nvpar_ + 1, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_};
+                                                        f5d_s, the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_};
 
             koliop::utility::SmartDeepCopy(a_host_visible_f5d_s, a_device_visible_f5d_s);
 
@@ -734,93 +620,14 @@ namespace koliop {
             Kokkos::fence();
         }
 
-        inline void State::ComputeCvCd(uint64_t,     // Nspace,
-                                       const Flo64*, // n1d_s,
-                                       const Flo64*, // T1d_s,
-                                       const Flo64*, // U_par1d,
-                                       const Flo64*, // q_par_on_nT1d,
-                                       const Flo64*, // nu1d,
-                                       Flo64*,       // RHS_vec,
-                                       Flo64*,       // N0,
-                                       Flo64*,       // N1,
-                                       Flo64*,       // N2,
-                                       Flo64*,       // D_mat,
-                                       Flo64*,       // DL_mat,
-                                       Flo64*,       // DU1_mat,
-                                       Flo64*,       // DU2_mat,
-                                       Flo64         // dt
-        ) const {
-            const auto a_host_visible_vparg = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{},
-                                                                                                     Kokkos::WithoutInitializing),
-                                                                                  vparg_);
-
-            // const Flo64 dvpar = vparg_(1) - vparg_(0);
-
-            // // ! Computation of the N_i,a ^ jl = sum_b M_i,ab ^ jl
-            // call libcoll_N_a_jl(Nspace, Npolmax_, vparg, C_jl_, n_allspecies, T_allspecies, nu, N0, N1, N2);
-            // // ! Computation of the RHS vector RHS_vec = (I + deltat * T/4) * alpha
-            // call libcoll_CvCd_RHS(Nspace, Npolmax_, dvpar, deltat / 4._F64, RHS_vec, N0, N1, N2);
-            // // ! Computation of the tridiagonal matrix element of (I - deltat * T /4)
-            // // ! in prevision to the LU factorization
-            // call libcoll_tridiag_matrix(Nspace, Npolmax_, dvpar, deltat / 4._F64, D_mat, DL_mat, DU1_mat, N0, N1, N2);
-            // // ! LU factorization of the matrix (I - deltat * T /4)
-            // call DGEBLTTRF(Nvpar_ + 1, Npolmax_, D_mat, DL_mat, DU1_mat, DU2_mat, Nspace + 1);
-            // // ! Solve the problem (I - deltat * T /4)*X = RHS_vec
-            // // ! Rk : The result is in RHS_vec
-            // call DGEBLTTRS(Nvpar_ + 1, Npolmax_, 1, D_mat, DL_mat, DU1_mat, DU2_mat, RHS_vec, Npolmax_ * (Nvpar_ + 1), Nspace + 1);
-            // // ! Add the source term RHS = RHS + deltat * S
-            // call libcoll_CvCd_source( Nspace, Npolmax_, deltat, vparg, T_allspecies(:,pSpecies_id_), U_par, q_par_on_nT, N0, N1, N2, RHS_vec );
-            // // ! Computation of the RHS vector RHS_vec = (I + deltat * T/4) * alpha
-            // call libcoll_CvCd_RHS(Nspace, Npolmax_, dvpar, deltat / 4._F64, RHS_vec, N0, N1, N2);
-            // // ! Solve the problem (I - deltat * T /4)*X = RHS_vec
-            // // ! Rk : The result is in RHS_vec
-            // call DGEBLTTRS(Nvpar_ + 1, Npolmax_, 1, D_mat, DL_mat, DU1_mat, DU2_mat, RHS_vec, Npolmax_ * (Nvpar_ + 1), Nspace + 1);
-        }
-
-        inline void State::ComputeReconstruction(uint64_t       ir_start,
-                                                 uint64_t       ir_end,
-                                                 uint64_t       itheta_start,
-                                                 uint64_t       itheta_end,
-                                                 uint64_t       iphi_start,
-                                                 uint64_t       iphi_end,
-                                                 const uint8_t* mask_coll,
-                                                 const Flo64*   B_norm,
-                                                 Flo64*         f5d_s,
-                                                 const Flo64*   T_s,
-                                                 const Flo64*   RHS_vec) const {
-
-            const uint64_t ir_block_size     = (ir_end + 1) - ir_start;
-            const uint64_t itheta_block_size = (itheta_end + 1) - itheta_start;
-            const uint64_t iphi_block_size   = (iphi_end + 1) - iphi_start;
-
-            const uint64_t Nspace = ir_block_size * itheta_block_size * iphi_block_size - 1;
-
-            DoComputeReconstruction(ir_block_size,
-                                    itheta_block_size,
-                                    iphi_block_size,
-                                    ViewUHL2<const uint8_t>{// "unmanaged_host_mask_coll",
-                                                            mask_coll, ir_block_size, itheta_block_size},
-                                    ViewUHL2<const Flo64>{// "unmanaged_host_B_norm",
-                                                          B_norm, the_r_extent_, the_theta_extent_ + /* This +1 is weird */ 1},
-                                    ViewUHL6<Flo64>{// "unmanaged_host_f5d_s",
-                                                    f5d_s, Nmu_ + 1, Nvpar_ + 1, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_},
-                                    ViewUHL4<const Flo64>{// "unmanaged_host_T_s",
-                                                          T_s, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_},
-                                    ViewUHL3<const Flo64>{// "unmanaged_host_RHS_vec",
-                                                          RHS_vec, Nspace + 1, Npolmax_, Nvpar_ + 1});
-
-            // TODO(Etienne M): ASYNC, relax that constraint ?
-            Kokkos::fence();
-        }
-
         inline void State::ComputeCorrectionUparT(Flo64* f5d_s) const {
             // TODO(Etienne M): COPY redundant.
 
             auto a_device_visible_f5d_s = ViewMDL6<Flo64>{Kokkos::view_alloc(Kokkos::WithoutInitializing, "f5d_s"),
-                                                          Nmu_ + 1, Nvpar_ + 1, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_};
+                                                          the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_};
 
             auto a_host_visible_f5d_s = ViewUHL6<Flo64>{// "unmanaged_host_f5d_s",
-                                                        f5d_s, Nmu_ + 1, Nvpar_ + 1, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_};
+                                                        f5d_s, the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_};
 
             koliop::utility::SmartDeepCopy(a_host_visible_f5d_s, a_device_visible_f5d_s);
 
@@ -1509,6 +1316,16 @@ namespace koliop {
             }
         }
 
+        template <typename Array6D>
+        void State::DoApplyCollisions(const State& a_state,
+                                      Array6D&&    f5d_s) {
+            // TODO(Etienne M): The blocking is mainly done for memory consumption reasons,
+            // we have to do something similar.
+
+            // TODO(Etienne M): we can drop the ir_start/ir_end and just pass the range as
+            // the arrays are not subarrays.
+        }
+
         inline void State::DoComputeAlphaProjection(uint64_t                       ir_block_size,
                                                     uint64_t                       itheta_block_size,
                                                     uint64_t                       iphi_block_size,
@@ -1748,7 +1565,6 @@ namespace koliop {
             const auto& coeff_intdvpar = a_state.coeff_intdvpar_;
             const auto& B_norm         = a_state.B_norm_;
             const auto& Bstar_s        = a_state.Bstar_s_;
-            const auto& nustar_coeff   = a_state.nustar_coeff_;
             const auto& n_s            = a_state.n_s_;
             const auto& T_s            = a_state.T_s_;
             const auto& nu_ab          = a_state.nu_ab_;
