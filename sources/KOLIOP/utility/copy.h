@@ -16,6 +16,30 @@ namespace koliop {
         ///
         struct Copy {
         public:
+            /// May still do a deep copy if memory spaces or layouts are not
+            /// compatible.
+            ///
+            /// Same layout? | Input ptr on: | Output ptr on:      |
+            ///              | Host | Other  | Host | (same) Other |
+            /// Host to host
+            ///          Yes |    1 | 0      | 1    | 0            | No op (reuse) or alloc+memcpy
+            ///           No |    1 | 0      | 1    | 0            | alloc+transposition/memcpy
+            /// Device to device
+            ///          Yes |    0 | 1      | 0    | 1            | No op (reuse) or alloc+memcpy
+            ///           No |    0 | 1      | 0    | 1            | alloc+transposition/memcpy
+            /// Host to device
+            ///          Yes |    1 | 0      | 0    | 1            | alloc+memcpy
+            ///           No |    1 | 0      | 0    | 1            | Transpose on host, then memcpy
+            /// Device to host
+            ///          Yes |    0 | 1      | 1    | 0            | alloc+memcpy
+            ///           No |    0 | 1      | 1    | 0            | alloc+transposition/memcpy
+            ///
+            /// NOTE: In case a DeepCopy is realized, the extents must match and
+            /// the storage must be allocated. TODO(Etienne M): In this case,
+            /// should be resize in Shallow() before calling Deep ?
+            /// NOTE: In case the shallow copy is realized, we loose the View's
+            /// labe !!
+            ///
             template <typename FromView,
                       typename ToView>
             static void
@@ -37,30 +61,6 @@ namespace koliop {
         // Copy methods definition
         ////////////////////////////////////////////////////////////////////////
 
-        /// May still do a deep copy if memory spaces or layouts are not
-        /// compatible.
-        ///
-        /// Same layout? | Input ptr on: | Output ptr on:      |
-        ///              | Host | Other  | Host | (same) Other |
-        /// Host to host
-        ///          Yes |    1 | 0      | 1    | 0            | No op (reuse) or alloc+memcpy
-        ///           No |    1 | 0      | 1    | 0            | alloc+transposition/memcpy
-        /// Device to device
-        ///          Yes |    0 | 1      | 0    | 1            | No op (reuse) or alloc+memcpy
-        ///           No |    0 | 1      | 0    | 1            | alloc+transposition/memcpy
-        /// Host to device
-        ///          Yes |    1 | 0      | 0    | 1            | alloc+memcpy
-        ///           No |    1 | 0      | 0    | 1            | Transpose on host, then memcpy
-        /// Device to host
-        ///          Yes |    0 | 1      | 1    | 0            | alloc+memcpy
-        ///           No |    0 | 1      | 1    | 0            | alloc+transposition/memcpy
-        ///
-        /// NOTE: In case a DeepCopy is realized, the extents must match and
-        /// the storage must be allocated. TODO(Etienne M): In this case,
-        /// should be resize in Shallow() before calling Deep ?
-        /// NOTE: In case the shallow copy is realized, we loose the View's
-        /// labe !!
-        ///
         template <typename FromView,
                   typename ToView>
         void Copy::Shallow(FromView&& from_view,
