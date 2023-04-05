@@ -1350,8 +1350,6 @@ namespace koliop {
             // !$OMP  mask_buffer_r,mask_LIM,nu_ab,f5d_s,n_s,U_par_s,T_s,q_par_on_nT_s,dt, &
             // !$OMP  ir_block_size,itheta_block_size,iphi_block_size)
 
-            //     allocate(mask_coll(0:ir_block_size-1,0:itheta_block_size-1))
-
             // !$OMP DO COLLAPSE(2) SCHEDULE(GUIDED)
             //     do iphi_start = collstart_,collend_,iphi_block_size
             //       do itheta_start = jstart_,jend_,itheta_block_size
@@ -1396,11 +1394,7 @@ namespace koliop {
             //       end do
             //     end do
 
-            const auto& the_mu_extent      = a_state.the_mu_extent_;
             const auto& the_vpar_extent    = a_state.the_vpar_extent_;
-            const auto& the_r_extent       = a_state.the_r_extent_;
-            const auto& the_theta_extent   = a_state.the_theta_extent_;
-            const auto& the_phi_extent     = a_state.the_phi_extent_;
             const auto& the_species_extent = a_state.Nspecies_;
 
             const auto& Npolmax = a_state.Npolmax_;
@@ -1410,7 +1404,6 @@ namespace koliop {
             static constexpr uint64_t iphi_block_size   = 1;
 
             static constexpr uint64_t the_flattened_extent = ir_block_size * itheta_block_size * iphi_block_size;
-            static constexpr uint64_t Nspace               = the_flattened_extent - 1;
 
             ViewMDD2<Flo64> mask_coll{Kokkos::view_alloc(Kokkos::WithoutInitializing, "mask_coll"),
                                       ir_block_size, itheta_block_size};
