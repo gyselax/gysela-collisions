@@ -341,6 +341,7 @@ namespace koliop {
             ViewMDD1<Flo64> rg_;
             ViewMDD1<Flo64> nustar0_r_;
             ViewMDD1<Flo64> q_r_;
+            ViewMDD1<Flo64> mask_buffer_r_;
             ViewMDD2<Flo64> mask_LIM_;
             ViewMDD2<Flo64> B_norm_;
             ViewMDD4<Flo64> Bstar_s_;
@@ -436,6 +437,8 @@ namespace koliop {
                          the_r_extent_}
             , q_r_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "q_r_"),
                    the_r_extent_}
+            , mask_buffer_r_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "mask_buffer_r_"),
+                             the_r_extent_}
             , mask_LIM_{}
             , B_norm_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "B_norm_"),
                       the_r_extent_, the_theta_extent_ + 1 /* Weird +1 */}
@@ -482,6 +485,7 @@ namespace koliop {
             koliop::utility::Copy::Shallow(a_host_visible_rg, rg_);
             koliop::utility::Copy::Shallow(a_host_visible_nustar0_r, nustar0_r_);
             koliop::utility::Copy::Shallow(a_host_visible_q_r, q_r_);
+            koliop::utility::Copy::Shallow(a_host_visible_mask_buffer_r, mask_buffer_r_);
 
             if(LIM_) {
                 mask_LIM_ = ViewMDD2<Flo64>{Kokkos::view_alloc(Kokkos::WithoutInitializing, "mask_LIM_"),
@@ -1339,19 +1343,31 @@ namespace koliop {
             // TODO(Etienne M): we can drop the ir_start/ir_end and just pass the range as
             // the arrays are not subarrays.
 
+            const auto& the_mu_extent      = a_state.the_mu_extent_;
             const auto& the_vpar_extent    = a_state.the_vpar_extent_;
-            const auto& the_species_extent = a_state.Nspecies_;
+            const auto& the_r_extent       = a_state.the_r_extent_;
+            const auto& the_theta_extent   = a_state.the_theta_extent_;
+            const auto& the_phi_extent     = a_state.the_phi_extent_;
+            const auto& the_species_extent = a_state.the_species_extent_;
+
+            const auto& mask_buffer_r = a_state.mask_buffer_r_;
+            const auto& mask_LIM      = a_state.mask_LIM_;
 
             const auto& Npolmax = a_state.Npolmax_;
+            const auto& LIM     = a_state.LIM_;
 
-            static constexpr uint64_t ir_block_size     = 8;
-            static constexpr uint64_t itheta_block_size = 1;
-            static constexpr uint64_t iphi_block_size   = 1;
+            static constexpr uint64_t block_extent_r     = 8;
+            static constexpr uint64_t block_extent_theta = 1;
+            static constexpr uint64_t block_extent_phi   = 1;
 
-            static constexpr uint64_t the_flattened_extent = ir_block_size * itheta_block_size * iphi_block_size;
+            KOLIOP_ASSERT(block_extent_r % block_extent_r == 0);
+            KOLIOP_ASSERT(block_extent_theta % block_extent_theta == 0);
+            KOLIOP_ASSERT(the_phi_extent % block_extent_phi == 0);
 
-            ViewMDD2<Flo64> mask_coll{Kokkos::view_alloc(Kokkos::WithoutInitializing, "mask_coll"),
-                                      ir_block_size, itheta_block_size};
+            static constexpr uint64_t the_flattened_extent = block_extent_r * block_extent_theta * block_extent_phi;
+
+            ViewMDD2<bool> mask_coll{Kokkos::view_alloc(Kokkos::WithoutInitializing, "mask_coll"),
+                                     block_extent_r, block_extent_theta};
 
             ViewMDD2<Flo64> n1d_s{Kokkos::view_alloc(Kokkos::WithoutInitializing, "n1d_s"),
                                   the_flattened_extent, the_species_extent};
@@ -1381,134 +1397,58 @@ namespace koliop {
             ViewMDD3<Flo64> DU2_mat{Kokkos::view_alloc(Kokkos::WithoutInitializing, "DU2_mat"),
                                     the_flattened_extent, Npolmax, Npolmax * (the_vpar_extent - 2)}; // TODO(Etienne M): Weird -2
 
-            // static constexpr uint64_t ir_start     = 0;
-            // static constexpr uint64_t ir_end       = ir_start + ir_block_size - 1;
-            // static constexpr uint64_t itheta_start = 0;
-            // static constexpr uint64_t itheta_end   = itheta_start + itheta_block_size - 1;
-            // static constexpr uint64_t iphi_start   = 0;
-            // static constexpr uint64_t iphi_end     = iphi_start + iphi_block_size - 1;
+            for(uint64_t block_first_phi = 0;
+                block_first_phi < the_phi_extent;
+                block_first_phi += block_extent_phi) {
+                for(uint64_t block_first_theta = 0;
+                    block_first_theta < the_theta_extent;
+                    block_first_theta += block_extent_theta) {
+                    for(uint64_t block_first_r = 0;
+                        block_first_r < the_r_extent;
+                        block_first_r += block_extent_r) {
 
-            // !$OMP PARALLEL default(none) &
-            // !$OMP private(ir,itheta,iphi,&
-            // !$OMP  ir_start,ir_end,itheta_start,itheta_end,iphi_start,iphi_end, &
-            // !$OMP  mask_coll,N0,N1,N2,D_mat,DL_mat,DU1_mat,DU2_mat,RHS_vec, &
-            // !$OMP  n1d_s,T1d_s,U_par1d,q_par_on_nT1d,nu1d) &
-            // !$OMP shared(Nvpar_,Npolmax_,index_max_,pSpecies_id_, &
-            // !$OMP  collstart_,collend_,jstart_,jend_,istart_,iend_, &
-            // !$OMP  Nspecies_,Nspace,LIM_, &
-            // !$OMP  mug,vparg,coeff_intdmu,coeff_intdvpar,B_norm,Bstar_s, &
-            // !$OMP  mask_buffer_r,mask_LIM,nu_ab,f5d_s,n_s,U_par_s,T_s,q_par_on_nT_s,dt, &
-            // !$OMP  ir_block_size,itheta_block_size,iphi_block_size)
+                        const uint64_t block_last_r     = block_first_r + block_extent_r;
+                        const uint64_t block_last_theta = block_first_theta + block_extent_theta;
+                        const uint64_t block_last_phi   = block_first_phi + block_extent_phi;
 
-            // !$OMP DO COLLAPSE(2) SCHEDULE(GUIDED)
-            //     do iphi_start = collstart_,collend_,iphi_block_size
-            //       do itheta_start = jstart_,jend_,itheta_block_size
+                        for(uint64_t itheta = block_first_theta; itheta < block_last_theta; ++itheta) {
+                            for(uint64_t ir = block_first_r; ir < block_last_r; ++ir) {
+                                mask_coll(ir - block_first_r, itheta - block_first_theta) = mask_buffer_r(ir) < 0.99;
+                            }
+                        }
 
-            //         do ir_start = istart_,iend_,ir_block_size
-            //           ir_end     = ir_start     + ir_block_size     - 1
-            //           itheta_end = itheta_start + itheta_block_size - 1
-            //           iphi_end   = iphi_start   + iphi_block_size   - 1
-            //           ! Filtering points in the buffer or limiter
-            //           do ir = ir_start,ir_end
-            //             mask_coll(ir-ir_start,:) = &
-            //               ( mask_buffer_r(ir)<0.99_F64 )
-            //           end do
-            //           if(LIM_) then
-            //             do itheta = itheta_start,itheta_end
-            //               do ir = ir_start,ir_end
-            //                 mask_coll(ir-ir_start,itheta-itheta_start) = &
-            //                   mask_coll(ir-ir_start,itheta-itheta_start) .or. &
-            //                   ( mask_LIM(ir,itheta)<0.99_F64 )
-            //               end do
-            //             end do
-            //           end if
-            //           if ( count(mask_coll).eq.0 ) cycle
-            //           call libcoll_alphaprojection( Npolmax_, &
-            //               ir_start, ir_end, itheta_start, itheta_end, &
-            //               iphi_start, iphi_end, mask_coll, &
-            //               mug, coeff_intdmu, B_norm, &
-            //               f5d_s, T_s, RHS_vec )
-            //           call libcoll_block_to_1d( &
-            //               ir_start, ir_end, itheta_start, itheta_end, &
-            //               iphi_start, iphi_end, mask_coll, nu_ab, &
-            //               n_s, U_par_s, T_s, q_par_on_nT_s, &
-            //               n1d_s, U_par1d, T1d_s, q_par_on_nT1d, nu1d )
-            //           call libcoll_CvCd( Nspace, vparg, dt, &
-            //               n1d_s, T1d_s, U_par1d, q_par_on_nT1d, nu1d, &
-            //               RHS_vec, N0, N1, N2, D_mat, DL_mat, DU1_mat, DU2_mat )
-            //           call libcoll_reconstruction( Npolmax_, &
-            //               ir_start, ir_end, itheta_start, itheta_end, &
-            //               iphi_start, iphi_end, mask_coll, mug, B_norm, &
-            //               f5d_s, T_s, RHS_vec )
-            //         end do
-            //       end do
-            //     end do
+                        if(LIM) {
+                            for(uint64_t itheta = block_first_theta; itheta < block_last_theta; ++itheta) {
+                                for(uint64_t ir = block_first_r; ir < block_last_r; ++ir) {
+                                    mask_coll(ir - block_first_r, itheta - block_first_theta) |= mask_LIM(ir, itheta) < 0.99;
+                                }
+                            }
+                        }
 
+                        // TODO(Etienne M): Basically if we have at least one
+                        // bit to 1, we do not skip.
+                        // if ( count(mask_coll).eq.0 ) cycle
 
+                        // DoComputeAlphaProjection(ir_start, ir_end,
+                        //                          itheta_start, itheta_end,
+                        //                          iphi_start, iphi_end,
+                        //                          mask_coll, f5d_s, T_s, RHS_vec);
 
+                        // DoComputeBlockTo1d(ir_start, ir_end,
+                        //                    itheta_start, itheta_end,
+                        //                    iphi_start, iphi_end,
+                        //                    mask_coll, n1d_s, U_par1d, T1d_s, q_par_on_nT1d, nu1d);
 
-            // ::koliop_ComputeAlphaProjection(an_operator,
-            //                                 ir_start,
-            //                                 ir_end,
-            //                                 itheta_start,
-            //                                 itheta_end,
-            //                                 iphi_start,
-            //                                 iphi_end,
-            //                                 &mask_coll[0][0],
-            //                                 &B_norm[0][0],
-            //                                 &f5d_s[0][0][0][0][0][0],
-            //                                 &T_s[0][0][0][0],
-            //                                 &RHS_vec[0][0][0]);
+                        // DoComputeCvCd(n1d_s, T1d_s, U_par1d, q_par_on_nT1d, nu1d,
+                        //               RHS_vec, N0, N1, N2, D_mat, DL_mat, DU1_mat, DU2_mat);
 
-            // ::koliop_ComputeBlockTo1d(an_operator,
-            //                           ir_start,
-            //                           ir_end,
-            //                           itheta_start,
-            //                           itheta_end,
-            //                           iphi_start,
-            //                           iphi_end,
-            //                           &mask_coll[0][0],
-            //                           &n_s[0][0][0][0],
-            //                           &U_par_s[0][0][0][0],
-            //                           &T_s[0][0][0][0],
-            //                           &q_par_on_nT_s[0][0][0][0],
-            //                           &n1d_s[0][0],
-            //                           &T1d_s[0][0],
-            //                           &U_par1d[0],
-            //                           &q_par_on_nT1d[0],
-            //                           &nu1d[0]);
-
-            // ::koliop_ComputeCvCd(an_operator,
-            //                      Nspace,
-            //                      &n1d_s[0][0],
-            //                      &T1d_s[0][0],
-            //                      &U_par1d[0],
-            //                      &q_par_on_nT1d[0],
-            //                      &nu1d[0],
-            //                      &RHS_vec[0][0][0],
-            //                      // TODO(Etienne M): These ar just tmp arrays. They
-            //                      // could be allocated by the operator ?
-            //                      &N0[0][0][0][0],
-            //                      &N1[0][0][0][0],
-            //                      &N2[0][0][0][0],
-            //                      &D_mat[0][0][0],
-            //                      &DL_mat[0][0][0],
-            //                      &DU1_mat[0][0][0],
-            //                      &DU2_mat[0][0][0],
-            //                      dt);
-
-            // ::koliop_ComputeReconstruction(an_operator,
-            //                                ir_start,
-            //                                ir_end,
-            //                                itheta_start,
-            //                                itheta_end,
-            //                                iphi_start,
-            //                                iphi_end,
-            //                                &mask_coll[0][0],
-            //                                &B_norm[0][0],
-            //                                &f5d_s[0][0][0][0][0][0],
-            //                                &T_s[0][0][0][0],
-            //                                &RHS_vec[0][0][0]);
+                        // DoComputeReconstruction(ir_start, ir_end,
+                        //                         itheta_start, itheta_end,
+                        //                         iphi_start, iphi_end,
+                        //                         mask_coll, f5d_s, RHS_vec);
+                    }
+                }
+            }
         }
 
         inline void State::DoComputeAlphaProjection(uint64_t                       ir_block_size,

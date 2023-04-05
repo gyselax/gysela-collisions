@@ -91,7 +91,10 @@ namespace koliop {
                 //     }
                 // }
 
-                // Else we do a linpack based, recursive LU decomposition.
+                // Else we do a recursive LU decomposition.
+                // NOTE that the algo used is similar to the one used in linpack, the
+                // recursive LU decomposition.
+                // Cormen, Thomas H.; Leiserson, Charles E.; Rivest, Ronald L.; Stein, Clifford (2001), Introduction to Algorithms, MIT Press and McGraw-Hill, ISBN 978-0-262-03293-3.
             }
         };
 
