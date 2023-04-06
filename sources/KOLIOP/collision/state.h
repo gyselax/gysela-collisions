@@ -283,19 +283,20 @@ namespace koliop {
                                      const Array6D& f5d_s,
                                      Array3D&&      RHS_vec);
 
-            void DoComputeBlockTo1d(uint64_t                       ir_block_size,
-                                    uint64_t                       itheta_block_size,
-                                    uint64_t                       iphi_block_size,
-                                    const ViewUHL2<const uint8_t>& a_host_visible_mask_coll,
-                                    const ViewUHL4<const Flo64>&   a_host_visible_n_s,
-                                    const ViewUHL4<const Flo64>&   a_host_visible_U_par_s,
-                                    const ViewUHL4<const Flo64>&   a_host_visible_T_s,
-                                    const ViewUHL4<const Flo64>&   a_host_visible_q_par_on_nT_s,
-                                    ViewUHL2<Flo64>&&              a_host_visible_n1d_s,
-                                    ViewUHL2<Flo64>&&              a_host_visible_T1d_s,
-                                    ViewUHL1<Flo64>&&              a_host_visible_U_par1d,
-                                    ViewUHL1<Flo64>&&              a_host_visible_q_par_on_nT1d,
-                                    ViewUHL1<Flo64>&&              a_host_visible_nu1d) const;
+            template <typename Array2D0,
+                      typename Array2D1,
+                      typename Array1D>
+            static void
+            DoComputeBlockTo1D(const State&    a_state,
+                               uint64_t        block_first_r,
+                               uint64_t        block_first_theta,
+                               uint64_t        block_first_phi,
+                               const Array2D0& mask_coll,
+                               Array2D1&&      n1d_s,
+                               Array2D1&&      T1d_s,
+                               Array1D&&       U_par1d,
+                               Array1D&&       q_par_on_nT1d,
+                               Array1D&&       nu1d);
 
             void DoComputeReconstruction(uint64_t                       ir_block_size,
                                          uint64_t                       itheta_block_size,
@@ -1444,10 +1445,11 @@ namespace koliop {
                                                  block_first_phi,
                                                  mask_coll, f5d_s, RHS_vec);
 
-                        // DoComputeBlockTo1d(ir_start, ir_end,
-                        //                    itheta_start, itheta_end,
-                        //                    iphi_start, iphi_end,
-                        //                    mask_coll, n1d_s, U_par1d, T1d_s, q_par_on_nT1d, nu1d);
+                        DoComputeBlockTo1D(a_state,
+                                           block_first_r,
+                                           block_first_theta,
+                                           block_first_phi,
+                                           mask_coll, n1d_s, T1d_s, U_par1d, q_par_on_nT1d, nu1d);
 
                         // DoComputeCvCd(n1d_s, T1d_s, U_par1d, q_par_on_nT1d, nu1d,
                         //               RHS_vec, N0, N1, N2, D_mat, DL_mat, DU1_mat, DU2_mat);
@@ -1536,54 +1538,65 @@ namespace koliop {
                                  a_policy, the_kernel);
         }
 
-        inline void State::DoComputeBlockTo1d(uint64_t                       ir_block_size,
-                                              uint64_t                       itheta_block_size,
-                                              uint64_t                       iphi_block_size,
-                                              const ViewUHL2<const uint8_t>& a_host_visible_mask_coll,
-                                              const ViewUHL4<const Flo64>&   a_host_visible_n_s,
-                                              const ViewUHL4<const Flo64>&   a_host_visible_U_par_s,
-                                              const ViewUHL4<const Flo64>&   a_host_visible_T_s,
-                                              const ViewUHL4<const Flo64>&   a_host_visible_q_par_on_nT_s,
-                                              ViewUHL2<Flo64>&&              a_host_visible_n1d_s,
-                                              ViewUHL2<Flo64>&&              a_host_visible_T1d_s,
-                                              ViewUHL1<Flo64>&&              a_host_visible_U_par1d,
-                                              ViewUHL1<Flo64>&&              a_host_visible_q_par_on_nT1d,
-                                              ViewUHL1<Flo64>&&              a_host_visible_nu1d) const {
+        template <typename Array2D0,
+                  typename Array2D1,
+                  typename Array1D>
+        void State::DoComputeBlockTo1D(const State&    a_state,
+                                       uint64_t        block_first_r,
+                                       uint64_t        block_first_theta,
+                                       uint64_t        block_first_phi,
+                                       const Array2D0& mask_coll,
+                                       Array2D1&&      n1d_s,
+                                       Array2D1&&      T1d_s,
+                                       Array1D&&       U_par1d,
+                                       Array1D&&       q_par_on_nT1d,
+                                       Array1D&&       nu1d) {
 
-            const auto a_host_visible_hat_As = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{},
-                                                                                                      Kokkos::WithoutInitializing),
-                                                                                   hat_As_);
+            const auto& the_species_extent = a_state.the_species_extent_;
+
+            const auto& n_s           = a_state.n_s_;
+            const auto& U_par_s       = a_state.U_par_s_;
+            const auto& T_s           = a_state.T_s_;
+            const auto& nu_ab         = a_state.nu_ab_;
+            const auto& q_par_on_nT_s = a_state.q_par_on_nT_s_;
+
+            const auto pSpecies_id = a_state.pSpecies_id_;
 
             const auto the_kernel = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi) {
-                // NOTE: INDEX are ideal for both CPU and GPU.
+                // NOTE: kBlockExtentXXX are constant, the compiler can replace
+                // the % with faster instructions.
+                const uint64_t block_local_index_r     = ir % kBlockExtentR;
+                const uint64_t block_local_index_theta = itheta % kBlockExtentTheta;
+                const uint64_t block_local_index_phi   = iphi % kBlockExtentPhi;
 
-                const uint64_t ispace = iphi * itheta_block_size * ir_block_size +
-                                        itheta * ir_block_size +
-                                        ir;
+                const uint64_t ispace = kBlockExtentR * kBlockExtentTheta * block_local_index_phi +
+                                        kBlockExtentR * block_local_index_theta +
+                                        block_local_index_r;
 
-                if(!a_host_visible_mask_coll(ir, itheta))
+                if(!mask_coll(ir, itheta)) {
                     return;
-
-                for(uint64_t ispecies = 0; ispecies < Nspecies_; ++ispecies) {
-                    a_host_visible_n1d_s(ispace, ispecies) = a_host_visible_n_s(ir, itheta, iphi, ispecies);
-                    a_host_visible_T1d_s(ispace, ispecies) = a_host_visible_T_s(ir, itheta, iphi, ispecies);
                 }
 
-                a_host_visible_U_par1d(ispace)       = a_host_visible_U_par_s(ir, itheta, iphi, pSpecies_id_);
-                a_host_visible_q_par_on_nT1d(ispace) = a_host_visible_q_par_on_nT_s(ir, itheta, iphi, pSpecies_id_);
+                for(uint64_t ispecies = 0; ispecies < the_species_extent; ++ispecies) {
+                    n1d_s(ispace, ispecies) = n_s(ir, itheta, iphi, ispecies);
+                    T1d_s(ispace, ispecies) = T_s(ir, itheta, iphi, ispecies);
+                }
 
-                a_host_visible_nu1d(ispace) = nu_ab_(ir, itheta, iphi, pSpecies_id_, pSpecies_id_);
+                U_par1d(ispace)       = U_par_s(ir, itheta, iphi, pSpecies_id);
+                q_par_on_nT1d(ispace) = q_par_on_nT_s(ir, itheta, iphi, pSpecies_id);
+                nu1d(ispace)          = nu_ab(ir, itheta, iphi, pSpecies_id, pSpecies_id);
             };
 
             const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<3,
                                                                      Kokkos::Iterate::Left,
-                                                                     Kokkos::Iterate::Left>,
-                                                        Kokkos::DefaultHostExecutionSpace>{{0, 0, 0},
-                                                                                           {ir_block_size,
-                                                                                            itheta_block_size,
-                                                                                            iphi_block_size}};
+                                                                     Kokkos::Iterate::Left>>{{block_first_r,
+                                                                                              block_first_theta,
+                                                                                              block_first_phi},
+                                                                                             {block_first_r + kBlockExtentR,
+                                                                                              block_first_theta + kBlockExtentTheta,
+                                                                                              block_first_phi + kBlockExtentPhi}};
 
-            Kokkos::parallel_for("DoComputeBlockTo1d",
+            Kokkos::parallel_for("DoComputeBlockTo1D",
                                  a_policy, the_kernel);
         }
 
