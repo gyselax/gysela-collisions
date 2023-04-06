@@ -298,14 +298,17 @@ namespace koliop {
                                Array1D&&       q_par_on_nT1d,
                                Array1D&&       nu1d);
 
-            void DoComputeReconstruction(uint64_t                       ir_block_size,
-                                         uint64_t                       itheta_block_size,
-                                         uint64_t                       iphi_block_size,
-                                         const ViewUHL2<const uint8_t>& a_host_visible_mask_coll,
-                                         const ViewUHL2<const Flo64>&   a_host_visible_B_norm,
-                                         ViewUHL6<Flo64>&&              a_host_visible_f5d_s,
-                                         const ViewUHL4<const Flo64>&   a_host_visible_T_s,
-                                         const ViewUHL3<const Flo64>&   a_host_visible_RHS_vec) const;
+            template <typename Array6D,
+                      typename Array3D,
+                      typename Array2D>
+            static void
+            DoComputeReconstruction(const State&   a_state,
+                                    uint64_t       block_first_r,
+                                    uint64_t       block_first_theta,
+                                    uint64_t       block_first_phi,
+                                    const Array2D& mask_coll,
+                                    Array6D&&      f5d_s,
+                                    const Array3D& RHS_vec);
 
             template <typename Array6D>
             static void
@@ -813,12 +816,12 @@ namespace koliop {
                                      Array4D&&    U_par_s,
                                      Array4D&&    T_s) {
 
-            const auto& the_mu_extent      = a_state.the_mu_extent_;
-            const auto& the_vpar_extent    = a_state.the_vpar_extent_;
-            const auto& the_r_extent       = a_state.the_r_extent_;
-            const auto& the_theta_extent   = a_state.the_theta_extent_;
-            const auto& the_phi_extent     = a_state.the_phi_extent_;
-            const auto& the_species_extent = a_state.Nspecies_;
+            const uint64_t& the_mu_extent      = a_state.the_mu_extent_;
+            const uint64_t& the_vpar_extent    = a_state.the_vpar_extent_;
+            const uint64_t& the_r_extent       = a_state.the_r_extent_;
+            const uint64_t& the_theta_extent   = a_state.the_theta_extent_;
+            const uint64_t& the_phi_extent     = a_state.the_phi_extent_;
+            const uint64_t& the_species_extent = a_state.Nspecies_;
 
             const auto& mug            = a_state.mug_;
             const auto& vparg          = a_state.vparg_;
@@ -910,17 +913,17 @@ namespace koliop {
         void State::DoPrecomputeNu(const State& a_state,
                                    Array5D&&    nu_ab) {
 
-            const auto& the_r_extent       = a_state.the_r_extent_;
-            const auto& the_theta_extent   = a_state.the_theta_extent_;
-            const auto& the_phi_extent     = a_state.the_phi_extent_;
-            const auto& the_species_extent = a_state.Nspecies_;
+            const uint64_t& the_r_extent       = a_state.the_r_extent_;
+            const uint64_t& the_theta_extent   = a_state.the_theta_extent_;
+            const uint64_t& the_phi_extent     = a_state.the_phi_extent_;
+            const uint64_t& the_species_extent = a_state.Nspecies_;
 
             const auto& hat_As       = a_state.hat_As_;
             const auto& nustar_coeff = a_state.nustar_coeff_;
             const auto& n_s          = a_state.n_s_;
             const auto& T_s          = a_state.T_s_;
 
-            const auto& ir_SOL_separatrix = a_state.ir_SOL_separatrix_;
+            const uint64_t& ir_SOL_separatrix = a_state.ir_SOL_separatrix_;
 
             const auto the_kernel = KOKKOS_LAMBDA(auto itheta, auto iphi, auto ispeciesA, auto ispeciesB) {
                 // TODO(Etienne M): INDEX not coalesced. Flatten more ?
@@ -960,12 +963,12 @@ namespace koliop {
                                                  Array6D&&    f5d_s,
                                                  Array4D&&    T_s) {
 
-            const auto& the_mu_extent      = a_state.the_mu_extent_;
-            const auto& the_vpar_extent    = a_state.the_vpar_extent_;
-            const auto& the_r_extent       = a_state.the_r_extent_;
-            const auto& the_theta_extent   = a_state.the_theta_extent_;
-            const auto& the_phi_extent     = a_state.the_phi_extent_;
-            const auto& the_species_extent = a_state.Nspecies_;
+            const uint64_t& the_mu_extent      = a_state.the_mu_extent_;
+            const uint64_t& the_vpar_extent    = a_state.the_vpar_extent_;
+            const uint64_t& the_r_extent       = a_state.the_r_extent_;
+            const uint64_t& the_theta_extent   = a_state.the_theta_extent_;
+            const uint64_t& the_phi_extent     = a_state.the_phi_extent_;
+            const uint64_t& the_species_extent = a_state.Nspecies_;
 
             const auto& hat_As  = a_state.hat_As_;
             const auto& mug     = a_state.mug_;
@@ -1090,12 +1093,12 @@ namespace koliop {
                                       const Array6D& f5d_s,
                                       Array4D&&      q_par_on_nT_s) {
 
-            const auto& the_mu_extent      = a_state.the_mu_extent_;
-            const auto& the_vpar_extent    = a_state.the_vpar_extent_;
-            const auto& the_r_extent       = a_state.the_r_extent_;
-            const auto& the_theta_extent   = a_state.the_theta_extent_;
-            const auto& the_phi_extent     = a_state.the_phi_extent_;
-            const auto& the_species_extent = a_state.Nspecies_;
+            const uint64_t& the_mu_extent      = a_state.the_mu_extent_;
+            const uint64_t& the_vpar_extent    = a_state.the_vpar_extent_;
+            const uint64_t& the_r_extent       = a_state.the_r_extent_;
+            const uint64_t& the_theta_extent   = a_state.the_theta_extent_;
+            const uint64_t& the_phi_extent     = a_state.the_phi_extent_;
+            const uint64_t& the_species_extent = a_state.Nspecies_;
 
             const auto& mug            = a_state.mug_;
             const auto& vparg          = a_state.vparg_;
@@ -1164,12 +1167,12 @@ namespace koliop {
         void State::DoComputeCpar(const State& a_state,
                                   Array6D&&    f5d_s) {
 
-            const auto& the_mu_extent      = a_state.the_mu_extent_;
-            const auto& the_vpar_extent    = a_state.the_vpar_extent_;
-            const auto& the_r_extent       = a_state.the_r_extent_;
-            const auto& the_theta_extent   = a_state.the_theta_extent_;
-            const auto& the_phi_extent     = a_state.the_phi_extent_;
-            const auto& the_species_extent = a_state.Nspecies_;
+            const uint64_t& the_mu_extent      = a_state.the_mu_extent_;
+            const uint64_t& the_vpar_extent    = a_state.the_vpar_extent_;
+            const uint64_t& the_r_extent       = a_state.the_r_extent_;
+            const uint64_t& the_theta_extent   = a_state.the_theta_extent_;
+            const uint64_t& the_phi_extent     = a_state.the_phi_extent_;
+            const uint64_t& the_species_extent = a_state.Nspecies_;
 
             const auto& hat_As        = a_state.hat_As_;
             const auto& hat_Zs        = a_state.hat_Zs_;
@@ -1184,9 +1187,9 @@ namespace koliop {
             const auto& T_s           = a_state.T_s_;
             const auto& q_par_on_nT_s = a_state.q_par_on_nT_s_;
 
-            const auto  pSpecies_id = a_state.pSpecies_id_;
-            const Flo64 R0_inverse  = 1.0 / a_state.R0_;
-            const Flo64 dt          = a_state.dt_ / 2.0;
+            const uint64_t& pSpecies_id = a_state.pSpecies_id_;
+            const Flo64     R0_inverse  = 1.0 / a_state.R0_;
+            const Flo64     dt          = a_state.dt_ / 2.0;
 
             const auto the_kernel = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi) {
                 // TODO(Etienne M): Assuming materialization, we could flatten
@@ -1261,11 +1264,11 @@ namespace koliop {
                                                              Array6D&&    f5d_s,
                                                              uint32_t     choice) {
 
-            const auto& the_mu_extent    = a_state.the_mu_extent_;
-            const auto& the_vpar_extent  = a_state.the_vpar_extent_;
-            const auto& the_r_extent     = a_state.the_r_extent_;
-            const auto& the_theta_extent = a_state.the_theta_extent_;
-            const auto& the_phi_extent   = a_state.the_phi_extent_;
+            const uint64_t& the_mu_extent    = a_state.the_mu_extent_;
+            const uint64_t& the_vpar_extent  = a_state.the_vpar_extent_;
+            const uint64_t& the_r_extent     = a_state.the_r_extent_;
+            const uint64_t& the_theta_extent = a_state.the_theta_extent_;
+            const uint64_t& the_phi_extent   = a_state.the_phi_extent_;
 
             const auto& mug    = a_state.mug_;
             const auto& vparg  = a_state.vparg_;
@@ -1273,7 +1276,7 @@ namespace koliop {
             const auto& n_s    = a_state.n_s_;
             const auto& T_s    = a_state.T_s_;
 
-            const auto pSpecies_id = a_state.pSpecies_id_;
+            const uint64_t& pSpecies_id = a_state.pSpecies_id_;
 
             const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<3,
                                                                      Kokkos::Iterate::Left,
@@ -1352,17 +1355,17 @@ namespace koliop {
             // TODO(Etienne M): we can drop the ir_start/ir_end and just pass the range as
             // the arrays are not subarrays.
 
-            const auto& the_vpar_extent    = a_state.the_vpar_extent_;
-            const auto& the_r_extent       = a_state.the_r_extent_;
-            const auto& the_theta_extent   = a_state.the_theta_extent_;
-            const auto& the_phi_extent     = a_state.the_phi_extent_;
-            const auto& the_species_extent = a_state.the_species_extent_;
+            const uint64_t& the_vpar_extent    = a_state.the_vpar_extent_;
+            const uint64_t& the_r_extent       = a_state.the_r_extent_;
+            const uint64_t& the_theta_extent   = a_state.the_theta_extent_;
+            const uint64_t& the_phi_extent     = a_state.the_phi_extent_;
+            const uint64_t& the_species_extent = a_state.the_species_extent_;
 
             const auto& mask_buffer_r = a_state.mask_buffer_r_;
             const auto& mask_LIM      = a_state.mask_LIM_;
 
-            const auto& Npolmax = a_state.Npolmax_;
-            const auto& LIM     = a_state.LIM_;
+            const uint64_t& Npolmax = a_state.Npolmax_;
+            const bool&     LIM     = a_state.LIM_;
 
             KOLIOP_ASSERT(the_r_extent % kBlockExtentR == 0);
             KOLIOP_ASSERT(the_theta_extent % kBlockExtentTheta == 0);
@@ -1419,7 +1422,6 @@ namespace koliop {
 
                         const uint64_t block_last_r     = block_first_r + kBlockExtentR;
                         const uint64_t block_last_theta = block_first_theta + kBlockExtentTheta;
-                        const uint64_t block_last_phi   = block_first_phi + kBlockExtentPhi;
 
                         for(uint64_t itheta = block_first_theta; itheta < block_last_theta; ++itheta) {
                             for(uint64_t ir = block_first_r; ir < block_last_r; ++ir) {
@@ -1437,6 +1439,7 @@ namespace koliop {
 
                         // TODO(Etienne M): Basically if we have at least one
                         // bit to 1, we do not skip.
+
                         // if ( count(mask_coll).eq.0 ) cycle
 
                         DoComputeAlphaProjection(a_state,
@@ -1454,10 +1457,11 @@ namespace koliop {
                         // DoComputeCvCd(n1d_s, T1d_s, U_par1d, q_par_on_nT1d, nu1d,
                         //               RHS_vec, N0, N1, N2, D_mat, DL_mat, DU1_mat, DU2_mat);
 
-                        // DoComputeReconstruction(ir_start, ir_end,
-                        //                         itheta_start, itheta_end,
-                        //                         iphi_start, iphi_end,
-                        //                         mask_coll, f5d_s, RHS_vec);
+                        DoComputeReconstruction(a_state,
+                                                block_first_r,
+                                                block_first_theta,
+                                                block_first_phi,
+                                                mask_coll, f5d_s, RHS_vec);
                     }
                 }
             }
@@ -1474,17 +1478,16 @@ namespace koliop {
                                              const Array6D& f5d_s,
                                              Array3D&&      RHS_vec) {
 
-            const auto& the_mu_extent   = a_state.the_mu_extent_;
-            const auto& the_vpar_extent = a_state.the_vpar_extent_;
+            const uint64_t& the_mu_extent   = a_state.the_mu_extent_;
+            const uint64_t& the_vpar_extent = a_state.the_vpar_extent_;
 
             const auto& mug          = a_state.mug_;
             const auto& coeff_intdmu = a_state.coeff_intdmu_;
             const auto& B_norm       = a_state.B_norm_;
             const auto& T_s          = a_state.T_s_;
 
-            const auto& Npolmax = a_state.Npolmax_;
-
-            const auto pSpecies_id = a_state.pSpecies_id_;
+            const uint64_t& Npolmax     = a_state.Npolmax_;
+            const uint64_t& pSpecies_id = a_state.pSpecies_id_;
 
             const auto the_kernel = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi) {
                 // TODO(Etienne M): INDEX not coalesced. Flatten more ?
@@ -1552,7 +1555,7 @@ namespace koliop {
                                        Array1D&&       q_par_on_nT1d,
                                        Array1D&&       nu1d) {
 
-            const auto& the_species_extent = a_state.the_species_extent_;
+            const uint64_t& the_species_extent = a_state.the_species_extent_;
 
             const auto& n_s           = a_state.n_s_;
             const auto& U_par_s       = a_state.U_par_s_;
@@ -1560,7 +1563,7 @@ namespace koliop {
             const auto& nu_ab         = a_state.nu_ab_;
             const auto& q_par_on_nT_s = a_state.q_par_on_nT_s_;
 
-            const auto pSpecies_id = a_state.pSpecies_id_;
+            const uint64_t& pSpecies_id = a_state.pSpecies_id_;
 
             const auto the_kernel = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi) {
                 // NOTE: kBlockExtentXXX are constant, the compiler can replace
@@ -1600,57 +1603,69 @@ namespace koliop {
                                  a_policy, the_kernel);
         }
 
-        inline void State::DoComputeReconstruction(uint64_t                       ir_block_size,
-                                                   uint64_t                       itheta_block_size,
-                                                   uint64_t                       iphi_block_size,
-                                                   const ViewUHL2<const uint8_t>& a_host_visible_mask_coll,
-                                                   const ViewUHL2<const Flo64>&   a_host_visible_B_norm,
-                                                   ViewUHL6<Flo64>&&              a_host_visible_f5d_s,
-                                                   const ViewUHL4<const Flo64>&   a_host_visible_T_s,
-                                                   const ViewUHL3<const Flo64>&   a_host_visible_RHS_vec) const {
+        template <typename Array6D,
+                  typename Array3D,
+                  typename Array2D>
+        void State::DoComputeReconstruction(const State&   a_state,
+                                            uint64_t       block_first_r,
+                                            uint64_t       block_first_theta,
+                                            uint64_t       block_first_phi,
+                                            const Array2D& mask_coll,
+                                            Array6D&&      f5d_s,
+                                            const Array3D& RHS_vec) {
 
-            const auto a_host_visible_mug = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{},
-                                                                                                   Kokkos::WithoutInitializing),
-                                                                                mug_);
+            const uint64_t& the_mu_extent   = a_state.the_mu_extent_;
+            const uint64_t& the_vpar_extent = a_state.the_vpar_extent_;
+
+            const auto& mug    = a_state.mug_;
+            const auto& B_norm = a_state.B_norm_;
+            const auto& T_s    = a_state.T_s_;
+
+            const uint64_t& Npolmax     = a_state.Npolmax_;
+            const uint64_t& pSpecies_id = a_state.pSpecies_id_;
 
             const auto the_kernel = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi) {
                 // TODO(Etienne M): INDEX not coalesced. Flatten more ?
                 // TODO(Etienne M): Expensive DoComputeLaguerrePol call.
 
-                const uint64_t ispace = iphi * itheta_block_size * ir_block_size +
-                                        itheta * ir_block_size +
-                                        ir;
+                // NOTE: kBlockExtentXXX are constant, the compiler can replace
+                // the % with faster instructions.
+                const uint64_t block_local_index_r     = ir % kBlockExtentR;
+                const uint64_t block_local_index_theta = itheta % kBlockExtentTheta;
+                const uint64_t block_local_index_phi   = iphi % kBlockExtentPhi;
 
-                if(!a_host_visible_mask_coll(ir, itheta))
+                const uint64_t ispace = kBlockExtentR * kBlockExtentTheta * block_local_index_phi +
+                                        kBlockExtentR * block_local_index_theta +
+                                        block_local_index_r;
+
+                if(!mask_coll(ir, itheta)) {
                     return;
+                }
 
-                const Flo64 BoT = a_host_visible_B_norm(ir, itheta) / a_host_visible_T_s(ir, itheta, iphi, pSpecies_id_);
+                const Flo64 BoT = B_norm(ir, itheta) / T_s(ir, itheta, iphi, pSpecies_id);
 
-                for(uint64_t ivpar = 0; ivpar <= Nvpar_; ++ivpar) {
-                    // TODO(Etienne M): Interchange loops and remove this
-                    // initialization. Use a temporary scalar, and do the
-                    // reduction.
-                    for(uint64_t imu = 0; imu <= Nmu_; ++imu) {
-                        a_host_visible_f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id_) = 0.0;
-                    }
+                for(uint64_t ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
+                    for(uint64_t imu = 0; imu < the_mu_extent; ++imu) {
+                        const Flo64 muBoT       = mug(imu) * BoT;
+                        Flo64       f5d_s_value = 0.0;
 
-                    for(uint64_t ipol = 0; ipol < Npolmax_; ++ipol) {
-                        for(uint64_t imu = 0; imu <= Nmu_; ++imu) {
-                            const Flo64 muBoT = a_host_visible_mug(imu) * BoT;
-                            a_host_visible_f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id_) += a_host_visible_RHS_vec(ispace, ipol, ivpar) *
-                                                                                                DoComputeLaguerrePol(ipol, muBoT);
+                        for(uint64_t ipol = 0; ipol < Npolmax; ++ipol) {
+                            f5d_s_value += RHS_vec(ispace, ipol, ivpar) * DoComputeLaguerrePol(ipol, muBoT);
                         }
+
+                        f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id) = f5d_s_value;
                     }
                 }
             };
 
             const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<3,
                                                                      Kokkos::Iterate::Left,
-                                                                     Kokkos::Iterate::Left>,
-                                                        Kokkos::DefaultHostExecutionSpace>{{0, 0, 0},
-                                                                                           {ir_block_size,
-                                                                                            itheta_block_size,
-                                                                                            iphi_block_size}};
+                                                                     Kokkos::Iterate::Left>>{{block_first_r,
+                                                                                              block_first_theta,
+                                                                                              block_first_phi},
+                                                                                             {block_first_r + kBlockExtentR,
+                                                                                              block_first_theta + kBlockExtentTheta,
+                                                                                              block_first_phi + kBlockExtentPhi}};
 
             Kokkos::parallel_for("DoComputeReconstruction",
                                  a_policy, the_kernel);
