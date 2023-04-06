@@ -52,6 +52,7 @@ typedef struct _koliop_Operator* koliop_Operator;
 
 /// The values given below are expected NOT to change during the lifetime
 /// of the operator.
+/// NOTE: Npolmax is expected to be 3 and index_max = 2 * (index_max - 1) = 4
 koliop_Status koliop_Create(koliop_Operator* an_operator_handle,
                             uint64_t         Npolmax,
                             uint64_t         index_max,

@@ -88,7 +88,12 @@
                               const double*      B_norm,
                               const double*      Bstar_s) {
     return koliop::error::FromException([&]() {
+        using State = koliop::collision::State;
+
         if(an_operator_handle == nullptr ||
+           // We expect Npolmax to be constant.
+           Npolmax != State::kMaximumLaguerrePolynomialDegree ||
+           (index_max != 2 * (Npolmax - 1)) ||
            comb_mat == nullptr ||
            hat_As == nullptr ||
            hat_Zs == nullptr ||
@@ -108,11 +113,7 @@
             return KOLIOP_STATUS_INVALID_VALUE;
         }
 
-        using State = koliop::collision::State;
-
-        auto* const an_operator = new State{Npolmax,
-                                            index_max,
-                                            pSpecies_id,
+        auto* const an_operator = new State{pSpecies_id,
                                             mu_id,
                                             the_mu_extent,
                                             the_vpar_extent,

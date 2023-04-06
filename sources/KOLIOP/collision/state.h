@@ -15,47 +15,55 @@ namespace koliop {
         // TODO(Etienne M): Cleanup that stuff.
         // View[U|M][H|D][L|R|D][1-9]
         // Unmanaged/Managed | Host or Default (device or host) | Left or Right layout | Dimension
+        template <typename Extent>
+        using ViewUHL = Kokkos::View<Extent, Kokkos::LayoutLeft, Kokkos::DefaultHostExecutionSpace::memory_space, Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
         template <typename Float>
-        using ViewUHL1 = Kokkos::View<Float*, Kokkos::LayoutLeft, Kokkos::DefaultHostExecutionSpace::memory_space, Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
+        using ViewUHL1 = ViewUHL<Float*>;
         template <typename Float>
-        using ViewUHL2 = Kokkos::View<Float**, Kokkos::LayoutLeft, Kokkos::DefaultHostExecutionSpace::memory_space, Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
+        using ViewUHL2 = ViewUHL<Float**>;
         template <typename Float>
-        using ViewUHL3 = Kokkos::View<Float***, Kokkos::LayoutLeft, Kokkos::DefaultHostExecutionSpace::memory_space, Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
+        using ViewUHL3 = ViewUHL<Float***>;
         template <typename Float>
-        using ViewUHL4 = Kokkos::View<Float****, Kokkos::LayoutLeft, Kokkos::DefaultHostExecutionSpace::memory_space, Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
+        using ViewUHL4 = ViewUHL<Float****>;
         template <typename Float>
-        using ViewUHL5 = Kokkos::View<Float*****, Kokkos::LayoutLeft, Kokkos::DefaultHostExecutionSpace::memory_space, Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
+        using ViewUHL5 = ViewUHL<Float*****>;
         template <typename Float>
-        using ViewUHL6 = Kokkos::View<Float******, Kokkos::LayoutLeft, Kokkos::DefaultHostExecutionSpace::memory_space, Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
+        using ViewUHL6 = ViewUHL<Float******>;
 
-        // template <typename Float>
-        // using ViewMDL1 = Kokkos::View<Float*, Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace::memory_space>;
-        // template <typename Float>
-        // using ViewMDL2 = Kokkos::View<Float**, Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace::memory_space>;
-        // template <typename Float>
-        // using ViewMDL3 = Kokkos::View<Float***, Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace::memory_space>;
-        // template <typename Float>
-        // using ViewMDL4 = Kokkos::View<Float****, Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace::memory_space>;
-        // template <typename Float>
-        // using ViewMDL5 = Kokkos::View<Float*****, Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace::memory_space>;
+        template <typename Extent>
+        using ViewMDL = Kokkos::View<Extent, Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace::memory_space>;
         template <typename Float>
-        using ViewMDL6 = Kokkos::View<Float******, Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace::memory_space>;
+        using ViewMDL1 = ViewMDL<Float*>;
+        template <typename Float>
+        using ViewMDL2 = ViewMDL<Float**>;
+        template <typename Float>
+        using ViewMDL3 = ViewMDL<Float***>;
+        template <typename Float>
+        using ViewMDL4 = ViewMDL<Float****>;
+        template <typename Float>
+        using ViewMDL5 = ViewMDL<Float*****>;
+        template <typename Float>
+        using ViewMDL6 = ViewMDL<Float******>;
 
+        template <typename Extent>
+        using ViewMDD = Kokkos::View<Extent, Kokkos::DefaultExecutionSpace::array_layout, Kokkos::DefaultExecutionSpace::memory_space>;
         template <typename Float>
-        using ViewMDD1 = Kokkos::View<Float*, Kokkos::DefaultExecutionSpace::array_layout, Kokkos::DefaultExecutionSpace::memory_space>;
+        using ViewMDD1 = ViewMDD<Float*>;
         template <typename Float>
-        using ViewMDD2 = Kokkos::View<Float**, Kokkos::DefaultExecutionSpace::array_layout, Kokkos::DefaultExecutionSpace::memory_space>;
+        using ViewMDD2 = ViewMDD<Float**>;
         template <typename Float>
-        using ViewMDD3 = Kokkos::View<Float***, Kokkos::DefaultExecutionSpace::array_layout, Kokkos::DefaultExecutionSpace::memory_space>;
+        using ViewMDD3 = ViewMDD<Float***>;
         template <typename Float>
-        using ViewMDD4 = Kokkos::View<Float****, Kokkos::DefaultExecutionSpace::array_layout, Kokkos::DefaultExecutionSpace::memory_space>;
+        using ViewMDD4 = ViewMDD<Float****>;
         template <typename Float>
-        using ViewMDD5 = Kokkos::View<Float*****, Kokkos::DefaultExecutionSpace::array_layout, Kokkos::DefaultExecutionSpace::memory_space>;
+        using ViewMDD5 = ViewMDD<Float*****>;
         template <typename Float>
-        using ViewMDD6 = Kokkos::View<Float******, Kokkos::DefaultExecutionSpace::array_layout, Kokkos::DefaultExecutionSpace::memory_space>;
+        using ViewMDD6 = ViewMDD<Float******>;
 
+        template <typename Extent>
+        using ViewMHL = Kokkos::View<Extent, Kokkos::LayoutLeft, Kokkos::DefaultHostExecutionSpace::memory_space>;
         template <typename Float>
-        using ViewMHL1 = Kokkos::View<Float*, Kokkos::LayoutLeft, Kokkos::DefaultHostExecutionSpace::memory_space>;
+        using ViewMHL1 = ViewMHL<Float*>;
 
 
         ////////////////////////////////////////////////////////////////////////
@@ -146,17 +154,17 @@ namespace koliop {
         ///
         class State {
         public:
-        protected:
-            static constexpr uint64_t kBlockExtentR     = 8;
-            static constexpr uint64_t kBlockExtentTheta = 1;
-            static constexpr uint64_t kBlockExtentPhi   = 1;
+            static inline constexpr uint64_t kMaximumLaguerrePolynomialDegree = 3;
 
-            static constexpr uint64_t kFlattenedExtent = kBlockExtentR * kBlockExtentTheta * kBlockExtentPhi;
+        protected:
+            static inline constexpr uint64_t kBlockExtentR     = 8;
+            static inline constexpr uint64_t kBlockExtentTheta = 1;
+            static inline constexpr uint64_t kBlockExtentPhi   = 1;
+
+            static inline constexpr uint64_t kFlattenedExtent = kBlockExtentR * kBlockExtentTheta * kBlockExtentPhi;
 
         public:
-            State(uint64_t                     Npolmax,
-                  uint64_t                     index_max,
-                  uint64_t                     pSpecies_id,
+            State(uint64_t                     pSpecies_id,
                   uint64_t                     mu_id,
                   uint64_t                     the_mu_extent,
                   uint64_t                     the_vpar_extent,
@@ -205,11 +213,15 @@ namespace koliop {
             void ComputeCorrectionUparT(Flo64* f5d_s) const;
 
         protected:
-            void DoPrepareCj_Cjl(ViewMDD2<Flo64>& C_j,
-                                 ViewMDD3<Flo64>& C_jl) const;
+            template <typename View3D,
+                      typename View2D>
+            void DoPrepareCj_Cjl(View2D& C_j,
+                                 View3D& C_jl) const;
 
-            void DoPrepareCjl(const ViewMDD2<Flo64>::host_mirror_type& a_host_visible_C_j,
-                              ViewMDD3<Flo64>&                         C_jl) const;
+            template <typename View3D,
+                      typename MirrorView2D>
+            void DoPrepareCjl(const MirrorView2D& a_host_visible_C_j,
+                              View3D&             C_jl) const;
 
             void DoPrepareNuStar(ViewMDD3<Flo64>&             nustar_coeff,
                                  const ViewUHL1<const Flo64>& a_host_visible_hat_As,
@@ -271,6 +283,10 @@ namespace koliop {
             DoApplyCollisions(const State& a_state,
                               Array6D&&    f5d_s);
 
+            static KOKKOS_INLINE_FUNCTION Flo64
+            DoComputeLaguerrePol(uint64_t l,
+                                 Flo64    x);
+
             template <typename Array6D,
                       typename Array3D,
                       typename Array2D>
@@ -321,10 +337,6 @@ namespace koliop {
             DoComputeCorrectionUparT(const State& a_state,
                                      Array6D&&    f5d_s,
                                      Array4D&&    U_par_s);
-
-            static KOKKOS_INLINE_FUNCTION Flo64
-            DoComputeLaguerrePol(uint64_t l,
-                                 Flo64    x);
 
             // Constant, externally computed values
 
@@ -685,19 +697,23 @@ namespace koliop {
             Kokkos::fence();
         }
 
-        inline void State::DoPrepareCj_Cjl(ViewMDD2<Flo64>& C_j,
-                                           ViewMDD3<Flo64>& C_jl) const {
+        template <typename View3D,
+                  typename View2D>
+        inline void State::DoPrepareCj_Cjl(View2D& C_j,
+                                           View3D& C_jl) const {
             // a_host_visible_C_j is zero initialized.
             auto a_host_visible_C_j = Kokkos::create_mirror_view(C_j);
 
-            for(uint64_t j = 0; j < Npolmax_; ++j) {
+            for(uint64_t j = 0; j < kMaximumLaguerrePolynomialDegree; ++j) {
                 a_host_visible_C_j(0, j) = 1.0;
                 a_host_visible_C_j(1, j) = static_cast<Flo64>(-static_cast<int64_t>(j));
             }
 
-            if(Npolmax_ > 2) {
+            if(kMaximumLaguerrePolynomialDegree > 2) {
                 a_host_visible_C_j(2, 2) = 0.5;
-                if(Npolmax_ > 3) {
+                if(kMaximumLaguerrePolynomialDegree > 3) {
+                    // NOTE: Assuming kMaximumLaguerrePolynomialDegree = 3, this
+                    // is never evaluated.
                     a_host_visible_C_j(2, 3) = 1.5;
                     a_host_visible_C_j(3, 3) = -1.0 / 6.0;
                 }
@@ -708,8 +724,10 @@ namespace koliop {
             DoPrepareCjl(a_host_visible_C_j, C_jl);
         }
 
-        inline void State::DoPrepareCjl(const ViewMDD2<Flo64>::host_mirror_type& a_host_visible_C_j,
-                                        ViewMDD3<Flo64>&                         C_jl) const {
+        template <typename View3D,
+                  typename MirrorView2D>
+        inline void State::DoPrepareCjl(const MirrorView2D& a_host_visible_C_j,
+                                        View3D&             C_jl) const {
             // a_host_visible_C_jl is zero initialized.
             auto a_host_visible_C_jl = Kokkos::create_mirror_view(C_jl_);
 
@@ -727,8 +745,8 @@ namespace koliop {
                 }
             };
 
-            for(uint64_t i = 0; i < Npolmax_; ++i) {
-                for(uint64_t j = 0; j < Npolmax_; ++j) {
+            for(uint64_t i = 0; i < kMaximumLaguerrePolynomialDegree; ++i) {
+                for(uint64_t j = 0; j < kMaximumLaguerrePolynomialDegree; ++j) {
                     CoreLoop(i, j);
                 }
             }
@@ -1467,6 +1485,28 @@ namespace koliop {
             }
         }
 
+        KOKKOS_INLINE_FUNCTION Flo64
+        State::DoComputeLaguerrePol(uint64_t l, Flo64 x) {
+            // TODO(Etienne M): find a better way to compute that, based on l.
+            switch(l) {
+                case 0:
+                    return 1.0;
+                case 1:
+                    return -x + 1.0;
+                case 2:
+                    return (1.0 / 2.0) + (-4 + /* 1 * */ x) * x;
+                case 3:
+                    // Horner -> dependency            : 1 + (-3 + (1.5 - 1/6 * x) * x) * x
+                    // but FMA friendly.
+                    // Naive  -> latency and dependency: (1.0 / 6.0) * (-(x * x * x) + 9.0 * x * x - 18.0 * x + 6.0);
+                    // Slow.
+                    // Factorized -> low latency       : ((-1.0 / 6.0) * (x - 0.41577455678347908331)) * ((x - 2.29428036027904171982) * (x - 6.28994508293747919686))
+                    return 1.0 + (-3.0 + (1.5 - (1.0 / 6.0) * x) * x) * x;
+                default:
+                    return -1.0;
+            }
+        }
+
         template <typename Array6D,
                   typename Array3D,
                   typename Array2D>
@@ -1486,7 +1526,6 @@ namespace koliop {
             const auto& B_norm       = a_state.B_norm_;
             const auto& T_s          = a_state.T_s_;
 
-            const uint64_t& Npolmax     = a_state.Npolmax_;
             const uint64_t& pSpecies_id = a_state.pSpecies_id_;
 
             const auto the_kernel = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi) {
@@ -1507,7 +1546,7 @@ namespace koliop {
                     const Flo64 BoT = B_norm(ir, itheta) / T_s(ir, itheta, iphi, pSpecies_id);
 
                     for(uint64_t ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
-                        for(uint64_t ipol = 0; ipol < Npolmax; ++ipol) {
+                        for(uint64_t ipol = 0; ipol < kMaximumLaguerrePolynomialDegree; ++ipol) {
                             Flo64 RHS_vec_value = 0.0;
                             for(uint64_t imu = 0; imu < the_mu_extent; ++imu) {
                                 const Flo64 muBoT     = mug(imu) * BoT;
@@ -1521,7 +1560,7 @@ namespace koliop {
                     }
                 } else {
                     for(uint64_t ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
-                        for(uint64_t ipol = 0; ipol < Npolmax; ++ipol) {
+                        for(uint64_t ipol = 0; ipol < kMaximumLaguerrePolynomialDegree; ++ipol) {
                             RHS_vec(ispace, ipol, ivpar) = 0.0;
                         }
                     }
@@ -1621,7 +1660,6 @@ namespace koliop {
             const auto& B_norm = a_state.B_norm_;
             const auto& T_s    = a_state.T_s_;
 
-            const uint64_t& Npolmax     = a_state.Npolmax_;
             const uint64_t& pSpecies_id = a_state.pSpecies_id_;
 
             const auto the_kernel = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi) {
@@ -1649,7 +1687,7 @@ namespace koliop {
                         const Flo64 muBoT       = mug(imu) * BoT;
                         Flo64       f5d_s_value = 0.0;
 
-                        for(uint64_t ipol = 0; ipol < Npolmax; ++ipol) {
+                        for(uint64_t ipol = 0; ipol < kMaximumLaguerrePolynomialDegree; ++ipol) {
                             f5d_s_value += RHS_vec(ispace, ipol, ivpar) * DoComputeLaguerrePol(ipol, muBoT);
                         }
 
@@ -1851,28 +1889,6 @@ namespace koliop {
 
             Kokkos::parallel_for("DoComputeCorrectionUparT",
                                  a_policy, the_kernel);
-        }
-
-        KOKKOS_INLINE_FUNCTION Flo64
-        State::DoComputeLaguerrePol(uint64_t l, Flo64 x) {
-            // TODO(Etienne M): find a better way to compute that, based on l.
-            switch(l) {
-                case 0:
-                    return 1.0;
-                case 1:
-                    return -x + 1.0;
-                case 2:
-                    return (1.0 / 2.0) + (-4 + /* 1 * */ x) * x;
-                case 3:
-                    // Horner -> dependency            : 1 + (-3 + (1.5 - 1/6 * x) * x) * x
-                    // but FMA friendly.
-                    // Naive  -> latency and dependency: (1.0 / 6.0) * (-(x * x * x) + 9.0 * x * x - 18.0 * x + 6.0);
-                    // Slow.
-                    // Factorized -> low latency       : ((-1.0 / 6.0) * (x - 0.41577455678347908331)) * ((x - 2.29428036027904171982) * (x - 6.28994508293747919686))
-                    return 1.0 + (-3.0 + (1.5 - (1.0 / 6.0) * x) * x) * x;
-                default:
-                    return -1.0;
-            }
         }
 
     } // namespace collision
