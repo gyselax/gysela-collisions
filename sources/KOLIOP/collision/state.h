@@ -340,9 +340,7 @@ namespace koliop {
 
             // Constant, externally computed values
 
-            // TODO(Etienne M): Cleanup unused values (say, Nspecies repalced with the_species_extent_)
-            uint64_t Npolmax_;
-            uint64_t index_max_;
+            // TODO(Etienne M): Cleanup unused values (say, Nspecies replaced with the_species_extent_)
             uint64_t Nspecies_;
             uint64_t pSpecies_id_;
             uint64_t mu_id_;
@@ -361,9 +359,9 @@ namespace koliop {
             uint64_t ir_SOL_separatrix_;
             Flo64    dt_;
 
-            ViewMDD2<Flo64> comb_mat_;
-            ViewMDD1<Flo64> hat_As_;
-            ViewMDD1<Flo64> hat_Zs_;
+            ViewMDD2<Flo64> comb_mat_; // TODO(Etienne M): constant extent.
+            ViewMDD1<Flo64> hat_As_;   // TODO(Etienne M): constant extent.
+            ViewMDD1<Flo64> hat_Zs_;   // TODO(Etienne M): constant extent.
             ViewMDD1<Flo64> mug_;
             ViewMDD1<Flo64> vparg_;
             ViewMDD1<Flo64> coeff_intdmu_;
@@ -378,8 +376,8 @@ namespace koliop {
 
             // Constant, internally computed values
 
-            ViewMDD2<Flo64> C_j_;
-            ViewMDD3<Flo64> C_jl_;
+            ViewMDD2<Flo64> C_j_;  // TODO(Etienne M): constant extent.
+            ViewMDD3<Flo64> C_jl_; // TODO(Etienne M): constant extent.
             ViewMDD3<Flo64> nustar_coeff_;
 
             // Variable, internally computed values
@@ -396,9 +394,7 @@ namespace koliop {
         // State methods definition
         ////////////////////////////////////////////////////////////////////////
 
-        inline State::State(uint64_t                     Npolmax,
-                            uint64_t                     index_max,
-                            uint64_t                     pSpecies_id,
+        inline State::State(uint64_t                     pSpecies_id,
                             uint64_t                     mu_id,
                             uint64_t                     the_mu_extent,
                             uint64_t                     the_vpar_extent,
@@ -428,9 +424,7 @@ namespace koliop {
                             const ViewUHL4<const Flo64>& a_host_visible_Bstar_s)
             : // Constant, externally computed values
 
-            Npolmax_{Npolmax}
-            , index_max_{index_max}
-            , Nspecies_{the_species_extent}
+            Nspecies_{the_species_extent}
             , pSpecies_id_{pSpecies_id}
             , mu_id_{mu_id}
             , Nmu_{the_mu_extent - 1}
@@ -448,11 +442,11 @@ namespace koliop {
             , ir_SOL_separatrix_{ir_SOL_separatrix}
             , dt_{dt}
             , comb_mat_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "comb_mat_"),
-                        ((index_max_ + 1) + 1) - 0, ((index_max_ + 1) + 1) - 0}
+                        2 * kMaximumLaguerrePolynomialDegree, 2 * kMaximumLaguerrePolynomialDegree}
             , hat_As_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "hat_As_"),
-                      Npolmax_}
+                      kMaximumLaguerrePolynomialDegree}
             , hat_Zs_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "hat_Zs_"),
-                      Npolmax_}
+                      kMaximumLaguerrePolynomialDegree}
             , mug_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "mug_"),
                    the_mu_extent_}
             , vparg_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "vparg_"),
@@ -477,11 +471,10 @@ namespace koliop {
 
             // Constant, internally computed values
 
-            // TODO(Etienne M): Compile time code based on Npolmax_ value ?
             , C_j_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "C_j_"),
-                   Npolmax_, Npolmax_}
+                   kMaximumLaguerrePolynomialDegree, kMaximumLaguerrePolynomialDegree}
             , C_jl_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "C_jl_"),
-                    index_max_ + 1, Npolmax_, Npolmax_}
+                    2 * kMaximumLaguerrePolynomialDegree - 1, kMaximumLaguerrePolynomialDegree, kMaximumLaguerrePolynomialDegree}
             , nustar_coeff_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "nustar_coeff_"),
                             the_species_extent_, the_species_extent_, the_r_extent_}
 
@@ -1382,8 +1375,7 @@ namespace koliop {
             const auto& mask_buffer_r = a_state.mask_buffer_r_;
             const auto& mask_LIM      = a_state.mask_LIM_;
 
-            const uint64_t& Npolmax = a_state.Npolmax_;
-            const bool&     LIM     = a_state.LIM_;
+            const bool& LIM = a_state.LIM_;
 
             KOLIOP_ASSERT(the_r_extent % kBlockExtentR == 0);
             KOLIOP_ASSERT(the_theta_extent % kBlockExtentTheta == 0);
@@ -1407,21 +1399,23 @@ namespace koliop {
                                  kFlattenedExtent};
 
             ViewMDD3<Flo64> RHS_vec{Kokkos::view_alloc(Kokkos::WithoutInitializing, "RHS_vec"),
-                                    kFlattenedExtent, Npolmax, the_vpar_extent};
+                                    kFlattenedExtent, kMaximumLaguerrePolynomialDegree, the_vpar_extent};
+
             ViewMDD4<Flo64> N0{Kokkos::view_alloc(Kokkos::WithoutInitializing, "N0"),
-                               the_vpar_extent, kFlattenedExtent, Npolmax, Npolmax};
+                               the_vpar_extent, kFlattenedExtent, kMaximumLaguerrePolynomialDegree, kMaximumLaguerrePolynomialDegree};
             ViewMDD4<Flo64> N1{Kokkos::view_alloc(Kokkos::WithoutInitializing, "N1"),
-                               the_vpar_extent, kFlattenedExtent, Npolmax, Npolmax};
+                               the_vpar_extent, kFlattenedExtent, kMaximumLaguerrePolynomialDegree, kMaximumLaguerrePolynomialDegree};
             ViewMDD4<Flo64> N2{Kokkos::view_alloc(Kokkos::WithoutInitializing, "N1"),
-                               the_vpar_extent, kFlattenedExtent, Npolmax, Npolmax};
+                               the_vpar_extent, kFlattenedExtent, kMaximumLaguerrePolynomialDegree, kMaximumLaguerrePolynomialDegree};
+
             ViewMDD3<Flo64> D_mat{Kokkos::view_alloc(Kokkos::WithoutInitializing, "D_mat"),
-                                  kFlattenedExtent, Npolmax, Npolmax * the_vpar_extent};
+                                  kFlattenedExtent, kMaximumLaguerrePolynomialDegree, kMaximumLaguerrePolynomialDegree * the_vpar_extent};
             ViewMDD3<Flo64> DL_mat{Kokkos::view_alloc(Kokkos::WithoutInitializing, "DL_mat"),
-                                   kFlattenedExtent, Npolmax, Npolmax * (the_vpar_extent - 1)}; // TODO(Etienne M): Weird -1
+                                   kFlattenedExtent, kMaximumLaguerrePolynomialDegree, kMaximumLaguerrePolynomialDegree * (the_vpar_extent - 1)}; // TODO(Etienne M): Weird -1
             ViewMDD3<Flo64> DU1_mat{Kokkos::view_alloc(Kokkos::WithoutInitializing, "DU1_mat"),
-                                    kFlattenedExtent, Npolmax, Npolmax * (the_vpar_extent - 1)}; // TODO(Etienne M): Weird -1
+                                    kFlattenedExtent, kMaximumLaguerrePolynomialDegree, kMaximumLaguerrePolynomialDegree * (the_vpar_extent - 1)}; // TODO(Etienne M): Weird -1
             ViewMDD3<Flo64> DU2_mat{Kokkos::view_alloc(Kokkos::WithoutInitializing, "DU2_mat"),
-                                    kFlattenedExtent, Npolmax, Npolmax * (the_vpar_extent - 2)}; // TODO(Etienne M): Weird -2
+                                    kFlattenedExtent, kMaximumLaguerrePolynomialDegree, kMaximumLaguerrePolynomialDegree * (the_vpar_extent - 2)}; // TODO(Etienne M): Weird -2
 
             // TODO(Etienne M): On GPU, should we just scale the block size ?
             // TODO(Etienne M): We use mask to avoid some computation, but
