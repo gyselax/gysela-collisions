@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 
-#ifndef KOLIOP_BLAS_LUFACTORIZATION_H
-#define KOLIOP_BLAS_LUFACTORIZATION_H
+#ifndef KOLIOP_BLAS_LU_H
+#define KOLIOP_BLAS_LU_H
 
 #include <KokkosBatched_Gemm_Decl.hpp>
 #include <KokkosBatched_Gemm_Serial_Impl.hpp>
@@ -19,44 +19,59 @@ namespace koliop {
     namespace blas {
 
         ////////////////////////////////////////////////////////////////////////
-        // LUFactorization definition
+        // LUBlockTridiagonalByBlock definition
         ////////////////////////////////////////////////////////////////////////
 
+        /// Lower upper (LU) tooling for block tridiagonal by block matrices.
         ///
+        /// Assuming we have a block tridiagonal matrix:
         ///
-        template <typename Float>
-        class LUFactorization {
+        /// M =
+        /// A_0 B_0       0
+        /// C_0 A_1 B_1
+        ///     C_1 A_. B_.
+        /// 0       C_. A_n
+        ///
+        /// where A, B and C are small matrices instead of scalars. These small
+        /// matrices are, in the case of Gysela, 3x3. Except for A, B and C
+        /// everything is assumed zero.
+        ///
+        /// Then, we propose a special case LU to solve for this kind of
+        /// matrices:
+        ///
+        /// M_0       0
+        ///     M_.
+        /// 0       M_n
+        ///
+        /// Due to the independent nature of the M_n blocks, we can treat them
+        /// in batch. In practice, this means that:
+        /// - On a CPU, each SIMD lane handles the factorization and solving for
+        /// an M block. A thead is given a set of M contiguous blocks.
+        /// - On a GPU, each thread    handles the factorization and solving for
+        /// an M block. A team (thread block/workgroup) is given a set of M
+        /// contiguous blocks.
+        ///
+        /// NOTE:
+        /// - We do not use pivoting which, for numerical stability or simply
+        /// validity of the solution, requires the A, B and C blocks be
+        /// diagonally dominant.
+        /// - We use a recursive LU decomposition very much similar to what is
+        /// used in Linpack implementations. A description is given in
+        /// Introduction to Algorithms, ISBN 978-0-262-03293-3 by Cormen, Thomas
+        /// H. et al., page 819.
+        ///
+        class LUBlockTridiagonalByBlock {
         public:
-        public:
-            void operator();
+            template <typename Array5D>
+            static void Factorize(Array5D&);
+            template <typename Array5D>
+            static void Solve();
 
         protected:
-            void DoFactorization() {
-                // // General scalar LU decomp ~
-                // const SizeType the_matrix_width = the_input.ColumnCount();
-
-                // for(SizeType the_pivot_idx = 0; the_pivot_idx < the_matrix_width; ++the_pivot_idx) {
-
-                //     const SizeType the_input_row_offset = the_pivot_idx + 1;
-                //     const T        the_pivot_value_inv  = static_cast<T>(1.0F) / the_input.Scalar(the_pivot_idx, the_pivot_idx);
-
-                //     for(SizeType the_input_y = the_input_row_offset; the_input_y < the_matrix_width; ++the_input_y) {
-
-                //         // the_input.Scalar(:, the_pivot_idx) = scale(the_input.Scalar(:, the_pivot_idx), the_pivot_value_inv)
-                //         const T the_row_scale_value                  = the_input.Scalar(the_input_y, the_pivot_idx) * the_pivot_value_inv;
-                //         the_input.Scalar(the_input_y, the_pivot_idx) = the_row_scale_value;
-
-                //         for(SizeType the_input_x = the_input_row_offset; the_input_x < the_matrix_width; ++the_input_x) {
-                //             // the_input.Scalar(the_input_y, :) = saxpy(the_input.Scalar(the_input_y, :), - /* minus */ the_row_scale_value, the_input.Scalar(the_pivot_idx, the_input_x))
-                //             the_input.Scalar(the_input_y, the_input_x) -= the_row_scale_value *
-                //                                                           the_input.Scalar(the_pivot_idx, the_input_x);
-                //         }
-                //     }
-                // }
-
-                // // Inputs Matrix A with D diagonals by block with block of size
-                // // W. A is N block wide in width and height. A(i,j) denotes the
-                // // block at row i and column j.
+            static void DoFactorization() {
+                // Inputs Matrix A with D diagonals by block with block of size
+                // W. A is N block wide in width and height. A(i,j) denotes the
+                // block at row i and column j.
 
                 // assert(D >= 1);
                 // assert(D % 2 == 1); // D is odd.
@@ -90,17 +105,12 @@ namespace koliop {
                 //         }
                 //     }
                 // }
-
-                // Else we do a recursive LU decomposition.
-                // NOTE that the algo used is similar to the one used in linpack, the
-                // recursive LU decomposition.
-                // Cormen, Thomas H.; Leiserson, Charles E.; Rivest, Ronald L.; Stein, Clifford (2001), Introduction to Algorithms, MIT Press and McGraw-Hill, ISBN 978-0-262-03293-3.
             }
         };
 
 
         ////////////////////////////////////////////////////////////////////////
-        // LUFactorization methods definition
+        // LUBlockTridiagonalByBlock methods definition
         ////////////////////////////////////////////////////////////////////////
 
 

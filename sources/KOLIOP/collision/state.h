@@ -1539,9 +1539,10 @@ namespace koliop {
                 if(mask_coll(ir, itheta)) {
                     const Flo64 BoT = B_norm(ir, itheta) / T_s(ir, itheta, iphi, pSpecies_id);
 
-                    for(uint64_t ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
-                        for(uint64_t ipol = 0; ipol < kMaximumLaguerrePolynomialDegree; ++ipol) {
+                    for(uint64_t ipol = 0; ipol < kMaximumLaguerrePolynomialDegree; ++ipol) {
+                        for(uint64_t ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
                             Flo64 RHS_vec_value = 0.0;
+
                             for(uint64_t imu = 0; imu < the_mu_extent; ++imu) {
                                 const Flo64 muBoT     = mug(imu) * BoT;
                                 const Flo64 coeff_tot = DoComputeLaguerrePol(ipol, muBoT) * BoT * coeff_intdmu(imu) * Kokkos::exp(-muBoT);

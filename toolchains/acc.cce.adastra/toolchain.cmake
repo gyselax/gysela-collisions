@@ -23,6 +23,10 @@ set(koliop_FLAGS_MINSIZEREL      -Os)
 set(koliop_FLAGS_RELEASE         -O3)
 set(koliop_FLAGS_RELWITHDEBINFO  -O3 -fno-omit-frame-pointer -fno-optimize-sibling-calls)
 
+# The following flags may have a positive performance impact:
+# -mllvm -amdgpu-early-inline-all=true -mllvm -amdgpu-function-calls=false
+# See: https://github.com/ROCm-Developer-Tools/HIP/blob/develop/hip-lang-config.cmake.in
+
 set(koliop_LINKER_FLAGS_DEBUG          ${koliop_FLAGS_DEBUG})
 set(koliop_LINKER_FLAGS_MINSIZEREL     ${koliop_FLAGS_MINSIZEREL})
 set(koliop_LINKER_FLAGS_RELEASE        ${koliop_FLAGS_RELEASE})
