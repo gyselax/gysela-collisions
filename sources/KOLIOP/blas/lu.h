@@ -23,6 +23,7 @@ namespace koliop {
         ////////////////////////////////////////////////////////////////////////
 
         /// Lower upper (LU) tooling for block tridiagonal by block matrices.
+        /// We treat square matrices.
         ///
         /// Assuming we have a block tridiagonal matrix:
         ///
@@ -32,40 +33,67 @@ namespace koliop {
         ///     C_1 A_. B_.
         /// 0       C_. A_n
         ///
-        /// where A, B and C are small matrices instead of scalars. These small
-        /// matrices are, in the case of Gysela, 3x3. Except for A, B and C
-        /// everything is assumed zero.
+        /// where A, B and C are small matrices of size kSmallBlockWidth x
+        /// kSmallBlockWidth instead of scalars. Except for A, B and C
+        /// everything is assumed zero. We have 0 <= n < kBigBlockWidth.
+        /// kBigBlockWidth is the number of block of size kSmallBlockWidth x
+        /// kSmallBlockWidth.
         ///
-        /// Then, we propose a special case LU to solve for this kind of
-        /// matrices:
+        /// We propose LU tooling for this kind of matrix:
         ///
+        /// A =
         /// M_0       0
         ///     M_.
         /// 0       M_n
         ///
-        /// Due to the independent nature of the M_n blocks, we can treat them
-        /// in batch. In practice, this means that:
-        /// - On a CPU, each SIMD lane handles the factorization and solving for
-        /// an M block. A thead is given a set of M contiguous blocks.
-        /// - On a GPU, each thread    handles the factorization and solving for
-        /// an M block. A team (thread block/workgroup) is given a set of M
-        /// contiguous blocks.
+        /// We have 0 <= n < A_width. A_width is the number of independent M
+        /// blocks of size kBigBlockWidth x kBigBlockWidth.
+        ///
+        /// The A matrix is expected to be stored under the following format:
+        ///     View<Scalar ccccc*>{kVectorWidth, kSmallBlockWidth, kSmallBlockWidth, 3, kBigBlockWidth, A_width / kVectorWidth}
+        /// The more naive format below prevent vectorization on CPU and
+        /// coalesced memory operations on GPU:
+        ///     View<Scalar cccc* >{              kSmallBlockWidth, kSmallBlockWidth, 3, kBigBlockWidth, A_width}
+        ///
+        ///
+        /// NOTE:
+        /// In Gysela, kBigBlockWidth = Npar, kSmallBlockWidth = Npolmax and
+        /// A_width depends on the blocking realized on r, theta and phi.
         ///
         /// NOTE:
         /// - We do not use pivoting which, for numerical stability or simply
-        /// validity of the solution, requires the A, B and C blocks be
-        /// diagonally dominant.
+        /// validity (division by 0) of the solution, requires in practice that
+        /// the A, B and C blocks be diagonally dominant.
         /// - We use a recursive LU decomposition very much similar to what is
         /// used in Linpack implementations. A description is given in
         /// Introduction to Algorithms, ISBN 978-0-262-03293-3 by Cormen, Thomas
         /// H. et al., page 819.
+        /// - Due to the independent nature of the M_n blocks, we can treat them
+        /// in batch. In practice, this means that:
+        ///     - On a CPU, each SIMD lane handles the factorization and solving
+        ///       for an M block. A thead is given a set of M contiguous blocks.
+        ///     - On a GPU, each thread    handles the factorization and solving
+        ///       for an M block. A team (thread block/workgroup) is given a set
+        ///       of M contiguous blocks.
         ///
         class LUBlockTridiagonalByBlock {
         public:
-            template <typename Array5D>
-            static void Factorize(Array5D&);
-            template <typename Array5D>
-            static void Solve();
+            /// @brief TRF
+            /// @param the_A_matrix Must respect the format described in the
+            /// LUBlockTridiagonalByBlock notes.
+            template <typename Array6D>
+            static void
+            Factorize(Array6D&& the_A_matrix);
+
+            /// @brief TRSV
+            /// @param the_A_matrix Must respect the format described in the
+            /// LUBlockTridiagonalByBlock notes.
+            /// @param the_rhs TODO(Etienne M)
+            template <typename Array6D,
+                      typename Array1D>
+            static void
+            SolveVector(const Array6D& the_A_matrix,
+                        Array1D&&      the_rhs);
 
         protected:
             static void DoFactorization() {
