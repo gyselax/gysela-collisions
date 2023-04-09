@@ -53,6 +53,17 @@ Test project /lus/home/BCINES/dci/malaboeuf/repos/gysela-gpu-porting/koliop/buil
 Total Test time (real) =   0.63 sec
 ```
 
+Note that to run the test on Unix systems, one may need to run the following
+command :
+```
+$ ulimit -s unlimited
+```
+
+This is due to our usage of of stack allocated (constant) buffer representing
+the input to the operator. This stack issue could be avoided with the use of
+dynamic allocation. The operator itself is not limited by the stack like the
+test case is, thus, there is not need to `ulimit` to be called.
+
 ## Coding style
 
 <!--
@@ -73,17 +84,17 @@ NOTE:
 ```c
     for each block do:
         for each 2x2 matrix:
-            A_r B_r
-            C_r A_r+1 B_r+1
-                C_r+1 A_r+2
-        // So for:
-        // A_r B_r
-        // C_r A_r+1
+            // A_r B_r
+            // C_r A_r+1 B_r+1
+            //     C_r+1 A_r+2
 
-        A_r   := LU(A_r);           // LU
-        B_r   := L^-1 * B_r;        // TRSM
-        C_r   := C_r * U^-1;        // TRSM
-        A_r+1 := C_r+1 - C_r * B_r; // GEMM
+            A_r B_r
+            C_r A_r+1
+
+            A_r   := LU(A_r);           // LU
+            B_r   := L^-1 * B_r;        // TRSM
+            C_r   := C_r * U^-1;        // TRSM
+            A_r+1 := C_r+1 - C_r * B_r; // GEMM
 ```
 
 - Which blas implementation for the LU decomposition
