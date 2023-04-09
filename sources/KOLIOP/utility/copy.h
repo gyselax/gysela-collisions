@@ -40,20 +40,20 @@ namespace koliop {
             /// NOTE: In case the shallow copy is realized, we loose the View's
             /// labe !!
             ///
-            template <typename FromView,
-                      typename ToView>
+            template <typename SourceView,
+                      typename DestinationView>
             static void
-            Shallow(FromView&& from_view,
-                    ToView&&   to_view);
+            Shallow(SourceView&&      a_source_view,
+                    DestinationView&& a_destination_view);
 
-            /// The storage for the to_view should already exist and the extents
+            /// The storage for the a_destination_view should already exist and the extents
             /// must match.
             ///
-            template <typename FromView,
-                      typename ToView>
+            template <typename SourceView,
+                      typename DestinationView>
             static void
-            Deep(FromView&& from_view,
-                 ToView&&   to_view);
+            Deep(SourceView&&      a_source_view,
+                 DestinationView&& a_destination_view);
         };
 
 
@@ -61,49 +61,49 @@ namespace koliop {
         // Copy methods definition
         ////////////////////////////////////////////////////////////////////////
 
-        template <typename FromView,
-                  typename ToView>
-        void Copy::Shallow(FromView&& from_view,
-                           ToView&&   to_view) {
-            if constexpr(std::is_same_v<typename std::remove_reference_t<FromView>::memory_space,
-                                        typename std::remove_reference_t<ToView>::memory_space> &&
-                         std::is_same_v<typename std::remove_reference_t<FromView>::array_layout,
-                                        typename std::remove_reference_t<ToView>::array_layout>) {
-                to_view = from_view;
+        template <typename SourceView,
+                  typename DestinationView>
+        void Copy::Shallow(SourceView&&      a_source_view,
+                           DestinationView&& a_destination_view) {
+            if constexpr(std::is_same_v<typename std::remove_reference_t<SourceView>::memory_space,
+                                        typename std::remove_reference_t<DestinationView>::memory_space> &&
+                         std::is_same_v<typename std::remove_reference_t<SourceView>::array_layout,
+                                        typename std::remove_reference_t<DestinationView>::array_layout>) {
+                a_destination_view = a_source_view;
             } else {
-                Deep(from_view, to_view);
+                Deep(a_source_view, a_destination_view);
             }
         }
 
-        template <typename FromView,
-                  typename ToView>
-        void Copy::Deep(FromView&& from_view,
-                        ToView&&   to_view) {
-            if constexpr(std::is_same_v<typename std::remove_reference_t<FromView>::memory_space,
-                                        typename std::remove_reference_t<ToView>::memory_space> ||
-                         std::is_same_v<typename std::remove_reference_t<FromView>::array_layout,
-                                        typename std::remove_reference_t<ToView>::array_layout>) {
+        template <typename SourceView,
+                  typename DestinationView>
+        void Copy::Deep(SourceView&&      a_source_view,
+                        DestinationView&& a_destination_view) {
+            if constexpr(std::is_same_v<typename std::remove_reference_t<SourceView>::memory_space,
+                                        typename std::remove_reference_t<DestinationView>::memory_space> ||
+                         std::is_same_v<typename std::remove_reference_t<SourceView>::array_layout,
+                                        typename std::remove_reference_t<DestinationView>::array_layout>) {
                 // Either we are in the same memory space, or we have a
                 // compatible layout which makes copying a simple memcpy.
-                Kokkos::deep_copy(to_view, from_view);
+                Kokkos::deep_copy(a_destination_view, a_source_view);
             } else {
 
                 // TODO(Etienne M): create_mirror_view_and_copy ?
 
                 // TODO(Etienne M): Do we really need to copy to the host ?
-                auto a_host_visible_source_mirror = Kokkos::create_mirror_view(Kokkos::view_alloc(Kokkos::WithoutInitializing), from_view);
-                auto a_host_visible_target_mirror = Kokkos::create_mirror_view(Kokkos::view_alloc(Kokkos::WithoutInitializing), to_view);
+                auto a_host_visible_source_mirror = Kokkos::create_mirror_view(Kokkos::view_alloc(Kokkos::WithoutInitializing), a_source_view);
+                auto a_host_visible_target_mirror = Kokkos::create_mirror_view(Kokkos::view_alloc(Kokkos::WithoutInitializing), a_destination_view);
 
                 // Could be a no-op.
                 Kokkos::deep_copy(a_host_visible_source_mirror,
-                                  from_view);
+                                  a_source_view);
 
                 // Resolve potential layout issues on the host.
                 Kokkos::deep_copy(a_host_visible_target_mirror,
                                   a_host_visible_source_mirror);
 
                 // Could be a no-op.
-                Kokkos::deep_copy(to_view,
+                Kokkos::deep_copy(a_destination_view,
                                   a_host_visible_target_mirror);
             }
         }
