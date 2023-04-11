@@ -580,8 +580,8 @@ namespace koliop {
         inline void State::ComputeQparOnNT(const Flo64* f5d_s) {
             // TODO(Etienne M): COPY redundant.
 
-            auto a_device_visible_f5d_s = ViewMDL6<Flo64>{Kokkos::view_alloc(Kokkos::WithoutInitializing, "f5d_s"),
-                                                          the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_};
+            auto a_device_visible_f5d_s = ViewMDL6<const Flo64>{Kokkos::view_alloc(Kokkos::WithoutInitializing, "f5d_s"),
+                                                                the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_};
 
             auto a_host_visible_f5d_s = ViewUHL6<const Flo64>{// "unmanaged_host_f5d_s",
                                                               f5d_s, the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_};
