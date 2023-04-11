@@ -12,7 +12,16 @@ namespace koliop {
         // Copy definition
         ////////////////////////////////////////////////////////////////////////
 
-        ///
+        /// TODO(Etienne M):
+        /// We could prevent an allocation before doing the shallow copy when
+        /// obtaining a host pointer and having to convert it to device.
+        /// Currently, we first allocate view to contain the potential copy, then
+        /// we deduce if we can do a shallow copy, if we can, the memory is
+        /// freed, else we do a deep copy. In case the deep copy is not required
+        /// we have to prevent that allocation.
+        /// Note that on CPU with CPU inputs Koliop should not allocate ANY memory
+        /// for its input and only do shallow copy. Similarly on GPU with GPU
+        /// inputs. that said, if a GPU Koliop gets CPU inputs we have to copy.
         ///
         struct Copy {
         public:

@@ -5,6 +5,7 @@
 
 #include <Kokkos_Core.hpp>
 
+#include "KOLIOP/blas/lu.h"
 #include "KOLIOP/internal/configuration.h"
 #include "KOLIOP/portability/cmath.h"
 #include "KOLIOP/utility/copy.h"
@@ -162,6 +163,10 @@ namespace koliop {
             static inline constexpr uint64_t kBlockExtentPhi   = 1;
 
             static inline constexpr uint64_t kFlattenedExtent = kBlockExtentR * kBlockExtentTheta * kBlockExtentPhi;
+
+            using AlphaSolverType = koliop::blas::LUBlockTridiagonalByBlock<Flo64,
+                                                                            Kokkos::DefaultExecutionSpace,
+                                                                            3>;
 
         public:
             State(uint64_t                     pSpecies_id,
@@ -384,6 +389,10 @@ namespace koliop {
             ViewMDD4<Flo64> T_s_;
             ViewMDD5<Flo64> nu_ab_;
             ViewMDD4<Flo64> q_par_on_nT_s_;
+
+            // Miscellaneous tooling
+
+            AlphaSolverType the_alpha_solver_;
         };
 
 
@@ -482,7 +491,12 @@ namespace koliop {
             , nu_ab_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "nu_ab_"),
                      the_r_extent_, the_theta_extent_, the_phi_extent_, the_species_extent_, the_species_extent_}
             , q_par_on_nT_s_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "q_par_on_nT_s_"),
-                             the_r_extent_, the_theta_extent_, the_phi_extent_, the_species_extent_} {
+                             the_r_extent_, the_theta_extent_, the_phi_extent_, the_species_extent_}
+
+            // Miscellaneous tooling
+
+            // TODO(Etienne M): Should we partition ?
+            , the_alpha_solver_{Kokkos::DefaultExecutionSpace{}} {
 
             // TODO(Etienne M): Say we get CPU buffers. Depending on whether
             // koliop is compiled for CPU or GPU we can either, do a shallow
@@ -1372,6 +1386,8 @@ namespace koliop {
             const auto& mask_LIM      = a_state.mask_LIM_;
 
             const bool& LIM = a_state.LIM_;
+
+            const auto the_alpha_solver = a_state.the_alpha_solver_;
 
             KOLIOP_ASSERT(the_r_extent % kBlockExtentR == 0);
             KOLIOP_ASSERT(the_theta_extent % kBlockExtentTheta == 0);

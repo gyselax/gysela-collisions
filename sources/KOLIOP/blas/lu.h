@@ -5,13 +5,10 @@
 
 #include <KokkosBatched_Gemm_Decl.hpp>
 #include <KokkosBatched_Gemm_Serial_Impl.hpp>
-#include <KokkosBatched_Gemm_Team_Impl.hpp>
 #include <KokkosBatched_LU_Decl.hpp>
 #include <KokkosBatched_LU_Serial_Impl.hpp>
-#include <KokkosBatched_LU_Team_Impl.hpp>
 #include <KokkosBatched_Trsm_Decl.hpp>
 #include <KokkosBatched_Trsm_Serial_Impl.hpp>
-#include <KokkosBatched_Trsm_Team_Impl.hpp>
 
 #include "KOLIOP/internal/configuration.h"
 
@@ -46,22 +43,38 @@ namespace koliop {
         ///     M_.
         /// 0       M_n
         ///
-        /// We have 0 <= n < A_width. A_width is the number of independent M
-        /// block of size kBigBlockExtent x kBigBlockExtent.
+        /// We have 0 <= n < A_matrix_extent. A_matrix_extent is the number of
+        /// independent M block of size kBigBlockExtent x kBigBlockExtent.
         ///
         /// The A matrix is expected to be stored under the following format:
-        ///     View<Scalar *ccccc>{A_width / kBatchSize, kBigBlockExtent, 3, kSmallBlockExtent, kSmallBlockExtent, kBatchSize}
+        ///     View<Scalar *ccccc>{A_matrix_extent / kBatchSize, kBigBlockExtent, kDiagonalCount, kSmallBlockExtent, kSmallBlockExtent, kBatchSize}
         /// The matrix should be in layout right and we justify that due to a
         /// limitation in Kokkos for representing constant extent, indeed they
-        /// can not appear before dynamic extent.
+        /// can not appear before dynamic extent. The C is followed by the block
+        /// A and B like so:
+        /// [ A_matrix_extent / kBatchSize
+        ///     [ kBigBlockExtent
+        ///         [ kDiagonalCount
+        ///             [BlockC], [BlockA], [BlockB]
+        ///         ]
+        ///     ]
+        /// ]
+        /// Each block contains the data for potentially multiple (kBatchSize)
+        /// problems like so:
+        /// [ BlockA
+        ///     [ BlockA row values
+        ///         [ kBatchSize values]
+        ///     ]
+        /// ]
         ///
         /// The more naive format below prevent vectorization on CPU and
         /// coalesced memory operations on GPU:
-        ///     View<Scalar *cccc>{A_width              , kBigBlockExtent, 3, kSmallBlockExtent, kSmallBlockExtent}
+        ///     View<Scalar *cccc>{A_matrix_extent              , kBigBlockExtent, kDiagonalCount, kSmallBlockExtent, kSmallBlockExtent}
         ///
         /// NOTE:
         /// In Gysela, kBigBlockExtent = Npar, kSmallBlockExtent = Npolmax and
-        /// A_width depends on the blocking realized on r, theta and phi.
+        /// A_matrix_extent depends on the blocking realized on r, theta and
+        /// phi.
         ///
         /// NOTE:
         /// - We do not use pivoting which, for numerical stability or simply
@@ -82,14 +95,79 @@ namespace koliop {
         ///       for an M block. A team (thread block/workgroup) is given a set
         ///       of M contiguous blocks. On GPU we may also use SIMD in the
         ///       form of double2 or float2 etc. (SIMDception).
+        ///     - An M block is referred as batch element.
+        ///     - The a matrix must a number of M block a multiple of kBatchSize
+        ///       (you can add padding).
         ///
         template <typename Float,
-                  typename ExecutionSpace>
+                  typename ExecutionSpace,
+                  uint64_t kSmallBlockExtent = 3>
         class LUBlockTridiagonalByBlock {
         public:
             using FloatType          = Float;
             using ExecutionSpaceType = ExecutionSpace;
-            // TODO(Etienne M): Batch size
+
+            /// We could make this more general but for now the code is assuming
+            /// this is fixed to 3.
+            static inline constexpr uint64_t kDiagonalCount = 3;
+
+            /// We wish to saturate the hardware.
+            /// - On CPU this means using SIMD instructions.
+            /// - On GPU this means using (intra lane) SIMD such as double2
+            /// combined with wavefront coalesced accesses. On AMD GPUs, a
+            /// wavefront is 64 but we could go even lower and only seek to do
+            /// 16 thread coalesced accesses as wave fronts a processed by
+            /// groups of 16 threads.
+            /// kBatchSize represents the vector length from the hardware POV.
+            /// The vector length from the thread POV may differ due to intra
+            /// lane SIMD such as double2.
+            static inline constexpr uint64_t kBatchSize = KokkosBatched::DefaultVectorLength<FloatType,
+                                                                                             typename ExecutionSpace::memory_space>::value;
+
+            using ScalarMatrixType = Kokkos::View<FloatType** [kDiagonalCount][kSmallBlockExtent][kSmallBlockExtent][kBatchSize],
+                                                  Kokkos::LayoutRight,
+                                                  ExecutionSpace>;
+
+            /// We define the vector type from the thread POV.
+            /// - On CPU it is similar to the vector type from the hardware POV
+            /// say, a ymm register.
+            /// - On GPU it shall represent an inter lane SIMD such as double4.
+            static constexpr uint64_t kVectorSize = KokkosBatched::DefaultInternalVectorLength<FloatType,
+                                                                                               typename ExecutionSpace::memory_space>::value;
+
+            static constexpr uint64_t kVectorPerBatch = kBatchSize / kVectorSize;
+
+            using ThreadVectorType = KokkosBatched::Vector<KokkosBatched::SIMD<FloatType>,
+                                                           kVectorSize>;
+
+            /// The batch count did not changed compared to ScalarMatrixType
+            /// but the batch potentially gets subdivided in vectors.
+            /// NOTE: We changed the View's type.
+            using VectorMatrixType = Kokkos::View<ThreadVectorType** [kDiagonalCount][kSmallBlockExtent][kSmallBlockExtent][kVectorPerBatch],
+                                                  Kokkos::LayoutRight,
+                                                  ExecutionSpace>;
+
+        protected:
+            // using ConcurrencyPolicy = KokkosBatched::Mode::Serial;
+            using CachingPolicy = KokkosBatched::Algo::Level3::Unblocked;
+
+            using LU = KokkosBatched::SerialLU<CachingPolicy>;
+
+            using TRSMLower = KokkosBatched::SerialTrsm<KokkosBatched::Side::Left,
+                                                        KokkosBatched::Uplo::Lower,
+                                                        KokkosBatched::Trans::NoTranspose,
+                                                        KokkosBatched::Diag::Unit,
+                                                        CachingPolicy>;
+
+            using TRSMUpper = KokkosBatched::SerialTrsm<KokkosBatched::Side::Right,
+                                                        KokkosBatched::Uplo::Upper,
+                                                        KokkosBatched::Trans::NoTranspose,
+                                                        KokkosBatched::Diag::NonUnit,
+                                                        CachingPolicy>;
+
+            using GEMM = KokkosBatched::SerialGemm<KokkosBatched::Trans::NoTranspose,
+                                                   KokkosBatched::Trans::NoTranspose,
+                                                   CachingPolicy>;
 
         public:
             LUBlockTridiagonalByBlock(ExecutionSpace an_execution_space);
@@ -97,8 +175,13 @@ namespace koliop {
             /// @brief TRF
             /// @param the_A_matrix Must respect the format described in the
             /// LUBlockTridiagonalByBlock notes.
-            template <typename Array6D>
-            void Factorize(Array6D&& the_A_matrix) const;
+            /// @param the_A_matrix_extent The number of independent block
+            /// diagonal problem. Must be a multiple of kBatchSize.
+            /// @param the_M_matrix_extent The number extent of the block
+            /// diagonal problem.
+            void Factorize(FloatType* the_A_matrix,
+                           uint64_t   the_A_matrix_extent,
+                           uint64_t   the_M_matrix_extent) const;
 
             /// @brief TRSV
             /// @param the_A_matrix Must respect the format described in the
@@ -118,73 +201,88 @@ namespace koliop {
         // LUBlockTridiagonalByBlock methods definition
         ////////////////////////////////////////////////////////////////////////
 
-        template <typename ExecutionSpace>
-        LUBlockTridiagonalByBlock<ExecutionSpace>::LUBlockTridiagonalByBlock(ExecutionSpace an_execution_space)
+        template <typename Float,
+                  typename ExecutionSpace,
+                  uint64_t kSmallBlockExtent>
+        LUBlockTridiagonalByBlock<Float,
+                                  ExecutionSpace,
+                                  kSmallBlockExtent>::LUBlockTridiagonalByBlock(ExecutionSpace an_execution_space)
             : the_execution_space_{an_execution_space} {
             // EMPTY
         }
 
-        template <typename ExecutionSpace>
-        template <typename Array6D>
-        void LUBlockTridiagonalByBlock<ExecutionSpace>::Factorize(Array6D&& the_A_matrix) const {
-            const auto the_kernel = KOKKOS_LAMBDA(const auto& a_team_handle){
-                
+        template <typename Float,
+                  typename ExecutionSpace,
+                  uint64_t kSmallBlockExtent>
+        void LUBlockTridiagonalByBlock<Float,
+                                       ExecutionSpace,
+                                       kSmallBlockExtent>::Factorize(FloatType* the_A_matrix,
+                                                                     uint64_t   the_A_matrix_extent,
+                                                                     uint64_t   the_M_matrix_extent) const {
+
+            KOLIOP_ASSERT(the_A_matrix != nullptr);
+            // the_A_matrix_extent must be divisible by kBatchSize. Else we need
+            // padding.
+            KOLIOP_ASSERT(the_A_matrix_extent % kBatchSize == 0);
+            KOLIOP_ASSERT(the_M_matrix_extent > 0);
+
+            const uint64_t kBatchCount     = the_A_matrix_extent / kBatchSize;
+            const uint64_t kBigBlockExtent = the_M_matrix_extent;
+
+            VectorMatrixType the_A_matrix_view{reinterpret_cast<ThreadVectorType*>(the_A_matrix),
+                                               kBatchCount,
+                                               the_M_matrix_extent};
+
+            const auto the_kernel = KOKKOS_LAMBDA(auto the_batch_index, auto the_batch_element_index) {
+                static_assert(kDiagonalCount == 3, "");
+
+                const auto the_batch_element = Kokkos::subview(the_A_matrix_view,
+                                                               the_batch_index,
+                                                               // TODO(Etienne M): These ALL() are constant, should we
+                                                               // hardcode them to facilitate the compiler's work ?
+                                                               Kokkos::ALL(), // kBigBlockExtent
+                                                               Kokkos::ALL(), // kDiagonalCount
+                                                               Kokkos::ALL(), // kSmallBlockExtent
+                                                               Kokkos::ALL(), // kSmallBlockExtent
+                                                               the_batch_element_index);
+
+                // Applying the naming above, we have:
+                auto A = Kokkos::subview(the_batch_element, 0, 1, Kokkos::ALL(), Kokkos::ALL());
+
+                if(kBigBlockExtent == 1) {
+                    LU::invoke(A);
+                } else {
+                    auto C      = Kokkos::subview(the_batch_element, 0, 0, Kokkos::ALL(), Kokkos::ALL());
+                    auto B      = Kokkos::subview(the_batch_element, 0, 2, Kokkos::ALL(), Kokkos::ALL());
+                    auto A_next = Kokkos::subview(the_batch_element, 1, 1, Kokkos::ALL(), Kokkos::ALL());
+
+                    for(uint64_t the_small_block_index = 0;
+                        the_small_block_index < (kBigBlockExtent - 1);
+                        ++the_small_block_index) {
+
+                        // TODO(Etienne M): Recreate view or assign ? Which is
+                        // faster ?
+
+                        C.assign_data(&the_batch_element(the_small_block_index, 0, 0, 0));
+                        A.assign_data(&the_batch_element(the_small_block_index, 1, 0, 0));
+                        B.assign_data(&the_batch_element(the_small_block_index, 2, 0, 0));
+                        A_next.assign_data(&the_batch_element(the_small_block_index + 1, 1, 0, 0));
+
+                        LU::invoke(A);                         // A = L+U-I
+                        TRSMLower::invoke(1.0, A, B);          // Solve: A_lower * X = B, X is put into B
+                        TRSMUpper::invoke(1.0, A, C);          // Solve: A_upper * X = C, X is put into C
+                        GEMM::invoke(-1.0, C, B, 1.0, A_next); // A_next = 1.0 * A_next + -1 * C * B
+                    }
+
+                    KokkosBatched::SerialLU<CachingPolicy>::invoke(A_next);
+                }
             };
 
-            // TODO(Etienne M): Assert that the range divide evenly by vectors
-            // and other *grandeur*.
-
-            // 1: We wish to saturate the hardware.
-            // - On CPU this means using SIMD instructions.
-            // - On GPU this means using (intra lane) SIMD such as double2 combined
-            // with wavefront coalesced accesses. On AMD GPUs, a wavefront is 64
-            // but we could go even lower and only seek to do 16 thread coalesced
-            // accesses. Indeed 16 x sizeof(double) = 128 which is the cache lane
-            // size.
-
-            // kBatchSize represents the vector length from the hardware POV. The
-            // vector length from the thread POV may differ due to intra lane SIMD
-            // such as double2.
-            static constexpr uint64_t kBatchSize  = DefaultVectorLength<FloatType, memory_space_type>::value;
-            const uint64_t            kBatchCount = A_width / kBatchSize;
-
-            Kokkos::View<FloatType******, Kokkos::LayoutRight, exec_space_type> A_storage("A",
-                                                                                           kBatchCount,
-                                                                                           kBigBlockExtent, 3,
-                                                                                           kSmallBlockExtent, kSmallBlockExtent,
-                                                                                           kBatchSize);
-
-            // 2: Then we define the vector type from the thread POV.
-            // - On CPU it is similar to the vector type from the hardware POV say,
-            // a ymm register.
-            // - On GPU it shall represent an inter lane SIMD such as double4.
-            static constexpr uint64_t kVectorSize     = DefaultInternalVectorLength<FloatType, memory_space_type>::value;
-            static constexpr uint64_t kVectorPerBatch = kBatchSize / kVectorSize;
-
-            using ThreadVector = Vector<SIMD<FloatType>, kVectorSize>;
-
-            Kokkos::View<ThreadVector******, Kokkos::LayoutRight, exec_space_type> A_vector(reinterpret_cast<ThreadVector*>(A_storage.data()),
-                                                                                            // The batch count does not change.
-                                                                                            kBatchCount,
-                                                                                            kBigBlockExtent, 3,
-                                                                                            kSmallBlockExtent, kSmallBlockExtent,
-                                                                                            // But the batch potentially gets
-                                                                                            // subdivided in vectors.
-                                                                                            // NOTE: We changed the View's
-                                                                                            // type.
-                                                                                            kVectorPerBatch);
-
-            // 3: Then, each thread identifies its batch and vector inside the
-            // batch.
-
-            const uint64_t kConcurrency   = XXX.concurency();
-            const uint64_t kWorkItemCount = kBatchCount * kVectorPerBatch;
-            const uint64_t kTeamSize      = WHAT here ? ; // 256; // 1 on CPU, at least a wavefront on GPUs ?
-            const uint64_t kLeagueCount   = WHAT here ? ; // kWorkItemCount / kTeamSize;
-
-            const uint64_t kVectorSize = 1; // We already defined ThreadVector so this vector loop is unnecessary.
-
-            const auto a_policy = Kokkos::TeamPolicy<ExecutionSpace>(kLeagueCount, Kokkos::AUTO, kVectorSize);
+            const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<2,
+                                                                     // TODO(Etienne M): Tune blocking.
+                                                                     Kokkos::Iterate::Left,
+                                                                     Kokkos::Iterate::Right>>{{0, 0},
+                                                                                              {kBatchCount, kBatchSize}};
 
             Kokkos::parallel_for("LUBlockTridiagonalByBlock::Factorize",
                                  a_policy, the_kernel);
