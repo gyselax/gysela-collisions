@@ -1088,8 +1088,8 @@ namespace koliop {
                                      });
             };
 
-            auto a_policy = KernelIterationPolicy{static_cast<int>(the_team_count),
-                                                  Kokkos::AUTO};
+            auto a_policy = KernelIterationPolicy(the_team_count,
+                                                  Kokkos::AUTO);
 
             a_policy.set_scratch_size(0,
                                       Kokkos::PerThread(ScratchMemory::shmem_size(the_scratch_memory_bytes_per_thread)));

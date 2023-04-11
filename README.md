@@ -88,7 +88,7 @@ NOTE:
 
 - Which blas implementation for the LU decomposition
 - Port more kernels
-- Test KOKKOS_BOUNDS_CHECK
+- Test KOKKOS_BOUNDS_CHECK Kokkos_ENABLE_DEBUG_BOUNDS_CHECKS Kokkos_ENABLE_DEBUG
 - Create the fortran bindings
 - Quick recheck of the kernel and their fortran equivalent
 - Test in Gysela (progressively replace libcoll with koliop)
