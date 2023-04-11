@@ -340,12 +340,9 @@ namespace koliop {
 
             // Constant, externally computed values
 
-            // TODO(Etienne M): Cleanup unused values (say, Nspecies replaced with the_species_extent_)
-            uint64_t Nspecies_;
+            // TODO(Etienne M): Cleanup unused values
             uint64_t pSpecies_id_;
             uint64_t mu_id_;
-            uint64_t Nmu_;
-            uint64_t Nvpar_;
             uint64_t the_mu_extent_;
             uint64_t the_vpar_extent_;
             uint64_t the_r_extent_;
@@ -422,13 +419,9 @@ namespace koliop {
                             const ViewUHL2<const Flo64>& a_host_visible_mask_LIM,
                             const ViewUHL2<const Flo64>& a_host_visible_B_norm,
                             const ViewUHL4<const Flo64>& a_host_visible_Bstar_s)
-            : // Constant, externally computed values
-
-            Nspecies_{the_species_extent}
-            , pSpecies_id_{pSpecies_id}
+            // Constant, externally computed values
+            : pSpecies_id_{pSpecies_id}
             , mu_id_{mu_id}
-            , Nmu_{the_mu_extent - 1}
-            , Nvpar_{the_vpar_extent - 1}
             , the_mu_extent_{the_mu_extent}
             , the_vpar_extent_{the_vpar_extent}
             , the_r_extent_{the_r_extent}
@@ -536,10 +529,10 @@ namespace koliop {
             // TODO(Etienne M): COPY redundant.
 
             auto a_device_visible_f5d_s = ViewMDL6<Flo64>{Kokkos::view_alloc(Kokkos::WithoutInitializing, "f5d_s"),
-                                                          the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_};
+                                                          the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, the_species_extent_};
 
             auto a_host_visible_f5d_s = ViewUHL6<Flo64>{// "unmanaged_host_f5d_s",
-                                                        f5d_s, the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_};
+                                                        f5d_s, the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, the_species_extent_};
 
             koliop::utility::Copy::Shallow(a_host_visible_f5d_s, a_device_visible_f5d_s);
 
@@ -562,10 +555,10 @@ namespace koliop {
             // TODO(Etienne M): COPY redundant.
 
             auto a_device_visible_f5d_s = ViewMDL6<Flo64>{Kokkos::view_alloc(Kokkos::WithoutInitializing, "f5d_s"),
-                                                          the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_};
+                                                          the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, the_species_extent_};
 
             auto a_host_visible_f5d_s = ViewUHL6<Flo64>{// "unmanaged_host_f5d_s",
-                                                        f5d_s, the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_};
+                                                        f5d_s, the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, the_species_extent_};
 
             koliop::utility::Copy::Shallow(a_host_visible_f5d_s, a_device_visible_f5d_s);
 
@@ -580,11 +573,14 @@ namespace koliop {
         inline void State::ComputeQparOnNT(const Flo64* f5d_s) {
             // TODO(Etienne M): COPY redundant.
 
-            auto a_device_visible_f5d_s = ViewMDL6<const Flo64>{Kokkos::view_alloc(Kokkos::WithoutInitializing, "f5d_s"),
-                                                                the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_};
+            // TODO(Etienne M): On host we want the view to have the same type
+            // (operator= is used.). On GPU, we need a deep copy and
+            // a_device_visible_f5d_s can not be const..
+            auto a_device_visible_f5d_s = ViewMDL6</* const */ Flo64>{Kokkos::view_alloc(Kokkos::WithoutInitializing, "f5d_s"),
+                                                                      the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, the_species_extent_};
 
             auto a_host_visible_f5d_s = ViewUHL6<const Flo64>{// "unmanaged_host_f5d_s",
-                                                              f5d_s, the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_};
+                                                              f5d_s, the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, the_species_extent_};
 
             koliop::utility::Copy::Shallow(a_host_visible_f5d_s, a_device_visible_f5d_s);
 
@@ -598,10 +594,10 @@ namespace koliop {
             // TODO(Etienne M): COPY redundant.
 
             auto a_device_visible_f5d_s = ViewMDL6<Flo64>{Kokkos::view_alloc(Kokkos::WithoutInitializing, "f5d_s"),
-                                                          the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_};
+                                                          the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, the_species_extent_};
 
             auto a_host_visible_f5d_s = ViewUHL6<Flo64>{// "unmanaged_host_f5d_s",
-                                                        f5d_s, the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_};
+                                                        f5d_s, the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, the_species_extent_};
 
             koliop::utility::Copy::Shallow(a_host_visible_f5d_s, a_device_visible_f5d_s);
 
@@ -618,10 +614,10 @@ namespace koliop {
             // TODO(Etienne M): COPY redundant.
 
             auto a_device_visible_f5d_s = ViewMDL6<Flo64>{Kokkos::view_alloc(Kokkos::WithoutInitializing, "f5d_s"),
-                                                          the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_};
+                                                          the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, the_species_extent_};
 
             auto a_host_visible_f5d_s = ViewUHL6<Flo64>{// "unmanaged_host_f5d_s",
-                                                        f5d_s, the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_};
+                                                        f5d_s, the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, the_species_extent_};
 
             koliop::utility::Copy::Shallow(a_host_visible_f5d_s, a_device_visible_f5d_s);
 
@@ -637,10 +633,10 @@ namespace koliop {
             // TODO(Etienne M): COPY redundant.
 
             auto a_device_visible_f5d_s = ViewMDL6<Flo64>{Kokkos::view_alloc(Kokkos::WithoutInitializing, "f5d_s"),
-                                                          the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_};
+                                                          the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, the_species_extent_};
 
             auto a_host_visible_f5d_s = ViewUHL6<Flo64>{// "unmanaged_host_f5d_s",
-                                                        f5d_s, the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_};
+                                                        f5d_s, the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, the_species_extent_};
 
             koliop::utility::Copy::Shallow(a_host_visible_f5d_s, a_device_visible_f5d_s);
 
@@ -656,10 +652,10 @@ namespace koliop {
             // TODO(Etienne M): COPY redundant.
 
             auto a_device_visible_f5d_s = ViewMDL6<Flo64>{Kokkos::view_alloc(Kokkos::WithoutInitializing, "f5d_s"),
-                                                          the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_};
+                                                          the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, the_species_extent_};
 
             auto a_host_visible_f5d_s = ViewUHL6<Flo64>{// "unmanaged_host_f5d_s",
-                                                        f5d_s, the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_};
+                                                        f5d_s, the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, the_species_extent_};
 
             koliop::utility::Copy::Shallow(a_host_visible_f5d_s, a_device_visible_f5d_s);
 
@@ -675,10 +671,10 @@ namespace koliop {
             // TODO(Etienne M): COPY redundant.
 
             auto a_device_visible_f5d_s = ViewMDL6<Flo64>{Kokkos::view_alloc(Kokkos::WithoutInitializing, "f5d_s"),
-                                                          the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_};
+                                                          the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, the_species_extent_};
 
             auto a_host_visible_f5d_s = ViewUHL6<Flo64>{// "unmanaged_host_f5d_s",
-                                                        f5d_s, the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, Nspecies_};
+                                                        f5d_s, the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, the_species_extent_};
 
             koliop::utility::Copy::Shallow(a_host_visible_f5d_s, a_device_visible_f5d_s);
 
@@ -779,8 +775,8 @@ namespace koliop {
             const auto R0_inverse = 1.0 / R0_;
 
             // TODO(Etienne M): LOOP Obvious loop inter exchange optimization ?
-            for(uint64_t ispeciesB = 0; ispeciesB < Nspecies_; ++ispeciesB) {
-                for(uint64_t ispeciesA = 0; ispeciesA < Nspecies_; ++ispeciesA) {
+            for(uint64_t ispeciesB = 0; ispeciesB < the_species_extent_; ++ispeciesB) {
+                for(uint64_t ispeciesA = 0; ispeciesA < the_species_extent_; ++ispeciesA) {
                     const Flo64 hat_Aa = a_host_visible_hat_As(ispeciesA);
                     const Flo64 hat_Za = a_host_visible_hat_Zs(ispeciesA);
                     const Flo64 hat_Ab = a_host_visible_hat_As(ispeciesB);
@@ -832,7 +828,7 @@ namespace koliop {
             const uint64_t& the_r_extent       = a_state.the_r_extent_;
             const uint64_t& the_theta_extent   = a_state.the_theta_extent_;
             const uint64_t& the_phi_extent     = a_state.the_phi_extent_;
-            const uint64_t& the_species_extent = a_state.Nspecies_;
+            const uint64_t& the_species_extent = a_state.the_species_extent_;
 
             const auto& mug            = a_state.mug_;
             const auto& vparg          = a_state.vparg_;
@@ -927,7 +923,7 @@ namespace koliop {
             const uint64_t& the_r_extent       = a_state.the_r_extent_;
             const uint64_t& the_theta_extent   = a_state.the_theta_extent_;
             const uint64_t& the_phi_extent     = a_state.the_phi_extent_;
-            const uint64_t& the_species_extent = a_state.Nspecies_;
+            const uint64_t& the_species_extent = a_state.the_species_extent_;
 
             const auto& hat_As       = a_state.hat_As_;
             const auto& nustar_coeff = a_state.nustar_coeff_;
@@ -979,7 +975,7 @@ namespace koliop {
             const uint64_t& the_r_extent       = a_state.the_r_extent_;
             const uint64_t& the_theta_extent   = a_state.the_theta_extent_;
             const uint64_t& the_phi_extent     = a_state.the_phi_extent_;
-            const uint64_t& the_species_extent = a_state.Nspecies_;
+            const uint64_t& the_species_extent = a_state.the_species_extent_;
 
             const auto& hat_As  = a_state.hat_As_;
             const auto& mug     = a_state.mug_;
@@ -1109,7 +1105,7 @@ namespace koliop {
             const uint64_t& the_r_extent       = a_state.the_r_extent_;
             const uint64_t& the_theta_extent   = a_state.the_theta_extent_;
             const uint64_t& the_phi_extent     = a_state.the_phi_extent_;
-            const uint64_t& the_species_extent = a_state.Nspecies_;
+            const uint64_t& the_species_extent = a_state.the_species_extent_;
 
             const auto& mug            = a_state.mug_;
             const auto& vparg          = a_state.vparg_;
@@ -1183,7 +1179,7 @@ namespace koliop {
             const uint64_t& the_r_extent       = a_state.the_r_extent_;
             const uint64_t& the_theta_extent   = a_state.the_theta_extent_;
             const uint64_t& the_phi_extent     = a_state.the_phi_extent_;
-            const uint64_t& the_species_extent = a_state.Nspecies_;
+            const uint64_t& the_species_extent = a_state.the_species_extent_;
 
             const auto& hat_As        = a_state.hat_As_;
             const auto& hat_Zs        = a_state.hat_Zs_;
@@ -1768,7 +1764,7 @@ namespace koliop {
             const auto& the_r_extent       = a_state.the_r_extent_;
             const auto& the_theta_extent   = a_state.the_theta_extent_;
             const auto& the_phi_extent     = a_state.the_phi_extent_;
-            const auto& the_species_extent = a_state.Nspecies_;
+            const auto& the_species_extent = a_state.the_species_extent_;
 
             const auto& hat_As         = a_state.hat_As_;
             const auto& mug            = a_state.mug_;
