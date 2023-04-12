@@ -210,7 +210,7 @@ namespace koliop {
                              FloatType*       the_rhs) const;
 
         protected:
-            ExecutionSpace the_execution_space_;
+            ExecutionSpaceType the_execution_space_;
         };
 
 
@@ -306,11 +306,13 @@ namespace koliop {
                 }
             };
 
-            const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<2,
+            const auto a_policy = Kokkos::MDRangePolicy<ExecutionSpaceType,
+                                                        Kokkos::Rank<2,
                                                                      // TODO(Etienne M): Tune blocking.
                                                                      Kokkos::Iterate::Left,
-                                                                     Kokkos::Iterate::Right>>{{0, 0},
-                                                                                              {kBatchCount, kBatchSize}};
+                                                                     Kokkos::Iterate::Right>>{the_execution_space_,
+                                                                                              {0, 0},
+                                                                                              {kBatchCount, kVectorPerBatch}};
 
             Kokkos::parallel_for("LUBlockTridiagonalByBlock::Factorize",
                                  a_policy, the_kernel);

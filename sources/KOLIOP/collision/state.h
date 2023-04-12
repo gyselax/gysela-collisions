@@ -158,16 +158,16 @@ namespace koliop {
             static inline constexpr uint64_t kMaximumLaguerrePolynomialDegree = 3;
 
         protected:
+            using AlphaSolverType = koliop::blas::LUBlockTridiagonalByBlock<Flo64,
+                                                                            Kokkos::DefaultExecutionSpace,
+                                                                            kMaximumLaguerrePolynomialDegree>;
+
             // TODO(Etienne M): Tune that size or rework batching
             static inline constexpr uint64_t kBlockExtentR     = 16;
             static inline constexpr uint64_t kBlockExtentTheta = 1;
             static inline constexpr uint64_t kBlockExtentPhi   = 1;
 
             static inline constexpr uint64_t kFlattenedExtent = kBlockExtentR * kBlockExtentTheta * kBlockExtentPhi;
-
-            using AlphaSolverType = koliop::blas::LUBlockTridiagonalByBlock<Flo64,
-                                                                            Kokkos::DefaultExecutionSpace,
-                                                                            kMaximumLaguerrePolynomialDegree>;
 
         public:
             State(uint64_t                     pSpecies_id,
