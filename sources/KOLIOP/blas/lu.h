@@ -101,6 +101,9 @@ namespace koliop {
         ///
         template <typename Float,
                   typename ExecutionSpace,
+                  // TODO(Etienne M): See if kFlattenedExtent which is
+                  // constexpr, can help improve the performance when used as an
+                  // template argument. kBigBlockExtent = kFlattenedExtent.
                   uint64_t kSmallBlockExtent = 3>
         class LUBlockTridiagonalByBlock {
         public:
@@ -232,6 +235,17 @@ namespace koliop {
             VectorMatrixType the_A_matrix_view{reinterpret_cast<ThreadVectorType*>(the_A_matrix),
                                                kBatchCount,
                                                the_M_matrix_extent};
+
+            // TODO(Etienne M): Check that we do not benefit from using
+            // TeamLU/TRSM/GEMM. This require a trick with vector threads.
+
+            // NOTE:
+            // Due to memory consumption issues (storing the whole system), we
+            // have to do blocking. Due to the blocking we may not be able to
+            // utilize the GPU enough. Say 64 t/wavefront * 32 wavefront/cu *
+            // 110 cu for a total of 225280 potential in flight workitem per
+            // MI250 GCD. This means, assuming 1024 nvpar and Flo64:
+            // (8 * 1024 * (3 * (3*3))) * 225280 = 49'828'331'520 o.
 
             const auto the_kernel = KOKKOS_LAMBDA(auto the_batch_index, auto the_batch_element_index) {
                 static_assert(kDiagonalCount == 3, "");
