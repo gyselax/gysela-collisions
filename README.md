@@ -110,6 +110,7 @@ NOTE:
 
 - Inter exchange loops
 - Tune for GPU (coalesced reads)
+- Reduce register usage. Each time you use a view, you consume a LOT of register.. much more than a simple pointer.
 
 - Remove reference to std:: in kernels
 - Cleanup redundant names, long namespaces, View naming

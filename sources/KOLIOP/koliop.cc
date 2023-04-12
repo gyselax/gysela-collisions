@@ -255,7 +255,7 @@
     return koliop::error::FromException([&]() {
         if(an_operator == nullptr ||
            f5d_s == nullptr ||
-           (choice == 3 || choice == 4)) {
+           !(choice == 3 || choice == 4)) {
             return KOLIOP_STATUS_INVALID_VALUE;
         }
 

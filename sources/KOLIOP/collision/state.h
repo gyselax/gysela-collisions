@@ -1352,7 +1352,7 @@ namespace koliop {
 
                                 f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id) = Kokkos::max(0.001,
                                                                                                Kokkos::min(1000.0,
-                                                                                                           coeff * exp(v2oTa) * f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id)));
+                                                                                                           coeff * Kokkos::exp(v2oTa) * f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id)));
                             }
                         }
                     };
