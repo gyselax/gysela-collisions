@@ -158,7 +158,8 @@ namespace koliop {
             static inline constexpr uint64_t kMaximumLaguerrePolynomialDegree = 3;
 
         protected:
-            static inline constexpr uint64_t kBlockExtentR     = 8;
+            // TODO(Etienne M): Tune that size or rework batching
+            static inline constexpr uint64_t kBlockExtentR     = 16;
             static inline constexpr uint64_t kBlockExtentTheta = 1;
             static inline constexpr uint64_t kBlockExtentPhi   = 1;
 
@@ -166,7 +167,7 @@ namespace koliop {
 
             using AlphaSolverType = koliop::blas::LUBlockTridiagonalByBlock<Flo64,
                                                                             Kokkos::DefaultExecutionSpace,
-                                                                            3>;
+                                                                            kMaximumLaguerrePolynomialDegree>;
 
         public:
             State(uint64_t                     pSpecies_id,
@@ -1429,6 +1430,10 @@ namespace koliop {
             ViewMDD3<Flo64> DU2_mat{Kokkos::view_alloc(Kokkos::WithoutInitializing, "DU2_mat"),
                                     kFlattenedExtent, kMaximumLaguerrePolynomialDegree, kMaximumLaguerrePolynomialDegree * (the_vpar_extent - 2)}; // TODO(Etienne M): Weird -2
 
+            AlphaSolverType::ScalarMatrixType the_differential_operator{Kokkos::view_alloc(Kokkos::WithoutInitializing,
+                                                                                           "the_differential_operator"),
+                                                                        kFlattenedExtent, the_vpar_extent};
+
             // TODO(Etienne M): On GPU, should we just scale the block size ?
             // TODO(Etienne M): We use mask to avoid some computation, but
             // wouldn't it be netter to compute for everything and only in the
@@ -1466,26 +1471,33 @@ namespace koliop {
 
                         // if ( count(mask_coll).eq.0 ) cycle
 
-                        DoComputeAlphaProjection(a_state,
-                                                 block_first_r,
-                                                 block_first_theta,
-                                                 block_first_phi,
-                                                 mask_coll, f5d_s, RHS_vec);
+                        {
+                            // IN: Constants upon entering the function.
+                            // OUT: RHS_vec
+                            DoComputeAlphaProjection(a_state,
+                                                     block_first_r,
+                                                     block_first_theta,
+                                                     block_first_phi,
+                                                     mask_coll, f5d_s, RHS_vec);
 
-                        DoComputeBlockTo1D(a_state,
-                                           block_first_r,
-                                           block_first_theta,
-                                           block_first_phi,
-                                           mask_coll, n1d_s, T1d_s, U_par1d, q_par_on_nT1d, nu1d);
+                            // IN: Constants upon entering the function.
+                            // OUT: n1d_s, T1d_s, U_par1d, q_par_on_nT1d, nu1d
+                            DoComputeBlockTo1D(a_state,
+                                               block_first_r,
+                                               block_first_theta,
+                                               block_first_phi,
+                                               mask_coll, n1d_s, T1d_s, U_par1d, q_par_on_nT1d, nu1d);
 
-                        // DoComputeCvCd(n1d_s, T1d_s, U_par1d, q_par_on_nT1d, nu1d,
-                        //               RHS_vec, N0, N1, N2, D_mat, DL_mat, DU1_mat, DU2_mat);
+                            std::cout << kFlattenedExtent << " " << the_alpha_solver.kBatchSize << " " << the_vpar_extent;
 
-                        DoComputeReconstruction(a_state,
-                                                block_first_r,
-                                                block_first_theta,
-                                                block_first_phi,
-                                                mask_coll, f5d_s, RHS_vec);
+                            the_alpha_solver.Factorize(the_differential_operator.data(), kFlattenedExtent, the_vpar_extent);
+
+                            DoComputeReconstruction(a_state,
+                                                    block_first_r,
+                                                    block_first_theta,
+                                                    block_first_phi,
+                                                    mask_coll, f5d_s, RHS_vec);
+                        }
                     }
                 }
             }
