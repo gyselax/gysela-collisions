@@ -1434,6 +1434,10 @@ namespace koliop {
                                                                                            "the_differential_operator"),
                                                                         kFlattenedExtent, the_vpar_extent};
 
+            AlphaSolverType::ScalarMatrixType the_rhs{Kokkos::view_alloc(Kokkos::WithoutInitializing,
+                                                                         "the_rhs"),
+                                                      kFlattenedExtent, the_vpar_extent};
+
             // TODO(Etienne M): On GPU, should we just scale the block size ?
             // TODO(Etienne M): We use mask to avoid some computation, but
             // wouldn't it be netter to compute for everything and only in the
@@ -1488,9 +1492,19 @@ namespace koliop {
                                                block_first_phi,
                                                mask_coll, n1d_s, T1d_s, U_par1d, q_par_on_nT1d, nu1d);
 
-                            std::cout << kFlattenedExtent << " " << the_alpha_solver.kBatchSize << " " << the_vpar_extent;
-
+                            // IN: matrix
+                            // OUT: matrix
                             the_alpha_solver.Factorize(the_differential_operator.data(), kFlattenedExtent, the_vpar_extent);
+
+                            // IN: matrix, RHS_vec
+                            // OUT: RHS_vec
+                            the_alpha_solver.SolveVector(the_differential_operator.data(), kFlattenedExtent, the_vpar_extent,
+                                                         the_rhs.data());
+
+                            // IN: matrix, RHS_vec
+                            // OUT: RHS_vec
+                            the_alpha_solver.SolveVector(the_differential_operator.data(), kFlattenedExtent, the_vpar_extent,
+                                                         the_rhs.data());
 
                             DoComputeReconstruction(a_state,
                                                     block_first_r,

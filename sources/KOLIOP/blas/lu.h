@@ -47,7 +47,8 @@ namespace koliop {
         /// independent M block of size kBigBlockExtent x kBigBlockExtent.
         ///
         /// The A matrix is expected to be stored under the following format:
-        ///     View<Scalar *ccccc>{A_matrix_extent / kBatchSize, kBigBlockExtent, kDiagonalCount, kSmallBlockExtent, kSmallBlockExtent, kBatchSize}
+        ///     View<Scalar **cccc>{A_matrix_extent / kBatchSize, kBigBlockExtent, kDiagonalCount, kSmallBlockExtent, kSmallBlockExtent, kBatchSize}
+        ///
         /// The matrix should be in layout right and we justify that due to a
         /// limitation in Kokkos for representing constant extent, indeed they
         /// can not appear before dynamic extent. The C is followed by the block
@@ -67,9 +68,8 @@ namespace koliop {
         ///     ]
         /// ]
         ///
-        /// The more naive format below prevent vectorization on CPU and
-        /// coalesced memory operations on GPU:
-        ///     View<Scalar *cccc>{A_matrix_extent              , kBigBlockExtent, kDiagonalCount, kSmallBlockExtent, kSmallBlockExtent}
+        /// For the_rhs vector we expect the following format:
+        ///     View<FloatType **cc>{A_matrix_extent / kBatchSize, kBigBlockExtent, kSmallBlockExtent, kBatchSize}
         ///
         /// NOTE:
         /// In Gysela, kBigBlockExtent = Npar, kSmallBlockExtent = Npolmax and
@@ -131,14 +131,18 @@ namespace koliop {
                                                   Kokkos::LayoutRight,
                                                   ExecutionSpace>;
 
+            using ScalarVectorType = Kokkos::View<FloatType** [kSmallBlockExtent][kBatchSize],
+                                                  Kokkos::LayoutRight,
+                                                  ExecutionSpace>;
+
             /// We define the vector type from the thread POV.
             /// - On CPU it is similar to the vector type from the hardware POV
             /// say, a ymm register.
             /// - On GPU it shall represent an inter lane SIMD such as double4.
-            static constexpr uint64_t kVectorSize = KokkosBatched::DefaultInternalVectorLength<FloatType,
-                                                                                               typename ExecutionSpace::memory_space>::value;
+            static inline constexpr uint64_t kVectorSize = KokkosBatched::DefaultInternalVectorLength<FloatType,
+                                                                                                      typename ExecutionSpace::memory_space>::value;
 
-            static constexpr uint64_t kVectorPerBatch = kBatchSize / kVectorSize;
+            static inline constexpr uint64_t kVectorPerBatch = kBatchSize / kVectorSize;
 
             using ThreadVectorType = KokkosBatched::Vector<KokkosBatched::SIMD<FloatType>,
                                                            kVectorSize>;
@@ -147,6 +151,10 @@ namespace koliop {
             /// but the batch potentially gets subdivided in vectors.
             /// NOTE: We changed the View's type.
             using VectorMatrixType = Kokkos::View<ThreadVectorType** [kDiagonalCount][kSmallBlockExtent][kSmallBlockExtent][kVectorPerBatch],
+                                                  Kokkos::LayoutRight,
+                                                  ExecutionSpace>;
+
+            using VectorVectorType = Kokkos::View<ThreadVectorType** [kSmallBlockExtent][kVectorPerBatch],
                                                   Kokkos::LayoutRight,
                                                   ExecutionSpace>;
 
@@ -189,11 +197,17 @@ namespace koliop {
             /// @brief TRSV
             /// @param the_A_matrix Must respect the format described in the
             /// LUBlockTridiagonalByBlock notes.
-            /// @param the_rhs TODO(Etienne M)
-            template <typename Array6D,
-                      typename Array1D>
-            void SolveVector(const Array6D& the_A_matrix,
-                             Array1D&&      the_rhs) const;
+            /// @param the_A_matrix_extent The number of independent block
+            /// diagonal problem. Must be a multiple of kBatchSize.
+            /// @param the_M_matrix_extent The number extent of the block
+            /// diagonal problem.
+            /// @param the_rhs A vector of the_A_matrix_extent *
+            /// the_M_matrix_extent * kSmallBlockExtent rows. for the format,
+            /// see above.
+            void SolveVector(const FloatType* the_A_matrix,
+                             uint64_t         the_A_matrix_extent,
+                             uint64_t         the_M_matrix_extent,
+                             FloatType*       the_rhs) const;
 
         protected:
             ExecutionSpace the_execution_space_;
@@ -300,6 +314,17 @@ namespace koliop {
 
             Kokkos::parallel_for("LUBlockTridiagonalByBlock::Factorize",
                                  a_policy, the_kernel);
+        }
+
+        template <typename Float,
+                  typename ExecutionSpace,
+                  uint64_t kSmallBlockExtent>
+        void LUBlockTridiagonalByBlock<Float,
+                                       ExecutionSpace,
+                                       kSmallBlockExtent>::SolveVector(const FloatType*,
+                                                                       uint64_t,
+                                                                       uint64_t,
+                                                                       FloatType*) const {
         }
 
     } // namespace blas
