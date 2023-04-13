@@ -4,7 +4,7 @@
 
 #include <Kokkos_Core.hpp>
 
-#include "KOLIOP/collision/state.h"
+#include "KOLIOP/collision/operator.h"
 #include "KOLIOP/error/exception.h"
 
 
