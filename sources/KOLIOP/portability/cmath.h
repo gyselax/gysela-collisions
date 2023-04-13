@@ -3,7 +3,8 @@
 #ifndef KOLIOP_PORTABILITY_CMATH_H
 #define KOLIOP_PORTABILITY_CMATH_H
 
-#include <cmath>
+#include <Kokkos_MathematicalFunctions.hpp>
+// #include <cmath>
 
 #include "KOLIOP/internal/configuration.h"
 

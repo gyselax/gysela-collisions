@@ -1425,9 +1425,6 @@ namespace koliop {
             ViewMDD4<Flo64> N2{Kokkos::view_alloc(Kokkos::WithoutInitializing, "N1"),
                                the_vpar_extent, kFlattenedExtent, kMaximumLaguerrePolynomialDegree, kMaximumLaguerrePolynomialDegree};
 
-            ViewMDD3<Flo64> RHS_vec{Kokkos::view_alloc(Kokkos::WithoutInitializing, "RHS_vec"),
-                                    kFlattenedExtent, kMaximumLaguerrePolynomialDegree, the_vpar_extent};
-
             AlphaSolverType::ScalarMatrixType the_differential_operator{Kokkos::view_alloc(Kokkos::WithoutInitializing,
                                                                                            "the_differential_operator"),
                                                                         kFlattenedExtent, the_vpar_extent};
