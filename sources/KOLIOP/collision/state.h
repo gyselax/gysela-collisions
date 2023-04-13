@@ -294,7 +294,7 @@ namespace koliop {
                                  Flo64    x);
 
             template <typename Array6D,
-                      typename Array3D,
+                      typename Array4D,
                       typename Array2D>
             static void
             DoComputeAlphaProjection(const State&   a_state,
@@ -303,7 +303,7 @@ namespace koliop {
                                      uint64_t       block_first_phi,
                                      const Array2D& mask_coll,
                                      const Array6D& f5d_s,
-                                     Array3D&&      RHS_vec);
+                                     Array4D&&      the_rhs);
 
             template <typename Array2D0,
                       typename Array2D1,
@@ -321,7 +321,7 @@ namespace koliop {
                                Array1D&&       nu1d);
 
             template <typename Array6D,
-                      typename Array3D,
+                      typename Array4D,
                       typename Array2D>
             static void
             DoComputeReconstruction(const State&   a_state,
@@ -330,7 +330,7 @@ namespace koliop {
                                     uint64_t       block_first_phi,
                                     const Array2D& mask_coll,
                                     Array6D&&      f5d_s,
-                                    const Array3D& RHS_vec);
+                                    const Array4D& the_rhs);
 
             template <typename Array6D>
             static void
@@ -743,8 +743,8 @@ namespace koliop {
 
                 for(uint64_t alpha = 0; alpha <= j_tmp; ++alpha) {
                     for(uint64_t beta = 0; beta <= l_tmp; ++beta) {
-                        a_host_visible_C_jl(alpha + beta, j_tmp, l_tmp) = a_host_visible_C_jl(alpha + beta, j_tmp, l_tmp) +
-                                                                          a_host_visible_C_j(alpha, j_tmp) * a_host_visible_C_j(beta, l_tmp);
+                        a_host_visible_C_jl(alpha + beta, j_tmp, l_tmp) += a_host_visible_C_j(alpha, j_tmp) *
+                                                                           a_host_visible_C_j(beta, l_tmp);
                     }
                 }
             };
@@ -919,8 +919,8 @@ namespace koliop {
                                       Flo64 nb,
                                       Flo64 Tb) {
 
-            const Flo64 vTa = Kokkos::sqrt(Ta / hat_As_speciesA);
-            const Flo64 vTb = Kokkos::sqrt(Tb / hat_As_speciesB);
+            const Flo64 vTa = Ta / hat_As_speciesA;
+            const Flo64 vTb = Tb / hat_As_speciesB;
 
             // TODO(Etienne M): SIMPLIFY We could do:
             // (nustar_coeff * nb) *
@@ -928,7 +928,7 @@ namespace koliop {
             //               Ta * hat_As_speciesB) /
             //                  (hat_As_speciesA * hat_As_speciesB),
             //              -3.0 / 2.0);
-            return (nustar_coeff * nb) / ((vTa * vTa + vTb * vTb) * Kokkos::sqrt(vTa * vTa + vTb * vTb));
+            return (nustar_coeff * nb) / ((vTa + vTb) * Kokkos::sqrt(vTa + vTb));
         }
 
         template <typename Array5D>
@@ -1400,6 +1400,13 @@ namespace koliop {
             ViewMDD2<bool> mask_coll{Kokkos::view_alloc(Kokkos::WithoutInitializing, "mask_coll"),
                                      kBlockExtentR, kBlockExtentTheta};
 
+            // TODO(Etienne M): Remove the *1D* n, T U Nu etc.
+            // Then build a matrix builder which samples the matrix returning
+            // the value which we can then cache and use in
+            // the_differential_operator and the_rhs. The builder produces the
+            // dt/4*T piece of matrix.
+            // mask_coll should also be obtain on the fly.
+
             ViewMDD2<Flo64> n1d_s{Kokkos::view_alloc(Kokkos::WithoutInitializing, "n1d_s"),
                                   kFlattenedExtent, the_species_extent};
             ViewMDD2<Flo64> T1d_s{Kokkos::view_alloc(Kokkos::WithoutInitializing, "T1d_s"),
@@ -1411,9 +1418,6 @@ namespace koliop {
             ViewMDD1<Flo64> nu1d{Kokkos::view_alloc(Kokkos::WithoutInitializing, "nu1d"),
                                  kFlattenedExtent};
 
-            ViewMDD3<Flo64> RHS_vec{Kokkos::view_alloc(Kokkos::WithoutInitializing, "RHS_vec"),
-                                    kFlattenedExtent, kMaximumLaguerrePolynomialDegree, the_vpar_extent};
-
             ViewMDD4<Flo64> N0{Kokkos::view_alloc(Kokkos::WithoutInitializing, "N0"),
                                the_vpar_extent, kFlattenedExtent, kMaximumLaguerrePolynomialDegree, kMaximumLaguerrePolynomialDegree};
             ViewMDD4<Flo64> N1{Kokkos::view_alloc(Kokkos::WithoutInitializing, "N1"),
@@ -1421,20 +1425,14 @@ namespace koliop {
             ViewMDD4<Flo64> N2{Kokkos::view_alloc(Kokkos::WithoutInitializing, "N1"),
                                the_vpar_extent, kFlattenedExtent, kMaximumLaguerrePolynomialDegree, kMaximumLaguerrePolynomialDegree};
 
-            ViewMDD3<Flo64> D_mat{Kokkos::view_alloc(Kokkos::WithoutInitializing, "D_mat"),
-                                  kFlattenedExtent, kMaximumLaguerrePolynomialDegree, kMaximumLaguerrePolynomialDegree * the_vpar_extent};
-            ViewMDD3<Flo64> DL_mat{Kokkos::view_alloc(Kokkos::WithoutInitializing, "DL_mat"),
-                                   kFlattenedExtent, kMaximumLaguerrePolynomialDegree, kMaximumLaguerrePolynomialDegree * (the_vpar_extent - 1)}; // TODO(Etienne M): Weird -1
-            ViewMDD3<Flo64> DU1_mat{Kokkos::view_alloc(Kokkos::WithoutInitializing, "DU1_mat"),
-                                    kFlattenedExtent, kMaximumLaguerrePolynomialDegree, kMaximumLaguerrePolynomialDegree * (the_vpar_extent - 1)}; // TODO(Etienne M): Weird -1
-            ViewMDD3<Flo64> DU2_mat{Kokkos::view_alloc(Kokkos::WithoutInitializing, "DU2_mat"),
-                                    kFlattenedExtent, kMaximumLaguerrePolynomialDegree, kMaximumLaguerrePolynomialDegree * (the_vpar_extent - 2)}; // TODO(Etienne M): Weird -2
+            ViewMDD3<Flo64> RHS_vec{Kokkos::view_alloc(Kokkos::WithoutInitializing, "RHS_vec"),
+                                    kFlattenedExtent, kMaximumLaguerrePolynomialDegree, the_vpar_extent};
 
             AlphaSolverType::ScalarMatrixType the_differential_operator{Kokkos::view_alloc(Kokkos::WithoutInitializing,
                                                                                            "the_differential_operator"),
                                                                         kFlattenedExtent, the_vpar_extent};
 
-            AlphaSolverType::ScalarMatrixType the_rhs{Kokkos::view_alloc(Kokkos::WithoutInitializing,
+            AlphaSolverType::ScalarVectorType the_rhs{Kokkos::view_alloc(Kokkos::WithoutInitializing,
                                                                          "the_rhs"),
                                                       kFlattenedExtent, the_vpar_extent};
 
@@ -1470,19 +1468,19 @@ namespace koliop {
                             }
                         }
 
-                        // TODO(Etienne M): Basically if we have at least one
-                        // bit to 1, we do not skip.
-
-                        // if ( count(mask_coll).eq.0 ) cycle
+                        // NOTE: Skipping would create imbalance
+                        // if(all boolean in mask_coll are false) {
+                        //     continue;
+                        // }
 
                         {
                             // IN: Constants upon entering the function.
-                            // OUT: RHS_vec
+                            // OUT: the_rhs
                             DoComputeAlphaProjection(a_state,
                                                      block_first_r,
                                                      block_first_theta,
                                                      block_first_phi,
-                                                     mask_coll, f5d_s, RHS_vec);
+                                                     mask_coll, f5d_s, the_rhs);
 
                             // IN: Constants upon entering the function.
                             // OUT: n1d_s, T1d_s, U_par1d, q_par_on_nT1d, nu1d
@@ -1510,7 +1508,7 @@ namespace koliop {
                                                     block_first_r,
                                                     block_first_theta,
                                                     block_first_phi,
-                                                    mask_coll, f5d_s, RHS_vec);
+                                                    mask_coll, f5d_s, the_rhs);
                         }
                     }
                 }
@@ -1540,7 +1538,7 @@ namespace koliop {
         }
 
         template <typename Array6D,
-                  typename Array3D,
+                  typename Array4D,
                   typename Array2D>
         void State::DoComputeAlphaProjection(const State&   a_state,
                                              uint64_t       block_first_r,
@@ -1548,7 +1546,7 @@ namespace koliop {
                                              uint64_t       block_first_phi,
                                              const Array2D& mask_coll,
                                              const Array6D& f5d_s,
-                                             Array3D&&      RHS_vec) {
+                                             Array4D&&      the_rhs) {
 
             const uint64_t& the_mu_extent   = a_state.the_mu_extent_;
             const uint64_t& the_vpar_extent = a_state.the_vpar_extent_;
@@ -1566,35 +1564,35 @@ namespace koliop {
 
                 // NOTE: kBlockExtentXXX are constant, the compiler can replace
                 // the % with faster instructions.
-                const uint64_t block_local_index_r     = ir % kBlockExtentR;
-                const uint64_t block_local_index_theta = itheta % kBlockExtentTheta;
-                const uint64_t block_local_index_phi   = iphi % kBlockExtentPhi;
+                const uint64_t the_block_local_index_r     = ir % kBlockExtentR;
+                const uint64_t the_block_local_index_theta = itheta % kBlockExtentTheta;
+                const uint64_t the_block_local_index_phi   = iphi % kBlockExtentPhi;
 
-                const uint64_t ispace = kBlockExtentR * kBlockExtentTheta * block_local_index_phi +
-                                        kBlockExtentR * block_local_index_theta +
-                                        block_local_index_r;
+                const uint64_t the_flattened_index = kBlockExtentR * kBlockExtentTheta * the_block_local_index_phi +
+                                                     kBlockExtentR * the_block_local_index_theta +
+                                                     the_block_local_index_r;
+
+                const uint64_t the_batch_index         = the_flattened_index / AlphaSolverType::kBatchSize;
+                const uint64_t the_batch_element_index = the_flattened_index % AlphaSolverType::kBatchSize;
 
                 if(mask_coll(ir, itheta)) {
                     const Flo64 BoT = B_norm(ir, itheta) / T_s(ir, itheta, iphi, pSpecies_id);
 
-                    for(uint64_t ipol = 0; ipol < kMaximumLaguerrePolynomialDegree; ++ipol) {
-                        for(uint64_t ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
-                            Flo64 RHS_vec_value = 0.0;
-
+                    for(uint64_t ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
+                        for(uint64_t ipol = 0; ipol < kMaximumLaguerrePolynomialDegree; ++ipol) {
                             for(uint64_t imu = 0; imu < the_mu_extent; ++imu) {
                                 const Flo64 muBoT     = mug(imu) * BoT;
                                 const Flo64 coeff_tot = DoComputeLaguerrePol(ipol, muBoT) * BoT * coeff_intdmu(imu) * Kokkos::exp(-muBoT);
 
-                                RHS_vec_value += coeff_tot * f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id);
+                                the_rhs(the_batch_index, ivpar, ipol, the_batch_element_index) += coeff_tot *
+                                                                                                  f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id);
                             }
-
-                            RHS_vec(ispace, ipol, ivpar) = RHS_vec_value;
                         }
                     }
                 } else {
                     for(uint64_t ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
                         for(uint64_t ipol = 0; ipol < kMaximumLaguerrePolynomialDegree; ++ipol) {
-                            RHS_vec(ispace, ipol, ivpar) = 0.0;
+                            the_rhs(the_batch_index, ivpar, ipol, the_batch_element_index) = 0.0;
                         }
                     }
                 }
@@ -1676,7 +1674,7 @@ namespace koliop {
         }
 
         template <typename Array6D,
-                  typename Array3D,
+                  typename Array4D,
                   typename Array2D>
         void State::DoComputeReconstruction(const State&   a_state,
                                             uint64_t       block_first_r,
@@ -1684,7 +1682,7 @@ namespace koliop {
                                             uint64_t       block_first_phi,
                                             const Array2D& mask_coll,
                                             Array6D&&      f5d_s,
-                                            const Array3D& RHS_vec) {
+                                            const Array4D& the_rhs) {
 
             const uint64_t& the_mu_extent   = a_state.the_mu_extent_;
             const uint64_t& the_vpar_extent = a_state.the_vpar_extent_;
@@ -1701,13 +1699,16 @@ namespace koliop {
 
                 // NOTE: kBlockExtentXXX are constant, the compiler can replace
                 // the % with faster instructions.
-                const uint64_t block_local_index_r     = ir % kBlockExtentR;
-                const uint64_t block_local_index_theta = itheta % kBlockExtentTheta;
-                const uint64_t block_local_index_phi   = iphi % kBlockExtentPhi;
+                const uint64_t the_block_local_index_r     = ir % kBlockExtentR;
+                const uint64_t the_block_local_index_theta = itheta % kBlockExtentTheta;
+                const uint64_t the_block_local_index_phi   = iphi % kBlockExtentPhi;
 
-                const uint64_t ispace = kBlockExtentR * kBlockExtentTheta * block_local_index_phi +
-                                        kBlockExtentR * block_local_index_theta +
-                                        block_local_index_r;
+                const uint64_t the_flattened_index = kBlockExtentR * kBlockExtentTheta * the_block_local_index_phi +
+                                                     kBlockExtentR * the_block_local_index_theta +
+                                                     the_block_local_index_r;
+
+                const uint64_t the_batch_index         = the_flattened_index / AlphaSolverType::kBatchSize;
+                const uint64_t the_batch_element_index = the_flattened_index % AlphaSolverType::kBatchSize;
 
                 if(!mask_coll(ir, itheta)) {
                     return;
@@ -1721,7 +1722,8 @@ namespace koliop {
                         Flo64       f5d_s_value = 0.0;
 
                         for(uint64_t ipol = 0; ipol < kMaximumLaguerrePolynomialDegree; ++ipol) {
-                            f5d_s_value += RHS_vec(ispace, ipol, ivpar) * DoComputeLaguerrePol(ipol, muBoT);
+                            f5d_s_value += the_rhs(the_batch_index, ivpar, ipol, the_batch_element_index) *
+                                           DoComputeLaguerrePol(ipol, muBoT);
                         }
 
                         f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id) = f5d_s_value;
