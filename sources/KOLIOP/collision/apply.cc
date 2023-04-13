@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 
 #include "KOLIOP/collision/operator.h"
+#include "KOLIOP/utility/copy.h"
 
 namespace koliop {
     namespace collision {
@@ -245,8 +246,8 @@ namespace koliop {
             // TODO(Etienne M): Many opportunities to use constant extent say:
             // Flo64 *[Operator::kFlattenedExtent].
 
-            ViewMDD2<bool> mask_coll{Kokkos::view_alloc(Kokkos::WithoutInitializing, "mask_coll"),
-                                     Operator::kBlockExtentR, Operator::kBlockExtentTheta};
+            koliop::utility::View::MDD2<bool> mask_coll{Kokkos::view_alloc(Kokkos::WithoutInitializing, "mask_coll"),
+                                                        Operator::kBlockExtentR, Operator::kBlockExtentTheta};
 
             // TODO(Etienne M): Remove the *1D* n, T U Nu etc.
             // Then build a matrix builder which samples the matrix returning
@@ -255,23 +256,23 @@ namespace koliop {
             // dt/4*T piece of matrix.
             // mask_coll should also be obtain on the fly.
 
-            ViewMDD2<Flo64> n1d_s{Kokkos::view_alloc(Kokkos::WithoutInitializing, "n1d_s"),
-                                  Operator::kFlattenedExtent, the_species_extent};
-            ViewMDD2<Flo64> T1d_s{Kokkos::view_alloc(Kokkos::WithoutInitializing, "T1d_s"),
-                                  Operator::kFlattenedExtent, the_species_extent};
-            ViewMDD1<Flo64> U_par1d{Kokkos::view_alloc(Kokkos::WithoutInitializing, "U_par1d"),
-                                    Operator::kFlattenedExtent};
-            ViewMDD1<Flo64> q_par_on_nT1d{Kokkos::view_alloc(Kokkos::WithoutInitializing, "q_par_on_nT1d"),
-                                          Operator::kFlattenedExtent};
-            ViewMDD1<Flo64> nu1d{Kokkos::view_alloc(Kokkos::WithoutInitializing, "nu1d"),
-                                 Operator::kFlattenedExtent};
+            koliop::utility::View::MDD2<Flo64> n1d_s{Kokkos::view_alloc(Kokkos::WithoutInitializing, "n1d_s"),
+                                                     Operator::kFlattenedExtent, the_species_extent};
+            koliop::utility::View::MDD2<Flo64> T1d_s{Kokkos::view_alloc(Kokkos::WithoutInitializing, "T1d_s"),
+                                                     Operator::kFlattenedExtent, the_species_extent};
+            koliop::utility::View::MDD1<Flo64> U_par1d{Kokkos::view_alloc(Kokkos::WithoutInitializing, "U_par1d"),
+                                                       Operator::kFlattenedExtent};
+            koliop::utility::View::MDD1<Flo64> q_par_on_nT1d{Kokkos::view_alloc(Kokkos::WithoutInitializing, "q_par_on_nT1d"),
+                                                             Operator::kFlattenedExtent};
+            koliop::utility::View::MDD1<Flo64> nu1d{Kokkos::view_alloc(Kokkos::WithoutInitializing, "nu1d"),
+                                                    Operator::kFlattenedExtent};
 
-            ViewMDD4<Flo64> N0{Kokkos::view_alloc(Kokkos::WithoutInitializing, "N0"),
-                               the_vpar_extent, Operator::kFlattenedExtent, Operator::kMaximumLaguerrePolynomialDegree, Operator::kMaximumLaguerrePolynomialDegree};
-            ViewMDD4<Flo64> N1{Kokkos::view_alloc(Kokkos::WithoutInitializing, "N1"),
-                               the_vpar_extent, Operator::kFlattenedExtent, Operator::kMaximumLaguerrePolynomialDegree, Operator::kMaximumLaguerrePolynomialDegree};
-            ViewMDD4<Flo64> N2{Kokkos::view_alloc(Kokkos::WithoutInitializing, "N1"),
-                               the_vpar_extent, Operator::kFlattenedExtent, Operator::kMaximumLaguerrePolynomialDegree, Operator::kMaximumLaguerrePolynomialDegree};
+            koliop::utility::View::MDD4<Flo64> N0{Kokkos::view_alloc(Kokkos::WithoutInitializing, "N0"),
+                                                  the_vpar_extent, Operator::kFlattenedExtent, Operator::kMaximumLaguerrePolynomialDegree, Operator::kMaximumLaguerrePolynomialDegree};
+            koliop::utility::View::MDD4<Flo64> N1{Kokkos::view_alloc(Kokkos::WithoutInitializing, "N1"),
+                                                  the_vpar_extent, Operator::kFlattenedExtent, Operator::kMaximumLaguerrePolynomialDegree, Operator::kMaximumLaguerrePolynomialDegree};
+            koliop::utility::View::MDD4<Flo64> N2{Kokkos::view_alloc(Kokkos::WithoutInitializing, "N1"),
+                                                  the_vpar_extent, Operator::kFlattenedExtent, Operator::kMaximumLaguerrePolynomialDegree, Operator::kMaximumLaguerrePolynomialDegree};
 
             Operator::AlphaSolverType::ScalarMatrixType the_differential_operator{Kokkos::view_alloc(Kokkos::WithoutInitializing,
                                                                                                      "the_differential_operator"),
@@ -363,11 +364,11 @@ namespace koliop {
         void Operator::Apply(Flo64* f5d_s) const {
             // TODO(Etienne M): COPY redundant.
 
-            auto a_device_visible_f5d_s = ViewMDL6<Flo64>{Kokkos::view_alloc(Kokkos::WithoutInitializing, "f5d_s"),
-                                                          the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, the_species_extent_};
+            auto a_device_visible_f5d_s = koliop::utility::View::MDL6<Flo64>{Kokkos::view_alloc(Kokkos::WithoutInitializing, "f5d_s"),
+                                                                             the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, the_species_extent_};
 
-            auto a_host_visible_f5d_s = ViewUHL6<Flo64>{// "unmanaged_host_f5d_s",
-                                                        f5d_s, the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, the_species_extent_};
+            auto a_host_visible_f5d_s = koliop::utility::View::UHL6<Flo64>{// "unmanaged_host_f5d_s",
+                                                                           f5d_s, the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, the_species_extent_};
 
             koliop::utility::Copy::Shallow(a_host_visible_f5d_s, a_device_visible_f5d_s);
 

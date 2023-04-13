@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 
 #include "KOLIOP/collision/operator.h"
+#include "KOLIOP/utility/copy.h"
 
 namespace koliop {
     namespace collision {
@@ -88,11 +89,11 @@ namespace koliop {
             // TODO(Etienne M): On host we want the view to have the same type
             // (operator= is used.). On GPU, we need a deep copy and
             // a_device_visible_f5d_s can not be const..
-            auto a_device_visible_f5d_s = ViewMDL6</* const */ Flo64>{Kokkos::view_alloc(Kokkos::WithoutInitializing, "f5d_s"),
-                                                                      the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, the_species_extent_};
+            auto a_device_visible_f5d_s = koliop::utility::View::MDL6</* const */ Flo64>{Kokkos::view_alloc(Kokkos::WithoutInitializing, "f5d_s"),
+                                                                                         the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, the_species_extent_};
 
-            auto a_host_visible_f5d_s = ViewUHL6<const Flo64>{// "unmanaged_host_f5d_s",
-                                                              f5d_s, the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, the_species_extent_};
+            auto a_host_visible_f5d_s = koliop::utility::View::UHL6<const Flo64>{// "unmanaged_host_f5d_s",
+                                                                                 f5d_s, the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, the_species_extent_};
 
             koliop::utility::Copy::Shallow(a_host_visible_f5d_s, a_device_visible_f5d_s);
 
