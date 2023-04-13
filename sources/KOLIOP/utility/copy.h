@@ -109,7 +109,12 @@ namespace koliop {
                 //                                                                                            Kokkos::WithoutInitializing),
                 //                                                                         a_source_view);
 
-                // TODO(Etienne M): Do we really need to copy to the host ?
+                // TODO(Etienne M): If we pass a memory_space to
+                // create_mirror_view or create_mirror_view_and_copy, we should
+                // be able to directly copy from memory space A to memory space
+                // B. Then a simple shallow copy assignment to
+                // a_destination_view and we are good.
+
                 auto a_host_visible_source_mirror = Kokkos::create_mirror_view(Kokkos::view_alloc(Kokkos::WithoutInitializing), a_source_view);
                 auto a_host_visible_target_mirror = Kokkos::create_mirror_view(Kokkos::view_alloc(Kokkos::WithoutInitializing), a_destination_view);
 

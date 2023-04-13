@@ -86,13 +86,13 @@ namespace koliop {
             // TODO(Etienne M): I observe some slight numerical discrepancy
             // (1e-14 ~ ) when comparing the result of Gysela and koliop.
 
-            const auto a_host_visible_hat_As        = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(typename View1D::memory_space{}, Kokkos::WithoutInitializing), hat_As);
-            const auto a_host_visible_hat_Zs        = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(typename View1D::memory_space{}, Kokkos::WithoutInitializing), hat_Zs);
-            const auto a_host_visible_rg            = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(typename View1D::memory_space{}, Kokkos::WithoutInitializing), rg);
-            const auto a_host_visible_nustar0_r     = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(typename View1D::memory_space{}, Kokkos::WithoutInitializing), nustar0_r);
-            const auto a_host_visible_q_r           = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(typename View1D::memory_space{}, Kokkos::WithoutInitializing), q_r);
-            const auto a_host_visible_mask_buffer_r = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(typename View1D::memory_space{}, Kokkos::WithoutInitializing), mask_buffer_r);
-            const auto a_host_visible_nustar_coeff  = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(typename View1D::memory_space{}, Kokkos::WithoutInitializing), nustar_coeff);
+            const auto a_host_visible_hat_As        = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{}, Kokkos::WithoutInitializing), hat_As);
+            const auto a_host_visible_hat_Zs        = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{}, Kokkos::WithoutInitializing), hat_Zs);
+            const auto a_host_visible_rg            = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{}, Kokkos::WithoutInitializing), rg);
+            const auto a_host_visible_nustar0_r     = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{}, Kokkos::WithoutInitializing), nustar0_r);
+            const auto a_host_visible_q_r           = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{}, Kokkos::WithoutInitializing), q_r);
+            const auto a_host_visible_mask_buffer_r = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{}, Kokkos::WithoutInitializing), mask_buffer_r);
+            const auto a_host_visible_nustar_coeff  = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{}, Kokkos::WithoutInitializing), nustar_coeff);
 
             koliop::utility::View::MHL1<Flo64> a_host_visible_mask_space{Kokkos::view_alloc(Kokkos::WithoutInitializing, "a_host_visible_mask_space"),
                                                                          an_operator.the_r_extent_};
