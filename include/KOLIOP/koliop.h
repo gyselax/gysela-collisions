@@ -91,27 +91,27 @@ koliop_Status koliop_ComputeMoments(koliop_Operator an_operator,
 
 koliop_Status koliop_PrecomputeNu(koliop_Operator an_operator);
 
-koliop_Status koliop_ComputeEvolutionMaxwellian(koliop_Operator an_operator,
+koliop_Status koliop_ComputeMaxwellianEvolution(koliop_Operator an_operator,
                                                 double*         f5d_s);
 
 koliop_Status koliop_ComputeQparOnNT(koliop_Operator an_operator,
-                                     const double* f5d_s);
+                                     const double*   f5d_s);
 
 koliop_Status koliop_ComputeCpar(koliop_Operator an_operator,
                                  double*         f5d_s);
 
 // TODO(Etienne M): Document choice
-koliop_Status koliop_ComputeOperationMaxwellianUnshiftedLoc(koliop_Operator an_operator,
-                                                            double*         f5d_s,
-                                                            uint32_t        choice);
+koliop_Status koliop_ComputeMaxwellianUnshiftedLoc(koliop_Operator an_operator,
+                                                   double*         f5d_s,
+                                                   uint32_t        choice);
 
-koliop_Status koliop_ApplyCollisions(koliop_Operator an_operator,
-                                     double*         f5d_s);
+koliop_Status koliop_Apply(koliop_Operator an_operator,
+                           double*         f5d_s);
 
-koliop_Status koliop_ComputeCorrectionDensity(koliop_Operator an_operator,
+koliop_Status koliop_ComputeDensityCorrection(koliop_Operator an_operator,
                                               double*         f5d_s);
 
-koliop_Status koliop_ComputeCorrectionUparT(koliop_Operator an_operator,
+koliop_Status koliop_ComputeUparTCorrection(koliop_Operator an_operator,
                                             double*         f5d_s);
 
 // TODO(Etienne M): diags.

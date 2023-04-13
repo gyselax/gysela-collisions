@@ -217,7 +217,7 @@ int main(int, char**) {
 
     ::koliop_PrecomputeNu(an_operator);
 
-    ::koliop_ComputeEvolutionMaxwellian(an_operator,
+    ::koliop_ComputeMaxwellianEvolution(an_operator,
                                         &f5d_s[0][0][0][0][0][0]);
 
     ::koliop_ComputeQparOnNT(an_operator,
@@ -228,17 +228,17 @@ int main(int, char**) {
 
     static constexpr uint32_t choice = 4;
 
-    ::koliop_ComputeOperationMaxwellianUnshiftedLoc(an_operator,
-                                                    &f5d_s[0][0][0][0][0][0],
-                                                    choice);
+    ::koliop_ComputeMaxwellianUnshiftedLoc(an_operator,
+                                           &f5d_s[0][0][0][0][0][0],
+                                           choice);
 
-    ::koliop_ApplyCollisions(an_operator,
-                             &f5d_s[0][0][0][0][0][0]);
+    ::koliop_Apply(an_operator,
+                   &f5d_s[0][0][0][0][0][0]);
 
-    ::koliop_ComputeCorrectionDensity(an_operator,
+    ::koliop_ComputeDensityCorrection(an_operator,
                                       &f5d_s[0][0][0][0][0][0]);
 
-    ::koliop_ComputeCorrectionUparT(an_operator,
+    ::koliop_ComputeUparTCorrection(an_operator,
                                     &f5d_s[0][0][0][0][0][0]);
 
     // TODO(Etienne M):

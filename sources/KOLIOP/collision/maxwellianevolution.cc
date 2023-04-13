@@ -8,7 +8,7 @@ namespace koliop {
         template <typename Array6D,
                   typename Array4D>
         static inline void
-        DoComputeEvolutionMaxwellian(const State& a_state,
+        DoComputeMaxwellianEvolution(const State& a_state,
                                      Array6D&&    f5d_s,
                                      Array4D&&    T_s) {
 
@@ -132,11 +132,11 @@ namespace koliop {
             a_policy.set_scratch_size(0,
                                       Kokkos::PerThread(ScratchMemory::shmem_size(the_scratch_memory_bytes_per_thread)));
 
-            Kokkos::parallel_for("DoComputeEvolutionMaxwellian",
+            Kokkos::parallel_for("DoComputeMaxwellianEvolution",
                                  a_policy, the_kernel);
         }
 
-        void State::ComputeEvolutionMaxwellian(Flo64* f5d_s) {
+        void State::ComputeMaxwellianEvolution(Flo64* f5d_s) {
             // TODO(Etienne M): COPY redundant.
 
             auto a_device_visible_f5d_s = ViewMDL6<Flo64>{Kokkos::view_alloc(Kokkos::WithoutInitializing, "f5d_s"),
@@ -147,7 +147,7 @@ namespace koliop {
 
             koliop::utility::Copy::Shallow(a_host_visible_f5d_s, a_device_visible_f5d_s);
 
-            DoComputeEvolutionMaxwellian(*this, a_device_visible_f5d_s, T_s_);
+            DoComputeMaxwellianEvolution(*this, a_device_visible_f5d_s, T_s_);
 
             koliop::utility::Copy::Shallow(a_device_visible_f5d_s, a_host_visible_f5d_s);
 

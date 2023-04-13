@@ -217,8 +217,8 @@ namespace koliop {
 
         template <typename Array6D>
         static inline void
-        DoApplyCollisions(const State& a_state,
-                          Array6D&&    f5d_s) {
+        DoApply(const State& a_state,
+                Array6D&&    f5d_s) {
             // TODO(Etienne M): The blocking is mainly done for memory consumption reasons,
             // we have to do something similar.
 
@@ -360,7 +360,7 @@ namespace koliop {
             }
         }
 
-        void State::ApplyCollisions(Flo64* f5d_s) const {
+        void State::Apply(Flo64* f5d_s) const {
             // TODO(Etienne M): COPY redundant.
 
             auto a_device_visible_f5d_s = ViewMDL6<Flo64>{Kokkos::view_alloc(Kokkos::WithoutInitializing, "f5d_s"),
@@ -371,7 +371,7 @@ namespace koliop {
 
             koliop::utility::Copy::Shallow(a_host_visible_f5d_s, a_device_visible_f5d_s);
 
-            DoApplyCollisions(*this, a_device_visible_f5d_s);
+            DoApply(*this, a_device_visible_f5d_s);
 
             koliop::utility::Copy::Shallow(a_device_visible_f5d_s, a_host_visible_f5d_s);
 

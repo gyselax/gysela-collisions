@@ -204,7 +204,7 @@
     });
 }
 
-::koliop_Status koliop_ComputeEvolutionMaxwellian(::koliop_Operator an_operator,
+::koliop_Status koliop_ComputeMaxwellianEvolution(::koliop_Operator an_operator,
                                                   double*           f5d_s) {
     return koliop::error::FromException([&]() {
         if(an_operator == nullptr ||
@@ -213,7 +213,7 @@
         }
 
         using State = koliop::collision::State;
-        reinterpret_cast<State*>(an_operator)->ComputeEvolutionMaxwellian(f5d_s);
+        reinterpret_cast<State*>(an_operator)->ComputeMaxwellianEvolution(f5d_s);
 
         return KOLIOP_STATUS_SUCCESS;
     });
@@ -249,9 +249,9 @@
     });
 }
 
-::koliop_Status koliop_ComputeOperationMaxwellianUnshiftedLoc(::koliop_Operator an_operator,
-                                                              double*           f5d_s,
-                                                              uint32_t          choice) {
+::koliop_Status koliop_ComputeMaxwellianUnshiftedLoc(::koliop_Operator an_operator,
+                                                     double*           f5d_s,
+                                                     uint32_t          choice) {
     return koliop::error::FromException([&]() {
         if(an_operator == nullptr ||
            f5d_s == nullptr ||
@@ -260,14 +260,14 @@
         }
 
         using State = koliop::collision::State;
-        reinterpret_cast<const State*>(an_operator)->ComputeOperationMaxwellianUnshiftedLoc(f5d_s, choice);
+        reinterpret_cast<const State*>(an_operator)->ComputeMaxwellianUnshiftedLoc(f5d_s, choice);
 
         return KOLIOP_STATUS_SUCCESS;
     });
 }
 
-::koliop_Status koliop_ApplyCollisions(::koliop_Operator an_operator,
-                                       double*           f5d_s) {
+::koliop_Status koliop_Apply(::koliop_Operator an_operator,
+                             double*           f5d_s) {
     return koliop::error::FromException([&]() {
         if(an_operator == nullptr ||
            f5d_s == nullptr) {
@@ -275,13 +275,13 @@
         }
 
         using State = koliop::collision::State;
-        reinterpret_cast<const State*>(an_operator)->ApplyCollisions(f5d_s);
+        reinterpret_cast<const State*>(an_operator)->Apply(f5d_s);
 
         return KOLIOP_STATUS_SUCCESS;
     });
 }
 
-::koliop_Status koliop_ComputeCorrectionDensity(::koliop_Operator an_operator,
+::koliop_Status koliop_ComputeDensityCorrection(::koliop_Operator an_operator,
                                                 double*           f5d_s) {
     return koliop::error::FromException([&]() {
         if(an_operator == nullptr ||
@@ -290,13 +290,13 @@
         }
 
         using State = koliop::collision::State;
-        reinterpret_cast<const State*>(an_operator)->ComputeCorrectionDensity(f5d_s);
+        reinterpret_cast<const State*>(an_operator)->ComputeDensityCorrection(f5d_s);
 
         return KOLIOP_STATUS_SUCCESS;
     });
 }
 
-::koliop_Status koliop_ComputeCorrectionUparT(::koliop_Operator an_operator,
+::koliop_Status koliop_ComputeUparTCorrection(::koliop_Operator an_operator,
                                               double*           f5d_s) {
     return koliop::error::FromException([&]() {
         if(an_operator == nullptr ||
@@ -305,7 +305,7 @@
         }
 
         using State = koliop::collision::State;
-        reinterpret_cast<State*>(an_operator)->ComputeCorrectionUparT(f5d_s);
+        reinterpret_cast<State*>(an_operator)->ComputeUparTCorrection(f5d_s);
 
         return KOLIOP_STATUS_SUCCESS;
     });

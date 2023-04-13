@@ -7,9 +7,9 @@ namespace koliop {
 
         template <typename Array6D>
         static inline void
-        DoComputeOperationMaxwellianUnshiftedLoc(const State& a_state,
-                                                 Array6D&&    f5d_s,
-                                                 uint32_t     choice) {
+        DoComputeMaxwellianUnshiftedLoc(const State& a_state,
+                                        Array6D&&    f5d_s,
+                                        uint32_t     choice) {
 
             const uint64_t& the_mu_extent    = a_state.the_mu_extent_;
             const uint64_t& the_vpar_extent  = a_state.the_vpar_extent_;
@@ -58,7 +58,7 @@ namespace koliop {
                         }
                     };
 
-                    Kokkos::parallel_for("DoComputeOperationMaxwellianUnshiftedLoc3",
+                    Kokkos::parallel_for("DoComputeMaxwellianUnshiftedLoc3",
                                          a_policy, the_kernel_choice_3);
                     break;
                 }
@@ -82,7 +82,7 @@ namespace koliop {
                         }
                     };
 
-                    Kokkos::parallel_for("DoComputeOperationMaxwellianUnshiftedLoc4",
+                    Kokkos::parallel_for("DoComputeMaxwellianUnshiftedLoc4",
                                          a_policy, the_kernel_choice_4);
                     break;
                 }
@@ -93,8 +93,8 @@ namespace koliop {
             }
         }
 
-        void State::ComputeOperationMaxwellianUnshiftedLoc(Flo64*   f5d_s,
-                                                           uint32_t choice) const {
+        void State::ComputeMaxwellianUnshiftedLoc(Flo64*   f5d_s,
+                                                  uint32_t choice) const {
             // TODO(Etienne M): COPY redundant.
 
             auto a_device_visible_f5d_s = ViewMDL6<Flo64>{Kokkos::view_alloc(Kokkos::WithoutInitializing, "f5d_s"),
@@ -105,7 +105,7 @@ namespace koliop {
 
             koliop::utility::Copy::Shallow(a_host_visible_f5d_s, a_device_visible_f5d_s);
 
-            DoComputeOperationMaxwellianUnshiftedLoc(*this, a_device_visible_f5d_s, choice);
+            DoComputeMaxwellianUnshiftedLoc(*this, a_device_visible_f5d_s, choice);
 
             koliop::utility::Copy::Shallow(a_device_visible_f5d_s, a_host_visible_f5d_s);
 
