@@ -35,17 +35,17 @@ namespace koliop {
 
         } // namespace
 
-        template <typename Array6D,
-                  typename Array4D,
-                  typename Array2D>
+        template <typename View6D,
+                  typename View4D,
+                  typename View2D>
         static inline void
         DoComputeAlphaProjection(const Operator& an_operator,
                                  uint64_t        block_first_r,
                                  uint64_t        block_first_theta,
                                  uint64_t        block_first_phi,
-                                 const Array2D&  mask_coll,
-                                 const Array6D&  f5d_s,
-                                 Array4D&&       the_rhs) {
+                                 const View2D&   mask_coll,
+                                 const View6D&   f5d_s,
+                                 View4D&&        the_rhs) {
 
             const uint64_t& the_mu_extent   = an_operator.the_mu_extent_;
             const uint64_t& the_vpar_extent = an_operator.the_vpar_extent_;
@@ -110,20 +110,20 @@ namespace koliop {
                                  a_policy, the_kernel);
         }
 
-        template <typename Array2D0,
-                  typename Array2D1,
-                  typename Array1D>
+        template <typename View2D0,
+                  typename View2D1,
+                  typename View1D>
         static inline void
         DoComputeBlockTo1D(const Operator& an_operator,
                            uint64_t        block_first_r,
                            uint64_t        block_first_theta,
                            uint64_t        block_first_phi,
-                           const Array2D0& mask_coll,
-                           Array2D1&&      n1d_s,
-                           Array2D1&&      T1d_s,
-                           Array1D&&       U_par1d,
-                           Array1D&&       q_par_on_nT1d,
-                           Array1D&&       nu1d) {
+                           const View2D0&  mask_coll,
+                           View2D1&&       n1d_s,
+                           View2D1&&       T1d_s,
+                           View1D&&        U_par1d,
+                           View1D&&        q_par_on_nT1d,
+                           View1D&&        nu1d) {
 
             const uint64_t& the_species_extent = an_operator.the_species_extent_;
 
@@ -173,17 +173,17 @@ namespace koliop {
                                  a_policy, the_kernel);
         }
 
-        template <typename Array6D,
-                  typename Array4D,
-                  typename Array2D>
+        template <typename View6D,
+                  typename View4D,
+                  typename View2D>
         static inline void
         DoComputeReconstruction(const Operator& an_operator,
                                 uint64_t        block_first_r,
                                 uint64_t        block_first_theta,
                                 uint64_t        block_first_phi,
-                                const Array2D&  mask_coll,
-                                Array6D&&       f5d_s,
-                                const Array4D&  the_rhs) {
+                                const View2D&   mask_coll,
+                                View6D&&        f5d_s,
+                                const View4D&   the_rhs) {
 
             const uint64_t& the_mu_extent   = an_operator.the_mu_extent_;
             const uint64_t& the_vpar_extent = an_operator.the_vpar_extent_;
@@ -245,10 +245,10 @@ namespace koliop {
                                  a_policy, the_kernel);
         }
 
-        template <typename Array6D>
+        template <typename View6D>
         static inline void
         DoApply(const Operator& an_operator,
-                Array6D&&       f5d_s) {
+                View6D&&        f5d_s) {
             // TODO(Etienne M): The blocking is mainly done for memory consumption reasons,
             // we have to do something similar.
 
@@ -391,19 +391,20 @@ namespace koliop {
         }
 
         void Operator::Apply(Flo64* f5d_s) const {
-            // TODO(Etienne M): COPY redundant.
 
-            auto a_device_visible_f5d_s = koliop::utility::View::MDL6<Flo64>{Kokkos::view_alloc(Kokkos::WithoutInitializing, "f5d_s"),
-                                                                             the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, the_species_extent_};
-
-            auto a_host_visible_f5d_s = koliop::utility::View::UHL6<Flo64>{// "unmanaged_host_f5d_s",
-                                                                           f5d_s, the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, the_species_extent_};
-
-            koliop::utility::Copy::Shallow(a_host_visible_f5d_s, a_device_visible_f5d_s);
+            auto a_device_visible_f5d_s = koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL6<Flo64>,
+                                                                               koliop::utility::View::MDL6>(f5d_s, "f5d_s",
+                                                                                                            the_mu_extent_, the_vpar_extent_,
+                                                                                                            the_r_extent_, the_theta_extent_, the_phi_extent_,
+                                                                                                            the_species_extent_);
 
             DoApply(*this, a_device_visible_f5d_s);
 
-            koliop::utility::Copy::Shallow(a_device_visible_f5d_s, a_host_visible_f5d_s);
+            koliop::utility::Copy::Shallow(a_device_visible_f5d_s,
+                                           koliop::utility::View::UHL6<Flo64>{f5d_s,
+                                                                              the_mu_extent_, the_vpar_extent_,
+                                                                              the_r_extent_, the_theta_extent_, the_phi_extent_,
+                                                                              the_species_extent_});
 
             // TODO(Etienne M): ASYNC, relax that constraint ?
             Kokkos::fence();

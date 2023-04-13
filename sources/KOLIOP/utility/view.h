@@ -20,53 +20,53 @@ namespace koliop {
         public:
             template <typename Extent>
             using UHL = Kokkos::View<Extent, Kokkos::LayoutLeft, Kokkos::DefaultHostExecutionSpace::memory_space, Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
-            template <typename Float>
-            using UHL1 = UHL<Float*>;
-            template <typename Float>
-            using UHL2 = UHL<Float**>;
-            template <typename Float>
-            using UHL3 = UHL<Float***>;
-            template <typename Float>
-            using UHL4 = UHL<Float****>;
-            template <typename Float>
-            using UHL5 = UHL<Float*****>;
-            template <typename Float>
-            using UHL6 = UHL<Float******>;
+            template <typename T>
+            using UHL1 = UHL<T*>;
+            template <typename T>
+            using UHL2 = UHL<T**>;
+            template <typename T>
+            using UHL3 = UHL<T***>;
+            template <typename T>
+            using UHL4 = UHL<T****>;
+            template <typename T>
+            using UHL5 = UHL<T*****>;
+            template <typename T>
+            using UHL6 = UHL<T******>;
 
             template <typename Extent>
             using MDL = Kokkos::View<Extent, Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace::memory_space>;
-            template <typename Float>
-            using MDL1 = MDL<Float*>;
-            template <typename Float>
-            using MDL2 = MDL<Float**>;
-            template <typename Float>
-            using MDL3 = MDL<Float***>;
-            template <typename Float>
-            using MDL4 = MDL<Float****>;
-            template <typename Float>
-            using MDL5 = MDL<Float*****>;
-            template <typename Float>
-            using MDL6 = MDL<Float******>;
+            template <typename T>
+            using MDL1 = MDL<T*>;
+            template <typename T>
+            using MDL2 = MDL<T**>;
+            template <typename T>
+            using MDL3 = MDL<T***>;
+            template <typename T>
+            using MDL4 = MDL<T****>;
+            template <typename T>
+            using MDL5 = MDL<T*****>;
+            template <typename T>
+            using MDL6 = MDL<T******>;
 
             template <typename Extent>
             using MDD = Kokkos::View<Extent, Kokkos::DefaultExecutionSpace::array_layout, Kokkos::DefaultExecutionSpace::memory_space>;
-            template <typename Float>
-            using MDD1 = MDD<Float*>;
-            template <typename Float>
-            using MDD2 = MDD<Float**>;
-            template <typename Float>
-            using MDD3 = MDD<Float***>;
-            template <typename Float>
-            using MDD4 = MDD<Float****>;
-            template <typename Float>
-            using MDD5 = MDD<Float*****>;
-            template <typename Float>
-            using MDD6 = MDD<Float******>;
+            template <typename T>
+            using MDD1 = MDD<T*>;
+            template <typename T>
+            using MDD2 = MDD<T**>;
+            template <typename T>
+            using MDD3 = MDD<T***>;
+            template <typename T>
+            using MDD4 = MDD<T****>;
+            template <typename T>
+            using MDD5 = MDD<T*****>;
+            template <typename T>
+            using MDD6 = MDD<T******>;
 
             template <typename Extent>
             using MHL = Kokkos::View<Extent, Kokkos::LayoutLeft, Kokkos::DefaultHostExecutionSpace::memory_space>;
-            template <typename Float>
-            using MHL1 = MHL<Float*>;
+            template <typename T>
+            using MHL1 = MHL<T*>;
         };
 
     } // namespace utility

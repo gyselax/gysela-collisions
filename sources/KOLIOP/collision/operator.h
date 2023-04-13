@@ -112,34 +112,34 @@ namespace koliop {
             static inline constexpr uint64_t kFlattenedExtent = kBlockExtentR * kBlockExtentTheta * kBlockExtentPhi;
 
         public:
-            Operator(uint64_t                                        pSpecies_id,
-                     uint64_t                                        mu_id,
-                     uint64_t                                        the_mu_extent,
-                     uint64_t                                        the_vpar_extent,
-                     uint64_t                                        the_r_extent,
-                     uint64_t                                        the_theta_extent,
-                     uint64_t                                        the_phi_extent,
-                     uint64_t                                        the_species_extent,
-                     Flo64                                           R0,
-                     bool                                            collision_interspecies,
-                     bool                                            SOL,
-                     bool                                            LIM,
-                     uint64_t                                        ir_SOL_separatrix,
-                     Flo64                                           dt,
-                     const koliop::utility::View::UHL2<const Flo64>& a_host_visible_comb_mat,
-                     const koliop::utility::View::UHL1<const Flo64>& a_host_visible_hat_As,
-                     const koliop::utility::View::UHL1<const Flo64>& a_host_visible_hat_Zs,
-                     const koliop::utility::View::UHL1<const Flo64>& a_host_visible_mug,
-                     const koliop::utility::View::UHL1<const Flo64>& a_host_visible_vparg,
-                     const koliop::utility::View::UHL1<const Flo64>& a_host_visible_coeff_intdmu,
-                     const koliop::utility::View::UHL1<const Flo64>& a_host_visible_coeff_intdvpar,
-                     const koliop::utility::View::UHL1<const Flo64>& a_host_visible_rg,
-                     const koliop::utility::View::UHL1<const Flo64>& a_host_visible_nustar0_r,
-                     const koliop::utility::View::UHL1<const Flo64>& a_host_visible_q_r,
-                     const koliop::utility::View::UHL1<const Flo64>& a_host_visible_mask_buffer_r,
-                     const koliop::utility::View::UHL2<const Flo64>& a_host_visible_mask_LIM,
-                     const koliop::utility::View::UHL2<const Flo64>& a_host_visible_B_norm,
-                     const koliop::utility::View::UHL4<const Flo64>& a_host_visible_Bstar_s);
+            Operator(uint64_t     pSpecies_id,
+                     uint64_t     mu_id,
+                     uint64_t     the_mu_extent,
+                     uint64_t     the_vpar_extent,
+                     uint64_t     the_r_extent,
+                     uint64_t     the_theta_extent,
+                     uint64_t     the_phi_extent,
+                     uint64_t     the_species_extent,
+                     Flo64        R0,
+                     bool         collision_interspecies,
+                     bool         SOL,
+                     bool         LIM,
+                     uint64_t     ir_SOL_separatrix,
+                     Flo64        dt,
+                     const Flo64* comb_mat,
+                     const Flo64* hat_As,
+                     const Flo64* hat_Zs,
+                     const Flo64* mug,
+                     const Flo64* vparg,
+                     const Flo64* coeff_intdmu,
+                     const Flo64* coeff_intdvpar,
+                     const Flo64* rg,
+                     const Flo64* nustar0_r,
+                     const Flo64* q_r,
+                     const Flo64* mask_buffer_r,
+                     const Flo64* mask_LIM,
+                     const Flo64* B_norm,
+                     const Flo64* Bstar_s);
 
             void ComputeMoments(Flo64* f5d_s);
 
@@ -179,20 +179,20 @@ namespace koliop {
             uint64_t ir_SOL_separatrix_;
             Flo64    dt_;
 
-            koliop::utility::View::MDD2<Flo64> comb_mat_; // TODO(Etienne M): constant extent.
-            koliop::utility::View::MDD1<Flo64> hat_As_;   // TODO(Etienne M): constant extent.
-            koliop::utility::View::MDD1<Flo64> hat_Zs_;   // TODO(Etienne M): constant extent.
-            koliop::utility::View::MDD1<Flo64> mug_;
-            koliop::utility::View::MDD1<Flo64> vparg_;
-            koliop::utility::View::MDD1<Flo64> coeff_intdmu_;
-            koliop::utility::View::MDD1<Flo64> coeff_intdvpar_;
-            koliop::utility::View::MDD1<Flo64> rg_;
-            koliop::utility::View::MDD1<Flo64> nustar0_r_;
-            koliop::utility::View::MDD1<Flo64> q_r_;
-            koliop::utility::View::MDD1<Flo64> mask_buffer_r_;
-            koliop::utility::View::MDD2<Flo64> mask_LIM_;
-            koliop::utility::View::MDD2<Flo64> B_norm_;
-            koliop::utility::View::MDD4<Flo64> Bstar_s_;
+            koliop::utility::View::MDD2<const Flo64> comb_mat_; // TODO(Etienne M): constant extent.
+            koliop::utility::View::MDD1<const Flo64> hat_As_;   // TODO(Etienne M): constant extent.
+            koliop::utility::View::MDD1<const Flo64> hat_Zs_;   // TODO(Etienne M): constant extent.
+            koliop::utility::View::MDD1<const Flo64> mug_;
+            koliop::utility::View::MDD1<const Flo64> vparg_;
+            koliop::utility::View::MDD1<const Flo64> coeff_intdmu_;
+            koliop::utility::View::MDD1<const Flo64> coeff_intdvpar_;
+            koliop::utility::View::MDD1<const Flo64> rg_;
+            koliop::utility::View::MDD1<const Flo64> nustar0_r_;
+            koliop::utility::View::MDD1<const Flo64> q_r_;
+            koliop::utility::View::MDD1<const Flo64> mask_buffer_r_;
+            koliop::utility::View::MDD2<const Flo64> mask_LIM_;
+            koliop::utility::View::MDD2<const Flo64> B_norm_;
+            koliop::utility::View::MDD4<const Flo64> Bstar_s_;
 
             // Constant, internally computed values
 

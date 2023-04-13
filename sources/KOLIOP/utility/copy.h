@@ -13,15 +13,7 @@ namespace koliop {
         ////////////////////////////////////////////////////////////////////////
 
         /// TODO(Etienne M):
-        /// We could prevent an allocation before doing the shallow copy when
-        /// obtaining a host pointer and having to convert it to device.
-        /// Currently, we first allocate view to contain the potential copy, then
-        /// we deduce if we can do a shallow copy, if we can, the memory is
-        /// freed, else we do a deep copy. In case the deep copy is not required
-        /// we have to prevent that allocation.
-        /// Note that on CPU with CPU inputs Koliop should not allocate ANY memory
-        /// for its input and only do shallow copy. Similarly on GPU with GPU
-        /// inputs. that said, if a GPU Koliop gets CPU inputs we have to copy.
+        /// Add execution space aware version of the functions below ?
         ///
         struct Copy {
         public:
@@ -51,7 +43,7 @@ namespace koliop {
             ///
             template <typename SourceView,
                       typename DestinationView>
-            static void
+            static auto
             Shallow(SourceView&&      a_source_view,
                     DestinationView&& a_destination_view);
 
@@ -60,9 +52,22 @@ namespace koliop {
             ///
             template <typename SourceView,
                       typename DestinationView>
-            static void
+            static auto
             Deep(SourceView&&      a_source_view,
                  DestinationView&& a_destination_view);
+
+            /// May or may not allocate new memory to represent the_raw_data. As
+            /// such it is required that the_raw_data's lifetime may be as long
+            /// as the one of the returned view.
+            ///
+            template <typename UnmanagedView,
+                      template <typename>
+                      typename DestinationViewTemplate,
+                      typename... Indicies>
+            static auto
+            RawDataToView(typename UnmanagedView::value_type* the_raw_data,
+                          const char*                         the_view_label,
+                          Indicies... the_indicies);
         };
 
 
@@ -72,7 +77,7 @@ namespace koliop {
 
         template <typename SourceView,
                   typename DestinationView>
-        void Copy::Shallow(SourceView&&      a_source_view,
+        auto Copy::Shallow(SourceView&&      a_source_view,
                            DestinationView&& a_destination_view) {
             if constexpr(std::is_same_v<typename std::remove_reference_t<SourceView>::memory_space,
                                         typename std::remove_reference_t<DestinationView>::memory_space> &&
@@ -82,11 +87,13 @@ namespace koliop {
             } else {
                 Deep(a_source_view, a_destination_view);
             }
+
+            return a_destination_view;
         }
 
         template <typename SourceView,
                   typename DestinationView>
-        void Copy::Deep(SourceView&&      a_source_view,
+        auto Copy::Deep(SourceView&&      a_source_view,
                         DestinationView&& a_destination_view) {
             if constexpr(std::is_same_v<typename std::remove_reference_t<SourceView>::memory_space,
                                         typename std::remove_reference_t<DestinationView>::memory_space> ||
@@ -97,7 +104,10 @@ namespace koliop {
                 Kokkos::deep_copy(a_destination_view, a_source_view);
             } else {
 
-                // TODO(Etienne M): create_mirror_view_and_copy ?
+                // // TODO(Etienne M): create_mirror_view_and_copy ?
+                // auto a_host_visible_source_mirror = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{},
+                //                                                                                            Kokkos::WithoutInitializing),
+                //                                                                         a_source_view);
 
                 // TODO(Etienne M): Do we really need to copy to the host ?
                 auto a_host_visible_source_mirror = Kokkos::create_mirror_view(Kokkos::view_alloc(Kokkos::WithoutInitializing), a_source_view);
@@ -114,6 +124,39 @@ namespace koliop {
                 // Could be a no-op.
                 Kokkos::deep_copy(a_destination_view,
                                   a_host_visible_target_mirror);
+            }
+
+            return a_destination_view;
+        }
+
+        template <typename UnmanagedView,
+                  template <typename>
+                  typename DestinationViewTemplate,
+                  typename... Indicies>
+        auto Copy::RawDataToView(typename UnmanagedView::value_type* the_raw_data,
+                                 const char*                         the_view_label,
+                                 Indicies... the_indicies) {
+
+            // NOTE:
+            // Assuming host as device, given a constant host ptr, we do not copy and do a                       simple assignment into a const view
+            // Assuming gpu  as device, given a constant host ptr, we do     copy into a non const view and do a simple assignment into a const view
+            //
+            // By const view, we mean a const value type.
+
+            using DestinationView = DestinationViewTemplate<std::remove_const_t<typename UnmanagedView::value_type>>;
+
+            if constexpr(std::is_same_v<typename std::remove_reference_t<UnmanagedView>::array_layout,
+                                        typename std::remove_reference_t<DestinationView>::array_layout> &&
+                         std::is_same_v<typename std::remove_reference_t<UnmanagedView>::memory_space,
+                                        typename std::remove_reference_t<DestinationView>::memory_space>) {
+                return UnmanagedView{the_raw_data,
+                                     the_indicies...};
+            } else {
+                return Deep(UnmanagedView{the_raw_data,
+                                          the_indicies...},
+                            DestinationView{Kokkos::view_alloc(Kokkos::WithoutInitializing,
+                                                               std::string{the_view_label}),
+                                            the_indicies...});
             }
         }
 

@@ -7,10 +7,10 @@
 namespace koliop {
     namespace collision {
 
-        template <typename Array6D>
+        template <typename View6D>
         static inline void
         DoComputeCpar(const Operator& an_operator,
-                      Array6D&&       f5d_s) {
+                      View6D&&        f5d_s) {
 
             const uint64_t& the_mu_extent      = an_operator.the_mu_extent_;
             const uint64_t& the_vpar_extent    = an_operator.the_vpar_extent_;
@@ -105,19 +105,20 @@ namespace koliop {
         }
 
         void Operator::ComputeCpar(Flo64* f5d_s) const {
-            // TODO(Etienne M): COPY redundant.
 
-            auto a_device_visible_f5d_s = koliop::utility::View::MDL6<Flo64>{Kokkos::view_alloc(Kokkos::WithoutInitializing, "f5d_s"),
-                                                                             the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, the_species_extent_};
-
-            auto a_host_visible_f5d_s = koliop::utility::View::UHL6<Flo64>{// "unmanaged_host_f5d_s",
-                                                                           f5d_s, the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, the_species_extent_};
-
-            koliop::utility::Copy::Shallow(a_host_visible_f5d_s, a_device_visible_f5d_s);
+            auto a_device_visible_f5d_s = koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL6<Flo64>,
+                                                                               koliop::utility::View::MDL6>(f5d_s, "f5d_s",
+                                                                                                            the_mu_extent_, the_vpar_extent_,
+                                                                                                            the_r_extent_, the_theta_extent_, the_phi_extent_,
+                                                                                                            the_species_extent_);
 
             DoComputeCpar(*this, a_device_visible_f5d_s);
 
-            koliop::utility::Copy::Shallow(a_device_visible_f5d_s, a_host_visible_f5d_s);
+            koliop::utility::Copy::Shallow(a_device_visible_f5d_s,
+                                           koliop::utility::View::UHL6<Flo64>{f5d_s,
+                                                                              the_mu_extent_, the_vpar_extent_,
+                                                                              the_r_extent_, the_theta_extent_, the_phi_extent_,
+                                                                              the_species_extent_});
 
             // TODO(Etienne M): ASYNC, relax that constraint ?
             Kokkos::fence();

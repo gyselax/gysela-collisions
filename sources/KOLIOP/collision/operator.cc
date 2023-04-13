@@ -71,18 +71,28 @@ namespace koliop {
             DoPrepareCjl(a_host_visible_C_j, C_jl);
         }
 
+        template <typename View3D,
+                  typename View1D>
         static inline void
-        DoPrepareNuStar(const Operator&                                 an_operator,
-                        koliop::utility::View::MDD3<Flo64>&             nustar_coeff,
-                        const koliop::utility::View::UHL1<const Flo64>& a_host_visible_hat_As,
-                        const koliop::utility::View::UHL1<const Flo64>& a_host_visible_hat_Zs,
-                        const koliop::utility::View::UHL1<const Flo64>& a_host_visible_rg,
-                        const koliop::utility::View::UHL1<const Flo64>& a_host_visible_nustar0_r,
-                        const koliop::utility::View::UHL1<const Flo64>& a_host_visible_q_r,
-                        const koliop::utility::View::UHL1<const Flo64>& a_host_visible_mask_buffer_r) {
+        DoPrepareNuStar(const Operator& an_operator,
+                        View3D&&        nustar_coeff,
+                        const View1D&   hat_As,
+                        const View1D&   hat_Zs,
+                        const View1D&   rg,
+                        const View1D&   nustar0_r,
+                        const View1D&   q_r,
+                        const View1D&   mask_buffer_r) {
 
             // TODO(Etienne M): I observe some slight numerical discrepancy
             // (1e-14 ~ ) when comparing the result of Gysela and koliop.
+
+            const auto a_host_visible_hat_As        = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(typename View1D::memory_space{}, Kokkos::WithoutInitializing), hat_As);
+            const auto a_host_visible_hat_Zs        = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(typename View1D::memory_space{}, Kokkos::WithoutInitializing), hat_Zs);
+            const auto a_host_visible_rg            = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(typename View1D::memory_space{}, Kokkos::WithoutInitializing), rg);
+            const auto a_host_visible_nustar0_r     = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(typename View1D::memory_space{}, Kokkos::WithoutInitializing), nustar0_r);
+            const auto a_host_visible_q_r           = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(typename View1D::memory_space{}, Kokkos::WithoutInitializing), q_r);
+            const auto a_host_visible_mask_buffer_r = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(typename View1D::memory_space{}, Kokkos::WithoutInitializing), mask_buffer_r);
+            const auto a_host_visible_nustar_coeff  = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(typename View1D::memory_space{}, Kokkos::WithoutInitializing), nustar_coeff);
 
             koliop::utility::View::MHL1<Flo64> a_host_visible_mask_space{Kokkos::view_alloc(Kokkos::WithoutInitializing, "a_host_visible_mask_space"),
                                                                          an_operator.the_r_extent_};
@@ -98,10 +108,6 @@ namespace koliop {
                     a_host_visible_mask_space(i) *= (1.0 - a_host_visible_mask_buffer_r(i));
                 }
             }
-
-            const auto a_host_visible_nustar_coeff = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{},
-                                                                                                            Kokkos::WithoutInitializing),
-                                                                                         nustar_coeff);
 
             const auto R0_inverse = 1.0 / an_operator.R0_;
 
@@ -146,34 +152,34 @@ namespace koliop {
             koliop::utility::Copy::Shallow(a_host_visible_nustar_coeff, nustar_coeff);
         }
 
-        Operator::Operator(uint64_t                                        pSpecies_id,
-                           uint64_t                                        mu_id,
-                           uint64_t                                        the_mu_extent,
-                           uint64_t                                        the_vpar_extent,
-                           uint64_t                                        the_r_extent,
-                           uint64_t                                        the_theta_extent,
-                           uint64_t                                        the_phi_extent,
-                           uint64_t                                        the_species_extent,
-                           Flo64                                           R0,
-                           bool                                            collision_interspecies,
-                           bool                                            SOL,
-                           bool                                            LIM,
-                           uint64_t                                        ir_SOL_separatrix,
-                           Flo64                                           dt,
-                           const koliop::utility::View::UHL2<const Flo64>& a_host_visible_comb_mat,
-                           const koliop::utility::View::UHL1<const Flo64>& a_host_visible_hat_As,
-                           const koliop::utility::View::UHL1<const Flo64>& a_host_visible_hat_Zs,
-                           const koliop::utility::View::UHL1<const Flo64>& a_host_visible_mug,
-                           const koliop::utility::View::UHL1<const Flo64>& a_host_visible_vparg,
-                           const koliop::utility::View::UHL1<const Flo64>& a_host_visible_coeff_intdmu,
-                           const koliop::utility::View::UHL1<const Flo64>& a_host_visible_coeff_intdvpar,
-                           const koliop::utility::View::UHL1<const Flo64>& a_host_visible_rg,
-                           const koliop::utility::View::UHL1<const Flo64>& a_host_visible_nustar0_r,
-                           const koliop::utility::View::UHL1<const Flo64>& a_host_visible_q_r,
-                           const koliop::utility::View::UHL1<const Flo64>& a_host_visible_mask_buffer_r,
-                           const koliop::utility::View::UHL2<const Flo64>& a_host_visible_mask_LIM,
-                           const koliop::utility::View::UHL2<const Flo64>& a_host_visible_B_norm,
-                           const koliop::utility::View::UHL4<const Flo64>& a_host_visible_Bstar_s)
+        Operator::Operator(uint64_t     pSpecies_id,
+                           uint64_t     mu_id,
+                           uint64_t     the_mu_extent,
+                           uint64_t     the_vpar_extent,
+                           uint64_t     the_r_extent,
+                           uint64_t     the_theta_extent,
+                           uint64_t     the_phi_extent,
+                           uint64_t     the_species_extent,
+                           Flo64        R0,
+                           bool         collision_interspecies,
+                           bool         SOL,
+                           bool         LIM,
+                           uint64_t     ir_SOL_separatrix,
+                           Flo64        dt,
+                           const Flo64* comb_mat,
+                           const Flo64* hat_As,
+                           const Flo64* hat_Zs,
+                           const Flo64* mug,
+                           const Flo64* vparg,
+                           const Flo64* coeff_intdmu,
+                           const Flo64* coeff_intdvpar,
+                           const Flo64* rg,
+                           const Flo64* nustar0_r,
+                           const Flo64* q_r,
+                           const Flo64* mask_buffer_r,
+                           const Flo64* mask_LIM,
+                           const Flo64* B_norm,
+                           const Flo64* Bstar_s)
             // Constant, externally computed values
             : pSpecies_id_{pSpecies_id}
             , mu_id_{mu_id}
@@ -189,33 +195,21 @@ namespace koliop {
             , LIM_{LIM}
             , ir_SOL_separatrix_{ir_SOL_separatrix}
             , dt_{dt}
-            , comb_mat_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "comb_mat_"),
-                        2 * kMaximumLaguerrePolynomialDegree, 2 * kMaximumLaguerrePolynomialDegree}
-            , hat_As_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "hat_As_"),
-                      kMaximumLaguerrePolynomialDegree}
-            , hat_Zs_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "hat_Zs_"),
-                      kMaximumLaguerrePolynomialDegree}
-            , mug_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "mug_"),
-                   the_mu_extent_}
-            , vparg_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "vparg_"),
-                     the_vpar_extent_}
-            , coeff_intdmu_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "coeff_intdmu_"),
-                            the_mu_extent_}
-            , coeff_intdvpar_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "coeff_intdvpar_"),
-                              the_vpar_extent_}
-            , rg_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "rg_"),
-                  the_r_extent_}
-            , nustar0_r_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "nustar0_r_"),
-                         the_r_extent_}
-            , q_r_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "q_r_"),
-                   the_r_extent_}
-            , mask_buffer_r_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "mask_buffer_r_"),
-                             the_r_extent_}
-            , mask_LIM_{}
-            , B_norm_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "B_norm_"),
-                      the_r_extent_, the_theta_extent_ + 1 /* Weird +1 */}
-            , Bstar_s_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "Bstar_s_"),
-                       the_vpar_extent_, the_r_extent_, the_theta_extent_, the_species_extent_}
+            , comb_mat_{koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL2<const Flo64>, koliop::utility::View::MDD2>(comb_mat, "comb_mat_", 2 * kMaximumLaguerrePolynomialDegree, 2 * kMaximumLaguerrePolynomialDegree)}
+            , hat_As_{koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL1<const Flo64>, koliop::utility::View::MDD1>(hat_As, "hat_As_", kMaximumLaguerrePolynomialDegree)}
+            , hat_Zs_{koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL1<const Flo64>, koliop::utility::View::MDD1>(hat_Zs, "hat_Zs_", kMaximumLaguerrePolynomialDegree)}
+            , mug_{koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL1<const Flo64>, koliop::utility::View::MDD1>(mug, "mug_", the_mu_extent_)}
+            , vparg_{koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL1<const Flo64>, koliop::utility::View::MDD1>(vparg, "vparg_", the_vpar_extent_)}
+            , coeff_intdmu_{koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL1<const Flo64>, koliop::utility::View::MDD1>(coeff_intdmu, "coeff_intdmu_", the_mu_extent_)}
+            , coeff_intdvpar_{koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL1<const Flo64>, koliop::utility::View::MDD1>(coeff_intdvpar, "coeff_intdvpar_", the_vpar_extent_)}
+            , rg_{koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL1<const Flo64>, koliop::utility::View::MDD1>(rg, "rg_", the_r_extent_)}
+            , nustar0_r_{koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL1<const Flo64>, koliop::utility::View::MDD1>(nustar0_r, "nustar0_r_", the_r_extent_)}
+            , q_r_{koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL1<const Flo64>, koliop::utility::View::MDD1>(q_r, "q_r_", the_r_extent_)}
+            , mask_buffer_r_{koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL1<const Flo64>, koliop::utility::View::MDD1>(mask_buffer_r, "mask_buffer_r_", the_r_extent_)}
+            , mask_LIM_{LIM_ ? koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL2<const Flo64>, koliop::utility::View::MDD2>(mask_LIM, "mask_LIM_", the_r_extent, the_theta_extent) :
+                               koliop::utility::View::MDD2<Flo64>{}}
+            , B_norm_{koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL2<const Flo64>, koliop::utility::View::MDD2>(B_norm, "B_norm_", the_r_extent_, the_theta_extent_ + 1 /* Weird +1 */)}
+            , Bstar_s_{koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL4<const Flo64>, koliop::utility::View::MDD4>(Bstar_s, "Bstar_s_", the_vpar_extent_, the_r_extent_, the_theta_extent_, the_species_extent_)}
 
             // Constant, internally computed values
 
@@ -244,46 +238,19 @@ namespace koliop {
             // TODO(Etienne M): Should we partition ?
             , the_alpha_solver_{Kokkos::DefaultExecutionSpace{}} {
 
-            // TODO(Etienne M): Say we get CPU buffers. Depending on whether
-            // koliop is compiled for CPU or GPU we can either, do a shallow
-            // copy, or we need to do a deep copy across memory spaces.
-            // Copy::Shallow tries not to allocate more memory than necessary.
-            // Copy::Deep always reallocate.
-            // Both Copy::Deep and Copy::Shallow know how to handle views
-            // of different layout and memory space.
-            koliop::utility::Copy::Shallow(a_host_visible_comb_mat, comb_mat_);
-            koliop::utility::Copy::Shallow(a_host_visible_hat_As, hat_As_);
-            koliop::utility::Copy::Shallow(a_host_visible_hat_Zs, hat_Zs_);
-            koliop::utility::Copy::Shallow(a_host_visible_mug, mug_);
-            koliop::utility::Copy::Shallow(a_host_visible_vparg, vparg_);
-            koliop::utility::Copy::Shallow(a_host_visible_coeff_intdmu, coeff_intdmu_);
-            koliop::utility::Copy::Shallow(a_host_visible_coeff_intdvpar, coeff_intdvpar_);
-            koliop::utility::Copy::Shallow(a_host_visible_rg, rg_);
-            koliop::utility::Copy::Shallow(a_host_visible_nustar0_r, nustar0_r_);
-            koliop::utility::Copy::Shallow(a_host_visible_q_r, q_r_);
-            koliop::utility::Copy::Shallow(a_host_visible_mask_buffer_r, mask_buffer_r_);
-
-            if(LIM_) {
-                mask_LIM_ = koliop::utility::View::MDD2<Flo64>{Kokkos::view_alloc(Kokkos::WithoutInitializing, "mask_LIM_"),
-                                                               the_r_extent, the_theta_extent};
-                koliop::utility::Copy::Shallow(a_host_visible_mask_LIM, mask_LIM_);
-            }
-
-            koliop::utility::Copy::Shallow(a_host_visible_B_norm, B_norm_);
-            koliop::utility::Copy::Shallow(a_host_visible_Bstar_s, Bstar_s_);
-
-            // TODO(Etienne M): ASYNC, relax that constraint ?
-            Kokkos::fence();
+            // TODO(Etienne M): Should we fence after the copies ? We *may* need
+            // that if we pass an execution space to the deep copy.
+            // Kokkos::fence();
 
             DoPrepareCj_Cjl(C_j_, C_jl_);
             DoPrepareNuStar(*this,
                             nustar_coeff_,
-                            a_host_visible_hat_As,
-                            a_host_visible_hat_Zs,
-                            a_host_visible_rg,
-                            a_host_visible_nustar0_r,
-                            a_host_visible_q_r,
-                            a_host_visible_mask_buffer_r);
+                            hat_As_,
+                            hat_Zs_,
+                            rg_,
+                            nustar0_r_,
+                            q_r_,
+                            mask_buffer_r_);
         }
 
     } // namespace collision

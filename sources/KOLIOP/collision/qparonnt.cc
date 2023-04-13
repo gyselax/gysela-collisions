@@ -7,12 +7,12 @@
 namespace koliop {
     namespace collision {
 
-        template <typename Array6D,
-                  typename Array4D>
+        template <typename View6D,
+                  typename View4D>
         static inline void
         DoComputeQparOnNT(const Operator& an_operator,
-                          const Array6D&  f5d_s,
-                          Array4D&&       q_par_on_nT_s) {
+                          const View6D&   f5d_s,
+                          View4D&&        q_par_on_nT_s) {
 
             const uint64_t& the_mu_extent      = an_operator.the_mu_extent_;
             const uint64_t& the_vpar_extent    = an_operator.the_vpar_extent_;
@@ -85,18 +85,12 @@ namespace koliop {
         }
 
         void Operator::ComputeQparOnNT(const Flo64* f5d_s) {
-            // TODO(Etienne M): COPY redundant.
 
-            // TODO(Etienne M): On host we want the view to have the same type
-            // (operator= is used.). On GPU, we need a deep copy and
-            // a_device_visible_f5d_s can not be const..
-            auto a_device_visible_f5d_s = koliop::utility::View::MDL6</* const */ Flo64>{Kokkos::view_alloc(Kokkos::WithoutInitializing, "f5d_s"),
-                                                                                         the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, the_species_extent_};
-
-            auto a_host_visible_f5d_s = koliop::utility::View::UHL6<const Flo64>{// "unmanaged_host_f5d_s",
-                                                                                 f5d_s, the_mu_extent_, the_vpar_extent_, the_r_extent_, the_theta_extent_, the_phi_extent_, the_species_extent_};
-
-            koliop::utility::Copy::Shallow(a_host_visible_f5d_s, a_device_visible_f5d_s);
+            auto a_device_visible_f5d_s = koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL6<const Flo64>,
+                                                                               koliop::utility::View::MDL6>(f5d_s, "f5d_s",
+                                                                                                            the_mu_extent_, the_vpar_extent_,
+                                                                                                            the_r_extent_, the_theta_extent_, the_phi_extent_,
+                                                                                                            the_species_extent_);
 
             DoComputeQparOnNT(*this, a_device_visible_f5d_s, q_par_on_nT_s_);
 

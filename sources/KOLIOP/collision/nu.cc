@@ -35,10 +35,10 @@ namespace koliop {
         /// TODO(Etienne M): We precompute the species' Nu but in some cases, it
         /// may be cheaper to just rematerialize it.
         ///
-        template <typename Array5D>
+        template <typename View5D>
         static inline void
         DoPrecomputeNu(const Operator& an_operator,
-                       Array5D&&       nu_ab) {
+                       View5D&&        nu_ab) {
 
             const uint64_t& the_r_extent       = an_operator.the_r_extent_;
             const uint64_t& the_theta_extent   = an_operator.the_theta_extent_;
