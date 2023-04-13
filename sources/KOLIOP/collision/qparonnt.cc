@@ -8,26 +8,26 @@ namespace koliop {
         template <typename Array6D,
                   typename Array4D>
         static inline void
-        DoComputeQparOnNT(const State&   a_state,
-                          const Array6D& f5d_s,
-                          Array4D&&      q_par_on_nT_s) {
+        DoComputeQparOnNT(const Operator& an_operator,
+                          const Array6D&  f5d_s,
+                          Array4D&&       q_par_on_nT_s) {
 
-            const uint64_t& the_mu_extent      = a_state.the_mu_extent_;
-            const uint64_t& the_vpar_extent    = a_state.the_vpar_extent_;
-            const uint64_t& the_r_extent       = a_state.the_r_extent_;
-            const uint64_t& the_theta_extent   = a_state.the_theta_extent_;
-            const uint64_t& the_phi_extent     = a_state.the_phi_extent_;
-            const uint64_t& the_species_extent = a_state.the_species_extent_;
+            const uint64_t& the_mu_extent      = an_operator.the_mu_extent_;
+            const uint64_t& the_vpar_extent    = an_operator.the_vpar_extent_;
+            const uint64_t& the_r_extent       = an_operator.the_r_extent_;
+            const uint64_t& the_theta_extent   = an_operator.the_theta_extent_;
+            const uint64_t& the_phi_extent     = an_operator.the_phi_extent_;
+            const uint64_t& the_species_extent = an_operator.the_species_extent_;
 
-            const auto& mug            = a_state.mug_;
-            const auto& vparg          = a_state.vparg_;
-            const auto& coeff_intdmu   = a_state.coeff_intdmu_;
-            const auto& coeff_intdvpar = a_state.coeff_intdvpar_;
-            const auto& B_norm         = a_state.B_norm_;
-            const auto& Bstar_s        = a_state.Bstar_s_;
-            const auto& n_s            = a_state.n_s_;
-            const auto& U_par_s        = a_state.U_par_s_;
-            const auto& T_s            = a_state.T_s_;
+            const auto& mug            = an_operator.mug_;
+            const auto& vparg          = an_operator.vparg_;
+            const auto& coeff_intdmu   = an_operator.coeff_intdmu_;
+            const auto& coeff_intdvpar = an_operator.coeff_intdvpar_;
+            const auto& B_norm         = an_operator.B_norm_;
+            const auto& Bstar_s        = an_operator.Bstar_s_;
+            const auto& n_s            = an_operator.n_s_;
+            const auto& U_par_s        = an_operator.U_par_s_;
+            const auto& T_s            = an_operator.T_s_;
 
             const auto the_kernel = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi, auto ispecies) {
                 // TODO(Etienne M): Should we flatten even more the loops ?
@@ -82,7 +82,7 @@ namespace koliop {
                                  a_policy, the_kernel);
         }
 
-        void State::ComputeQparOnNT(const Flo64* f5d_s) {
+        void Operator::ComputeQparOnNT(const Flo64* f5d_s) {
             // TODO(Etienne M): COPY redundant.
 
             // TODO(Etienne M): On host we want the view to have the same type

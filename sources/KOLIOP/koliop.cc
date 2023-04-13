@@ -88,11 +88,11 @@
                               const double*      B_norm,
                               const double*      Bstar_s) {
     return koliop::error::FromException([&]() {
-        using State = koliop::collision::State;
+        using Operator = koliop::collision::Operator;
 
         if(an_operator_handle == nullptr ||
            // We expect Npolmax to be constant.
-           Npolmax != State::kMaximumLaguerrePolynomialDegree ||
+           Npolmax != Operator::kMaximumLaguerrePolynomialDegree ||
            (index_max != 2 * (Npolmax - 1)) ||
            comb_mat == nullptr ||
            hat_As == nullptr ||
@@ -113,49 +113,49 @@
             return KOLIOP_STATUS_INVALID_VALUE;
         }
 
-        auto* const an_operator = new State{pSpecies_id,
-                                            mu_id,
-                                            the_mu_extent,
-                                            the_vpar_extent,
-                                            the_r_extent,
-                                            the_theta_extent,
-                                            the_phi_extent,
-                                            the_species_extent,
-                                            R0,
-                                            static_cast<bool>(collision_interspecies),
-                                            static_cast<bool>(SOL),
-                                            static_cast<bool>(LIM),
-                                            ir_SOL_separatrix,
-                                            dt,
-                                            koliop::collision::ViewUHL2<const koliop::Flo64>{// "unmanaged_host_comb_mat",
-                                                                                             comb_mat, ((index_max + 1) + 1) - 0, ((index_max + 1) + 1) - 0},
-                                            koliop::collision::ViewUHL1<const koliop::Flo64>{// "unmanaged_host_hat_As",
-                                                                                             hat_As, Npolmax},
-                                            koliop::collision::ViewUHL1<const koliop::Flo64>{// "unmanaged_host_hat_Zs",
-                                                                                             hat_Zs, Npolmax},
-                                            koliop::collision::ViewUHL1<const koliop::Flo64>{// "unmanaged_host_mug",
-                                                                                             mug, the_mu_extent},
-                                            koliop::collision::ViewUHL1<const koliop::Flo64>{// "unmanaged_host_vparg",
-                                                                                             vparg, the_vpar_extent},
-                                            koliop::collision::ViewUHL1<const koliop::Flo64>{// "unmanaged_host_coeff_intdmu",
-                                                                                             coeff_intdmu, the_mu_extent},
-                                            koliop::collision::ViewUHL1<const koliop::Flo64>{// "unmanaged_host_coeff_intdvpar",
-                                                                                             coeff_intdvpar, the_vpar_extent},
-                                            koliop::collision::ViewUHL1<const koliop::Flo64>{// "unmanaged_host_rg",
-                                                                                             rg, the_r_extent},
-                                            koliop::collision::ViewUHL1<const koliop::Flo64>{// "unmanaged_host_nustar0_r",
-                                                                                             nustar0_r, the_r_extent},
-                                            koliop::collision::ViewUHL1<const koliop::Flo64>{// "unmanaged_host_q_r",
-                                                                                             q_r, the_r_extent},
-                                            koliop::collision::ViewUHL1<const koliop::Flo64>{// "unmanaged_host_mask_buffer_r",
-                                                                                             mask_buffer_r, the_r_extent},
-                                            static_cast<bool>(LIM) ? koliop::collision::ViewUHL2<const koliop::Flo64>{// "unmanaged_host_mask_LIM",
-                                                                                                                      mask_LIM, the_r_extent, the_theta_extent} :
-                                                                     koliop::collision::ViewUHL2<const koliop::Flo64>{/* "unmanaged_host_mask_LIM" */},
-                                            koliop::collision::ViewUHL2<const koliop::Flo64>{// "unmanaged_host_B_norm",
-                                                                                             B_norm, the_r_extent, the_theta_extent + 1 /* Weird +1 */},
-                                            koliop::collision::ViewUHL4<const koliop::Flo64>{// "unmanaged_host_Bstar_s",
-                                                                                             Bstar_s, the_vpar_extent, the_r_extent, the_theta_extent, the_species_extent}};
+        auto* const an_operator = new Operator{pSpecies_id,
+                                               mu_id,
+                                               the_mu_extent,
+                                               the_vpar_extent,
+                                               the_r_extent,
+                                               the_theta_extent,
+                                               the_phi_extent,
+                                               the_species_extent,
+                                               R0,
+                                               static_cast<bool>(collision_interspecies),
+                                               static_cast<bool>(SOL),
+                                               static_cast<bool>(LIM),
+                                               ir_SOL_separatrix,
+                                               dt,
+                                               koliop::collision::ViewUHL2<const koliop::Flo64>{// "unmanaged_host_comb_mat",
+                                                                                                comb_mat, ((index_max + 1) + 1) - 0, ((index_max + 1) + 1) - 0},
+                                               koliop::collision::ViewUHL1<const koliop::Flo64>{// "unmanaged_host_hat_As",
+                                                                                                hat_As, Npolmax},
+                                               koliop::collision::ViewUHL1<const koliop::Flo64>{// "unmanaged_host_hat_Zs",
+                                                                                                hat_Zs, Npolmax},
+                                               koliop::collision::ViewUHL1<const koliop::Flo64>{// "unmanaged_host_mug",
+                                                                                                mug, the_mu_extent},
+                                               koliop::collision::ViewUHL1<const koliop::Flo64>{// "unmanaged_host_vparg",
+                                                                                                vparg, the_vpar_extent},
+                                               koliop::collision::ViewUHL1<const koliop::Flo64>{// "unmanaged_host_coeff_intdmu",
+                                                                                                coeff_intdmu, the_mu_extent},
+                                               koliop::collision::ViewUHL1<const koliop::Flo64>{// "unmanaged_host_coeff_intdvpar",
+                                                                                                coeff_intdvpar, the_vpar_extent},
+                                               koliop::collision::ViewUHL1<const koliop::Flo64>{// "unmanaged_host_rg",
+                                                                                                rg, the_r_extent},
+                                               koliop::collision::ViewUHL1<const koliop::Flo64>{// "unmanaged_host_nustar0_r",
+                                                                                                nustar0_r, the_r_extent},
+                                               koliop::collision::ViewUHL1<const koliop::Flo64>{// "unmanaged_host_q_r",
+                                                                                                q_r, the_r_extent},
+                                               koliop::collision::ViewUHL1<const koliop::Flo64>{// "unmanaged_host_mask_buffer_r",
+                                                                                                mask_buffer_r, the_r_extent},
+                                               static_cast<bool>(LIM) ? koliop::collision::ViewUHL2<const koliop::Flo64>{// "unmanaged_host_mask_LIM",
+                                                                                                                         mask_LIM, the_r_extent, the_theta_extent} :
+                                                                        koliop::collision::ViewUHL2<const koliop::Flo64>{/* "unmanaged_host_mask_LIM" */},
+                                               koliop::collision::ViewUHL2<const koliop::Flo64>{// "unmanaged_host_B_norm",
+                                                                                                B_norm, the_r_extent, the_theta_extent + 1 /* Weird +1 */},
+                                               koliop::collision::ViewUHL4<const koliop::Flo64>{// "unmanaged_host_Bstar_s",
+                                                                                                Bstar_s, the_vpar_extent, the_r_extent, the_theta_extent, the_species_extent}};
 
         KOLIOP_ASSERT(an_operator != nullptr);
 
@@ -167,10 +167,9 @@
 
 ::koliop_Status koliop_Release(::koliop_Operator an_operator) {
     return koliop::error::FromException([&]() {
-        using State = koliop::collision::State;
 
         // Freeing a nullptr is *fine*.
-        delete reinterpret_cast<const State*>(an_operator);
+        delete reinterpret_cast<const koliop::collision::Operator*>(an_operator);
 
         return KOLIOP_STATUS_SUCCESS;
     });
@@ -184,8 +183,7 @@
             return KOLIOP_STATUS_INVALID_VALUE;
         }
 
-        using State = koliop::collision::State;
-        reinterpret_cast<State*>(an_operator)->ComputeMoments(f5d_s);
+        reinterpret_cast<koliop::collision::Operator*>(an_operator)->ComputeMoments(f5d_s);
 
         return KOLIOP_STATUS_SUCCESS;
     });
@@ -197,8 +195,7 @@
             return KOLIOP_STATUS_INVALID_VALUE;
         }
 
-        using State = koliop::collision::State;
-        reinterpret_cast<State*>(an_operator)->PrecomputeNu();
+        reinterpret_cast<koliop::collision::Operator*>(an_operator)->PrecomputeNu();
 
         return KOLIOP_STATUS_SUCCESS;
     });
@@ -212,8 +209,7 @@
             return KOLIOP_STATUS_INVALID_VALUE;
         }
 
-        using State = koliop::collision::State;
-        reinterpret_cast<State*>(an_operator)->ComputeMaxwellianEvolution(f5d_s);
+        reinterpret_cast<koliop::collision::Operator*>(an_operator)->ComputeMaxwellianEvolution(f5d_s);
 
         return KOLIOP_STATUS_SUCCESS;
     });
@@ -227,8 +223,7 @@
             return KOLIOP_STATUS_INVALID_VALUE;
         }
 
-        using State = koliop::collision::State;
-        reinterpret_cast<State*>(an_operator)->ComputeQparOnNT(f5d_s);
+        reinterpret_cast<koliop::collision::Operator*>(an_operator)->ComputeQparOnNT(f5d_s);
 
         return KOLIOP_STATUS_SUCCESS;
     });
@@ -242,8 +237,7 @@
             return KOLIOP_STATUS_INVALID_VALUE;
         }
 
-        using State = koliop::collision::State;
-        reinterpret_cast<const State*>(an_operator)->ComputeCpar(f5d_s);
+        reinterpret_cast<const koliop::collision::Operator*>(an_operator)->ComputeCpar(f5d_s);
 
         return KOLIOP_STATUS_SUCCESS;
     });
@@ -259,8 +253,7 @@
             return KOLIOP_STATUS_INVALID_VALUE;
         }
 
-        using State = koliop::collision::State;
-        reinterpret_cast<const State*>(an_operator)->ComputeMaxwellianUnshiftedLoc(f5d_s, choice);
+        reinterpret_cast<const koliop::collision::Operator*>(an_operator)->ComputeMaxwellianUnshiftedLoc(f5d_s, choice);
 
         return KOLIOP_STATUS_SUCCESS;
     });
@@ -274,8 +267,7 @@
             return KOLIOP_STATUS_INVALID_VALUE;
         }
 
-        using State = koliop::collision::State;
-        reinterpret_cast<const State*>(an_operator)->Apply(f5d_s);
+        reinterpret_cast<const koliop::collision::Operator*>(an_operator)->Apply(f5d_s);
 
         return KOLIOP_STATUS_SUCCESS;
     });
@@ -289,8 +281,7 @@
             return KOLIOP_STATUS_INVALID_VALUE;
         }
 
-        using State = koliop::collision::State;
-        reinterpret_cast<const State*>(an_operator)->ComputeDensityCorrection(f5d_s);
+        reinterpret_cast<const koliop::collision::Operator*>(an_operator)->ComputeDensityCorrection(f5d_s);
 
         return KOLIOP_STATUS_SUCCESS;
     });
@@ -304,8 +295,7 @@
             return KOLIOP_STATUS_INVALID_VALUE;
         }
 
-        using State = koliop::collision::State;
-        reinterpret_cast<State*>(an_operator)->ComputeUparTCorrection(f5d_s);
+        reinterpret_cast<koliop::collision::Operator*>(an_operator)->ComputeUparTCorrection(f5d_s);
 
         return KOLIOP_STATUS_SUCCESS;
     });

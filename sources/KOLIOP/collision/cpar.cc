@@ -7,32 +7,32 @@ namespace koliop {
 
         template <typename Array6D>
         static inline void
-        DoComputeCpar(const State& a_state,
-                      Array6D&&    f5d_s) {
+        DoComputeCpar(const Operator& an_operator,
+                      Array6D&&       f5d_s) {
 
-            const uint64_t& the_mu_extent      = a_state.the_mu_extent_;
-            const uint64_t& the_vpar_extent    = a_state.the_vpar_extent_;
-            const uint64_t& the_r_extent       = a_state.the_r_extent_;
-            const uint64_t& the_theta_extent   = a_state.the_theta_extent_;
-            const uint64_t& the_phi_extent     = a_state.the_phi_extent_;
-            const uint64_t& the_species_extent = a_state.the_species_extent_;
+            const uint64_t& the_mu_extent      = an_operator.the_mu_extent_;
+            const uint64_t& the_vpar_extent    = an_operator.the_vpar_extent_;
+            const uint64_t& the_r_extent       = an_operator.the_r_extent_;
+            const uint64_t& the_theta_extent   = an_operator.the_theta_extent_;
+            const uint64_t& the_phi_extent     = an_operator.the_phi_extent_;
+            const uint64_t& the_species_extent = an_operator.the_species_extent_;
 
-            const auto& hat_As        = a_state.hat_As_;
-            const auto& hat_Zs        = a_state.hat_Zs_;
-            const auto& mug           = a_state.mug_;
-            const auto& vparg         = a_state.vparg_;
-            const auto& rg            = a_state.rg_;
-            const auto& nustar0_r     = a_state.nustar0_r_;
-            const auto& q_r           = a_state.q_r_;
-            const auto& B_norm        = a_state.B_norm_;
-            const auto& n_s           = a_state.n_s_;
-            const auto& U_par_s       = a_state.U_par_s_;
-            const auto& T_s           = a_state.T_s_;
-            const auto& q_par_on_nT_s = a_state.q_par_on_nT_s_;
+            const auto& hat_As        = an_operator.hat_As_;
+            const auto& hat_Zs        = an_operator.hat_Zs_;
+            const auto& mug           = an_operator.mug_;
+            const auto& vparg         = an_operator.vparg_;
+            const auto& rg            = an_operator.rg_;
+            const auto& nustar0_r     = an_operator.nustar0_r_;
+            const auto& q_r           = an_operator.q_r_;
+            const auto& B_norm        = an_operator.B_norm_;
+            const auto& n_s           = an_operator.n_s_;
+            const auto& U_par_s       = an_operator.U_par_s_;
+            const auto& T_s           = an_operator.T_s_;
+            const auto& q_par_on_nT_s = an_operator.q_par_on_nT_s_;
 
-            const uint64_t& pSpecies_id = a_state.pSpecies_id_;
-            const Flo64     R0_inverse  = 1.0 / a_state.R0_;
-            const Flo64     dt          = a_state.dt_ / 2.0;
+            const uint64_t& pSpecies_id = an_operator.pSpecies_id_;
+            const Flo64     R0_inverse  = 1.0 / an_operator.R0_;
+            const Flo64     dt          = an_operator.dt_ / 2.0;
 
             const auto the_kernel = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi) {
                 // TODO(Etienne M): Assuming materialization, we could flatten
@@ -102,7 +102,7 @@ namespace koliop {
                                  a_policy, the_kernel);
         }
 
-        void State::ComputeCpar(Flo64* f5d_s) const {
+        void Operator::ComputeCpar(Flo64* f5d_s) const {
             // TODO(Etienne M): COPY redundant.
 
             auto a_device_visible_f5d_s = ViewMDL6<Flo64>{Kokkos::view_alloc(Kokkos::WithoutInitializing, "f5d_s"),

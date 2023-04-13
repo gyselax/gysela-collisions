@@ -7,21 +7,21 @@ namespace koliop {
 
         template <typename Array6D>
         static inline void
-        DoComputeDensityCorrection(const State& a_state,
-                                   Array6D&&    f5d_s) {
+        DoComputeDensityCorrection(const Operator& an_operator,
+                                   Array6D&&       f5d_s) {
 
-            const auto& the_mu_extent    = a_state.the_mu_extent_;
-            const auto& the_vpar_extent  = a_state.the_vpar_extent_;
-            const auto& the_r_extent     = a_state.the_r_extent_;
-            const auto& the_theta_extent = a_state.the_theta_extent_;
-            const auto& the_phi_extent   = a_state.the_phi_extent_;
+            const auto& the_mu_extent    = an_operator.the_mu_extent_;
+            const auto& the_vpar_extent  = an_operator.the_vpar_extent_;
+            const auto& the_r_extent     = an_operator.the_r_extent_;
+            const auto& the_theta_extent = an_operator.the_theta_extent_;
+            const auto& the_phi_extent   = an_operator.the_phi_extent_;
 
-            const auto& coeff_intdmu   = a_state.coeff_intdmu_;
-            const auto& coeff_intdvpar = a_state.coeff_intdvpar_;
-            const auto& Bstar_s        = a_state.Bstar_s_;
-            const auto& n_s            = a_state.n_s_;
+            const auto& coeff_intdmu   = an_operator.coeff_intdmu_;
+            const auto& coeff_intdvpar = an_operator.coeff_intdvpar_;
+            const auto& Bstar_s        = an_operator.Bstar_s_;
+            const auto& n_s            = an_operator.n_s_;
 
-            const auto pSpecies_id = a_state.pSpecies_id_;
+            const auto pSpecies_id = an_operator.pSpecies_id_;
 
             const auto the_kernel = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi) {
                 // TODO(Etienne M): INDEX not coalesced. Flatten more ?
@@ -59,7 +59,7 @@ namespace koliop {
                                  a_policy, the_kernel);
         }
 
-        void State::ComputeDensityCorrection(Flo64* f5d_s) const {
+        void Operator::ComputeDensityCorrection(Flo64* f5d_s) const {
             // TODO(Etienne M): COPY redundant.
 
             auto a_device_visible_f5d_s = ViewMDL6<Flo64>{Kokkos::view_alloc(Kokkos::WithoutInitializing, "f5d_s"),

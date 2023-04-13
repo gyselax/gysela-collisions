@@ -7,20 +7,20 @@ namespace koliop {
 
         template <typename Array5D>
         static inline void
-        DoPrecomputeNu(const State& a_state,
-                       Array5D&&    nu_ab) {
+        DoPrecomputeNu(const Operator& an_operator,
+                       Array5D&&       nu_ab) {
 
-            const uint64_t& the_r_extent       = a_state.the_r_extent_;
-            const uint64_t& the_theta_extent   = a_state.the_theta_extent_;
-            const uint64_t& the_phi_extent     = a_state.the_phi_extent_;
-            const uint64_t& the_species_extent = a_state.the_species_extent_;
+            const uint64_t& the_r_extent       = an_operator.the_r_extent_;
+            const uint64_t& the_theta_extent   = an_operator.the_theta_extent_;
+            const uint64_t& the_phi_extent     = an_operator.the_phi_extent_;
+            const uint64_t& the_species_extent = an_operator.the_species_extent_;
 
-            const auto& hat_As       = a_state.hat_As_;
-            const auto& nustar_coeff = a_state.nustar_coeff_;
-            const auto& n_s          = a_state.n_s_;
-            const auto& T_s          = a_state.T_s_;
+            const auto& hat_As       = an_operator.hat_As_;
+            const auto& nustar_coeff = an_operator.nustar_coeff_;
+            const auto& n_s          = an_operator.n_s_;
+            const auto& T_s          = an_operator.T_s_;
 
-            const uint64_t& ir_SOL_separatrix = a_state.ir_SOL_separatrix_;
+            const uint64_t& ir_SOL_separatrix = an_operator.ir_SOL_separatrix_;
 
             const auto the_kernel = KOKKOS_LAMBDA(auto itheta, auto iphi, auto ispeciesA, auto ispeciesB) {
                 // TODO(Etienne M): INDEX not coalesced. Flatten more ?
@@ -54,7 +54,7 @@ namespace koliop {
                                  a_policy, the_kernel);
         }
 
-        void State::PrecomputeNu() {
+        void Operator::PrecomputeNu() {
             DoPrecomputeNu(*this, nu_ab_);
 
             // TODO(Etienne M): ASYNC, relax that constraint ?

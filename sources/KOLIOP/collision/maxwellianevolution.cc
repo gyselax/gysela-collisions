@@ -8,26 +8,26 @@ namespace koliop {
         template <typename Array6D,
                   typename Array4D>
         static inline void
-        DoComputeMaxwellianEvolution(const State& a_state,
-                                     Array6D&&    f5d_s,
-                                     Array4D&&    T_s) {
+        DoComputeMaxwellianEvolution(const Operator& an_operator,
+                                     Array6D&&       f5d_s,
+                                     Array4D&&       T_s) {
 
-            const uint64_t& the_mu_extent      = a_state.the_mu_extent_;
-            const uint64_t& the_vpar_extent    = a_state.the_vpar_extent_;
-            const uint64_t& the_r_extent       = a_state.the_r_extent_;
-            const uint64_t& the_theta_extent   = a_state.the_theta_extent_;
-            const uint64_t& the_phi_extent     = a_state.the_phi_extent_;
-            const uint64_t& the_species_extent = a_state.the_species_extent_;
+            const uint64_t& the_mu_extent      = an_operator.the_mu_extent_;
+            const uint64_t& the_vpar_extent    = an_operator.the_vpar_extent_;
+            const uint64_t& the_r_extent       = an_operator.the_r_extent_;
+            const uint64_t& the_theta_extent   = an_operator.the_theta_extent_;
+            const uint64_t& the_phi_extent     = an_operator.the_phi_extent_;
+            const uint64_t& the_species_extent = an_operator.the_species_extent_;
 
-            const auto& hat_As  = a_state.hat_As_;
-            const auto& mug     = a_state.mug_;
-            const auto& vparg   = a_state.vparg_;
-            const auto& B_norm  = a_state.B_norm_;
-            const auto& n_s     = a_state.n_s_;
-            const auto& U_par_s = a_state.U_par_s_;
-            const auto& nu_ab   = a_state.nu_ab_;
+            const auto& hat_As  = an_operator.hat_As_;
+            const auto& mug     = an_operator.mug_;
+            const auto& vparg   = an_operator.vparg_;
+            const auto& B_norm  = an_operator.B_norm_;
+            const auto& n_s     = an_operator.n_s_;
+            const auto& U_par_s = an_operator.U_par_s_;
+            const auto& nu_ab   = an_operator.nu_ab_;
 
-            const Flo64 dt = a_state.dt_ / 2.0;
+            const Flo64 dt = an_operator.dt_ / 2.0;
 
             // TODO(Etienne M): I wish we had MDRange with scratch memory.
             // Instead of having to use a TeamPolicy and computing MDRange index
@@ -136,7 +136,7 @@ namespace koliop {
                                  a_policy, the_kernel);
         }
 
-        void State::ComputeMaxwellianEvolution(Flo64* f5d_s) {
+        void Operator::ComputeMaxwellianEvolution(Flo64* f5d_s) {
             // TODO(Etienne M): COPY redundant.
 
             auto a_device_visible_f5d_s = ViewMDL6<Flo64>{Kokkos::view_alloc(Kokkos::WithoutInitializing, "f5d_s"),

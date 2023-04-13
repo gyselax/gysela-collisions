@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 
-#ifndef KOLIOP_COLLISION_STATE_H
-#define KOLIOP_COLLISION_STATE_H
+#ifndef KOLIOP_COLLISION_OPERATOR_H
+#define KOLIOP_COLLISION_OPERATOR_H
 
 #include <Kokkos_Core.hpp>
 
@@ -111,7 +111,7 @@ namespace koliop {
 
 
         ////////////////////////////////////////////////////////////////////////
-        // State definition
+        // Operator definition
         ////////////////////////////////////////////////////////////////////////
 
         /// TODO(Etinne M): INDEX We have a dilemma. CPU allows for large
@@ -196,7 +196,7 @@ namespace koliop {
         /// TODO(Etienne M): Convert all these indicies to half open ranges
         /// counter.
         ///
-        class State {
+        class Operator {
         public:
             static inline constexpr uint64_t kMaximumLaguerrePolynomialDegree = 3;
 
@@ -213,34 +213,34 @@ namespace koliop {
             static inline constexpr uint64_t kFlattenedExtent = kBlockExtentR * kBlockExtentTheta * kBlockExtentPhi;
 
         public:
-            State(uint64_t                     pSpecies_id,
-                  uint64_t                     mu_id,
-                  uint64_t                     the_mu_extent,
-                  uint64_t                     the_vpar_extent,
-                  uint64_t                     the_r_extent,
-                  uint64_t                     the_theta_extent,
-                  uint64_t                     the_phi_extent,
-                  uint64_t                     the_species_extent,
-                  Flo64                        R0,
-                  bool                         collision_interspecies,
-                  bool                         SOL,
-                  bool                         LIM,
-                  uint64_t                     ir_SOL_separatrix,
-                  Flo64                        dt,
-                  const ViewUHL2<const Flo64>& a_host_visible_comb_mat,
-                  const ViewUHL1<const Flo64>& a_host_visible_hat_As,
-                  const ViewUHL1<const Flo64>& a_host_visible_hat_Zs,
-                  const ViewUHL1<const Flo64>& a_host_visible_mug,
-                  const ViewUHL1<const Flo64>& a_host_visible_vparg,
-                  const ViewUHL1<const Flo64>& a_host_visible_coeff_intdmu,
-                  const ViewUHL1<const Flo64>& a_host_visible_coeff_intdvpar,
-                  const ViewUHL1<const Flo64>& a_host_visible_rg,
-                  const ViewUHL1<const Flo64>& a_host_visible_nustar0_r,
-                  const ViewUHL1<const Flo64>& a_host_visible_q_r,
-                  const ViewUHL1<const Flo64>& a_host_visible_mask_buffer_r,
-                  const ViewUHL2<const Flo64>& a_host_visible_mask_LIM,
-                  const ViewUHL2<const Flo64>& a_host_visible_B_norm,
-                  const ViewUHL4<const Flo64>& a_host_visible_Bstar_s);
+            Operator(uint64_t                     pSpecies_id,
+                     uint64_t                     mu_id,
+                     uint64_t                     the_mu_extent,
+                     uint64_t                     the_vpar_extent,
+                     uint64_t                     the_r_extent,
+                     uint64_t                     the_theta_extent,
+                     uint64_t                     the_phi_extent,
+                     uint64_t                     the_species_extent,
+                     Flo64                        R0,
+                     bool                         collision_interspecies,
+                     bool                         SOL,
+                     bool                         LIM,
+                     uint64_t                     ir_SOL_separatrix,
+                     Flo64                        dt,
+                     const ViewUHL2<const Flo64>& a_host_visible_comb_mat,
+                     const ViewUHL1<const Flo64>& a_host_visible_hat_As,
+                     const ViewUHL1<const Flo64>& a_host_visible_hat_Zs,
+                     const ViewUHL1<const Flo64>& a_host_visible_mug,
+                     const ViewUHL1<const Flo64>& a_host_visible_vparg,
+                     const ViewUHL1<const Flo64>& a_host_visible_coeff_intdmu,
+                     const ViewUHL1<const Flo64>& a_host_visible_coeff_intdvpar,
+                     const ViewUHL1<const Flo64>& a_host_visible_rg,
+                     const ViewUHL1<const Flo64>& a_host_visible_nustar0_r,
+                     const ViewUHL1<const Flo64>& a_host_visible_q_r,
+                     const ViewUHL1<const Flo64>& a_host_visible_mask_buffer_r,
+                     const ViewUHL2<const Flo64>& a_host_visible_mask_LIM,
+                     const ViewUHL2<const Flo64>& a_host_visible_B_norm,
+                     const ViewUHL4<const Flo64>& a_host_visible_Bstar_s);
 
             void ComputeMoments(Flo64* f5d_s);
 
@@ -334,37 +334,37 @@ namespace koliop {
 
 
         ////////////////////////////////////////////////////////////////////////
-        // State methods definition
+        // Operator methods definition
         ////////////////////////////////////////////////////////////////////////
 
-        inline State::State(uint64_t                     pSpecies_id,
-                            uint64_t                     mu_id,
-                            uint64_t                     the_mu_extent,
-                            uint64_t                     the_vpar_extent,
-                            uint64_t                     the_r_extent,
-                            uint64_t                     the_theta_extent,
-                            uint64_t                     the_phi_extent,
-                            uint64_t                     the_species_extent,
-                            Flo64                        R0,
-                            bool                         collision_interspecies,
-                            bool                         SOL,
-                            bool                         LIM,
-                            uint64_t                     ir_SOL_separatrix,
-                            Flo64                        dt,
-                            const ViewUHL2<const Flo64>& a_host_visible_comb_mat,
-                            const ViewUHL1<const Flo64>& a_host_visible_hat_As,
-                            const ViewUHL1<const Flo64>& a_host_visible_hat_Zs,
-                            const ViewUHL1<const Flo64>& a_host_visible_mug,
-                            const ViewUHL1<const Flo64>& a_host_visible_vparg,
-                            const ViewUHL1<const Flo64>& a_host_visible_coeff_intdmu,
-                            const ViewUHL1<const Flo64>& a_host_visible_coeff_intdvpar,
-                            const ViewUHL1<const Flo64>& a_host_visible_rg,
-                            const ViewUHL1<const Flo64>& a_host_visible_nustar0_r,
-                            const ViewUHL1<const Flo64>& a_host_visible_q_r,
-                            const ViewUHL1<const Flo64>& a_host_visible_mask_buffer_r,
-                            const ViewUHL2<const Flo64>& a_host_visible_mask_LIM,
-                            const ViewUHL2<const Flo64>& a_host_visible_B_norm,
-                            const ViewUHL4<const Flo64>& a_host_visible_Bstar_s)
+        inline Operator::Operator(uint64_t                     pSpecies_id,
+                                  uint64_t                     mu_id,
+                                  uint64_t                     the_mu_extent,
+                                  uint64_t                     the_vpar_extent,
+                                  uint64_t                     the_r_extent,
+                                  uint64_t                     the_theta_extent,
+                                  uint64_t                     the_phi_extent,
+                                  uint64_t                     the_species_extent,
+                                  Flo64                        R0,
+                                  bool                         collision_interspecies,
+                                  bool                         SOL,
+                                  bool                         LIM,
+                                  uint64_t                     ir_SOL_separatrix,
+                                  Flo64                        dt,
+                                  const ViewUHL2<const Flo64>& a_host_visible_comb_mat,
+                                  const ViewUHL1<const Flo64>& a_host_visible_hat_As,
+                                  const ViewUHL1<const Flo64>& a_host_visible_hat_Zs,
+                                  const ViewUHL1<const Flo64>& a_host_visible_mug,
+                                  const ViewUHL1<const Flo64>& a_host_visible_vparg,
+                                  const ViewUHL1<const Flo64>& a_host_visible_coeff_intdmu,
+                                  const ViewUHL1<const Flo64>& a_host_visible_coeff_intdvpar,
+                                  const ViewUHL1<const Flo64>& a_host_visible_rg,
+                                  const ViewUHL1<const Flo64>& a_host_visible_nustar0_r,
+                                  const ViewUHL1<const Flo64>& a_host_visible_q_r,
+                                  const ViewUHL1<const Flo64>& a_host_visible_mask_buffer_r,
+                                  const ViewUHL2<const Flo64>& a_host_visible_mask_LIM,
+                                  const ViewUHL2<const Flo64>& a_host_visible_B_norm,
+                                  const ViewUHL4<const Flo64>& a_host_visible_Bstar_s)
             // Constant, externally computed values
             : pSpecies_id_{pSpecies_id}
             , mu_id_{mu_id}
@@ -478,8 +478,8 @@ namespace koliop {
 
         template <typename View3D,
                   typename View2D>
-        inline void State::DoPrepareCj_Cjl(View2D& C_j,
-                                           View3D& C_jl) const {
+        inline void Operator::DoPrepareCj_Cjl(View2D& C_j,
+                                              View3D& C_jl) const {
             // a_host_visible_C_j is zero initialized.
             auto a_host_visible_C_j = Kokkos::create_mirror_view(C_j);
 
@@ -505,8 +505,8 @@ namespace koliop {
 
         template <typename View3D,
                   typename MirrorView2D>
-        inline void State::DoPrepareCjl(const MirrorView2D& a_host_visible_C_j,
-                                        View3D&             C_jl) const {
+        inline void Operator::DoPrepareCjl(const MirrorView2D& a_host_visible_C_j,
+                                           View3D&             C_jl) const {
             // a_host_visible_C_jl is zero initialized.
             auto a_host_visible_C_jl = Kokkos::create_mirror_view(C_jl_);
 
@@ -533,13 +533,13 @@ namespace koliop {
             koliop::utility::Copy::Shallow(a_host_visible_C_jl, C_jl);
         }
 
-        inline void State::DoPrepareNuStar(ViewMDD3<Flo64>&             nustar_coeff,
-                                           const ViewUHL1<const Flo64>& a_host_visible_hat_As,
-                                           const ViewUHL1<const Flo64>& a_host_visible_hat_Zs,
-                                           const ViewUHL1<const Flo64>& a_host_visible_rg,
-                                           const ViewUHL1<const Flo64>& a_host_visible_nustar0_r,
-                                           const ViewUHL1<const Flo64>& a_host_visible_q_r,
-                                           const ViewUHL1<const Flo64>& a_host_visible_mask_buffer_r) const {
+        inline void Operator::DoPrepareNuStar(ViewMDD3<Flo64>&             nustar_coeff,
+                                              const ViewUHL1<const Flo64>& a_host_visible_hat_As,
+                                              const ViewUHL1<const Flo64>& a_host_visible_hat_Zs,
+                                              const ViewUHL1<const Flo64>& a_host_visible_rg,
+                                              const ViewUHL1<const Flo64>& a_host_visible_nustar0_r,
+                                              const ViewUHL1<const Flo64>& a_host_visible_q_r,
+                                              const ViewUHL1<const Flo64>& a_host_visible_mask_buffer_r) const {
             // TODO(Etienne M): I observe some slight numerical discrepancy
             // (1e-14 ~ ) when comparing the result of Gysela and koliop.
 

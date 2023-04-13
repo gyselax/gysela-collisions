@@ -8,25 +8,25 @@ namespace koliop {
         template <typename Array6D,
                   typename Array4D>
         static inline void
-        DoComputeMoments(const State& a_state,
-                         Array6D&&    f5d_s,
-                         Array4D&&    n_s,
-                         Array4D&&    U_par_s,
-                         Array4D&&    T_s) {
+        DoComputeMoments(const Operator& an_operator,
+                         Array6D&&       f5d_s,
+                         Array4D&&       n_s,
+                         Array4D&&       U_par_s,
+                         Array4D&&       T_s) {
 
-            const uint64_t& the_mu_extent      = a_state.the_mu_extent_;
-            const uint64_t& the_vpar_extent    = a_state.the_vpar_extent_;
-            const uint64_t& the_r_extent       = a_state.the_r_extent_;
-            const uint64_t& the_theta_extent   = a_state.the_theta_extent_;
-            const uint64_t& the_phi_extent     = a_state.the_phi_extent_;
-            const uint64_t& the_species_extent = a_state.the_species_extent_;
+            const uint64_t& the_mu_extent      = an_operator.the_mu_extent_;
+            const uint64_t& the_vpar_extent    = an_operator.the_vpar_extent_;
+            const uint64_t& the_r_extent       = an_operator.the_r_extent_;
+            const uint64_t& the_theta_extent   = an_operator.the_theta_extent_;
+            const uint64_t& the_phi_extent     = an_operator.the_phi_extent_;
+            const uint64_t& the_species_extent = an_operator.the_species_extent_;
 
-            const auto& mug            = a_state.mug_;
-            const auto& vparg          = a_state.vparg_;
-            const auto& coeff_intdmu   = a_state.coeff_intdmu_;
-            const auto& coeff_intdvpar = a_state.coeff_intdvpar_;
-            const auto& B_norm         = a_state.B_norm_;
-            const auto& Bstar_s        = a_state.Bstar_s_;
+            const auto& mug            = an_operator.mug_;
+            const auto& vparg          = an_operator.vparg_;
+            const auto& coeff_intdmu   = an_operator.coeff_intdmu_;
+            const auto& coeff_intdvpar = an_operator.coeff_intdvpar_;
+            const auto& B_norm         = an_operator.B_norm_;
+            const auto& Bstar_s        = an_operator.Bstar_s_;
 
             const auto the_kernel = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi, auto ispecies) {
                 // TODO(Etienne M): INDEX not coalesced. Flatten more ?
@@ -87,7 +87,7 @@ namespace koliop {
                                  a_policy, the_kernel);
         }
 
-        void State::ComputeMoments(Flo64* f5d_s) {
+        void Operator::ComputeMoments(Flo64* f5d_s) {
             // TODO(Etienne M): COPY redundant.
 
             auto a_device_visible_f5d_s = ViewMDL6<Flo64>{Kokkos::view_alloc(Kokkos::WithoutInitializing, "f5d_s"),
