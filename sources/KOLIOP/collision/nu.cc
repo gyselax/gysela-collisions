@@ -1,10 +1,40 @@
 // SPDX-License-Identifier: MIT
 
 #include "KOLIOP/collision/operator.h"
+#include "KOLIOP/portability/cmath.h"
 
 namespace koliop {
     namespace collision {
 
+        namespace {
+            // NOTE: I use an unamed namespace because it is unknown to me if
+            // adding static prior KOKKOS_INLINE_FUNCTION is legal.
+
+            KOKKOS_INLINE_FUNCTION Flo64
+            DoComputeFrequencyNuab(Flo64 nustar_coeff,
+                                   Flo64 hat_As_speciesA,
+                                   Flo64 hat_As_speciesB,
+                                   Flo64 Ta,
+                                   Flo64 nb,
+                                   Flo64 Tb) {
+
+                const Flo64 vTa = Ta / hat_As_speciesA;
+                const Flo64 vTb = Tb / hat_As_speciesB;
+
+                // TODO(Etienne M): SIMPLIFY We could do:
+                // (nustar_coeff * nb) *
+                //     std::pow((Tb * hat_As_speciesA +
+                //               Ta * hat_As_speciesB) /
+                //                  (hat_As_speciesA * hat_As_speciesB),
+                //              -3.0 / 2.0);
+                return (nustar_coeff * nb) / ((vTa + vTb) * Kokkos::sqrt(vTa + vTb));
+            }
+
+        } // namespace
+
+        /// TODO(Etienne M): We precompute the species' Nu but in some cases, it
+        /// may be cheaper to just rematerialize it.
+        ///
         template <typename Array5D>
         static inline void
         DoPrecomputeNu(const Operator& an_operator,

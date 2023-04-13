@@ -3,10 +3,7 @@
 #ifndef KOLIOP_COLLISION_OPERATOR_H
 #define KOLIOP_COLLISION_OPERATOR_H
 
-#include <Kokkos_Core.hpp>
-
 #include "KOLIOP/blas/lu.h"
-#include "KOLIOP/portability/cmath.h"
 #include "KOLIOP/utility/view.h"
 
 namespace koliop {
@@ -215,53 +212,6 @@ namespace koliop {
 
             AlphaSolverType the_alpha_solver_;
         };
-
-
-        ////////////////////////////////////////////////////////////////////////
-        // Global methods definition
-        ////////////////////////////////////////////////////////////////////////
-
-        KOKKOS_INLINE_FUNCTION Flo64
-        DoComputeFrequencyNuab(Flo64 nustar_coeff,
-                               Flo64 hat_As_speciesA,
-                               Flo64 hat_As_speciesB,
-                               Flo64 Ta,
-                               Flo64 nb,
-                               Flo64 Tb) {
-
-            const Flo64 vTa = Ta / hat_As_speciesA;
-            const Flo64 vTb = Tb / hat_As_speciesB;
-
-            // TODO(Etienne M): SIMPLIFY We could do:
-            // (nustar_coeff * nb) *
-            //     std::pow((Tb * hat_As_speciesA +
-            //               Ta * hat_As_speciesB) /
-            //                  (hat_As_speciesA * hat_As_speciesB),
-            //              -3.0 / 2.0);
-            return (nustar_coeff * nb) / ((vTa + vTb) * Kokkos::sqrt(vTa + vTb));
-        }
-
-        KOKKOS_INLINE_FUNCTION Flo64
-        DoComputeLaguerrePol(uint64_t l, Flo64 x) {
-            // TODO(Etienne M): find a better way to compute that, based on l.
-            switch(l) {
-                case 0:
-                    return 1.0;
-                case 1:
-                    return -x + 1.0;
-                case 2:
-                    return (1.0 / 2.0) + (-4 + /* 1 * */ x) * x;
-                case 3:
-                    // Horner -> dependency            : 1 + (-3 + (1.5 - 1/6 * x) * x) * x
-                    // but FMA friendly.
-                    // Naive  -> latency and dependency: (1.0 / 6.0) * (-(x * x * x) + 9.0 * x * x - 18.0 * x + 6.0);
-                    // Slow.
-                    // Factorized -> low latency       : ((-1.0 / 6.0) * (x - 0.41577455678347908331)) * ((x - 2.29428036027904171982) * (x - 6.28994508293747919686))
-                    return 1.0 + (-3.0 + (1.5 - (1.0 / 6.0) * x) * x) * x;
-                default:
-                    return -1.0;
-            }
-        }
 
     } // namespace collision
 } // namespace koliop

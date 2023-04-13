@@ -1,10 +1,39 @@
 // SPDX-License-Identifier: MIT
 
 #include "KOLIOP/collision/operator.h"
+#include "KOLIOP/portability/cmath.h"
 #include "KOLIOP/utility/copy.h"
 
 namespace koliop {
     namespace collision {
+
+        namespace {
+            // NOTE: I use an unamed namespace because it is unknown to me if
+            // adding static prior KOKKOS_INLINE_FUNCTION is legal.
+
+            KOKKOS_INLINE_FUNCTION Flo64
+            DoComputeLaguerrePol(uint64_t l, Flo64 x) {
+                // TODO(Etienne M): find a better way to compute that, based on l.
+                switch(l) {
+                    case 0:
+                        return 1.0;
+                    case 1:
+                        return -x + 1.0;
+                    case 2:
+                        return (1.0 / 2.0) + (-4 + /* 1 * */ x) * x;
+                    case 3:
+                        // Horner -> dependency            : 1 + (-3 + (1.5 - 1/6 * x) * x) * x
+                        // but FMA friendly.
+                        // Naive  -> latency and dependency: (1.0 / 6.0) * (-(x * x * x) + 9.0 * x * x - 18.0 * x + 6.0);
+                        // Slow.
+                        // Factorized -> low latency       : ((-1.0 / 6.0) * (x - 0.41577455678347908331)) * ((x - 2.29428036027904171982) * (x - 6.28994508293747919686))
+                        return 1.0 + (-3.0 + (1.5 - (1.0 / 6.0) * x) * x) * x;
+                    default:
+                        return -1.0;
+                }
+            }
+
+        } // namespace
 
         template <typename Array6D,
                   typename Array4D,

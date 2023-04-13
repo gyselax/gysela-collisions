@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 
 #include "KOLIOP/collision/operator.h"
+#include "KOLIOP/portability/cmath.h"
 #include "KOLIOP/utility/copy.h"
 
 namespace koliop {
