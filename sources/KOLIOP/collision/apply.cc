@@ -129,10 +129,8 @@ namespace koliop {
             const auto& the_species_extent = an_operator.the_species_extent_;
 
             const auto& n_s           = an_operator.n_s_;
-            const auto& U_par_s       = an_operator.U_par_s_;
             const auto& T_s           = an_operator.T_s_;
             const auto& nu_ab         = an_operator.nu_ab_;
-            const auto& q_par_on_nT_s = an_operator.q_par_on_nT_s_;
 
             const auto& pSpecies_id = an_operator.pSpecies_id_;
 
