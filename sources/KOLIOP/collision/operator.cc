@@ -99,17 +99,17 @@ namespace koliop {
 
             if(a_host_visible_q_r(0) < koliop::portability::GyselaConstant<ComputeFloatType>::kInfinity) {
                 for(OrdinalType i = 0; i < an_operator.the_r_extent_; ++i) {
-                    a_host_visible_mask_space(i) = 1.0 / a_host_visible_q_r(i);
+                    a_host_visible_mask_space(i) = static_cast<ComputeFloatType>(1.0) / a_host_visible_q_r(i);
                 }
             }
 
             if(!(an_operator.LIM_ || an_operator.SOL_)) {
                 for(OrdinalType i = 0; i < an_operator.the_r_extent_; ++i) {
-                    a_host_visible_mask_space(i) *= (1.0 - a_host_visible_mask_buffer_r(i));
+                    a_host_visible_mask_space(i) *= (static_cast<ComputeFloatType>(1.0) - a_host_visible_mask_buffer_r(i));
                 }
             }
 
-            const auto R0_inverse = 1.0 / an_operator.R0_;
+            const auto R0_inverse = static_cast<ComputeFloatType>(1.0) / an_operator.R0_;
 
             // TODO(Etienne M): LOOP Obvious loop inter exchange optimization ?
             for(OrdinalType ispeciesB = 0; ispeciesB < an_operator.the_species_extent_; ++ispeciesB) {
@@ -120,8 +120,8 @@ namespace koliop {
                     const ComputeFloatType hat_Zb = a_host_visible_hat_Zs(ispeciesB);
 
                     const ComputeFloatType AD_factor = ((hat_Za * hat_Za) * (hat_Zb * hat_Zb)) *
-                                                       (1.0 / hat_Aa) *
-                                                       (1.0 / hat_Aa + 1.0 / hat_Ab);
+                                                       (static_cast<ComputeFloatType>(1.0) / hat_Aa) *
+                                                       (static_cast<ComputeFloatType>(1.0) / hat_Aa + static_cast<ComputeFloatType>(1.0) / hat_Ab);
 
                     for(OrdinalType ir = 0; ir < an_operator.the_r_extent_; ++ir) {
                         // Computation of
