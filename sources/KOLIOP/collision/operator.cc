@@ -109,7 +109,7 @@ namespace koliop {
                 }
             }
 
-            const auto R0_inverse = static_cast<ComputeFloatType>(1.0) / an_operator.R0_;
+            const ComputeFloatType R0_inverse = static_cast<ComputeFloatType>(1.0) / an_operator.R0_;
 
             // TODO(Etienne M): LOOP Obvious loop inter exchange optimization ?
             for(OrdinalType ispeciesB = 0; ispeciesB < an_operator.the_species_extent_; ++ispeciesB) {

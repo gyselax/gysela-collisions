@@ -140,7 +140,7 @@ namespace koliop {
             /// say, a ymm register.
             /// - On GPU it shall represent an inter lane SIMD such as double4.
             static inline constexpr OrdinalType kVectorSize = KokkosBatched::DefaultInternalVectorLength<FloatType,
-                                                                                                      typename ExecutionSpace::memory_space>::value;
+                                                                                                         typename ExecutionSpace::memory_space>::value;
 
             static inline constexpr OrdinalType kVectorPerBatch = kBatchSize / kVectorSize;
 
