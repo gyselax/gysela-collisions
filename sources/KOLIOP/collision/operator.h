@@ -109,9 +109,9 @@ namespace koliop {
             static inline constexpr OrdinalType kBlockExtentTheta = 1;
             static inline constexpr OrdinalType kBlockExtentPhi   = 1;
 
-            static inline constexpr OffsetType kFlattenedExtent = kBlockExtentR * kBlockExtentTheta * kBlockExtentPhi;
+            static inline constexpr OffsetType kFlattenedBlockExtent = kBlockExtentR * kBlockExtentTheta * kBlockExtentPhi;
 
-            static inline constexpr OffsetType kBatchCount = kFlattenedExtent / AlphaSolverType::kBatchSize;
+            static inline constexpr OffsetType kBatchCount = kFlattenedBlockExtent / AlphaSolverType::kBatchSize;
 
         public:
             Operator(uint64_t     pSpecies_id,
