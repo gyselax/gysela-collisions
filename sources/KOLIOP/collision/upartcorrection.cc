@@ -33,20 +33,20 @@ namespace koliop {
             const auto& nu_ab          = an_operator.nu_ab_;
             const auto& q_par_on_nT_s  = an_operator.q_par_on_nT_s_;
 
-            const auto  pSpecies_id            = an_operator.pSpecies_id_;
-            const auto  collision_interspecies = an_operator.collision_interspecies_;
-            const Flo64 dt                     = an_operator.dt_;
+            const auto             pSpecies_id            = an_operator.pSpecies_id_;
+            const auto             collision_interspecies = an_operator.collision_interspecies_;
+            const ComputeFloatType dt                     = an_operator.dt_;
 
             const auto the_kernel = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi) {
                 // TODO(Etienne M): INDEX not coalesced. Flatten more ?
 
-                const Flo64 Bij            = B_norm(ir, itheta);
-                const Flo64 na             = n_s(ir, itheta, iphi, pSpecies_id);
-                Flo64       impulsion_coll = 0.0;
+                const ComputeFloatType Bij            = B_norm(ir, itheta);
+                const ComputeFloatType na             = n_s(ir, itheta, iphi, pSpecies_id);
+                ComputeFloatType       impulsion_coll = 0.0;
 
-                for(uint64_t ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
-                    const Flo64 jacob_vel = koliop::portability::MathematicalConstant<Flo64>::k2Pi * Bstar_s(ivpar, ir, itheta, pSpecies_id);
-                    for(uint64_t imu = 0; imu < the_mu_extent; ++imu) {
+                for(OrdinalType ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
+                    const ComputeFloatType jacob_vel = koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Bstar_s(ivpar, ir, itheta, pSpecies_id);
+                    for(OrdinalType imu = 0; imu < the_mu_extent; ++imu) {
                         impulsion_coll += coeff_intdvpar(ivpar) *
                                           coeff_intdmu(imu) *
                                           jacob_vel *
@@ -55,12 +55,12 @@ namespace koliop {
                     }
                 }
 
-                const Flo64 U_par_coll = impulsion_coll / na;
-                Flo64       T_coll     = 0.0;
+                const ComputeFloatType U_par_coll = impulsion_coll / na;
+                ComputeFloatType       T_coll     = 0.0;
 
-                for(uint64_t ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
-                    const Flo64 jacob_vel = koliop::portability::MathematicalConstant<Flo64>::k2Pi * Bstar_s(ivpar, ir, itheta, pSpecies_id) / na;
-                    for(uint64_t imu = 0; imu < the_mu_extent; ++imu) {
+                for(OrdinalType ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
+                    const ComputeFloatType jacob_vel = koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Bstar_s(ivpar, ir, itheta, pSpecies_id) / na;
+                    for(OrdinalType imu = 0; imu < the_mu_extent; ++imu) {
                         T_coll += coeff_intdvpar(ivpar) *
                                   coeff_intdmu(imu) *
                                   (jacob_vel / 3.0) *
@@ -70,54 +70,54 @@ namespace koliop {
                     }
                 }
 
-                const Flo64 hat_Aa      = (pSpecies_id);
-                const Flo64 Vpara       = U_par_s(ir, itheta, iphi, pSpecies_id);
-                Flo64       U_par_new   = U_par_s(ir, itheta, iphi, pSpecies_id);
-                const Flo64 q_par_on_nT = q_par_on_nT_s(ir, itheta, iphi, pSpecies_id);
-                const Flo64 T_new       = T_s(ir, itheta, iphi, pSpecies_id);
+                const ComputeFloatType hat_Aa      = (pSpecies_id);
+                const ComputeFloatType Vpara       = U_par_s(ir, itheta, iphi, pSpecies_id);
+                ComputeFloatType       U_par_new   = U_par_s(ir, itheta, iphi, pSpecies_id);
+                const ComputeFloatType q_par_on_nT = q_par_on_nT_s(ir, itheta, iphi, pSpecies_id);
+                const ComputeFloatType T_new       = T_s(ir, itheta, iphi, pSpecies_id);
 
-                for(uint64_t ispecies = 0; ispecies < the_species_extent; ++ispecies) {
+                for(OrdinalType ispecies = 0; ispecies < the_species_extent; ++ispecies) {
                     if((ispecies != pSpecies_id) && collision_interspecies) {
-                        const Flo64 hat_Ab         = hat_As(ispecies);
-                        const Flo64 Rat            = Kokkos::sqrt(hat_Aa / hat_Ab);
-                        const Flo64 Vparb          = U_par_s(ir, itheta, iphi, ispecies);
-                        const Flo64 q_parb_on_nbTb = q_par_on_nT_s(ir, itheta, iphi, ispecies);
+                        const ComputeFloatType hat_Ab         = hat_As(ispecies);
+                        const ComputeFloatType Rat            = Kokkos::sqrt(hat_Aa / hat_Ab);
+                        const ComputeFloatType Vparb          = U_par_s(ir, itheta, iphi, ispecies);
+                        const ComputeFloatType q_parb_on_nbTb = q_par_on_nT_s(ir, itheta, iphi, ispecies);
 
-                        const Flo64 k_ab = 1.0 / (1.0 +
-                                                  hat_Aa * T_s(ir, itheta, iphi, ispecies) /
-                                                      (hat_Ab * T_s(ir, itheta, iphi, pSpecies_id)));
-                        const Flo64 k_ba = 1.0 / (1.0 +
-                                                  hat_Ab * T_s(ir, itheta, iphi, pSpecies_id) /
-                                                      (hat_Aa * T_s(ir, itheta, iphi, ispecies)));
+                        const ComputeFloatType k_ab = 1.0 / (1.0 +
+                                                             hat_Aa * T_s(ir, itheta, iphi, ispecies) /
+                                                                 (hat_Ab * T_s(ir, itheta, iphi, pSpecies_id)));
+                        const ComputeFloatType k_ba = 1.0 / (1.0 +
+                                                             hat_Ab * T_s(ir, itheta, iphi, pSpecies_id) /
+                                                                 (hat_Aa * T_s(ir, itheta, iphi, ispecies)));
 
-                        const Flo64 nu = nu_ab(ir, itheta, iphi, pSpecies_id, ispecies);
+                        const ComputeFloatType nu = nu_ab(ir, itheta, iphi, pSpecies_id, ispecies);
 
-                        const Flo64 R_ab = -nu * (Vpara - Rat * Vparb -
-                                                  0.6 * k_ab * q_par_on_nT +
-                                                  Rat * 0.6 * k_ba * q_parb_on_nbTb);
+                        const ComputeFloatType R_ab = -nu * (Vpara - Rat * Vparb -
+                                                             0.6 * k_ab * q_par_on_nT +
+                                                             Rat * 0.6 * k_ba * q_parb_on_nbTb);
                         U_par_new += dt * R_ab;
                     }
                 }
 
-                const Flo64 coeff_Max_coll = na / (koliop::portability::MathematicalConstant<Flo64>::k2Pi *
-                                                   T_coll *
-                                                   Kokkos::sqrt(koliop::portability::MathematicalConstant<Flo64>::k2Pi * T_coll));
+                const ComputeFloatType coeff_Max_coll = na / (koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi *
+                                                              T_coll *
+                                                              Kokkos::sqrt(koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * T_coll));
 
-                const Flo64 coeff_Max_new = na / (koliop::portability::MathematicalConstant<Flo64>::k2Pi *
-                                                  T_new *
-                                                  Kokkos::sqrt(koliop::portability::MathematicalConstant<Flo64>::k2Pi * T_new));
+                const ComputeFloatType coeff_Max_new = na / (koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi *
+                                                             T_new *
+                                                             Kokkos::sqrt(koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * T_new));
 
-                for(uint64_t ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
-                    for(uint64_t imu = 0; imu < the_mu_extent; ++imu) {
-                        const Flo64 u_coll = mug(imu) * Bij / T_coll;
-                        const Flo64 u_new  = mug(imu) * Bij / T_new;
+                for(OrdinalType ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
+                    for(OrdinalType imu = 0; imu < the_mu_extent; ++imu) {
+                        const ComputeFloatType u_coll = mug(imu) * Bij / T_coll;
+                        const ComputeFloatType u_new  = mug(imu) * Bij / T_new;
 
-                        const Flo64 FMa_coll = coeff_Max_coll * Kokkos::exp(-u_coll -
-                                                                            (vparg(ivpar) - U_par_coll) *
-                                                                                (vparg(ivpar) - U_par_coll) / (2 * T_coll));
-                        const Flo64 FMa_new  = coeff_Max_new * Kokkos::exp(-u_new -
-                                                                           (vparg(ivpar) - U_par_new) *
-                                                                               (vparg(ivpar) - U_par_new) / (2 * T_new));
+                        const ComputeFloatType FMa_coll = coeff_Max_coll * Kokkos::exp(-u_coll -
+                                                                                       (vparg(ivpar) - U_par_coll) *
+                                                                                           (vparg(ivpar) - U_par_coll) / (2 * T_coll));
+                        const ComputeFloatType FMa_new  = coeff_Max_new * Kokkos::exp(-u_new -
+                                                                                      (vparg(ivpar) - U_par_new) *
+                                                                                          (vparg(ivpar) - U_par_new) / (2 * T_new));
 
                         f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id) += FMa_new - FMa_coll;
                     }
@@ -149,9 +149,9 @@ namespace koliop {
 
             koliop::utility::Copy::Shallow(a_device_visible_f5d_s,
                                            koliop::utility::View::UHL6<Flo64>{f5d_s,
-                                                                              the_mu_extent_, the_vpar_extent_,
-                                                                              the_r_extent_, the_theta_extent_, the_phi_extent_,
-                                                                              the_species_extent_});
+                                                                              static_cast<std::size_t>(the_mu_extent_), static_cast<std::size_t>(the_vpar_extent_),
+                                                                              static_cast<std::size_t>(the_r_extent_), static_cast<std::size_t>(the_theta_extent_), static_cast<std::size_t>(the_phi_extent_),
+                                                                              static_cast<std::size_t>(the_species_extent_)});
 
             // TODO(Etienne M): ASYNC, relax that constraint ?
             Kokkos::fence();

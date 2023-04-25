@@ -16,12 +16,12 @@ namespace koliop {
                          View4D&&        U_par_s,
                          View4D&&        T_s) {
 
-            const uint64_t& the_mu_extent      = an_operator.the_mu_extent_;
-            const uint64_t& the_vpar_extent    = an_operator.the_vpar_extent_;
-            const uint64_t& the_r_extent       = an_operator.the_r_extent_;
-            const uint64_t& the_theta_extent   = an_operator.the_theta_extent_;
-            const uint64_t& the_phi_extent     = an_operator.the_phi_extent_;
-            const uint64_t& the_species_extent = an_operator.the_species_extent_;
+            const auto& the_mu_extent      = an_operator.the_mu_extent_;
+            const auto& the_vpar_extent    = an_operator.the_vpar_extent_;
+            const auto& the_r_extent       = an_operator.the_r_extent_;
+            const auto& the_theta_extent   = an_operator.the_theta_extent_;
+            const auto& the_phi_extent     = an_operator.the_phi_extent_;
+            const auto& the_species_extent = an_operator.the_species_extent_;
 
             const auto& mug            = an_operator.mug_;
             const auto& vparg          = an_operator.vparg_;
@@ -33,17 +33,17 @@ namespace koliop {
             const auto the_kernel = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi, auto ispecies) {
                 // TODO(Etienne M): INDEX not coalesced. Flatten more ?
 
-                Flo64 na    = 0.0;
-                Flo64 vpara = 0.0;
+                ComputeFloatType na    = 0.0;
+                ComputeFloatType vpara = 0.0;
 
-                for(uint64_t ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
-                    for(uint64_t imu = 0; imu < the_mu_extent; ++imu) {
-                        const Flo64 f5d_s_value = Kokkos::max(1.0E-40,
-                                                              f5d_s(imu, ivpar, ir, itheta, iphi, ispecies));
+                for(OrdinalType ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
+                    for(OrdinalType imu = 0; imu < the_mu_extent; ++imu) {
+                        const ComputeFloatType f5d_s_value = Kokkos::max(1.0E-40,
+                                                                         f5d_s(imu, ivpar, ir, itheta, iphi, ispecies));
 
                         // TODO(Etienne M): LOAD Hoist the invariant load.
-                        const Flo64 ftmp = (Bstar_s(ivpar, ir, itheta, ispecies) * coeff_intdvpar(ivpar)) *
-                                           (coeff_intdmu(imu) * f5d_s_value);
+                        const ComputeFloatType ftmp = (Bstar_s(ivpar, ir, itheta, ispecies) * coeff_intdvpar(ivpar)) *
+                                                      (coeff_intdmu(imu) * f5d_s_value);
                         na += ftmp;
                         vpara += vparg(ivpar) * ftmp;
 
@@ -53,16 +53,16 @@ namespace koliop {
 
                 vpara = vpara / na;
 
-                Flo64 Ta = 0.0;
+                ComputeFloatType Ta = 0.0;
 
-                for(uint64_t ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
-                    for(uint64_t imu = 0; imu < the_mu_extent; ++imu) {
+                for(OrdinalType ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
+                    for(OrdinalType imu = 0; imu < the_mu_extent; ++imu) {
                         // TODO(Etienne M): Avoid this recomputation ? On
                         // Gysela fortran, a temporary buffer is used but
                         // that would hardly fit on a GPU.
                         // TODO(Etienne M): LOAD Hoist the invariant load.
-                        const Flo64 ftmp = (Bstar_s(ivpar, ir, itheta, ispecies) * coeff_intdvpar(ivpar)) *
-                                           (coeff_intdmu(imu) * f5d_s(imu, ivpar, ir, itheta, iphi, ispecies));
+                        const ComputeFloatType ftmp = (Bstar_s(ivpar, ir, itheta, ispecies) * coeff_intdvpar(ivpar)) *
+                                                      (coeff_intdmu(imu) * f5d_s(imu, ivpar, ir, itheta, iphi, ispecies));
                         Ta += ((vparg(ivpar) - vpara) * (vparg(ivpar) - vpara) +
                                2.0 * mug(imu) * B_norm(ir, itheta)) *
                               ftmp;
@@ -70,7 +70,7 @@ namespace koliop {
                 }
 
                 Ta = Ta / (3.0 * na);
-                na = koliop::portability::MathematicalConstant<Flo64>::k2Pi * na;
+                na = koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * na;
 
                 n_s(ir, itheta, iphi, ispecies)     = na;
                 U_par_s(ir, itheta, iphi, ispecies) = vpara;
@@ -101,9 +101,9 @@ namespace koliop {
 
             koliop::utility::Copy::Shallow(a_device_visible_f5d_s,
                                            koliop::utility::View::UHL6<Flo64>{f5d_s,
-                                                                              the_mu_extent_, the_vpar_extent_,
-                                                                              the_r_extent_, the_theta_extent_, the_phi_extent_,
-                                                                              the_species_extent_});
+                                                                              static_cast<std::size_t>(the_mu_extent_), static_cast<std::size_t>(the_vpar_extent_),
+                                                                              static_cast<std::size_t>(the_r_extent_), static_cast<std::size_t>(the_theta_extent_), static_cast<std::size_t>(the_phi_extent_),
+                                                                              static_cast<std::size_t>(the_species_extent_)});
 
             // TODO(Etienne M): ASYNC, relax that constraint ?
             Kokkos::fence();

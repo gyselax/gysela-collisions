@@ -28,11 +28,11 @@ namespace koliop {
             const auto the_kernel = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi) {
                 // TODO(Etienne M): INDEX not coalesced. Flatten more ?
 
-                Flo64 na = 0.0;
-                for(uint64_t ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
-                    const Flo64 jacob_vel = koliop::portability::MathematicalConstant<Flo64>::k2Pi * Bstar_s(ivpar, ir, itheta, pSpecies_id);
-                    for(uint64_t imu = 0; imu < the_mu_extent; ++imu) {
-                        const Flo64 ftmp = Kokkos::max(f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id),
+                ComputeFloatType na = 0.0;
+                for(OrdinalType ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
+                    const ComputeFloatType jacob_vel = koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Bstar_s(ivpar, ir, itheta, pSpecies_id);
+                    for(OrdinalType imu = 0; imu < the_mu_extent; ++imu) {
+                        const ComputeFloatType ftmp = Kokkos::max(f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id),
                                                        0.0);
 
                         na += jacob_vel * coeff_intdmu(imu) * coeff_intdvpar(ivpar) * ftmp;
@@ -41,10 +41,10 @@ namespace koliop {
                     }
                 }
 
-                const Flo64 na_inverse = 1.0 / na;
+                const ComputeFloatType na_inverse = 1.0 / na;
 
-                for(uint64_t ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
-                    for(uint64_t imu = 0; imu < the_mu_extent; ++imu) {
+                for(OrdinalType ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
+                    for(OrdinalType imu = 0; imu < the_mu_extent; ++imu) {
                         f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id) *= n_s(ir, itheta, iphi, pSpecies_id) * na_inverse;
                     }
                 }
@@ -73,9 +73,9 @@ namespace koliop {
 
             koliop::utility::Copy::Shallow(a_device_visible_f5d_s,
                                            koliop::utility::View::UHL6<Flo64>{f5d_s,
-                                                                              the_mu_extent_, the_vpar_extent_,
-                                                                              the_r_extent_, the_theta_extent_, the_phi_extent_,
-                                                                              the_species_extent_});
+                                                                              static_cast<std::size_t>(the_mu_extent_), static_cast<std::size_t>(the_vpar_extent_),
+                                                                              static_cast<std::size_t>(the_r_extent_), static_cast<std::size_t>(the_theta_extent_), static_cast<std::size_t>(the_phi_extent_),
+                                                                              static_cast<std::size_t>(the_species_extent_)});
 
             // TODO(Etienne M): ASYNC, relax that constraint ?
             Kokkos::fence();

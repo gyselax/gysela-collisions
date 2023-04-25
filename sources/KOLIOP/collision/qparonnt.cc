@@ -14,12 +14,12 @@ namespace koliop {
                           const View6D&   f5d_s,
                           View4D&&        q_par_on_nT_s) {
 
-            const uint64_t& the_mu_extent      = an_operator.the_mu_extent_;
-            const uint64_t& the_vpar_extent    = an_operator.the_vpar_extent_;
-            const uint64_t& the_r_extent       = an_operator.the_r_extent_;
-            const uint64_t& the_theta_extent   = an_operator.the_theta_extent_;
-            const uint64_t& the_phi_extent     = an_operator.the_phi_extent_;
-            const uint64_t& the_species_extent = an_operator.the_species_extent_;
+            const auto& the_mu_extent      = an_operator.the_mu_extent_;
+            const auto& the_vpar_extent    = an_operator.the_vpar_extent_;
+            const auto& the_r_extent       = an_operator.the_r_extent_;
+            const auto& the_theta_extent   = an_operator.the_theta_extent_;
+            const auto& the_phi_extent     = an_operator.the_phi_extent_;
+            const auto& the_species_extent = an_operator.the_species_extent_;
 
             const auto& mug            = an_operator.mug_;
             const auto& vparg          = an_operator.vparg_;
@@ -38,27 +38,27 @@ namespace koliop {
                 // imu tends to be larger than ir, itheta or iphi.
                 // TODO(Etienne M): INDEX not coalesced. Flatten more ?
 
-                const Flo64 Bij   = B_norm(ir, itheta);
-                const Flo64 na    = n_s(ir, itheta, iphi, ispecies);
-                const Flo64 Vpara = U_par_s(ir, itheta, iphi, ispecies);
-                const Flo64 Ta    = T_s(ir, itheta, iphi, ispecies);
-                // TODO(Etienne M): SIMPLIFY as std::pow(koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta, -3 / 2);
-                const Flo64 coeff = 1.0 / (koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta * Kokkos::sqrt(koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta));
+                const ComputeFloatType Bij   = B_norm(ir, itheta);
+                const ComputeFloatType na    = n_s(ir, itheta, iphi, ispecies);
+                const ComputeFloatType Vpara = U_par_s(ir, itheta, iphi, ispecies);
+                const ComputeFloatType Ta    = T_s(ir, itheta, iphi, ispecies);
+                // TODO(Etienne M): SIMPLIFY as std::pow(koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta, -3 / 2);
+                const ComputeFloatType coeff = 1.0 / (koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta * Kokkos::sqrt(koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta));
 
-                Flo64 q_par_on_nT_s_reduction = 0.0;
+                ComputeFloatType q_par_on_nT_s_reduction = 0.0;
 
-                for(uint64_t ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
-                    const Flo64 jac = koliop::portability::MathematicalConstant<Flo64>::k2Pi *
-                                      Bstar_s(ivpar, ir, itheta, ispecies);
+                for(OrdinalType ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
+                    const ComputeFloatType jac = koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi *
+                                                 Bstar_s(ivpar, ir, itheta, ispecies);
 
-                    const Flo64 vparg_minus_vpara         = vparg(ivpar) - Vpara;
-                    const Flo64 vparg_minus_vpara_squared = vparg_minus_vpara * vparg_minus_vpara;
-                    const Flo64 vp2                       = vparg_minus_vpara_squared / (2.0 * Ta);
+                    const ComputeFloatType vparg_minus_vpara         = vparg(ivpar) - Vpara;
+                    const ComputeFloatType vparg_minus_vpara_squared = vparg_minus_vpara * vparg_minus_vpara;
+                    const ComputeFloatType vp2                       = vparg_minus_vpara_squared / (2.0 * Ta);
 
-                    for(uint64_t imu = 0; imu < the_mu_extent; ++imu) {
-                        const Flo64 u_tmp   = mug(imu) * Bij / Ta;
-                        const Flo64 FMa_tmp = na * Kokkos::exp(-u_tmp - vp2) * coeff;
-                        const Flo64 v2      = 2.0 * mug(imu) * Bij + vparg_minus_vpara_squared;
+                    for(OrdinalType imu = 0; imu < the_mu_extent; ++imu) {
+                        const ComputeFloatType u_tmp   = mug(imu) * Bij / Ta;
+                        const ComputeFloatType FMa_tmp = na * Kokkos::exp(-u_tmp - vp2) * coeff;
+                        const ComputeFloatType v2      = 2.0 * mug(imu) * Bij + vparg_minus_vpara_squared;
                         q_par_on_nT_s_reduction += 0.5 *
                                                    jac *
                                                    coeff_intdmu(imu) *

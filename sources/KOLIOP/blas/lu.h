@@ -104,7 +104,7 @@ namespace koliop {
                   // TODO(Etienne M): See if kFlattenedExtent which is
                   // constexpr, can help improve the performance when used as an
                   // template argument. kBigBlockExtent = kFlattenedExtent.
-                  uint64_t kSmallBlockExtent = 3>
+                  OrdinalType kSmallBlockExtent = 3>
         class LUBlockTridiagonalByBlock {
         public:
             using FloatType          = Float;
@@ -112,7 +112,7 @@ namespace koliop {
 
             /// We could make this more general but for now the code is assuming
             /// this is fixed to 3.
-            static inline constexpr uint64_t kDiagonalCount = 3;
+            static inline constexpr OrdinalType kDiagonalCount = 3;
 
             /// We wish to saturate the hardware.
             /// - On CPU this means using SIMD instructions.
@@ -124,8 +124,8 @@ namespace koliop {
             /// kBatchSize represents the vector length from the hardware POV.
             /// The vector length from the thread POV may differ due to intra
             /// lane SIMD such as double2.
-            static inline constexpr uint64_t kBatchSize = KokkosBatched::DefaultVectorLength<FloatType,
-                                                                                             typename ExecutionSpace::memory_space>::value;
+            static inline constexpr OrdinalType kBatchSize = KokkosBatched::DefaultVectorLength<FloatType,
+                                                                                                typename ExecutionSpace::memory_space>::value;
 
             using ScalarMatrixType = Kokkos::View<FloatType** [kDiagonalCount][kSmallBlockExtent][kSmallBlockExtent][kBatchSize],
                                                   Kokkos::LayoutRight,
@@ -139,10 +139,10 @@ namespace koliop {
             /// - On CPU it is similar to the vector type from the hardware POV
             /// say, a ymm register.
             /// - On GPU it shall represent an inter lane SIMD such as double4.
-            static inline constexpr uint64_t kVectorSize = KokkosBatched::DefaultInternalVectorLength<FloatType,
+            static inline constexpr OrdinalType kVectorSize = KokkosBatched::DefaultInternalVectorLength<FloatType,
                                                                                                       typename ExecutionSpace::memory_space>::value;
 
-            static inline constexpr uint64_t kVectorPerBatch = kBatchSize / kVectorSize;
+            static inline constexpr OrdinalType kVectorPerBatch = kBatchSize / kVectorSize;
 
             using ThreadVectorType = KokkosBatched::Vector<KokkosBatched::SIMD<FloatType>,
                                                            kVectorSize>;
@@ -190,9 +190,9 @@ namespace koliop {
             /// diagonal problem. Must be a multiple of kBatchSize.
             /// @param the_M_matrix_extent The number extent of the block
             /// diagonal problem.
-            void Factorize(FloatType* the_A_matrix,
-                           uint64_t   the_A_matrix_extent,
-                           uint64_t   the_M_matrix_extent) const;
+            void Factorize(FloatType*  the_A_matrix,
+                           OrdinalType the_A_matrix_extent,
+                           OrdinalType the_M_matrix_extent) const;
 
             /// @brief TRSV
             /// @param the_A_matrix Must respect the format described in the
@@ -205,8 +205,8 @@ namespace koliop {
             /// the_M_matrix_extent * kSmallBlockExtent rows. for the format,
             /// see above.
             void SolveVector(const FloatType* the_A_matrix,
-                             uint64_t         the_A_matrix_extent,
-                             uint64_t         the_M_matrix_extent,
+                             OrdinalType      the_A_matrix_extent,
+                             OrdinalType      the_M_matrix_extent,
                              FloatType*       the_rhs) const;
 
         protected:
@@ -220,7 +220,7 @@ namespace koliop {
 
         template <typename Float,
                   typename ExecutionSpace,
-                  uint64_t kSmallBlockExtent>
+                  OrdinalType kSmallBlockExtent>
         LUBlockTridiagonalByBlock<Float,
                                   ExecutionSpace,
                                   kSmallBlockExtent>::LUBlockTridiagonalByBlock(ExecutionSpace an_execution_space)
@@ -230,12 +230,12 @@ namespace koliop {
 
         template <typename Float,
                   typename ExecutionSpace,
-                  uint64_t kSmallBlockExtent>
+                  OrdinalType kSmallBlockExtent>
         void LUBlockTridiagonalByBlock<Float,
                                        ExecutionSpace,
-                                       kSmallBlockExtent>::Factorize(FloatType* the_A_matrix,
-                                                                     uint64_t   the_A_matrix_extent,
-                                                                     uint64_t   the_M_matrix_extent) const {
+                                       kSmallBlockExtent>::Factorize(FloatType*  the_A_matrix,
+                                                                     OrdinalType the_A_matrix_extent,
+                                                                     OrdinalType the_M_matrix_extent) const {
 
             KOLIOP_ASSERT(the_A_matrix != nullptr);
             // the_A_matrix_extent must be divisible by kBatchSize. Else we need
@@ -243,12 +243,12 @@ namespace koliop {
             KOLIOP_ASSERT(the_A_matrix_extent % kBatchSize == 0);
             KOLIOP_ASSERT(the_M_matrix_extent > 0);
 
-            const uint64_t kBatchCount     = the_A_matrix_extent / kBatchSize;
-            const uint64_t kBigBlockExtent = the_M_matrix_extent;
+            const OrdinalType kBatchCount     = the_A_matrix_extent / kBatchSize;
+            const OrdinalType kBigBlockExtent = the_M_matrix_extent;
 
             VectorMatrixType the_A_matrix_view{reinterpret_cast<ThreadVectorType*>(the_A_matrix),
-                                               kBatchCount,
-                                               the_M_matrix_extent};
+                                               static_cast<std::size_t>(kBatchCount),
+                                               static_cast<std::size_t>(the_M_matrix_extent)};
 
             // TODO(Etienne M): Check that we do not benefit from using
             // TeamLU/TRSM/GEMM. This require a trick with vector threads.
@@ -284,7 +284,7 @@ namespace koliop {
                     auto B      = Kokkos::subview(the_batch_element, 0, 2, Kokkos::ALL(), Kokkos::ALL());
                     auto A_next = Kokkos::subview(the_batch_element, 1, 1, Kokkos::ALL(), Kokkos::ALL());
 
-                    for(uint64_t the_small_block_index = 0;
+                    for(OrdinalType the_small_block_index = 0;
                         the_small_block_index < (kBigBlockExtent - 1);
                         ++the_small_block_index) {
 
@@ -320,12 +320,12 @@ namespace koliop {
 
         template <typename Float,
                   typename ExecutionSpace,
-                  uint64_t kSmallBlockExtent>
+                  OrdinalType kSmallBlockExtent>
         void LUBlockTridiagonalByBlock<Float,
                                        ExecutionSpace,
                                        kSmallBlockExtent>::SolveVector(const FloatType*,
-                                                                       uint64_t,
-                                                                       uint64_t,
+                                                                       OrdinalType,
+                                                                       OrdinalType,
                                                                        FloatType*) const {
         }
 

@@ -198,10 +198,12 @@ namespace koliop {
 
 namespace koliop {
 
-    // using UnsignedIndex = uint64_t;
-    // using SignedIndex = int64_t;
     using Flo32 = float;
     using Flo64 = double;
+
+    using ComputeFloatType = Flo64;
+    using OrdinalType      = int64_t;
+    using OffsetType       = uint64_t;
 
 } // namespace koliop
 

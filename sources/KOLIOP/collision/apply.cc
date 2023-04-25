@@ -11,8 +11,8 @@ namespace koliop {
             // NOTE: I use an unamed namespace because it is unknown to me if
             // adding static prior KOKKOS_INLINE_FUNCTION is legal.
 
-            KOKKOS_INLINE_FUNCTION Flo64
-            DoComputeLaguerrePol(uint64_t l, Flo64 x) {
+            KOKKOS_INLINE_FUNCTION ComputeFloatType
+            DoComputeLaguerrePol(OrdinalType l, ComputeFloatType x) {
                 // TODO(Etienne M): find a better way to compute that, based on l.
                 switch(l) {
                     case 0:
@@ -40,22 +40,22 @@ namespace koliop {
                   typename View2D>
         static inline void
         DoComputeAlphaProjection(const Operator& an_operator,
-                                 uint64_t        block_first_r,
-                                 uint64_t        block_first_theta,
-                                 uint64_t        block_first_phi,
+                                 OrdinalType     block_first_r,
+                                 OrdinalType     block_first_theta,
+                                 OrdinalType     block_first_phi,
                                  const View2D&   mask_coll,
                                  const View6D&   f5d_s,
                                  View4D&&        the_rhs) {
 
-            const uint64_t& the_mu_extent   = an_operator.the_mu_extent_;
-            const uint64_t& the_vpar_extent = an_operator.the_vpar_extent_;
+            const auto& the_mu_extent   = an_operator.the_mu_extent_;
+            const auto& the_vpar_extent = an_operator.the_vpar_extent_;
 
             const auto& mug          = an_operator.mug_;
             const auto& coeff_intdmu = an_operator.coeff_intdmu_;
             const auto& B_norm       = an_operator.B_norm_;
             const auto& T_s          = an_operator.T_s_;
 
-            const uint64_t& pSpecies_id = an_operator.pSpecies_id_;
+            const auto& pSpecies_id = an_operator.pSpecies_id_;
 
             const auto the_kernel = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi) {
                 // TODO(Etienne M): INDEX not coalesced. Flatten more ?
@@ -63,25 +63,25 @@ namespace koliop {
 
                 // NOTE: kBlockExtentXXX are constant, the compiler can replace
                 // the % with faster instructions.
-                const uint64_t the_block_local_index_r     = ir % Operator::kBlockExtentR;
-                const uint64_t the_block_local_index_theta = itheta % Operator::kBlockExtentTheta;
-                const uint64_t the_block_local_index_phi   = iphi % Operator::kBlockExtentPhi;
+                const OrdinalType the_block_local_index_r     = ir % Operator::kBlockExtentR;
+                const OrdinalType the_block_local_index_theta = itheta % Operator::kBlockExtentTheta;
+                const OrdinalType the_block_local_index_phi   = iphi % Operator::kBlockExtentPhi;
 
-                const uint64_t the_flattened_index = Operator::kBlockExtentR * Operator::kBlockExtentTheta * the_block_local_index_phi +
-                                                     Operator::kBlockExtentR * the_block_local_index_theta +
-                                                     the_block_local_index_r;
+                const OffsetType the_flattened_index = Operator::kBlockExtentR * Operator::kBlockExtentTheta * the_block_local_index_phi +
+                                                       Operator::kBlockExtentR * the_block_local_index_theta +
+                                                       the_block_local_index_r;
 
-                const uint64_t the_batch_index         = the_flattened_index / Operator::AlphaSolverType::kBatchSize;
-                const uint64_t the_batch_element_index = the_flattened_index % Operator::AlphaSolverType::kBatchSize;
+                const OrdinalType the_batch_index         = the_flattened_index / Operator::AlphaSolverType::kBatchSize;
+                const OrdinalType the_batch_element_index = the_flattened_index % Operator::AlphaSolverType::kBatchSize;
 
                 if(mask_coll(ir, itheta)) {
-                    const Flo64 BoT = B_norm(ir, itheta) / T_s(ir, itheta, iphi, pSpecies_id);
+                    const ComputeFloatType BoT = B_norm(ir, itheta) / T_s(ir, itheta, iphi, pSpecies_id);
 
-                    for(uint64_t ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
-                        for(uint64_t ipol = 0; ipol < Operator::kMaximumLaguerrePolynomialDegree; ++ipol) {
-                            for(uint64_t imu = 0; imu < the_mu_extent; ++imu) {
-                                const Flo64 muBoT     = mug(imu) * BoT;
-                                const Flo64 coeff_tot = DoComputeLaguerrePol(ipol, muBoT) * BoT * coeff_intdmu(imu) * Kokkos::exp(-muBoT);
+                    for(OrdinalType ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
+                        for(OrdinalType ipol = 0; ipol < Operator::kMaximumLaguerrePolynomialDegree; ++ipol) {
+                            for(OrdinalType imu = 0; imu < the_mu_extent; ++imu) {
+                                const ComputeFloatType muBoT     = mug(imu) * BoT;
+                                const ComputeFloatType coeff_tot = DoComputeLaguerrePol(ipol, muBoT) * BoT * coeff_intdmu(imu) * Kokkos::exp(-muBoT);
 
                                 the_rhs(the_batch_index, ivpar, ipol, the_batch_element_index) += coeff_tot *
                                                                                                   f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id);
@@ -89,8 +89,8 @@ namespace koliop {
                         }
                     }
                 } else {
-                    for(uint64_t ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
-                        for(uint64_t ipol = 0; ipol < Operator::kMaximumLaguerrePolynomialDegree; ++ipol) {
+                    for(OrdinalType ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
+                        for(OrdinalType ipol = 0; ipol < Operator::kMaximumLaguerrePolynomialDegree; ++ipol) {
                             the_rhs(the_batch_index, ivpar, ipol, the_batch_element_index) = 0.0;
                         }
                     }
@@ -115,9 +115,9 @@ namespace koliop {
                   typename View1D>
         static inline void
         DoComputeBlockTo1D(const Operator& an_operator,
-                           uint64_t        block_first_r,
-                           uint64_t        block_first_theta,
-                           uint64_t        block_first_phi,
+                           OrdinalType     block_first_r,
+                           OrdinalType     block_first_theta,
+                           OrdinalType     block_first_phi,
                            const View2D0&  mask_coll,
                            View2D1&&       n1d_s,
                            View2D1&&       T1d_s,
@@ -125,7 +125,7 @@ namespace koliop {
                            View1D&&        q_par_on_nT1d,
                            View1D&&        nu1d) {
 
-            const uint64_t& the_species_extent = an_operator.the_species_extent_;
+            const auto& the_species_extent = an_operator.the_species_extent_;
 
             const auto& n_s           = an_operator.n_s_;
             const auto& U_par_s       = an_operator.U_par_s_;
@@ -133,31 +133,31 @@ namespace koliop {
             const auto& nu_ab         = an_operator.nu_ab_;
             const auto& q_par_on_nT_s = an_operator.q_par_on_nT_s_;
 
-            const uint64_t& pSpecies_id = an_operator.pSpecies_id_;
+            const auto& pSpecies_id = an_operator.pSpecies_id_;
 
             const auto the_kernel = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi) {
                 // NOTE: kBlockExtentXXX are constant, the compiler can replace
                 // the % with faster instructions.
-                const uint64_t block_local_index_r     = ir % Operator::kBlockExtentR;
-                const uint64_t block_local_index_theta = itheta % Operator::kBlockExtentTheta;
-                const uint64_t block_local_index_phi   = iphi % Operator::kBlockExtentPhi;
+                const OrdinalType the_block_local_index_r     = ir % Operator::kBlockExtentR;
+                const OrdinalType the_block_local_index_theta = itheta % Operator::kBlockExtentTheta;
+                const OrdinalType the_block_local_index_phi   = iphi % Operator::kBlockExtentPhi;
 
-                const uint64_t ispace = Operator::kBlockExtentR * Operator::kBlockExtentTheta * block_local_index_phi +
-                                        Operator::kBlockExtentR * block_local_index_theta +
-                                        block_local_index_r;
+                const OffsetType the_flattened_index = Operator::kBlockExtentR * Operator::kBlockExtentTheta * the_block_local_index_phi +
+                                                       Operator::kBlockExtentR * the_block_local_index_theta +
+                                                       the_block_local_index_r;
 
                 if(!mask_coll(ir, itheta)) {
                     return;
                 }
 
-                for(uint64_t ispecies = 0; ispecies < the_species_extent; ++ispecies) {
-                    n1d_s(ispace, ispecies) = n_s(ir, itheta, iphi, ispecies);
-                    T1d_s(ispace, ispecies) = T_s(ir, itheta, iphi, ispecies);
+                for(OrdinalType ispecies = 0; ispecies < the_species_extent; ++ispecies) {
+                    n1d_s(the_flattened_index, ispecies) = n_s(ir, itheta, iphi, ispecies);
+                    T1d_s(the_flattened_index, ispecies) = T_s(ir, itheta, iphi, ispecies);
                 }
 
-                U_par1d(ispace)       = U_par_s(ir, itheta, iphi, pSpecies_id);
-                q_par_on_nT1d(ispace) = q_par_on_nT_s(ir, itheta, iphi, pSpecies_id);
-                nu1d(ispace)          = nu_ab(ir, itheta, iphi, pSpecies_id, pSpecies_id);
+                U_par1d(the_flattened_index)       = U_par_s(ir, itheta, iphi, pSpecies_id);
+                q_par_on_nT1d(the_flattened_index) = q_par_on_nT_s(ir, itheta, iphi, pSpecies_id);
+                nu1d(the_flattened_index)          = nu_ab(ir, itheta, iphi, pSpecies_id, pSpecies_id);
             };
 
             const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<3,
@@ -178,21 +178,21 @@ namespace koliop {
                   typename View2D>
         static inline void
         DoComputeReconstruction(const Operator& an_operator,
-                                uint64_t        block_first_r,
-                                uint64_t        block_first_theta,
-                                uint64_t        block_first_phi,
+                                OrdinalType     block_first_r,
+                                OrdinalType     block_first_theta,
+                                OrdinalType     block_first_phi,
                                 const View2D&   mask_coll,
                                 View6D&&        f5d_s,
                                 const View4D&   the_rhs) {
 
-            const uint64_t& the_mu_extent   = an_operator.the_mu_extent_;
-            const uint64_t& the_vpar_extent = an_operator.the_vpar_extent_;
+            const auto& the_mu_extent   = an_operator.the_mu_extent_;
+            const auto& the_vpar_extent = an_operator.the_vpar_extent_;
 
             const auto& mug    = an_operator.mug_;
             const auto& B_norm = an_operator.B_norm_;
             const auto& T_s    = an_operator.T_s_;
 
-            const uint64_t& pSpecies_id = an_operator.pSpecies_id_;
+            const auto& pSpecies_id = an_operator.pSpecies_id_;
 
             const auto the_kernel = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi) {
                 // TODO(Etienne M): INDEX not coalesced. Flatten more ?
@@ -200,29 +200,29 @@ namespace koliop {
 
                 // NOTE: kBlockExtentXXX are constant, the compiler can replace
                 // the % with faster instructions.
-                const uint64_t the_block_local_index_r     = ir % Operator::kBlockExtentR;
-                const uint64_t the_block_local_index_theta = itheta % Operator::kBlockExtentTheta;
-                const uint64_t the_block_local_index_phi   = iphi % Operator::kBlockExtentPhi;
+                const OrdinalType the_block_local_index_r     = ir % Operator::kBlockExtentR;
+                const OrdinalType the_block_local_index_theta = itheta % Operator::kBlockExtentTheta;
+                const OrdinalType the_block_local_index_phi   = iphi % Operator::kBlockExtentPhi;
 
-                const uint64_t the_flattened_index = Operator::kBlockExtentR * Operator::kBlockExtentTheta * the_block_local_index_phi +
-                                                     Operator::kBlockExtentR * the_block_local_index_theta +
-                                                     the_block_local_index_r;
+                const OffsetType the_flattened_index = Operator::kBlockExtentR * Operator::kBlockExtentTheta * the_block_local_index_phi +
+                                                       Operator::kBlockExtentR * the_block_local_index_theta +
+                                                       the_block_local_index_r;
 
-                const uint64_t the_batch_index         = the_flattened_index / Operator::AlphaSolverType::kBatchSize;
-                const uint64_t the_batch_element_index = the_flattened_index % Operator::AlphaSolverType::kBatchSize;
+                const OrdinalType the_batch_index         = the_flattened_index / Operator::AlphaSolverType::kBatchSize;
+                const OrdinalType the_batch_element_index = the_flattened_index % Operator::AlphaSolverType::kBatchSize;
 
                 if(!mask_coll(ir, itheta)) {
                     return;
                 }
 
-                const Flo64 BoT = B_norm(ir, itheta) / T_s(ir, itheta, iphi, pSpecies_id);
+                const ComputeFloatType BoT = B_norm(ir, itheta) / T_s(ir, itheta, iphi, pSpecies_id);
 
-                for(uint64_t ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
-                    for(uint64_t imu = 0; imu < the_mu_extent; ++imu) {
-                        const Flo64 muBoT       = mug(imu) * BoT;
-                        Flo64       f5d_s_value = 0.0;
+                for(OrdinalType ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
+                    for(OrdinalType imu = 0; imu < the_mu_extent; ++imu) {
+                        const ComputeFloatType muBoT       = mug(imu) * BoT;
+                        ComputeFloatType       f5d_s_value = 0.0;
 
-                        for(uint64_t ipol = 0; ipol < Operator::kMaximumLaguerrePolynomialDegree; ++ipol) {
+                        for(OrdinalType ipol = 0; ipol < Operator::kMaximumLaguerrePolynomialDegree; ++ipol) {
                             f5d_s_value += the_rhs(the_batch_index, ivpar, ipol, the_batch_element_index) *
                                            DoComputeLaguerrePol(ipol, muBoT);
                         }
@@ -255,11 +255,11 @@ namespace koliop {
             // TODO(Etienne M): we can drop the ir_start/ir_end and just pass the range as
             // the arrays are not subarrays.
 
-            const uint64_t& the_vpar_extent    = an_operator.the_vpar_extent_;
-            const uint64_t& the_r_extent       = an_operator.the_r_extent_;
-            const uint64_t& the_theta_extent   = an_operator.the_theta_extent_;
-            const uint64_t& the_phi_extent     = an_operator.the_phi_extent_;
-            const uint64_t& the_species_extent = an_operator.the_species_extent_;
+            const auto& the_vpar_extent    = an_operator.the_vpar_extent_;
+            const auto& the_r_extent       = an_operator.the_r_extent_;
+            const auto& the_theta_extent   = an_operator.the_theta_extent_;
+            const auto& the_phi_extent     = an_operator.the_phi_extent_;
+            const auto& the_species_extent = an_operator.the_species_extent_;
 
             const auto& mask_buffer_r = an_operator.mask_buffer_r_;
             const auto& mask_LIM      = an_operator.mask_LIM_;
@@ -273,7 +273,7 @@ namespace koliop {
             KOLIOP_ASSERT(the_phi_extent % Operator::kBlockExtentPhi == 0);
 
             // TODO(Etienne M): Many opportunities to use constant extent say:
-            // Flo64 *[Operator::kFlattenedExtent].
+            // ComputeFloatType *[Operator::kFlattenedExtent].
 
             koliop::utility::View::MDD2<bool> mask_coll{Kokkos::view_alloc(Kokkos::WithoutInitializing, "mask_coll"),
                                                         Operator::kBlockExtentR, Operator::kBlockExtentTheta};
@@ -285,59 +285,59 @@ namespace koliop {
             // dt/4*T piece of matrix.
             // mask_coll should also be obtain on the fly.
 
-            koliop::utility::View::MDD2<Flo64> n1d_s{Kokkos::view_alloc(Kokkos::WithoutInitializing, "n1d_s"),
-                                                     Operator::kFlattenedExtent, the_species_extent};
-            koliop::utility::View::MDD2<Flo64> T1d_s{Kokkos::view_alloc(Kokkos::WithoutInitializing, "T1d_s"),
-                                                     Operator::kFlattenedExtent, the_species_extent};
-            koliop::utility::View::MDD1<Flo64> U_par1d{Kokkos::view_alloc(Kokkos::WithoutInitializing, "U_par1d"),
-                                                       Operator::kFlattenedExtent};
-            koliop::utility::View::MDD1<Flo64> q_par_on_nT1d{Kokkos::view_alloc(Kokkos::WithoutInitializing, "q_par_on_nT1d"),
-                                                             Operator::kFlattenedExtent};
-            koliop::utility::View::MDD1<Flo64> nu1d{Kokkos::view_alloc(Kokkos::WithoutInitializing, "nu1d"),
-                                                    Operator::kFlattenedExtent};
+            koliop::utility::View::MDD2<ComputeFloatType> n1d_s{Kokkos::view_alloc(Kokkos::WithoutInitializing, "n1d_s"),
+                                                                static_cast<std::size_t>(Operator::kFlattenedExtent), static_cast<std::size_t>(the_species_extent)};
+            koliop::utility::View::MDD2<ComputeFloatType> T1d_s{Kokkos::view_alloc(Kokkos::WithoutInitializing, "T1d_s"),
+                                                                static_cast<std::size_t>(Operator::kFlattenedExtent), static_cast<std::size_t>(the_species_extent)};
+            koliop::utility::View::MDD1<ComputeFloatType> U_par1d{Kokkos::view_alloc(Kokkos::WithoutInitializing, "U_par1d"),
+                                                                  static_cast<std::size_t>(Operator::kFlattenedExtent)};
+            koliop::utility::View::MDD1<ComputeFloatType> q_par_on_nT1d{Kokkos::view_alloc(Kokkos::WithoutInitializing, "q_par_on_nT1d"),
+                                                                        static_cast<std::size_t>(Operator::kFlattenedExtent)};
+            koliop::utility::View::MDD1<ComputeFloatType> nu1d{Kokkos::view_alloc(Kokkos::WithoutInitializing, "nu1d"),
+                                                               static_cast<std::size_t>(Operator::kFlattenedExtent)};
 
-            koliop::utility::View::MDD4<Flo64> N0{Kokkos::view_alloc(Kokkos::WithoutInitializing, "N0"),
-                                                  the_vpar_extent, Operator::kFlattenedExtent, Operator::kMaximumLaguerrePolynomialDegree, Operator::kMaximumLaguerrePolynomialDegree};
-            koliop::utility::View::MDD4<Flo64> N1{Kokkos::view_alloc(Kokkos::WithoutInitializing, "N1"),
-                                                  the_vpar_extent, Operator::kFlattenedExtent, Operator::kMaximumLaguerrePolynomialDegree, Operator::kMaximumLaguerrePolynomialDegree};
-            koliop::utility::View::MDD4<Flo64> N2{Kokkos::view_alloc(Kokkos::WithoutInitializing, "N1"),
-                                                  the_vpar_extent, Operator::kFlattenedExtent, Operator::kMaximumLaguerrePolynomialDegree, Operator::kMaximumLaguerrePolynomialDegree};
+            koliop::utility::View::MDD4<ComputeFloatType> N0{Kokkos::view_alloc(Kokkos::WithoutInitializing, "N0"),
+                                                             static_cast<std::size_t>(the_vpar_extent), static_cast<std::size_t>(Operator::kFlattenedExtent), static_cast<std::size_t>(Operator::kMaximumLaguerrePolynomialDegree), static_cast<std::size_t>(Operator::kMaximumLaguerrePolynomialDegree)};
+            koliop::utility::View::MDD4<ComputeFloatType> N1{Kokkos::view_alloc(Kokkos::WithoutInitializing, "N1"),
+                                                             static_cast<std::size_t>(the_vpar_extent), static_cast<std::size_t>(Operator::kFlattenedExtent), static_cast<std::size_t>(Operator::kMaximumLaguerrePolynomialDegree), static_cast<std::size_t>(Operator::kMaximumLaguerrePolynomialDegree)};
+            koliop::utility::View::MDD4<ComputeFloatType> N2{Kokkos::view_alloc(Kokkos::WithoutInitializing, "N1"),
+                                                             static_cast<std::size_t>(the_vpar_extent), static_cast<std::size_t>(Operator::kFlattenedExtent), static_cast<std::size_t>(Operator::kMaximumLaguerrePolynomialDegree), static_cast<std::size_t>(Operator::kMaximumLaguerrePolynomialDegree)};
 
             Operator::AlphaSolverType::ScalarMatrixType the_differential_operator{Kokkos::view_alloc(Kokkos::WithoutInitializing,
                                                                                                      "the_differential_operator"),
-                                                                                  Operator::kFlattenedExtent, the_vpar_extent};
+                                                                                  static_cast<std::size_t>(Operator::kFlattenedExtent), static_cast<std::size_t>(the_vpar_extent)};
 
             Operator::AlphaSolverType::ScalarVectorType the_rhs{Kokkos::view_alloc(Kokkos::WithoutInitializing,
                                                                                    "the_rhs"),
-                                                                Operator::kFlattenedExtent, the_vpar_extent};
+                                                                static_cast<std::size_t>(Operator::kFlattenedExtent), static_cast<std::size_t>(the_vpar_extent)};
 
             // TODO(Etienne M): On GPU, should we just scale the block size ?
             // TODO(Etienne M): We use mask to avoid some computation, but
             // wouldn't it be netter to compute for everything and only in the
             // end, reconstruct f based on the mask ?
 
-            for(uint64_t block_first_phi = 0;
+            for(OrdinalType block_first_phi = 0;
                 block_first_phi < the_phi_extent;
                 block_first_phi += Operator::kBlockExtentPhi) {
-                for(uint64_t block_first_theta = 0;
+                for(OrdinalType block_first_theta = 0;
                     block_first_theta < the_theta_extent;
                     block_first_theta += Operator::kBlockExtentTheta) {
-                    for(uint64_t block_first_r = 0;
+                    for(OrdinalType block_first_r = 0;
                         block_first_r < the_r_extent;
                         block_first_r += Operator::kBlockExtentR) {
 
-                        const uint64_t block_last_r     = block_first_r + Operator::kBlockExtentR;
-                        const uint64_t block_last_theta = block_first_theta + Operator::kBlockExtentTheta;
+                        const OrdinalType block_last_r     = block_first_r + Operator::kBlockExtentR;
+                        const OrdinalType block_last_theta = block_first_theta + Operator::kBlockExtentTheta;
 
-                        for(uint64_t itheta = block_first_theta; itheta < block_last_theta; ++itheta) {
-                            for(uint64_t ir = block_first_r; ir < block_last_r; ++ir) {
+                        for(OrdinalType itheta = block_first_theta; itheta < block_last_theta; ++itheta) {
+                            for(OrdinalType ir = block_first_r; ir < block_last_r; ++ir) {
                                 mask_coll(ir - block_first_r, itheta - block_first_theta) = mask_buffer_r(ir) < 0.99;
                             }
                         }
 
                         if(LIM) {
-                            for(uint64_t itheta = block_first_theta; itheta < block_last_theta; ++itheta) {
-                                for(uint64_t ir = block_first_r; ir < block_last_r; ++ir) {
+                            for(OrdinalType itheta = block_first_theta; itheta < block_last_theta; ++itheta) {
+                                for(OrdinalType ir = block_first_r; ir < block_last_r; ++ir) {
                                     mask_coll(ir - block_first_r, itheta - block_first_theta) |= mask_LIM(ir, itheta) < 0.99;
                                 }
                             }
@@ -402,9 +402,9 @@ namespace koliop {
 
             koliop::utility::Copy::Shallow(a_device_visible_f5d_s,
                                            koliop::utility::View::UHL6<Flo64>{f5d_s,
-                                                                              the_mu_extent_, the_vpar_extent_,
-                                                                              the_r_extent_, the_theta_extent_, the_phi_extent_,
-                                                                              the_species_extent_});
+                                                                              static_cast<std::size_t>(the_mu_extent_), static_cast<std::size_t>(the_vpar_extent_),
+                                                                              static_cast<std::size_t>(the_r_extent_), static_cast<std::size_t>(the_theta_extent_), static_cast<std::size_t>(the_phi_extent_),
+                                                                              static_cast<std::size_t>(the_species_extent_)});
 
             // TODO(Etienne M): ASYNC, relax that constraint ?
             Kokkos::fence();

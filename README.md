@@ -103,6 +103,8 @@ NOTE:
 - Create the fortran bindings
 - Quick recheck of the kernel and their fortran equivalent
 - Test in Gysela (progressively replace libcoll with koliop)
+- Observ performance changes depending on the choice of Ordinal/Offset/FloatType
+- https://github.com/cpm-cmake/CPM.cmake
 
 - Simplify operations
 
@@ -110,11 +112,11 @@ NOTE:
 
 - Inter exchange loops
 - Tune for GPU (coalesced reads)
-- Reduce register usage. Each time you use a view, you consume a LOT of register.. much more than a simple pointer.
+- Reduce register usage. Each time you use a view, you consume a LOT of register (dimension/stride storage ?).. much more than a simple pointer.
 
 - Remove reference to std:: in kernels
 - Cleanup redundant names, long namespaces, View naming
-- Replace reference to Flo64 with something that can be changed more easily. For instance, to turn on/off the use of float instead of double.
+- Try validating using floats
 - Split the implementation in more files (one per function ?)
 - Document the C interface
 - Make sure the C interface does not leak (exception et al.)

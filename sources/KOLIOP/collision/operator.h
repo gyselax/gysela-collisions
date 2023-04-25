@@ -97,7 +97,7 @@ namespace koliop {
         ///
         class Operator {
         public:
-            static inline constexpr uint64_t kMaximumLaguerrePolynomialDegree = 3;
+            static inline constexpr OrdinalType kMaximumLaguerrePolynomialDegree = 3;
 
         public:
             using AlphaSolverType = koliop::blas::LUBlockTridiagonalByBlock<Flo64,
@@ -105,11 +105,11 @@ namespace koliop {
                                                                             kMaximumLaguerrePolynomialDegree>;
 
             // TODO(Etienne M): Tune that size or rework batching
-            static inline constexpr uint64_t kBlockExtentR     = 16;
-            static inline constexpr uint64_t kBlockExtentTheta = 1;
-            static inline constexpr uint64_t kBlockExtentPhi   = 1;
+            static inline constexpr OrdinalType kBlockExtentR     = 16;
+            static inline constexpr OrdinalType kBlockExtentTheta = 1;
+            static inline constexpr OrdinalType kBlockExtentPhi   = 1;
 
-            static inline constexpr uint64_t kFlattenedExtent = kBlockExtentR * kBlockExtentTheta * kBlockExtentPhi;
+            static inline constexpr OffsetType kFlattenedExtent = kBlockExtentR * kBlockExtentTheta * kBlockExtentPhi;
 
         public:
             Operator(uint64_t     pSpecies_id,
@@ -164,49 +164,49 @@ namespace koliop {
             // Constant, externally computed values
 
             // TODO(Etienne M): Cleanup unused values
-            uint64_t pSpecies_id_;
-            uint64_t mu_id_;
-            uint64_t the_mu_extent_;
-            uint64_t the_vpar_extent_;
-            uint64_t the_r_extent_;
-            uint64_t the_theta_extent_;
-            uint64_t the_phi_extent_;
-            uint64_t the_species_extent_;
-            Flo64    R0_;
-            bool     collision_interspecies_;
-            bool     SOL_;
-            bool     LIM_;
-            uint64_t ir_SOL_separatrix_;
-            Flo64    dt_;
+            OrdinalType      pSpecies_id_;
+            OrdinalType      mu_id_;
+            OrdinalType      the_mu_extent_;
+            OrdinalType      the_vpar_extent_;
+            OrdinalType      the_r_extent_;
+            OrdinalType      the_theta_extent_;
+            OrdinalType      the_phi_extent_;
+            OrdinalType      the_species_extent_;
+            ComputeFloatType R0_;
+            bool             collision_interspecies_;
+            bool             SOL_;
+            bool             LIM_;
+            OrdinalType      ir_SOL_separatrix_;
+            ComputeFloatType dt_;
 
-            koliop::utility::View::MDD2<const Flo64> comb_mat_; // TODO(Etienne M): constant extent.
-            koliop::utility::View::MDD1<const Flo64> hat_As_;   // TODO(Etienne M): constant extent.
-            koliop::utility::View::MDD1<const Flo64> hat_Zs_;   // TODO(Etienne M): constant extent.
-            koliop::utility::View::MDD1<const Flo64> mug_;
-            koliop::utility::View::MDD1<const Flo64> vparg_;
-            koliop::utility::View::MDD1<const Flo64> coeff_intdmu_;
-            koliop::utility::View::MDD1<const Flo64> coeff_intdvpar_;
-            koliop::utility::View::MDD1<const Flo64> rg_;
-            koliop::utility::View::MDD1<const Flo64> nustar0_r_;
-            koliop::utility::View::MDD1<const Flo64> q_r_;
-            koliop::utility::View::MDD1<const Flo64> mask_buffer_r_;
-            koliop::utility::View::MDD2<const Flo64> mask_LIM_;
-            koliop::utility::View::MDD2<const Flo64> B_norm_;
-            koliop::utility::View::MDD4<const Flo64> Bstar_s_;
+            koliop::utility::View::MDD2<const ComputeFloatType> comb_mat_; // TODO(Etienne M): constant extent.
+            koliop::utility::View::MDD1<const ComputeFloatType> hat_As_;   // TODO(Etienne M): constant extent.
+            koliop::utility::View::MDD1<const ComputeFloatType> hat_Zs_;   // TODO(Etienne M): constant extent.
+            koliop::utility::View::MDD1<const ComputeFloatType> mug_;
+            koliop::utility::View::MDD1<const ComputeFloatType> vparg_;
+            koliop::utility::View::MDD1<const ComputeFloatType> coeff_intdmu_;
+            koliop::utility::View::MDD1<const ComputeFloatType> coeff_intdvpar_;
+            koliop::utility::View::MDD1<const ComputeFloatType> rg_;
+            koliop::utility::View::MDD1<const ComputeFloatType> nustar0_r_;
+            koliop::utility::View::MDD1<const ComputeFloatType> q_r_;
+            koliop::utility::View::MDD1<const ComputeFloatType> mask_buffer_r_;
+            koliop::utility::View::MDD2<const ComputeFloatType> mask_LIM_;
+            koliop::utility::View::MDD2<const ComputeFloatType> B_norm_;
+            koliop::utility::View::MDD4<const ComputeFloatType> Bstar_s_;
 
             // Constant, internally computed values
 
-            koliop::utility::View::MDD2<Flo64> C_j_;  // TODO(Etienne M): constant extent.
-            koliop::utility::View::MDD3<Flo64> C_jl_; // TODO(Etienne M): constant extent.
-            koliop::utility::View::MDD3<Flo64> nustar_coeff_;
+            koliop::utility::View::MDD2<ComputeFloatType> C_j_;  // TODO(Etienne M): constant extent.
+            koliop::utility::View::MDD3<ComputeFloatType> C_jl_; // TODO(Etienne M): constant extent.
+            koliop::utility::View::MDD3<ComputeFloatType> nustar_coeff_;
 
             // Variable, internally computed values
 
-            koliop::utility::View::MDD4<Flo64> n_s_;
-            koliop::utility::View::MDD4<Flo64> U_par_s_;
-            koliop::utility::View::MDD4<Flo64> T_s_;
-            koliop::utility::View::MDD5<Flo64> nu_ab_;
-            koliop::utility::View::MDD4<Flo64> q_par_on_nT_s_;
+            koliop::utility::View::MDD4<ComputeFloatType> n_s_;
+            koliop::utility::View::MDD4<ComputeFloatType> U_par_s_;
+            koliop::utility::View::MDD4<ComputeFloatType> T_s_;
+            koliop::utility::View::MDD5<ComputeFloatType> nu_ab_;
+            koliop::utility::View::MDD4<ComputeFloatType> q_par_on_nT_s_;
 
             // Miscellaneous tooling
 

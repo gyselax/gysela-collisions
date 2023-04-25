@@ -13,11 +13,11 @@ namespace koliop {
                                         View6D&&        f5d_s,
                                         uint32_t        choice) {
 
-            const uint64_t& the_mu_extent    = an_operator.the_mu_extent_;
-            const uint64_t& the_vpar_extent  = an_operator.the_vpar_extent_;
-            const uint64_t& the_r_extent     = an_operator.the_r_extent_;
-            const uint64_t& the_theta_extent = an_operator.the_theta_extent_;
-            const uint64_t& the_phi_extent   = an_operator.the_phi_extent_;
+            const auto& the_mu_extent    = an_operator.the_mu_extent_;
+            const auto& the_vpar_extent  = an_operator.the_vpar_extent_;
+            const auto& the_r_extent     = an_operator.the_r_extent_;
+            const auto& the_theta_extent = an_operator.the_theta_extent_;
+            const auto& the_phi_extent   = an_operator.the_phi_extent_;
 
             const auto& mug    = an_operator.mug_;
             const auto& vparg  = an_operator.vparg_;
@@ -25,7 +25,7 @@ namespace koliop {
             const auto& n_s    = an_operator.n_s_;
             const auto& T_s    = an_operator.T_s_;
 
-            const uint64_t& pSpecies_id = an_operator.pSpecies_id_;
+            const auto& pSpecies_id = an_operator.pSpecies_id_;
 
             const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<3,
                                                                      Kokkos::Iterate::Left,
@@ -43,16 +43,16 @@ namespace koliop {
                 case 3: {
                     const auto the_kernel_choice_3 = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi) {
                         // TODO(Etienne M): INDEX not coalesced. Flatten more ?
-                        const Flo64 Bij    = B_norm(ir, itheta);
-                        const Flo64 na     = n_s(ir, itheta, iphi, pSpecies_id);
-                        const Flo64 Ta     = T_s(ir, itheta, iphi, pSpecies_id);
-                        const Flo64 BijoTa = Bij / Ta;
-                        const Flo64 f2oTa  = 0.5 / Ta;
-                        const Flo64 coeff  = na / (koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta * Kokkos::sqrt(koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta));
+                        const ComputeFloatType Bij    = B_norm(ir, itheta);
+                        const ComputeFloatType na     = n_s(ir, itheta, iphi, pSpecies_id);
+                        const ComputeFloatType Ta     = T_s(ir, itheta, iphi, pSpecies_id);
+                        const ComputeFloatType BijoTa = Bij / Ta;
+                        const ComputeFloatType f2oTa  = 0.5 / Ta;
+                        const ComputeFloatType coeff  = na / (koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta * Kokkos::sqrt(koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta));
 
-                        for(uint64_t ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
-                            for(uint64_t imu = 0; imu < the_mu_extent; ++imu) {
-                                const Flo64 v2oTa = mug(imu) * BijoTa + vparg(ivpar) * vparg(ivpar) * f2oTa;
+                        for(OrdinalType ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
+                            for(OrdinalType imu = 0; imu < the_mu_extent; ++imu) {
+                                const ComputeFloatType v2oTa = mug(imu) * BijoTa + vparg(ivpar) * vparg(ivpar) * f2oTa;
 
                                 f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id) = Kokkos::max(0.0,
                                                                                                coeff * Kokkos::exp(-v2oTa) * f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id));
@@ -67,15 +67,15 @@ namespace koliop {
                 case 4: {
                     const auto the_kernel_choice_4 = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi) {
                         // TODO(Etienne M): INDEX not coalesced. Flatten more ?
-                        const Flo64 Bij    = B_norm(ir, itheta);
-                        const Flo64 na     = n_s(ir, itheta, iphi, pSpecies_id);
-                        const Flo64 Ta     = T_s(ir, itheta, iphi, pSpecies_id);
-                        const Flo64 BijoTa = Bij / Ta;
-                        const Flo64 f2oTa  = 0.5 / Ta;
-                        const Flo64 coeff  = (koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta * Kokkos::sqrt(koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta)) / na;
-                        for(uint64_t ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
-                            for(uint64_t imu = 0; imu < the_mu_extent; ++imu) {
-                                const Flo64 v2oTa = mug(imu) * BijoTa + vparg(ivpar) * vparg(ivpar) * f2oTa;
+                        const ComputeFloatType Bij    = B_norm(ir, itheta);
+                        const ComputeFloatType na     = n_s(ir, itheta, iphi, pSpecies_id);
+                        const ComputeFloatType Ta     = T_s(ir, itheta, iphi, pSpecies_id);
+                        const ComputeFloatType BijoTa = Bij / Ta;
+                        const ComputeFloatType f2oTa  = 0.5 / Ta;
+                        const ComputeFloatType coeff  = (koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta * Kokkos::sqrt(koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta)) / na;
+                        for(OrdinalType ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
+                            for(OrdinalType imu = 0; imu < the_mu_extent; ++imu) {
+                                const ComputeFloatType v2oTa = mug(imu) * BijoTa + vparg(ivpar) * vparg(ivpar) * f2oTa;
 
                                 f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id) = Kokkos::max(0.001,
                                                                                                Kokkos::min(1000.0,
@@ -108,9 +108,9 @@ namespace koliop {
 
             koliop::utility::Copy::Shallow(a_device_visible_f5d_s,
                                            koliop::utility::View::UHL6<Flo64>{f5d_s,
-                                                                              the_mu_extent_, the_vpar_extent_,
-                                                                              the_r_extent_, the_theta_extent_, the_phi_extent_,
-                                                                              the_species_extent_});
+                                                                              static_cast<std::size_t>(the_mu_extent_), static_cast<std::size_t>(the_vpar_extent_),
+                                                                              static_cast<std::size_t>(the_r_extent_), static_cast<std::size_t>(the_theta_extent_), static_cast<std::size_t>(the_phi_extent_),
+                                                                              static_cast<std::size_t>(the_species_extent_)});
 
             // TODO(Etienne M): ASYNC, relax that constraint ?
             Kokkos::fence();

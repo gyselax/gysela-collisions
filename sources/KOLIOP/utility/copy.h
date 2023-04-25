@@ -155,13 +155,13 @@ namespace koliop {
                          std::is_same_v<typename std::remove_reference_t<UnmanagedView>::memory_space,
                                         typename std::remove_reference_t<DestinationView>::memory_space>) {
                 return UnmanagedView{the_raw_data,
-                                     the_indicies...};
+                                     static_cast<std::size_t>(the_indicies)...};
             } else {
                 return Deep(UnmanagedView{the_raw_data,
-                                          the_indicies...},
+                                          static_cast<std::size_t>(the_indicies)...},
                             DestinationView{Kokkos::view_alloc(Kokkos::WithoutInitializing,
                                                                std::string{the_view_label}),
-                                            the_indicies...});
+                                            static_cast<std::size_t>(the_indicies)...});
             }
         }
 

@@ -86,21 +86,54 @@ koliop_Status koliop_Create(koliop_Operator* an_operator_handle,
                             const double*    Bstar_s);
 koliop_Status koliop_Release(koliop_Operator an_operator);
 
+/// @brief Computation of fluid moments term:
+///   na =  int 2 * Pi * Bstar * dmu * dvpar * Fa
+///   Vpara = (1/na) * int 2 * Pi * Bstar * dmu * dvpar * vpar * Fa
+///   Ta = (1/(3*na)) * int 2 * Pi * Bstar * dmu * dvpar * Fa * &
+///        (2 * mu *B + (vpar-Vpara)^2)
+///
 koliop_Status koliop_ComputeMoments(koliop_Operator an_operator,
                                     double*         f5d_s);
 
 koliop_Status koliop_PrecomputeNu(koliop_Operator an_operator);
 
+/// @brief Remove the Maxwellian to the distribution function Fa = Fa - FMa
+/// Evolve temperature
+/// Compute the new Maxwellian
+/// Add it to the function distribution Fa = Fa + FMa
+/// Evolution of the temperatures via the term C0:
+///   Ta = Ta + deltat*sum_b nu_ab * (2*hat_Aa/(hat_Aa + hat_Ab)*(Tb -Ta) +
+///     (2/3) * Vpara *(Vpara - Vparb))
+///
 koliop_Status koliop_ComputeMaxwellianEvolution(koliop_Operator an_operator,
                                                 double*         f5d_s);
 
+/// @brief Computation of q_para/(na*Ta)
+///   q_par_on_nT = 0.5*int (2 * Pi * Bstar) *  dmu * dvpar * &
+///       (vpar-Vpara) * ((vpar-Vpara)^2 + vperp^2) * (Fa - FMa)
+///  Indeed  q_par_on_nT = 0 for a Maxwellian distribution function
+///
 koliop_Status koliop_ComputeQparOnNT(koliop_Operator an_operator,
                                      const double*   f5d_s);
 
+/// @brief Evolution of f due to the Cpar
+///   f = f + dt * sum_b (nu_sab(xb) * vpar / Ta) * F_M0a * &
+///           (Rat * Vparb - Vpara + (q_para / (na * Ta)) * (1 - 2*xa*xa/5) -
+///           (3/5) *  Rat * (q_parb / (nb * Tb)) / (1 + (vTa/vTb)^2 ))
+///  with Rat = sqrt(hat_Aa/hat_Ab)
+///   xa = v /(sqrt(2*Ta)) = sqrt(2*mu*B + vpar*vpar)/(sqrt(2*Ta))
+///   xb = xa * vTa / vTb
+///
 koliop_Status koliop_ComputeCpar(koliop_Operator an_operator,
                                  double*         f5d_s);
 
-// TODO(Etienne M): Document choice
+/// @brief This routine compute one of the following operation on the
+/// distribution function:
+///  - choice 3 : Fa = Fa * FM0a
+///  - choice 4 : Fa = Fa / FM0a
+///
+/// @param choice [3, 4]
+///
 koliop_Status koliop_ComputeMaxwellianUnshiftedLoc(koliop_Operator an_operator,
                                                    double*         f5d_s,
                                                    uint32_t        choice);
