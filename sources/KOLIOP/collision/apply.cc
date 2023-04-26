@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 
+#include "KOLIOP/collision/matrixsampler.h"
 #include "KOLIOP/collision/operator.h"
 #include "KOLIOP/portability/cmath.h"
 #include "KOLIOP/utility/copy.h"
@@ -35,6 +36,8 @@ namespace koliop {
 
         } // namespace
 
+        /// Store the current alpha coefficient in the_rhs.
+        ///
         template <typename View6D,
                   typename View4D,
                   typename View2D>
@@ -128,9 +131,9 @@ namespace koliop {
 
             const auto& the_species_extent = an_operator.the_species_extent_;
 
-            const auto& n_s           = an_operator.n_s_;
-            const auto& T_s           = an_operator.T_s_;
-            const auto& nu_ab         = an_operator.nu_ab_;
+            const auto& n_s   = an_operator.n_s_;
+            const auto& T_s   = an_operator.T_s_;
+            const auto& nu_ab = an_operator.nu_ab_;
 
             const auto& pSpecies_id = an_operator.pSpecies_id_;
 
@@ -154,7 +157,7 @@ namespace koliop {
                     T1d_s(the_flattened_index, ispecies) = T_s(ir, itheta, iphi, ispecies);
                 }
 
-                nu1d(the_flattened_index)          = nu_ab(ir, itheta, iphi, pSpecies_id, pSpecies_id);
+                nu1d(the_flattened_index) = nu_ab(ir, itheta, iphi, pSpecies_id, pSpecies_id);
             };
 
             const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<3,
@@ -170,21 +173,69 @@ namespace koliop {
                                  a_policy, the_kernel);
         }
 
-        template <typename View4D0,
-                  typename View4D1>
+        template <typename View6D,
+                  typename View4D>
+        static inline void
+        DoPrepareMatrix(const Operator& an_operator,
+                        const View6D&   the_Nia,
+                        const View6D&   the_matrix) {
+
+            // TODO(Etienne M): We could reduce the loads by preparing
+            // the_matrix and the_rhs. Indeed the sampling of the T matrix is
+            // the same.
+
+            const auto& the_vpar_extent = an_operator.the_vpar_extent_;
+
+            const ComputeFloatType dt    = an_operator.dt_;
+            const ComputeFloatType dvpar = an_operator.dvpar_;
+
+            const MatrixSampler the_T_matrix_sampler{the_Nia,
+                                                     dt, dvpar};
+
+            const auto the_kernel = KOKKOS_LAMBDA(auto the_batch_element_index, auto jpol, auto ipol, auto ivpar, auto the_batch_index) {
+                // TODO(Etienne M): Lower and Upper diagonals require special
+                // conditions. We can use branches or launch three kernels.
+
+                the_matrix(the_batch_index,
+                           ivpar, 1,
+                           ipol, jpol,
+                           the_batch_element_index) = the_T_matrix_sampler(the_batch_index,
+                                                                           ivpar, 1,
+                                                                           ipol, jpol,
+                                                                           the_batch_element_index);
+            };
+
+            const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<6,
+                                                                     Kokkos::Iterate::Left,
+                                                                     Kokkos::Iterate::Left>>{{0, 0, 0, 0, 0, 0},
+                                                                                             {Operator::AlphaSolverType::kBatchSize,
+                                                                                              Operator::kMaximumLaguerrePolynomialDegree,
+                                                                                              Operator::kMaximumLaguerrePolynomialDegree,
+                                                                                              the_vpar_extent,
+                                                                                              3,
+                                                                                              Operator::kFlattenedBlockExtent}};
+
+            Kokkos::parallel_for("DoPrepareMatrix",
+                                 a_policy, the_kernel);
+        }
+
+        template <typename View6D,
+                  typename View4D>
+        static inline void
+        DoPrepareRHS(const Operator&,
+                     const View6D&,
+                     const View4D&) {
+        }
+
+        template <typename View6D,
+                  typename View4D>
         static inline void
         DoComputeCvCdSource(const Operator& an_operator,
                             OrdinalType     block_first_r,
                             OrdinalType     block_first_theta,
                             OrdinalType     block_first_phi,
-                            const View4D0&  N0,
-                            const View4D0&  N1,
-                            const View4D0&  N2,
-                            View4D1&&       the_rhs) {
-
-            // TODO(Etienne M): The Nia's matrix indexing is transposed. Careful
-            // with N(k, j, l) which is how it is stored and N(k, l, j) how it
-            // is used when building the matrix T.
+                            const View6D&   the_Nia,
+                            View4D&&        the_rhs) {
 
             const auto& the_vpar_extent = an_operator.the_vpar_extent_;
             const auto& U_par_s         = an_operator.U_par_s_;
@@ -196,7 +247,7 @@ namespace koliop {
             const auto&            pSpecies_id = an_operator.pSpecies_id_;
             const ComputeFloatType dt          = an_operator.dt_;
 
-            const auto the_kernel = KOKKOS_LAMBDA(auto iphi, auto itheta, auto ir, auto ivpar, auto ipol) {
+            const auto the_kernel = KOKKOS_LAMBDA(auto ipol, auto ivpar, auto ir, auto itheta, auto iphi) {
                 const OrdinalType the_block_local_index_r     = ir % Operator::kBlockExtentR;
                 const OrdinalType the_block_local_index_theta = itheta % Operator::kBlockExtentTheta;
                 const OrdinalType the_block_local_index_phi   = iphi % Operator::kBlockExtentPhi;
@@ -215,24 +266,28 @@ namespace koliop {
 
                 // TODO(Etienne M): Can we simplify that ?
 
+                // TODO(Etienne M): The Nia's matrix indexing is transposed. Careful
+                // with N(k, j, l) which is how it is stored and N(k, l, j) how it
+                // is used when building the matrix T.
+
                 the_rhs(the_batch_index, ivpar, ipol, the_batch_element_index) -= dt / (5.0 * Ta) *
-                                                                                  ((5.0 * U_para - 3.0 * q_para_on_naTa) * (vpar_tmp * N0(ivpar, the_flattened_index, 0, ipol) + N1(ivpar, the_flattened_index, 0, ipol)) +
-                                                                                   q_para_on_naTa * vpar_tmp * vpar_tmp / Ta * (vpar_tmp * N0(ivpar, the_flattened_index, 0, ipol) + 3.0 * N1(ivpar, the_flattened_index, 0, ipol)) +
-                                                                                   2.0 * q_para_on_naTa * (3.0 * vpar_tmp / Ta * N2(ivpar, the_flattened_index, 0, ipol) - vpar_tmp * N0(ivpar, the_flattened_index, 1, ipol) - N1(ivpar, the_flattened_index, 1, ipol)));
+                                                                                  ((5.0 * U_para - 3.0 * q_para_on_naTa) * (vpar_tmp * the_Nia(the_batch_index, ivpar, 0, 0, ipol, the_batch_element_index) + the_Nia(the_batch_index, ivpar, 1, 0, ipol, the_batch_element_index)) +
+                                                                                   q_para_on_naTa * vpar_tmp * vpar_tmp / Ta * (vpar_tmp * the_Nia(the_batch_index, ivpar, 0, 0, ipol, the_batch_element_index) + 3.0 * the_Nia(the_batch_index, ivpar, 1, 0, ipol, the_batch_element_index)) +
+                                                                                   2.0 * q_para_on_naTa * (3.0 * vpar_tmp / Ta * the_Nia(the_batch_index, ivpar, 2, 0, ipol, the_batch_element_index) - vpar_tmp * the_Nia(the_batch_index, ivpar, 0, 1, ipol, the_batch_element_index) - the_Nia(the_batch_index, ivpar, 1, 1, ipol, the_batch_element_index)));
             };
 
             const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<5,
-                                                                     Kokkos::Iterate::Right,
-                                                                     Kokkos::Iterate::Right>>{{block_first_phi,
-                                                                                               block_first_theta,
-                                                                                               block_first_r,
-                                                                                               0,
-                                                                                               0},
-                                                                                              {block_first_phi + Operator::kBlockExtentPhi,
-                                                                                               block_first_theta + Operator::kBlockExtentTheta,
-                                                                                               block_first_r + Operator::kBlockExtentR,
-                                                                                               the_vpar_extent,
-                                                                                               Operator::kMaximumLaguerrePolynomialDegree}};
+                                                                     Kokkos::Iterate::Left,
+                                                                     Kokkos::Iterate::Left>>{{0,
+                                                                                              0,
+                                                                                              block_first_r,
+                                                                                              block_first_theta,
+                                                                                              block_first_phi},
+                                                                                             {Operator::kMaximumLaguerrePolynomialDegree,
+                                                                                              the_vpar_extent,
+                                                                                              block_first_r + Operator::kBlockExtentR,
+                                                                                              block_first_theta + Operator::kBlockExtentTheta,
+                                                                                              block_first_phi + Operator::kBlockExtentPhi}};
 
             Kokkos::parallel_for("DoComputeCvCdSource",
                                  a_policy, the_kernel);
@@ -348,7 +403,7 @@ namespace koliop {
             // the value which we can then cache and use in
             // the_differential_operator and the_rhs. The builder produces the
             // dt/4*T piece of matrix.
-            // mask_coll should also be obtain on the fly.
+            // mask_coll should also be obtained on the fly.
 
             koliop::utility::View::MDD2<ComputeFloatType> n1d_s{Kokkos::view_alloc(Kokkos::WithoutInitializing, "n1d_s"),
                                                                 static_cast<std::size_t>(Operator::kFlattenedBlockExtent), static_cast<std::size_t>(the_species_extent)};
@@ -357,16 +412,19 @@ namespace koliop {
             koliop::utility::View::MDD1<ComputeFloatType> nu1d{Kokkos::view_alloc(Kokkos::WithoutInitializing, "nu1d"),
                                                                static_cast<std::size_t>(Operator::kFlattenedBlockExtent)};
 
-            koliop::utility::View::MDD4<ComputeFloatType> N0{Kokkos::view_alloc(Kokkos::WithoutInitializing, "N0"),
-                                                             static_cast<std::size_t>(the_vpar_extent), static_cast<std::size_t>(Operator::kFlattenedBlockExtent), static_cast<std::size_t>(Operator::kMaximumLaguerrePolynomialDegree), static_cast<std::size_t>(Operator::kMaximumLaguerrePolynomialDegree)};
-            koliop::utility::View::MDD4<ComputeFloatType> N1{Kokkos::view_alloc(Kokkos::WithoutInitializing, "N1"),
-                                                             static_cast<std::size_t>(the_vpar_extent), static_cast<std::size_t>(Operator::kFlattenedBlockExtent), static_cast<std::size_t>(Operator::kMaximumLaguerrePolynomialDegree), static_cast<std::size_t>(Operator::kMaximumLaguerrePolynomialDegree)};
-            koliop::utility::View::MDD4<ComputeFloatType> N2{Kokkos::view_alloc(Kokkos::WithoutInitializing, "N1"),
-                                                             static_cast<std::size_t>(the_vpar_extent), static_cast<std::size_t>(Operator::kFlattenedBlockExtent), static_cast<std::size_t>(Operator::kMaximumLaguerrePolynomialDegree), static_cast<std::size_t>(Operator::kMaximumLaguerrePolynomialDegree)};
+            // TODO(Etienne M): Storing the Nia cost as much as the matrix ! We
+            // should try to compute them on the fly so we can have larger block
+            // size.
 
-            Operator::AlphaSolverType::ScalarMatrixType the_differential_operator{Kokkos::view_alloc(Kokkos::WithoutInitializing,
-                                                                                                     "the_differential_operator"),
-                                                                                  static_cast<std::size_t>(Operator::kBatchCount), static_cast<std::size_t>(the_vpar_extent)};
+            // TODO(Etienne M): Many opportunities to use constant extent say:
+            // ComputeFloatType *[Operator::kFlattenedBlockExtent].
+            Operator::AlphaSolverType::ScalarMatrixType the_Nia{Kokkos::view_alloc(Kokkos::WithoutInitializing,
+                                                                                   "the_Nia"),
+                                                                static_cast<std::size_t>(Operator::kBatchCount), static_cast<std::size_t>(the_vpar_extent)};
+
+            Operator::AlphaSolverType::ScalarMatrixType the_matrix{Kokkos::view_alloc(Kokkos::WithoutInitializing,
+                                                                                      "the_matrix"),
+                                                                   static_cast<std::size_t>(Operator::kBatchCount), static_cast<std::size_t>(the_vpar_extent)};
 
             Operator::AlphaSolverType::ScalarVectorType the_rhs{Kokkos::view_alloc(Kokkos::WithoutInitializing,
                                                                                    "the_rhs"),
@@ -434,7 +492,7 @@ namespace koliop {
                                 {
                                     // call libcoll_tridiag_matrix(Nspace, dvpar, dt / 4._F64, D_mat, DL_mat, DU1_mat, N0, N1, N2);
 
-                                    the_alpha_solver.Factorize(the_differential_operator.data(), Operator::kFlattenedBlockExtent, the_vpar_extent);
+                                    the_alpha_solver.Factorize(the_matrix.data(), Operator::kFlattenedBlockExtent, the_vpar_extent);
                                 }
                                 {
                                     // call libcoll_CvCd_RHS(Nspace, dvpar, dt / 4._F64, RHS_vec, N0, N1, N2);
@@ -443,16 +501,18 @@ namespace koliop {
                                 // Fence for RHS_vec and the factorized matrix
 
                                 {
-                                    the_alpha_solver.SolveVector(the_differential_operator.data(), Operator::kFlattenedBlockExtent, the_vpar_extent,
+                                    the_alpha_solver.SolveVector(the_matrix.data(), Operator::kFlattenedBlockExtent, the_vpar_extent,
                                                                  the_rhs.data());
+
                                     DoComputeCvCdSource(an_operator,
                                                         block_first_r,
                                                         block_first_theta,
                                                         block_first_phi,
-                                                        N0, N1, N2,
+                                                        the_Nia,
                                                         the_rhs);
+
                                     // call libcoll_CvCd_RHS(Nspace, dvpar, dt / 4._F64, RHS_vec, N0, N1, N2);
-                                    the_alpha_solver.SolveVector(the_differential_operator.data(), Operator::kFlattenedBlockExtent, the_vpar_extent,
+                                    the_alpha_solver.SolveVector(the_matrix.data(), Operator::kFlattenedBlockExtent, the_vpar_extent,
                                                                  the_rhs.data());
                                 }
                             }

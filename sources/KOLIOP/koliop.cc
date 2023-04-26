@@ -73,6 +73,10 @@
                               uint32_t           LIM,
                               uint64_t           ir_SOL_separatrix,
                               double             dt,
+                              double             mumin,
+                              double             dmu,
+                              double             vparmin,
+                              double             dvpar,
                               const double*      comb_mat,
                               const double*      hat_As,
                               const double*      hat_Zs,
@@ -127,6 +131,10 @@
                                                static_cast<bool>(LIM),
                                                ir_SOL_separatrix,
                                                dt,
+                                               mumin,
+                                               dmu,
+                                               vparmin,
+                                               dvpar,
                                                comb_mat,
                                                hat_As,
                                                hat_Zs,
@@ -152,7 +160,6 @@
 
 ::koliop_Status koliop_Release(::koliop_Operator an_operator) {
     return koliop::error::FromException([&]() {
-
         // Freeing a nullptr is *fine*.
         delete reinterpret_cast<const koliop::collision::Operator*>(an_operator);
 

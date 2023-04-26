@@ -19,7 +19,7 @@ namespace koliop {
         // LUBlockTridiagonalByBlock definition
         ////////////////////////////////////////////////////////////////////////
 
-        /// Lower upper (LU) tooling for block tridiagonal by block matrices.
+        /// Lower Upper (LU) tooling for block tridiagonal by block matrices.
         /// We treat square matrices.
         ///
         /// Assuming we have a block tridiagonal matrix:
@@ -48,15 +48,21 @@ namespace koliop {
         ///
         /// The A matrix is expected to be stored under the following format:
         ///     View<Scalar **cccc>{A_matrix_extent / kBatchSize, kBigBlockExtent, kDiagonalCount, kSmallBlockExtent, kSmallBlockExtent, kBatchSize}
+        /// The first kSmallBlockExtent represents the number of row and the
+        /// second represents the columns so that:
+        /// ScalarMatrixType{}(5, 4, 2, 2, 1, 0)
+        /// represents the first (0) batch element of the second (1) column of
+        /// the third (2) row of the upper (2) diagonal block at the fifth row
+        /// (4) of batch sixth batch.
         ///
         /// The matrix should be in layout right and we justify that due to a
         /// limitation in Kokkos for representing constant extent, indeed they
-        /// can not appear before dynamic extent. The C is followed by the block
-        /// A and B like so:
+        /// can not appear before dynamic extent. The A is followed by the block
+        /// B and C like so:
         /// [ A_matrix_extent / kBatchSize
         ///     [ kBigBlockExtent
         ///         [ kDiagonalCount
-        ///             [BlockC], [BlockA], [BlockB]
+        ///             [BlockA], [BlockB], [BlockC]
         ///         ]
         ///     ]
         /// ]
@@ -101,9 +107,9 @@ namespace koliop {
         ///
         template <typename Float,
                   typename ExecutionSpace,
-                  // TODO(Etienne M): See if kFlattenedExtent which is
+                  // TODO(Etienne M): See if kFlattenedBlockExtent which is
                   // constexpr, can help improve the performance when used as an
-                  // template argument. kBigBlockExtent = kFlattenedExtent.
+                  // template argument. kBigBlockExtent = kFlattenedBlockExtent.
                   OrdinalType kSmallBlockExtent = 3>
         class LUBlockTridiagonalByBlock {
         public:
@@ -275,14 +281,14 @@ namespace koliop {
                                                                the_batch_element_index);
 
                 // Applying the naming above, we have:
-                auto A = Kokkos::subview(the_batch_element, 0, 1, Kokkos::ALL(), Kokkos::ALL());
+                auto A = Kokkos::subview(the_batch_element, 0, 0, Kokkos::ALL(), Kokkos::ALL());
 
                 if(kBigBlockExtent == 1) {
                     LU::invoke(A);
                 } else {
-                    auto C      = Kokkos::subview(the_batch_element, 0, 0, Kokkos::ALL(), Kokkos::ALL());
-                    auto B      = Kokkos::subview(the_batch_element, 0, 2, Kokkos::ALL(), Kokkos::ALL());
-                    auto A_next = Kokkos::subview(the_batch_element, 1, 1, Kokkos::ALL(), Kokkos::ALL());
+                    auto B      = Kokkos::subview(the_batch_element, 0, 1, Kokkos::ALL(), Kokkos::ALL());
+                    auto C      = Kokkos::subview(the_batch_element, 0, 2, Kokkos::ALL(), Kokkos::ALL());
+                    auto A_next = Kokkos::subview(the_batch_element, 1, 0, Kokkos::ALL(), Kokkos::ALL());
 
                     for(OrdinalType the_small_block_index = 0;
                         the_small_block_index < (kBigBlockExtent - 1);
@@ -291,10 +297,10 @@ namespace koliop {
                         // TODO(Etienne M): Recreate view or assign ? Which is
                         // faster ?
 
-                        C.assign_data(&the_batch_element(the_small_block_index, 0, 0, 0));
-                        A.assign_data(&the_batch_element(the_small_block_index, 1, 0, 0));
-                        B.assign_data(&the_batch_element(the_small_block_index, 2, 0, 0));
-                        A_next.assign_data(&the_batch_element(the_small_block_index + 1, 1, 0, 0));
+                        A.assign_data(&the_batch_element(the_small_block_index, 0, 0, 0));
+                        B.assign_data(&the_batch_element(the_small_block_index, 1, 0, 0));
+                        C.assign_data(&the_batch_element(the_small_block_index, 2, 0, 0));
+                        A_next.assign_data(&the_batch_element(the_small_block_index + 1, 0, 0, 0));
 
                         LU::invoke(A);                         // A = L+U-I
                         TRSMLower::invoke(1.0, A, B);          // Solve: A_lower * X = B, X is put into B
