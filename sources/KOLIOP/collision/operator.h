@@ -112,6 +112,7 @@ namespace koliop {
             static inline constexpr OffsetType kFlattenedBlockExtent = kBlockExtentR * kBlockExtentTheta * kBlockExtentPhi;
 
             static inline constexpr OffsetType kBatchCount = kFlattenedBlockExtent / AlphaSolverType::kBatchSize;
+            static_assert(kBatchCount * AlphaSolverType::kBatchSize == kFlattenedBlockExtent, "");
 
         public:
             Operator(uint64_t     pSpecies_id,
@@ -128,6 +129,7 @@ namespace koliop {
                      bool         LIM,
                      uint64_t     ir_SOL_separatrix,
                      Flo64        dt,
+                     Flo64        dvpar,
                      const Flo64* comb_mat,
                      const Flo64* hat_As,
                      const Flo64* hat_Zs,
@@ -180,13 +182,21 @@ namespace koliop {
             bool             LIM_;
             OrdinalType      ir_SOL_separatrix_;
             ComputeFloatType dt_;
+            // TODO(Etienne M): dvpar is already present in gysela. Because we
+            // assume (for now) an uniform vpar discretization, vparg could be
+            // removed in favor of a closed formula. To avoid changing the
+            // interface we recompute it
+            // When we start using a sampler, remove this value.
+            ComputeFloatType dvpar_;
 
             koliop::utility::View::MDD2<const ComputeFloatType> comb_mat_; // TODO(Etienne M): constant extent.
             koliop::utility::View::MDD1<const ComputeFloatType> hat_As_;   // TODO(Etienne M): constant extent.
             koliop::utility::View::MDD1<const ComputeFloatType> hat_Zs_;   // TODO(Etienne M): constant extent.
             koliop::utility::View::MDD1<const ComputeFloatType> mug_;
             // NOTE: In practice the grid is uniform in vparg so you
-            // could compute vparg(n) = vparg(0) + dvpar * n
+            // could compute vparg(n) = vparg(0) + dvpar * n.
+            // TODO(Etienne M): replace vparg by a sampler and it should be
+            // mostly transparent to the user
             koliop::utility::View::MDD1<const ComputeFloatType> vparg_;
             koliop::utility::View::MDD1<const ComputeFloatType> coeff_intdmu_;
             koliop::utility::View::MDD1<const ComputeFloatType> coeff_intdvpar_;

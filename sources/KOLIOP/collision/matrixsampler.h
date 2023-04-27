@@ -21,7 +21,6 @@ namespace koliop {
         public:
         public:
             MatrixSampler(const View6D&    the_Nia,
-                          ComputeFloatType a_time_delta,
                           ComputeFloatType a_vpar_delta);
 
             KOKKOS_INLINE_FUNCTION ComputeFloatType
@@ -49,7 +48,6 @@ namespace koliop {
             // TODO(Etienne M): having a copy may not be ideal. Maybe we should
             // pass everything the the sampling function.
             View6D           the_Nia_;
-            ComputeFloatType the_time_delta_;
             ComputeFloatType the_coefficients_[2];
         };
 
@@ -60,10 +58,8 @@ namespace koliop {
 
         template <typename View6D>
         MatrixSampler<View6D>::MatrixSampler(const View6D&    the_Nia,
-                                             ComputeFloatType a_time_delta,
                                              ComputeFloatType a_vpar_delta)
             : the_Nia_{the_Nia}
-            , the_time_delta_{a_time_delta}
             , the_coefficients_{1.0 / (a_vpar_delta * 2.0),
                                 1.0 / (a_vpar_delta * a_vpar_delta)} {
             // EMPTY
@@ -79,9 +75,9 @@ namespace koliop {
             // NOTE: Careful with the i,j. The value of the 3x3 matrix block are
             // given using transposed values of the Nia. With i the row and j
             // the column:
-            // A[i, j] = dt * ( -N1(j, i) * ... )
-            return the_time_delta_ * (the_Nia_(the_batch_index, ivpar, 2, jpol, ipol, the_batch_element_index) * the_coefficients_[1] -
-                                      the_Nia_(the_batch_index, ivpar, 1, jpol, ipol, the_batch_element_index) * the_coefficients_[0]);
+            // A[i, j] = -N1(j, i) * ...
+            return the_Nia_(the_batch_index, ivpar, 2, jpol, ipol, the_batch_element_index) * the_coefficients_[1] -
+                   the_Nia_(the_batch_index, ivpar, 1, jpol, ipol, the_batch_element_index) * the_coefficients_[0];
         }
 
         template <typename View6D>
@@ -91,8 +87,8 @@ namespace koliop {
                                               OrdinalType ipol,
                                               OrdinalType jpol,
                                               OrdinalType the_batch_element_index) const {
-            return the_time_delta_ * (the_Nia_(the_batch_index, ivpar, 0, jpol, ipol, the_batch_element_index) * the_coefficients_[0] -
-                                      the_Nia_(the_batch_index, ivpar, 2, jpol, ipol, the_batch_element_index) * the_coefficients_[1] * 2.0);
+            return the_Nia_(the_batch_index, ivpar, 0, jpol, ipol, the_batch_element_index) * the_coefficients_[0] -
+                   the_Nia_(the_batch_index, ivpar, 2, jpol, ipol, the_batch_element_index) * the_coefficients_[1] * 2.0;
         }
 
         template <typename View6D>
@@ -102,8 +98,8 @@ namespace koliop {
                                              OrdinalType ipol,
                                              OrdinalType jpol,
                                              OrdinalType the_batch_element_index) const {
-            return the_time_delta_ * (the_Nia_(the_batch_index, ivpar, 2, jpol, ipol, the_batch_element_index) * the_coefficients_[1] +
-                                      the_Nia_(the_batch_index, ivpar, 1, jpol, ipol, the_batch_element_index) * the_coefficients_[0]);
+            return the_Nia_(the_batch_index, ivpar, 2, jpol, ipol, the_batch_element_index) * the_coefficients_[1] +
+                   the_Nia_(the_batch_index, ivpar, 1, jpol, ipol, the_batch_element_index) * the_coefficients_[0];
         }
 
     } // namespace collision

@@ -166,6 +166,7 @@ namespace koliop {
                            bool         LIM,
                            uint64_t     ir_SOL_separatrix,
                            Flo64        dt,
+                           Flo64        dvpar,
                            const Flo64* comb_mat,
                            const Flo64* hat_As,
                            const Flo64* hat_Zs,
@@ -195,6 +196,7 @@ namespace koliop {
             , LIM_{LIM}
             , ir_SOL_separatrix_{static_cast<OrdinalType>(ir_SOL_separatrix)}
             , dt_{static_cast<ComputeFloatType>(dt)}
+            , dvpar_{static_cast<ComputeFloatType>(dvpar)}
             , comb_mat_{koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL2<const Flo64>, koliop::utility::View::MDD2>(comb_mat, "comb_mat_", 2 * kMaximumLaguerrePolynomialDegree, 2 * kMaximumLaguerrePolynomialDegree)}
             , hat_As_{koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL1<const Flo64>, koliop::utility::View::MDD1>(hat_As, "hat_As_", kMaximumLaguerrePolynomialDegree)}
             , hat_Zs_{koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL1<const Flo64>, koliop::utility::View::MDD1>(hat_Zs, "hat_Zs_", kMaximumLaguerrePolynomialDegree)}

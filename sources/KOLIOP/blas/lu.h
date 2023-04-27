@@ -254,7 +254,7 @@ namespace koliop {
 
             VectorMatrixType the_A_matrix_view{reinterpret_cast<ThreadVectorType*>(the_A_matrix),
                                                static_cast<std::size_t>(kBatchCount),
-                                               static_cast<std::size_t>(the_M_matrix_extent)};
+                                               static_cast<std::size_t>(kBigBlockExtent)};
 
             // TODO(Etienne M): Check that we do not benefit from using
             // TeamLU/TRSM/GEMM. This require a trick with vector threads.

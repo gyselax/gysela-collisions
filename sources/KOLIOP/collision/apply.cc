@@ -173,12 +173,12 @@ namespace koliop {
                                  a_policy, the_kernel);
         }
 
-        template <typename View6D,
-                  typename View4D>
+        template <typename View6D0,
+                  typename View6D1>
         static inline void
         DoPrepareMatrix(const Operator& an_operator,
-                        const View6D&   the_Nia,
-                        const View6D&   the_matrix) {
+                        const View6D0&  the_Nia,
+                        View6D1&&       the_matrix) {
 
             // TODO(Etienne M): We could reduce the loads by preparing
             // the_matrix and the_rhs. Indeed the sampling of the T matrix is
@@ -186,34 +186,71 @@ namespace koliop {
 
             const auto& the_vpar_extent = an_operator.the_vpar_extent_;
 
-            const ComputeFloatType dt    = an_operator.dt_;
+            const ComputeFloatType dt = an_operator.dt_;
+            // TODO(Etienne M): dvpar should be part of the vpar sampler.
             const ComputeFloatType dvpar = an_operator.dvpar_;
 
-            const MatrixSampler the_T_matrix_sampler{the_Nia,
-                                                     dt, dvpar};
+            const MatrixSampler the_matrix_sampler{the_Nia,
+                                                   dvpar};
+
+            const ComputeFloatType the_time_delta_coefficient = -dt / 4.0;
 
             const auto the_kernel = KOKKOS_LAMBDA(auto the_batch_element_index, auto jpol, auto ipol, auto ivpar, auto the_batch_index) {
-                // TODO(Etienne M): Lower and Upper diagonals require special
-                // conditions. We can use branches or launch three kernels.
+                const ComputeFloatType the_middle_block_value = the_matrix_sampler.MiddleDiagonal(the_batch_index,
+                                                                                                  ivpar,
+                                                                                                  ipol, jpol,
+                                                                                                  the_batch_element_index);
+                const ComputeFloatType the_upper_block_value  = the_matrix_sampler.UpperDiagonal(the_batch_index,
+                                                                                                 ivpar,
+                                                                                                 ipol, jpol,
+                                                                                                 the_batch_element_index);
+                const ComputeFloatType the_lower_block_value  = the_matrix_sampler.LowerDiagonal(the_batch_index,
+                                                                                                 ivpar,
+                                                                                                 ipol, jpol,
+                                                                                                 the_batch_element_index);
 
+                the_matrix(the_batch_index,
+                           ivpar, 0,
+                           ipol, jpol,
+                           the_batch_element_index) = the_time_delta_coefficient *
+                                                      the_middle_block_value;
                 the_matrix(the_batch_index,
                            ivpar, 1,
                            ipol, jpol,
-                           the_batch_element_index) = the_T_matrix_sampler(the_batch_index,
-                                                                           ivpar, 1,
-                                                                           ipol, jpol,
-                                                                           the_batch_element_index);
+                           the_batch_element_index) = the_time_delta_coefficient *
+                                                      the_upper_block_value;
+                the_matrix(the_batch_index,
+                           ivpar, 2,
+                           ipol, jpol,
+                           the_batch_element_index) = the_time_delta_coefficient *
+                                                      the_lower_block_value;
+
+                if(jpol == ipol) {
+                    // the_matrix = I - dt/4 * T
+
+                    // TODO(Etienne M): On CPU this branch should get moved up
+                    // in the loop and on GPU I hope it does not cost too much.
+                    // Else we have to launch another kernel on the diagonal.
+                    the_matrix(the_batch_index,
+                               ivpar, 0,
+                               ipol, jpol,
+                               the_batch_element_index) += 1.0;
+                }
             };
 
-            const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<6,
+            // TODO(Etienne M): Should I launch 3 kernels, one per diagonal ?
+            // This way we could remove the conditional and avoid doing more 
+            // computation than needed for the first lower and last upper
+            // diagonal blocks.
+
+            const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<5,
                                                                      Kokkos::Iterate::Left,
-                                                                     Kokkos::Iterate::Left>>{{0, 0, 0, 0, 0, 0},
+                                                                     Kokkos::Iterate::Left>>{{0, 0, 0, 0, 0},
                                                                                              {Operator::AlphaSolverType::kBatchSize,
                                                                                               Operator::kMaximumLaguerrePolynomialDegree,
                                                                                               Operator::kMaximumLaguerrePolynomialDegree,
                                                                                               the_vpar_extent,
-                                                                                              3,
-                                                                                              Operator::kFlattenedBlockExtent}};
+                                                                                              Operator::kBatchCount}};
 
             Kokkos::parallel_for("DoPrepareMatrix",
                                  a_policy, the_kernel);
@@ -490,7 +527,8 @@ namespace koliop {
                                 // Fence for N0, N1, N2
 
                                 {
-                                    // call libcoll_tridiag_matrix(Nspace, dvpar, dt / 4._F64, D_mat, DL_mat, DU1_mat, N0, N1, N2);
+                                    DoPrepareMatrix(an_operator,
+                                                    the_Nia, the_matrix);
 
                                     the_alpha_solver.Factorize(the_matrix.data(), Operator::kFlattenedBlockExtent, the_vpar_extent);
                                 }
@@ -508,8 +546,7 @@ namespace koliop {
                                                         block_first_r,
                                                         block_first_theta,
                                                         block_first_phi,
-                                                        the_Nia,
-                                                        the_rhs);
+                                                        the_Nia, the_rhs);
 
                                     // call libcoll_CvCd_RHS(Nspace, dvpar, dt / 4._F64, RHS_vec, N0, N1, N2);
                                     the_alpha_solver.SolveVector(the_matrix.data(), Operator::kFlattenedBlockExtent, the_vpar_extent,
