@@ -52,10 +52,6 @@ int main(int, char**) {
     static constexpr uint32_t LIM                    = false;
     static constexpr uint64_t ir_SOL_separatrix      = 32;
     static constexpr double   dt                     = 50.0;
-    static constexpr double   mumin                  = 0.0;
-    static constexpr double   dmu                    = 0.42553191489; // TODO5Etienne M): I think it should be 0.41666666666
-    static constexpr double   vparmin                = -12.0;
-    static constexpr double   dvpar                  = 0.18897637795; // TODO(Etienne M): I think it should be 0.1875;
 
     static constexpr uint64_t the_mu_extent      = Nmu + 1;
     static constexpr uint64_t the_vpar_extent    = Nvpar + 1;
@@ -177,10 +173,6 @@ int main(int, char**) {
                        LIM,
                        ir_SOL_separatrix,
                        dt,
-                       mumin,
-                       dmu,
-                       vparmin,
-                       dvpar,
                        &comb_mat[0][0],
                        &hat_As[0],
                        &hat_Zs[0],

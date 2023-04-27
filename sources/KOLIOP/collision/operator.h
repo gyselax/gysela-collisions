@@ -128,15 +128,9 @@ namespace koliop {
                      bool         LIM,
                      uint64_t     ir_SOL_separatrix,
                      Flo64        dt,
-                     Flo64        mumin,
-                     Flo64        dmu,
-                     Flo64        vparmin,
-                     Flo64        dvpar,
                      const Flo64* comb_mat,
                      const Flo64* hat_As,
                      const Flo64* hat_Zs,
-                     // TODO(Etienne M): remove mug/vparg we can obtain them via closed
-                     // formulas. Create a sampler for mug and vparg ?
                      const Flo64* mug,
                      const Flo64* vparg,
                      const Flo64* coeff_intdmu,
@@ -186,17 +180,13 @@ namespace koliop {
             bool             LIM_;
             OrdinalType      ir_SOL_separatrix_;
             ComputeFloatType dt_;
-            ComputeFloatType mumin_;
-            ComputeFloatType dmu_;
-            ComputeFloatType vparmin_;
-            ComputeFloatType dvpar_;
 
             koliop::utility::View::MDD2<const ComputeFloatType> comb_mat_; // TODO(Etienne M): constant extent.
             koliop::utility::View::MDD1<const ComputeFloatType> hat_As_;   // TODO(Etienne M): constant extent.
             koliop::utility::View::MDD1<const ComputeFloatType> hat_Zs_;   // TODO(Etienne M): constant extent.
-            // TODO(Etienne M): remove mug/vparg we can obtain them via closed
-            // formulas. Create a sampler for mug and vparg ?
             koliop::utility::View::MDD1<const ComputeFloatType> mug_;
+            // NOTE: In practice the grid is uniform in vparg so you
+            // could compute vparg(n) = vparg(0) + dvpar * n
             koliop::utility::View::MDD1<const ComputeFloatType> vparg_;
             koliop::utility::View::MDD1<const ComputeFloatType> coeff_intdmu_;
             koliop::utility::View::MDD1<const ComputeFloatType> coeff_intdvpar_;
