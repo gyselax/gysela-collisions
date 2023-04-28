@@ -190,52 +190,30 @@ namespace koliop {
             // TODO(Etienne M): dvpar should be part of the vpar sampler.
             const ComputeFloatType dvpar = an_operator.dvpar_;
 
-            const MatrixSampler the_matrix_sampler{the_Nia,
-                                                   dvpar};
-
             const ComputeFloatType the_time_delta_coefficient = -dt / 4.0;
 
+            // Sample T
+            const MatrixSampler the_matrix_sampler{the_Nia,
+                                                   dvpar,
+                                                   the_time_delta_coefficient};
+
             const auto the_kernel = KOKKOS_LAMBDA(auto the_batch_element_index, auto jpol, auto ipol, auto ivpar, auto the_batch_index) {
-                const ComputeFloatType the_lower_block_value  = the_matrix_sampler.LowerDiagonal(the_batch_index,
-                                                                                                 ivpar,
-                                                                                                 ipol, jpol,
-                                                                                                 the_batch_element_index);
-                const ComputeFloatType the_middle_block_value = the_matrix_sampler.MiddleDiagonal(the_batch_index,
-                                                                                                  ivpar,
-                                                                                                  ipol, jpol,
-                                                                                                  the_batch_element_index);
-                const ComputeFloatType the_upper_block_value  = the_matrix_sampler.UpperDiagonal(the_batch_index,
-                                                                                                 ivpar,
-                                                                                                 ipol, jpol,
-                                                                                                 the_batch_element_index);
-
-                the_matrix(the_batch_index,
-                           ivpar, 0,
-                           ipol, jpol,
-                           the_batch_element_index) = the_time_delta_coefficient *
-                                                      the_lower_block_value;
-                the_matrix(the_batch_index,
-                           ivpar, 1,
-                           ipol, jpol,
-                           the_batch_element_index) = the_time_delta_coefficient *
-                                                      the_middle_block_value;
-                the_matrix(the_batch_index,
-                           ivpar, 2,
-                           ipol, jpol,
-                           the_batch_element_index) = the_time_delta_coefficient *
-                                                      the_upper_block_value;
-
-                if(jpol == ipol) {
-                    // the_matrix = I - dt/4 * T
-
-                    // TODO(Etienne M): On CPU this branch should get moved up
-                    // in the loop and on GPU I hope it does not cost too much.
-                    // Else we have to launch another kernel on the diagonal.
-                    the_matrix(the_batch_index,
-                               ivpar, 1,
-                               ipol, jpol,
-                               the_batch_element_index) += 1.0;
-                }
+                the_matrix_sampler.AllDiagonals(the_batch_index,
+                                                ivpar,
+                                                ipol, jpol,
+                                                the_batch_element_index,
+                                                the_matrix(the_batch_index,
+                                                           ivpar, 0,
+                                                           ipol, jpol,
+                                                           the_batch_element_index),
+                                                the_matrix(the_batch_index,
+                                                           ivpar, 1,
+                                                           ipol, jpol,
+                                                           the_batch_element_index),
+                                                the_matrix(the_batch_index,
+                                                           ivpar, 2,
+                                                           ipol, jpol,
+                                                           the_batch_element_index));
             };
 
             // TODO(Etienne M): Should I launch 3 kernels, one per diagonal ?
