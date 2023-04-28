@@ -100,9 +100,13 @@ namespace koliop {
             static inline constexpr OrdinalType kMaximumLaguerrePolynomialDegree = 3;
 
         public:
-            using AlphaSolverType = koliop::blas::LUBlockTridiagonalByBlock<Flo64,
-                                                                            Kokkos::DefaultExecutionSpace,
-                                                                            kMaximumLaguerrePolynomialDegree>;
+            using BatchTraitsType = koliop::blas::BatchTraits<ComputeFloatType,
+                                                              Kokkos::DefaultExecutionSpace>;
+
+            using BatchedSolverType = koliop::blas::BatchedLUBlockTridiagonalByBlock<BatchTraitsType,
+                                                                                     kMaximumLaguerrePolynomialDegree>;
+            // using BatchedGEMVType   = koliop::blas::BatchedGEMVBlockTridiagonalByBlock<BatchTraitsType,
+            //                                                                          kMaximumLaguerrePolynomialDegree>;
 
             // TODO(Etienne M): Tune that size or rework batching
             static inline constexpr OrdinalType kBlockExtentR     = 16;
@@ -111,8 +115,8 @@ namespace koliop {
 
             static inline constexpr OffsetType kFlattenedBlockExtent = kBlockExtentR * kBlockExtentTheta * kBlockExtentPhi;
 
-            static inline constexpr OffsetType kBatchCount = kFlattenedBlockExtent / AlphaSolverType::kBatchSize;
-            static_assert(kBatchCount * AlphaSolverType::kBatchSize == kFlattenedBlockExtent, "");
+            static inline constexpr OffsetType kBatchCount = kFlattenedBlockExtent / BatchTraitsType::kBatchSize;
+            static_assert(kBatchCount * BatchTraitsType::kBatchSize == kFlattenedBlockExtent, "");
 
         public:
             Operator(uint64_t     pSpecies_id,
@@ -224,7 +228,7 @@ namespace koliop {
 
             // Miscellaneous tooling
 
-            AlphaSolverType the_alpha_solver_;
+            BatchedSolverType the_alpha_solver_;
         };
 
     } // namespace collision

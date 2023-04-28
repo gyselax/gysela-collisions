@@ -74,8 +74,8 @@ namespace koliop {
                                                        Operator::kBlockExtentR * the_block_local_index_theta +
                                                        the_block_local_index_r;
 
-                const OrdinalType the_batch_index         = the_flattened_index / Operator::AlphaSolverType::kBatchSize;
-                const OrdinalType the_batch_element_index = the_flattened_index % Operator::AlphaSolverType::kBatchSize;
+                const OrdinalType the_batch_index         = the_flattened_index / Operator::BatchTraitsType::kBatchSize;
+                const OrdinalType the_batch_element_index = the_flattened_index % Operator::BatchTraitsType::kBatchSize;
 
                 if(mask_coll(ir, itheta)) {
                     const ComputeFloatType BoT = B_norm(ir, itheta) / T_s(ir, itheta, iphi, pSpecies_id);
@@ -224,7 +224,7 @@ namespace koliop {
             const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<5,
                                                                      Kokkos::Iterate::Left,
                                                                      Kokkos::Iterate::Left>>{{0, 0, 0, 0, 0},
-                                                                                             {Operator::AlphaSolverType::kBatchSize,
+                                                                                             {Operator::BatchTraitsType::kBatchSize,
                                                                                               Operator::kMaximumLaguerrePolynomialDegree,
                                                                                               Operator::kMaximumLaguerrePolynomialDegree,
                                                                                               the_vpar_extent,
@@ -271,8 +271,8 @@ namespace koliop {
                                                        Operator::kBlockExtentR * the_block_local_index_theta +
                                                        the_block_local_index_r;
 
-                const OrdinalType the_batch_index         = the_flattened_index / Operator::AlphaSolverType::kBatchSize;
-                const OrdinalType the_batch_element_index = the_flattened_index % Operator::AlphaSolverType::kBatchSize;
+                const OrdinalType the_batch_index         = the_flattened_index / Operator::BatchTraitsType::kBatchSize;
+                const OrdinalType the_batch_element_index = the_flattened_index % Operator::BatchTraitsType::kBatchSize;
 
                 const ComputeFloatType vpar_tmp       = vparg(ivpar);
                 const ComputeFloatType Ta             = T_s(ir, itheta, iphi, pSpecies_id);
@@ -343,8 +343,8 @@ namespace koliop {
                                                        Operator::kBlockExtentR * the_block_local_index_theta +
                                                        the_block_local_index_r;
 
-                const OrdinalType the_batch_index         = the_flattened_index / Operator::AlphaSolverType::kBatchSize;
-                const OrdinalType the_batch_element_index = the_flattened_index % Operator::AlphaSolverType::kBatchSize;
+                const OrdinalType the_batch_index         = the_flattened_index / Operator::BatchTraitsType::kBatchSize;
+                const OrdinalType the_batch_element_index = the_flattened_index % Operator::BatchTraitsType::kBatchSize;
 
                 if(!mask_coll(ir, itheta)) {
                     return;
@@ -433,17 +433,17 @@ namespace koliop {
 
             // TODO(Etienne M): Many opportunities to use constant extent say:
             // ComputeFloatType *[Operator::kFlattenedBlockExtent].
-            Operator::AlphaSolverType::ScalarMatrixType the_Nia{Kokkos::view_alloc(Kokkos::WithoutInitializing,
-                                                                                   "the_Nia"),
-                                                                static_cast<std::size_t>(Operator::kBatchCount), static_cast<std::size_t>(the_vpar_extent)};
+            Operator::BatchedSolverType::ScalarMatrixType the_Nia{Kokkos::view_alloc(Kokkos::WithoutInitializing,
+                                                                                     "the_Nia"),
+                                                                  static_cast<std::size_t>(Operator::kBatchCount), static_cast<std::size_t>(the_vpar_extent)};
 
-            Operator::AlphaSolverType::ScalarMatrixType the_matrix{Kokkos::view_alloc(Kokkos::WithoutInitializing,
-                                                                                      "the_matrix"),
-                                                                   static_cast<std::size_t>(Operator::kBatchCount), static_cast<std::size_t>(the_vpar_extent)};
+            Operator::BatchedSolverType::ScalarMatrixType the_matrix{Kokkos::view_alloc(Kokkos::WithoutInitializing,
+                                                                                        "the_matrix"),
+                                                                     static_cast<std::size_t>(Operator::kBatchCount), static_cast<std::size_t>(the_vpar_extent)};
 
-            Operator::AlphaSolverType::ScalarVectorType the_rhs{Kokkos::view_alloc(Kokkos::WithoutInitializing,
-                                                                                   "the_rhs"),
-                                                                static_cast<std::size_t>(Operator::kBatchCount), static_cast<std::size_t>(the_vpar_extent)};
+            Operator::BatchedSolverType::ScalarVectorType the_rhs{Kokkos::view_alloc(Kokkos::WithoutInitializing,
+                                                                                     "the_rhs"),
+                                                                  static_cast<std::size_t>(Operator::kBatchCount), static_cast<std::size_t>(the_vpar_extent)};
 
             // TODO(Etienne M): On GPU, should we just scale the block size ?
             // TODO(Etienne M): We use mask to avoid some computation, but
