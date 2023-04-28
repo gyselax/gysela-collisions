@@ -196,6 +196,10 @@ namespace koliop {
             const ComputeFloatType the_time_delta_coefficient = -dt / 4.0;
 
             const auto the_kernel = KOKKOS_LAMBDA(auto the_batch_element_index, auto jpol, auto ipol, auto ivpar, auto the_batch_index) {
+                const ComputeFloatType the_lower_block_value  = the_matrix_sampler.LowerDiagonal(the_batch_index,
+                                                                                                 ivpar,
+                                                                                                 ipol, jpol,
+                                                                                                 the_batch_element_index);
                 const ComputeFloatType the_middle_block_value = the_matrix_sampler.MiddleDiagonal(the_batch_index,
                                                                                                   ivpar,
                                                                                                   ipol, jpol,
@@ -204,26 +208,22 @@ namespace koliop {
                                                                                                  ivpar,
                                                                                                  ipol, jpol,
                                                                                                  the_batch_element_index);
-                const ComputeFloatType the_lower_block_value  = the_matrix_sampler.LowerDiagonal(the_batch_index,
-                                                                                                 ivpar,
-                                                                                                 ipol, jpol,
-                                                                                                 the_batch_element_index);
 
                 the_matrix(the_batch_index,
                            ivpar, 0,
                            ipol, jpol,
                            the_batch_element_index) = the_time_delta_coefficient *
-                                                      the_middle_block_value;
+                                                      the_lower_block_value;
                 the_matrix(the_batch_index,
                            ivpar, 1,
                            ipol, jpol,
                            the_batch_element_index) = the_time_delta_coefficient *
-                                                      the_upper_block_value;
+                                                      the_middle_block_value;
                 the_matrix(the_batch_index,
                            ivpar, 2,
                            ipol, jpol,
                            the_batch_element_index) = the_time_delta_coefficient *
-                                                      the_lower_block_value;
+                                                      the_upper_block_value;
 
                 if(jpol == ipol) {
                     // the_matrix = I - dt/4 * T
@@ -232,14 +232,14 @@ namespace koliop {
                     // in the loop and on GPU I hope it does not cost too much.
                     // Else we have to launch another kernel on the diagonal.
                     the_matrix(the_batch_index,
-                               ivpar, 0,
+                               ivpar, 1,
                                ipol, jpol,
                                the_batch_element_index) += 1.0;
                 }
             };
 
             // TODO(Etienne M): Should I launch 3 kernels, one per diagonal ?
-            // This way we could remove the conditional and avoid doing more 
+            // This way we could remove the conditional and avoid doing more
             // computation than needed for the first lower and last upper
             // diagonal blocks.
 

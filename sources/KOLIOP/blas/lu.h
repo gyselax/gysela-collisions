@@ -25,10 +25,10 @@ namespace koliop {
         /// Assuming we have a block tridiagonal matrix:
         ///
         /// M =
-        /// A_0 B_0       0
-        /// C_0 A_1 B_1
-        ///     C_1 A_. B_.
-        /// 0       C_. A_n
+        /// B_0 C_0       0
+        /// A_1 B_1 C_1
+        ///     A_. B_. C_.
+        /// 0       A_n B_n
         ///
         /// where A, B and C are small matrices of size kSmallBlockExtent x
         /// kSmallBlockExtent instead of scalars. Except for A, B and C
@@ -280,15 +280,25 @@ namespace koliop {
                                                                Kokkos::ALL(), // kSmallBlockExtent
                                                                the_batch_element_index);
 
+                // NOTE: This layout is more elegant but less Gysela friendly.
+                // It is less intuitive and does not match the vpar representing
+                // rows.
+                //
+                // M =
+                // A_0 B_0       0
+                // C_0 A_1 B_1
+                //     C_1 A_. B_.
+                // 0       C_. A_n
+
                 // Applying the naming above, we have:
-                auto A = Kokkos::subview(the_batch_element, 0, 0, Kokkos::ALL(), Kokkos::ALL());
+                auto B = Kokkos::subview(the_batch_element, 0, 1, Kokkos::ALL(), Kokkos::ALL());
 
                 if(kBigBlockExtent == 1) {
-                    LU::invoke(A);
+                    LU::invoke(B);
                 } else {
-                    auto B      = Kokkos::subview(the_batch_element, 0, 1, Kokkos::ALL(), Kokkos::ALL());
                     auto C      = Kokkos::subview(the_batch_element, 0, 2, Kokkos::ALL(), Kokkos::ALL());
                     auto A_next = Kokkos::subview(the_batch_element, 1, 0, Kokkos::ALL(), Kokkos::ALL());
+                    auto B_next = Kokkos::subview(the_batch_element, 1, 1, Kokkos::ALL(), Kokkos::ALL());
 
                     for(OrdinalType the_small_block_index = 0;
                         the_small_block_index < (kBigBlockExtent - 1);
@@ -297,18 +307,18 @@ namespace koliop {
                         // TODO(Etienne M): Recreate view or assign ? Which is
                         // faster ?
 
-                        A.assign_data(&the_batch_element(the_small_block_index, 0, 0, 0));
                         B.assign_data(&the_batch_element(the_small_block_index, 1, 0, 0));
                         C.assign_data(&the_batch_element(the_small_block_index, 2, 0, 0));
                         A_next.assign_data(&the_batch_element(the_small_block_index + 1, 0, 0, 0));
+                        B_next.assign_data(&the_batch_element(the_small_block_index + 1, 1, 0, 0));
 
-                        LU::invoke(A);                         // A = L+U-I
-                        TRSMLower::invoke(1.0, A, B);          // Solve: A_lower * X = B, X is put into B
-                        TRSMUpper::invoke(1.0, A, C);          // Solve: A_upper * X = C, X is put into C
-                        GEMM::invoke(-1.0, C, B, 1.0, A_next); // A_next = 1.0 * A_next + -1 * C * B
+                        LU::invoke(B);                              // B = L+U-I
+                        TRSMLower::invoke(1.0, B, C);               // Solve: B_lower * X = C, X is put into C
+                        TRSMUpper::invoke(1.0, B, A_next);          // Solve: B_upper * X = A_next, X is put into A_next
+                        GEMM::invoke(-1.0, A_next, C, 1.0, B_next); // B_next = 1.0 * B_next + -1 * A_next * C
                     }
 
-                    KokkosBatched::SerialLU<CachingPolicy>::invoke(A_next);
+                    KokkosBatched::SerialLU<CachingPolicy>::invoke(B_next);
                 }
             };
 
