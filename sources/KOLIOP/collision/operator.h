@@ -3,7 +3,9 @@
 #ifndef KOLIOP_COLLISION_OPERATOR_H
 #define KOLIOP_COLLISION_OPERATOR_H
 
-#include "KOLIOP/blas/lu.h"
+#include "KOLIOP/blas/batch.h"
+#include "KOLIOP/blas/gemv.h"
+#include "KOLIOP/blas/getrf.h"
 #include "KOLIOP/utility/view.h"
 
 namespace koliop {
@@ -103,10 +105,11 @@ namespace koliop {
             using BatchTraitsType = koliop::blas::BatchTraits<ComputeFloatType,
                                                               Kokkos::DefaultExecutionSpace>;
 
-            using BatchedSolverType = koliop::blas::BatchedLUBlockTridiagonalByBlock<BatchTraitsType,
-                                                                                     kMaximumLaguerrePolynomialDegree>;
-            // using BatchedGEMVType   = koliop::blas::BatchedGEMVBlockTridiagonalByBlock<BatchTraitsType,
-            //                                                                          kMaximumLaguerrePolynomialDegree>;
+            using BatchedSolverType = koliop::blas::BatchedGETRFBlockTridiagonalByBlock<BatchTraitsType,
+                                                                                        kMaximumLaguerrePolynomialDegree>;
+
+            using BatchedGEMVType = koliop::blas::MatrixSamplingBatchedGEMVBlockTridiagonalByBlock<BatchTraitsType,
+                                                                                                   kMaximumLaguerrePolynomialDegree>;
 
             // TODO(Etienne M): Tune that size or rework batching
             static inline constexpr OrdinalType kBlockExtentR     = 16;
