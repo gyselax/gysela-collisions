@@ -33,6 +33,10 @@ namespace koliop {
                                                   Kokkos::LayoutRight,
                                                   ExecutionSpaceType>;
 
+            using ConstVectorVectorType = Kokkos::View<const typename BatchTraitsType::ThreadVectorType** [kSmallBlockExtent][BatchTraitsType::kVectorPerBatch],
+                                                       Kokkos::LayoutRight,
+                                                       ExecutionSpaceType>;
+
         protected:
             // using ConcurrencyPolicy = KokkosBatched::Mode::Serial;
             using CachingPolicy = KokkosBatched::Algo::Level3::Unblocked;
@@ -63,6 +67,14 @@ namespace koliop {
 
         template <typename BatchTraits,
                   OrdinalType kSmallBlockExtent>
+        MatrixSamplingBatchedGEMVBlockTridiagonalByBlock<BatchTraits,
+                                                         kSmallBlockExtent>::MatrixSamplingBatchedGEMVBlockTridiagonalByBlock(ExecutionSpaceType an_execution_space)
+            : the_execution_space_{an_execution_space} {
+            // EMPTY
+        }
+
+        template <typename BatchTraits,
+                  OrdinalType kSmallBlockExtent>
         template <typename MatrixSampler>
         void MatrixSamplingBatchedGEMVBlockTridiagonalByBlock<BatchTraits, kSmallBlockExtent>::Apply(ValueType        the_alpha_scalar,
                                                                                                      MatrixSampler&&  the_A_matrix_sampler,
@@ -83,9 +95,9 @@ namespace koliop {
             const OrdinalType kBatchCount     = BatchTraitsType::BatchCount(the_A_matrix_extent);
             const OrdinalType kBigBlockExtent = the_M_matrix_extent;
 
-            VectorVectorType the_x_vector_view{reinterpret_cast<typename BatchTraitsType::ThreadVectorType*>(the_x_vector),
-                                               static_cast<std::size_t>(kBatchCount),
-                                               static_cast<std::size_t>(kBigBlockExtent)};
+            ConstVectorVectorType the_x_vector_view{reinterpret_cast<const typename BatchTraitsType::ThreadVectorType*>(the_x_vector),
+                                                    static_cast<std::size_t>(kBatchCount),
+                                                    static_cast<std::size_t>(kBigBlockExtent)};
 
             VectorVectorType the_y_vector_view{reinterpret_cast<typename BatchTraitsType::ThreadVectorType*>(the_y_vector),
                                                static_cast<std::size_t>(kBatchCount),
@@ -103,7 +115,7 @@ namespace koliop {
                                                                         Kokkos::ALL(), // kSmallBlockExtent
                                                                         the_batch_element_index);
 
-                ValueType the_dot_product{};
+                typename BatchTraitsType::ThreadVectorType the_dot_product{};
 
                 // TODO(Etienne M): in practice, the_A_matrix_sampler samples
                 // the Nia in a transposed order. That is, it could lead to
@@ -153,11 +165,11 @@ namespace koliop {
             };
 
             const auto a_policy = Kokkos::MDRangePolicy<ExecutionSpaceType,
-                                                        Kokkos::Rank<2,
+                                                        Kokkos::Rank<4,
                                                                      // TODO(Etienne M): Tune blocking.
                                                                      Kokkos::Iterate::Left,
                                                                      Kokkos::Iterate::Left>>{the_execution_space_,
-                                                                                             {0, 0},
+                                                                                             {0, 0, 0, 0},
                                                                                              {BatchTraitsType::kVectorPerBatch,
                                                                                               kSmallBlockExtent, kBigBlockExtent,
                                                                                               kBatchCount}};

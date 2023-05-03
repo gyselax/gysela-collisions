@@ -23,7 +23,7 @@ namespace koliop {
             const auto& Bstar_s        = an_operator.Bstar_s_;
             const auto& n_s            = an_operator.n_s_;
 
-            const auto pSpecies_id = an_operator.pSpecies_id_;
+            const auto& pSpecies_id = an_operator.pSpecies_id_;
 
             const auto the_kernel = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi) {
                 // TODO(Etienne M): INDEX not coalesced. Flatten more ?
@@ -33,7 +33,7 @@ namespace koliop {
                     const ComputeFloatType jacob_vel = koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Bstar_s(ivpar, ir, itheta, pSpecies_id);
                     for(OrdinalType imu = 0; imu < the_mu_extent; ++imu) {
                         const ComputeFloatType ftmp = Kokkos::max(f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id),
-                                                       0.0);
+                                                                  0.0);
 
                         na += jacob_vel * coeff_intdmu(imu) * coeff_intdvpar(ivpar) * ftmp;
 

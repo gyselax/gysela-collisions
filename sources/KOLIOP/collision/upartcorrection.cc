@@ -33,8 +33,8 @@ namespace koliop {
             const auto& nu_ab          = an_operator.nu_ab_;
             const auto& q_par_on_nT_s  = an_operator.q_par_on_nT_s_;
 
-            const auto             pSpecies_id            = an_operator.pSpecies_id_;
-            const auto             collision_interspecies = an_operator.collision_interspecies_;
+            const auto&            pSpecies_id            = an_operator.pSpecies_id_;
+            const auto&            collision_interspecies = an_operator.collision_interspecies_;
             const ComputeFloatType dt                     = an_operator.dt_;
 
             const auto the_kernel = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi) {

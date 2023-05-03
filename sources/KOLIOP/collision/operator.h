@@ -232,6 +232,7 @@ namespace koliop {
             // Miscellaneous tooling
 
             BatchedSolverType the_alpha_solver_;
+            BatchedGEMVType   the_gemv_;
         };
 
     } // namespace collision

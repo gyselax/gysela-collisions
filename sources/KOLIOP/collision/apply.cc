@@ -176,44 +176,33 @@ namespace koliop {
         template <typename View6D0,
                   typename View6D1>
         static inline void
-        DoPrepareMatrix(const Operator& an_operator,
-                        const View6D0&  the_Nia,
-                        View6D1&&       the_matrix) {
+        DoPrepareMatrix(const Operator&               an_operator,
+                        const MatrixSampler<View6D0>& the_matrix_sampler,
+                        View6D1&&                     the_output_matrix) {
 
             // TODO(Etienne M): We could reduce the loads by preparing
-            // the_matrix and the_rhs. Indeed the sampling of the T matrix is
-            // the same.
+            // the_output_matrix and the_rhs. Indeed the sampling of the T
+            // matrix is the same.
 
             const auto& the_vpar_extent = an_operator.the_vpar_extent_;
-
-            const ComputeFloatType dt = an_operator.dt_;
-            // TODO(Etienne M): dvpar should be part of the vpar sampler.
-            const ComputeFloatType dvpar = an_operator.dvpar_;
-
-            const ComputeFloatType the_time_delta_coefficient = -dt / 4.0;
-
-            // Sample T
-            const MatrixSampler the_matrix_sampler{the_Nia,
-                                                   dvpar,
-                                                   the_time_delta_coefficient};
 
             const auto the_kernel = KOKKOS_LAMBDA(auto the_batch_element_index, auto jpol, auto ipol, auto ivpar, auto the_batch_index) {
                 the_matrix_sampler.AllDiagonals(the_batch_index,
                                                 ivpar,
                                                 ipol, jpol,
                                                 the_batch_element_index,
-                                                the_matrix(the_batch_index,
-                                                           ivpar, 0,
-                                                           ipol, jpol,
-                                                           the_batch_element_index),
-                                                the_matrix(the_batch_index,
-                                                           ivpar, 1,
-                                                           ipol, jpol,
-                                                           the_batch_element_index),
-                                                the_matrix(the_batch_index,
-                                                           ivpar, 2,
-                                                           ipol, jpol,
-                                                           the_batch_element_index));
+                                                the_output_matrix(the_batch_index,
+                                                                  ivpar, 0,
+                                                                  ipol, jpol,
+                                                                  the_batch_element_index),
+                                                the_output_matrix(the_batch_index,
+                                                                  ivpar, 1,
+                                                                  ipol, jpol,
+                                                                  the_batch_element_index),
+                                                the_output_matrix(the_batch_index,
+                                                                  ivpar, 2,
+                                                                  ipol, jpol,
+                                                                  the_batch_element_index));
             };
 
             // TODO(Etienne M): Should I launch 3 kernels, one per diagonal ?
@@ -232,14 +221,6 @@ namespace koliop {
 
             Kokkos::parallel_for("DoPrepareMatrix",
                                  a_policy, the_kernel);
-        }
-
-        template <typename View6D,
-                  typename View4D>
-        static inline void
-        DoPrepareRHS(const Operator&,
-                     const View6D&,
-                     const View4D&) {
         }
 
         template <typename View6D,
@@ -396,12 +377,16 @@ namespace koliop {
             const auto& the_phi_extent     = an_operator.the_phi_extent_;
             const auto& the_species_extent = an_operator.the_species_extent_;
 
+            const auto&             LIM = an_operator.LIM_;
+            const ComputeFloatType& dt  = an_operator.dt_;
+            // TODO(Etienne M): dvpar should be part of the vpar sampler.
+            const ComputeFloatType& dvpar = an_operator.dvpar_;
+
             const auto& mask_buffer_r = an_operator.mask_buffer_r_;
             const auto& mask_LIM      = an_operator.mask_LIM_;
 
-            const bool& LIM = an_operator.LIM_;
-
             const auto the_alpha_solver = an_operator.the_alpha_solver_;
+            const auto the_gemv         = an_operator.the_gemv_;
 
             KOLIOP_ASSERT(the_r_extent % Operator::kBlockExtentR == 0);
             KOLIOP_ASSERT(the_theta_extent % Operator::kBlockExtentTheta == 0);
@@ -441,9 +426,24 @@ namespace koliop {
                                                                                         "the_matrix"),
                                                                      static_cast<std::size_t>(Operator::kBatchCount), static_cast<std::size_t>(the_vpar_extent)};
 
+            Operator::BatchedSolverType::ScalarVectorType the_alpha_coefficients{Kokkos::view_alloc(Kokkos::WithoutInitializing,
+                                                                                                    "the_alpha_coefficients"),
+                                                                                 static_cast<std::size_t>(Operator::kBatchCount), static_cast<std::size_t>(the_vpar_extent)};
+
             Operator::BatchedSolverType::ScalarVectorType the_rhs{Kokkos::view_alloc(Kokkos::WithoutInitializing,
                                                                                      "the_rhs"),
                                                                   static_cast<std::size_t>(Operator::kBatchCount), static_cast<std::size_t>(the_vpar_extent)};
+
+
+            // Samples I - T*dt/4
+            const MatrixSampler the_LHS_matrix_sampler{the_Nia,
+                                                       dvpar,
+                                                       -dt / 4.0};
+
+            // Samples I + T*dt/4
+            const MatrixSampler the_RHS_matrix_sampler{the_Nia,
+                                                       dvpar,
+                                                       dt / 4.0};
 
             // TODO(Etienne M): On GPU, should we just scale the block size ?
             // TODO(Etienne M): We use mask to avoid some computation, but
@@ -483,16 +483,12 @@ namespace koliop {
                         // }
 
                         {
-                            // IN: Constants upon entering the function.
-                            // OUT: the_rhs
                             DoComputeAlphaProjection(an_operator,
                                                      block_first_r,
                                                      block_first_theta,
                                                      block_first_phi,
-                                                     mask_coll, f5d_s, the_rhs);
+                                                     mask_coll, f5d_s, the_alpha_coefficients);
 
-                            // IN: Constants upon entering the function.
-                            // OUT: n1d_s, T1d_s, U_par1d, q_par_on_nT1d, nu1d
                             DoComputeBlockTo1D(an_operator,
                                                block_first_r,
                                                block_first_theta,
@@ -506,27 +502,47 @@ namespace koliop {
 
                                 {
                                     DoPrepareMatrix(an_operator,
-                                                    the_Nia, the_matrix);
+                                                    the_LHS_matrix_sampler, the_matrix);
 
+                                    // L*U = (I - T * dt/4)
                                     the_alpha_solver.Factorize(the_matrix.data(), Operator::kFlattenedBlockExtent, the_vpar_extent);
                                 }
                                 {
-                                    // call libcoll_CvCd_RHS(Nspace, dvpar, dt / 4._F64, RHS_vec, N0, N1, N2);
+                                    // the_rhs = (I + T * dt/4) * alpha(n)
+                                    the_gemv.Apply(1.0,
+                                                   the_RHS_matrix_sampler,
+                                                   Operator::kFlattenedBlockExtent, the_vpar_extent,
+                                                   the_alpha_coefficients.data(),
+                                                   // Discard what the_rhs could contain.
+                                                   0.0,
+                                                   the_rhs.data());
                                 }
 
                                 // Fence for RHS_vec and the factorized matrix
 
                                 {
+                                    // the_rhs = alpha~
                                     the_alpha_solver.SolveVector(the_matrix.data(), Operator::kFlattenedBlockExtent, the_vpar_extent,
                                                                  the_rhs.data());
 
+                                    // the_rhs = alpha~~
                                     DoComputeCvCdSource(an_operator,
                                                         block_first_r,
                                                         block_first_theta,
                                                         block_first_phi,
                                                         the_Nia, the_rhs);
 
-                                    // call libcoll_CvCd_RHS(Nspace, dvpar, dt / 4._F64, RHS_vec, N0, N1, N2);
+                                    std::swap(the_rhs, the_alpha_coefficients);
+
+                                    // the_rhs = (I + T * dt/4) * alpha~~
+                                    the_gemv.Apply(1.0,
+                                                   the_RHS_matrix_sampler,
+                                                   Operator::kFlattenedBlockExtent, the_vpar_extent,
+                                                   the_alpha_coefficients.data(),
+                                                   0.0,
+                                                   the_rhs.data());
+
+                                    // the_rhs = alpha(n+1)
                                     the_alpha_solver.SolveVector(the_matrix.data(), Operator::kFlattenedBlockExtent, the_vpar_extent,
                                                                  the_rhs.data());
                                 }
