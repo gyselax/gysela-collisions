@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 
-#ifndef KOLIOP_BLAS_GEMV_H
-#define KOLIOP_BLAS_GEMV_H
+#ifndef KOLIOP_BLAS_MV_H
+#define KOLIOP_BLAS_MV_H
 
 #include "KOLIOP/internal/configuration.h"
 
@@ -9,15 +9,15 @@ namespace koliop {
     namespace blas {
 
         ////////////////////////////////////////////////////////////////////////
-        // MatrixSamplingBatchedGEMVBlockTridiagonalByBlock definition
+        // BatchedMatrixSamplingBlockTridiagonalByBlockMV definition
         ////////////////////////////////////////////////////////////////////////
 
-        /// See BatchedGETRFBlockTridiagonalByBlock for more details on the data
+        /// See BatchedBlockTridiagonalByBlockTRF for more details on the data
         /// layout.
         ///
         template <typename BatchTraits,
                   OrdinalType kSmallBlockExtent>
-        class MatrixSamplingBatchedGEMVBlockTridiagonalByBlock {
+        class BatchedMatrixSamplingBlockTridiagonalByBlockMV {
         public:
             using BatchTraitsType = BatchTraits;
 
@@ -42,7 +42,7 @@ namespace koliop {
             using CachingPolicy = KokkosBatched::Algo::Level3::Unblocked;
 
         public:
-            MatrixSamplingBatchedGEMVBlockTridiagonalByBlock(ExecutionSpaceType an_execution_space);
+            BatchedMatrixSamplingBlockTridiagonalByBlockMV(ExecutionSpaceType an_execution_space);
 
             /// @brief Computes the_y_vector = the_alpha_scalar * the_A_matrix(...) * the_x_vector +
             /// the_beta_scalar * the_y_vector
@@ -62,13 +62,13 @@ namespace koliop {
 
 
         ////////////////////////////////////////////////////////////////////////
-        // MatrixSamplingBatchedGEMVBlockTridiagonalByBlock methods definition
+        // BatchedMatrixSamplingBlockTridiagonalByBlockMV methods definition
         ////////////////////////////////////////////////////////////////////////
 
         template <typename BatchTraits,
                   OrdinalType kSmallBlockExtent>
-        MatrixSamplingBatchedGEMVBlockTridiagonalByBlock<BatchTraits,
-                                                         kSmallBlockExtent>::MatrixSamplingBatchedGEMVBlockTridiagonalByBlock(ExecutionSpaceType an_execution_space)
+        BatchedMatrixSamplingBlockTridiagonalByBlockMV<BatchTraits,
+                                                       kSmallBlockExtent>::BatchedMatrixSamplingBlockTridiagonalByBlockMV(ExecutionSpaceType an_execution_space)
             : the_execution_space_{an_execution_space} {
             // EMPTY
         }
@@ -76,13 +76,13 @@ namespace koliop {
         template <typename BatchTraits,
                   OrdinalType kSmallBlockExtent>
         template <typename MatrixSampler>
-        void MatrixSamplingBatchedGEMVBlockTridiagonalByBlock<BatchTraits, kSmallBlockExtent>::Apply(ValueType        the_alpha_scalar,
-                                                                                                     MatrixSampler&&  the_A_matrix_sampler,
-                                                                                                     OrdinalType      the_A_matrix_extent,
-                                                                                                     OrdinalType      the_M_matrix_extent,
-                                                                                                     const ValueType* the_x_vector,
-                                                                                                     ValueType        the_beta_scalar,
-                                                                                                     ValueType*       the_y_vector) const {
+        void BatchedMatrixSamplingBlockTridiagonalByBlockMV<BatchTraits, kSmallBlockExtent>::Apply(ValueType        the_alpha_scalar,
+                                                                                                   MatrixSampler&&  the_A_matrix_sampler,
+                                                                                                   OrdinalType      the_A_matrix_extent,
+                                                                                                   OrdinalType      the_M_matrix_extent,
+                                                                                                   const ValueType* the_x_vector,
+                                                                                                   ValueType        the_beta_scalar,
+                                                                                                   ValueType*       the_y_vector) const {
 
             KOLIOP_ASSERT(the_x_vector != nullptr);
             KOLIOP_ASSERT(the_y_vector != nullptr);
@@ -174,7 +174,7 @@ namespace koliop {
                                                                                               kSmallBlockExtent, kBigBlockExtent,
                                                                                               kBatchCount}};
 
-            Kokkos::parallel_for("MatrixSamplingBatchedGEMVBlockTridiagonalByBlock::Apply",
+            Kokkos::parallel_for("BatchedMatrixSamplingBlockTridiagonalByBlockMV::Apply",
                                  a_policy, the_kernel);
         }
 

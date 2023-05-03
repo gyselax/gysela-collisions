@@ -386,7 +386,7 @@ namespace koliop {
             const auto& mask_LIM      = an_operator.mask_LIM_;
 
             const auto the_alpha_solver = an_operator.the_alpha_solver_;
-            const auto the_gemv         = an_operator.the_gemv_;
+            const auto the_mv           = an_operator.the_mv_;
 
             KOLIOP_ASSERT(the_r_extent % Operator::kBlockExtentR == 0);
             KOLIOP_ASSERT(the_theta_extent % Operator::kBlockExtentTheta == 0);
@@ -477,7 +477,10 @@ namespace koliop {
                             }
                         }
 
-                        // NOTE: Skipping would create imbalance
+                        // NOTE: Skipping would create imbalance and because we
+                        // use large blocks, assuming the resolution is not too
+                        // large, we are pretty much assured that we get at
+                        // least one point we need to process.
                         // if(all boolean in mask_coll are false) {
                         //     continue;
                         // }
@@ -509,13 +512,13 @@ namespace koliop {
                                 }
                                 {
                                     // the_rhs = (I + T * dt/4) * alpha(n)
-                                    the_gemv.Apply(1.0,
-                                                   the_RHS_matrix_sampler,
-                                                   Operator::kFlattenedBlockExtent, the_vpar_extent,
-                                                   the_alpha_coefficients.data(),
-                                                   // Discard what the_rhs could contain.
-                                                   0.0,
-                                                   the_rhs.data());
+                                    the_mv.Apply(1.0,
+                                                 the_RHS_matrix_sampler,
+                                                 Operator::kFlattenedBlockExtent, the_vpar_extent,
+                                                 the_alpha_coefficients.data(),
+                                                 // Discard what the_rhs could contain.
+                                                 0.0,
+                                                 the_rhs.data());
                                 }
 
                                 // Fence for RHS_vec and the factorized matrix
@@ -535,12 +538,12 @@ namespace koliop {
                                     std::swap(the_rhs, the_alpha_coefficients);
 
                                     // the_rhs = (I + T * dt/4) * alpha~~
-                                    the_gemv.Apply(1.0,
-                                                   the_RHS_matrix_sampler,
-                                                   Operator::kFlattenedBlockExtent, the_vpar_extent,
-                                                   the_alpha_coefficients.data(),
-                                                   0.0,
-                                                   the_rhs.data());
+                                    the_mv.Apply(1.0,
+                                                 the_RHS_matrix_sampler,
+                                                 Operator::kFlattenedBlockExtent, the_vpar_extent,
+                                                 the_alpha_coefficients.data(),
+                                                 0.0,
+                                                 the_rhs.data());
 
                                     // the_rhs = alpha(n+1)
                                     the_alpha_solver.SolveVector(the_matrix.data(), Operator::kFlattenedBlockExtent, the_vpar_extent,

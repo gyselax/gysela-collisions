@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 
-#ifndef KOLIOP_BLAS_GETRF_H
-#define KOLIOP_BLAS_GETRF_H
+#ifndef KOLIOP_BLAS_TRF_H
+#define KOLIOP_BLAS_TRF_H
 
 #include <KokkosBatched_Gemm_Decl.hpp>
 #include <KokkosBatched_Gemm_Serial_Impl.hpp>
@@ -16,7 +16,7 @@ namespace koliop {
     namespace blas {
 
         ////////////////////////////////////////////////////////////////////////
-        // BatchedGETRFBlockTridiagonalByBlock definition
+        // BatchedBlockTridiagonalByBlockTRF definition
         ////////////////////////////////////////////////////////////////////////
 
         /// Lower Upper (LU) tooling for block tridiagonal by block matrices.
@@ -111,7 +111,7 @@ namespace koliop {
                   // constexpr, can help improve the performance when used as an
                   // template argument. kBigBlockExtent = kFlattenedBlockExtent.
                   OrdinalType kSmallBlockExtent>
-        class BatchedGETRFBlockTridiagonalByBlock {
+        class BatchedBlockTridiagonalByBlockTRF {
         public:
             using BatchTraitsType = BatchTraits;
 
@@ -165,11 +165,11 @@ namespace koliop {
                                                    CachingPolicy>;
 
         public:
-            BatchedGETRFBlockTridiagonalByBlock(ExecutionSpaceType an_execution_space);
+            BatchedBlockTridiagonalByBlockTRF(ExecutionSpaceType an_execution_space);
 
             /// @brief TRF
             /// @param the_A_matrix Must respect the format described in the
-            /// BatchedGETRFBlockTridiagonalByBlock notes.
+            /// BatchedBlockTridiagonalByBlockTRF notes.
             /// @param the_A_matrix_extent The number of independent block
             /// diagonal problem. Must be a multiple of
             /// BatchTraitsType::kBatchSize.
@@ -181,7 +181,7 @@ namespace koliop {
 
             /// @brief TRSV
             /// @param the_A_matrix Must respect the format described in the
-            /// BatchedGETRFBlockTridiagonalByBlock notes.
+            /// BatchedBlockTridiagonalByBlockTRF notes.
             /// @param the_A_matrix_extent The number of independent block
             /// diagonal problem. Must be a multiple of
             /// BatchTraitsType::kBatchSize.
@@ -201,23 +201,23 @@ namespace koliop {
 
 
         ////////////////////////////////////////////////////////////////////////
-        // BatchedGETRFBlockTridiagonalByBlock methods definition
+        // BatchedBlockTridiagonalByBlockTRF methods definition
         ////////////////////////////////////////////////////////////////////////
 
         template <typename BatchTraits,
                   OrdinalType kSmallBlockExtent>
-        BatchedGETRFBlockTridiagonalByBlock<BatchTraits,
-                                            kSmallBlockExtent>::BatchedGETRFBlockTridiagonalByBlock(ExecutionSpaceType an_execution_space)
+        BatchedBlockTridiagonalByBlockTRF<BatchTraits,
+                                          kSmallBlockExtent>::BatchedBlockTridiagonalByBlockTRF(ExecutionSpaceType an_execution_space)
             : the_execution_space_{an_execution_space} {
             // EMPTY
         }
 
         template <typename BatchTraits,
                   OrdinalType kSmallBlockExtent>
-        void BatchedGETRFBlockTridiagonalByBlock<BatchTraits,
-                                                 kSmallBlockExtent>::Factorize(ValueType*  the_A_matrix,
-                                                                               OrdinalType the_A_matrix_extent,
-                                                                               OrdinalType the_M_matrix_extent) const {
+        void BatchedBlockTridiagonalByBlockTRF<BatchTraits,
+                                               kSmallBlockExtent>::Factorize(ValueType*  the_A_matrix,
+                                                                             OrdinalType the_A_matrix_extent,
+                                                                             OrdinalType the_M_matrix_extent) const {
 
             KOLIOP_ASSERT(the_A_matrix != nullptr);
             // the_A_matrix_extent must be divisible by
@@ -306,17 +306,17 @@ namespace koliop {
                                                                                              {0, 0},
                                                                                              {BatchTraitsType::kVectorPerBatch, kBatchCount}};
 
-            Kokkos::parallel_for("BatchedGETRFBlockTridiagonalByBlock::Factorize",
+            Kokkos::parallel_for("BatchedBlockTridiagonalByBlockTRF::Factorize",
                                  a_policy, the_kernel);
         }
 
         template <typename BatchTraits,
                   OrdinalType kSmallBlockExtent>
-        void BatchedGETRFBlockTridiagonalByBlock<BatchTraits,
-                                                 kSmallBlockExtent>::SolveVector(const ValueType*,
-                                                                                 OrdinalType,
-                                                                                 OrdinalType,
-                                                                                 ValueType*) const {
+        void BatchedBlockTridiagonalByBlockTRF<BatchTraits,
+                                               kSmallBlockExtent>::SolveVector(const ValueType*,
+                                                                               OrdinalType,
+                                                                               OrdinalType,
+                                                                               ValueType*) const {
         }
 
     } // namespace blas

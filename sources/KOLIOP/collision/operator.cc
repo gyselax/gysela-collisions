@@ -239,7 +239,7 @@ namespace koliop {
 
             // TODO(Etienne M): Should we partition ?
             , the_alpha_solver_{Kokkos::DefaultExecutionSpace{}}
-            , the_gemv_{Kokkos::DefaultExecutionSpace{}} {
+            , the_mv_{Kokkos::DefaultExecutionSpace{}} {
 
             // TODO(Etienne M): Should we fence after the copies ? We *may* need
             // that if we pass an execution space to the deep copy.
