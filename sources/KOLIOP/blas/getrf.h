@@ -35,6 +35,7 @@ namespace koliop {
         /// everything is assumed zero. We have 0 <= n < kBigBlockExtent.
         /// kBigBlockExtent is the number of block of size kSmallBlockExtent x
         /// kSmallBlockExtent.
+        /// A_0 and C_n are expected to be zero.
         ///
         /// We propose LU tooling for this kind of matrix:
         ///
@@ -224,7 +225,7 @@ namespace koliop {
             KOLIOP_ASSERT(the_A_matrix_extent % BatchTraitsType::kBatchSize == 0);
             KOLIOP_ASSERT(the_M_matrix_extent > 0);
 
-            const OrdinalType kBatchCount     = the_A_matrix_extent / BatchTraitsType::kBatchSize;
+            const OrdinalType kBatchCount     = BatchTraitsType::BatchCount(the_A_matrix_extent);
             const OrdinalType kBigBlockExtent = the_M_matrix_extent;
 
             VectorMatrixType the_A_matrix_view{reinterpret_cast<typename BatchTraitsType::ThreadVectorType*>(the_A_matrix),
@@ -242,7 +243,7 @@ namespace koliop {
             // MI250 GCD. This means, assuming 1024 nvpar and Flo64:
             // (8 * 1024 * (3 * (3*3))) * 225280 = 49'828'331'520 o.
 
-            const auto the_kernel = KOKKOS_LAMBDA(auto the_batch_index, auto the_batch_element_index) {
+            const auto the_kernel = KOKKOS_LAMBDA(auto the_batch_element_index, auto the_batch_index) {
                 static_assert(kDiagonalCount == 3, "");
 
                 const auto the_batch_element = Kokkos::subview(the_A_matrix_view,
@@ -301,9 +302,9 @@ namespace koliop {
                                                         Kokkos::Rank<2,
                                                                      // TODO(Etienne M): Tune blocking.
                                                                      Kokkos::Iterate::Left,
-                                                                     Kokkos::Iterate::Right>>{the_execution_space_,
-                                                                                              {0, 0},
-                                                                                              {kBatchCount, BatchTraitsType::kVectorPerBatch}};
+                                                                     Kokkos::Iterate::Left>>{the_execution_space_,
+                                                                                             {0, 0},
+                                                                                             {BatchTraitsType::kVectorPerBatch, kBatchCount}};
 
             Kokkos::parallel_for("BatchedGETRFBlockTridiagonalByBlock::Factorize",
                                  a_policy, the_kernel);

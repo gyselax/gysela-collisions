@@ -110,6 +110,7 @@ namespace koliop {
             // TODO(Etienne M): On CPU this branch should get moved up
             // in the loop and on GPU I hope it does not cost too much.
             // Else we have to launch another kernel on the diagonal.
+            // TODO(Etienne M): What about branch divergence.
 
             return jpol == ipol ?
                        the_value + 1.0 :
