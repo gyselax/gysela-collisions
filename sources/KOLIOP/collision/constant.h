@@ -1,0 +1,58 @@
+// SPDX-License-Identifier: MIT
+
+#ifndef KOLIOP_COLLISION_CONSTANT_H
+#define KOLIOP_COLLISION_CONSTANT_H
+
+#include "KOLIOP/blas/batch.h"
+#include "KOLIOP/blas/mv.h"
+#include "KOLIOP/blas/trf.h"
+
+namespace koliop {
+    namespace collision {
+
+        ////////////////////////////////////////////////////////////////////////
+        // Constant definition
+        ////////////////////////////////////////////////////////////////////////
+
+        struct Constant {
+        public:
+            static inline constexpr OrdinalType kMaximumLaguerrePolynomialDegree = 3;
+
+            using BatchTraitsType = koliop::blas::BatchTraits<ComputeFloatType,
+                                                              Kokkos::DefaultExecutionSpace>;
+
+            // TODO(Etienne M): Note we should probably not use constant for the
+            // blocking. Indeed, on CPU we benefit from a small block and on GPU
+            // we would rather to everything at once if possible. This leads us
+            // to the dilemma where on CPU due to the small block size, we can
+            // afford a constraint on the simulation through
+            // kBlockExtent[R, Theta, Phi] but on GPU, this constraints would be
+            // unaffordable. On GPU we need dynamic kBlockExtent[R, Theta, Phi].
+
+            // TODO(Etienne M): Tune that size or rework batching
+            static inline constexpr OrdinalType kBlockExtentR     = 16;
+            static inline constexpr OrdinalType kBlockExtentTheta = 1;
+            static inline constexpr OrdinalType kBlockExtentPhi   = 1;
+
+            static inline constexpr OffsetType kFlattenedBlockExtent = kBlockExtentR * kBlockExtentTheta * kBlockExtentPhi;
+
+            static inline constexpr OffsetType kBatchCount = BatchTraitsType::BatchCount(kFlattenedBlockExtent);
+            static_assert(kBatchCount * BatchTraitsType::kBatchSize == kFlattenedBlockExtent, "");
+
+            using BatchedSolverType = koliop::blas::BatchedBlockTridiagonalByBlockTRF<BatchTraitsType,
+                                                                                      kMaximumLaguerrePolynomialDegree>;
+
+            using BatchedMVType = koliop::blas::BatchedMatrixSamplingBlockTridiagonalByBlockMV<BatchTraitsType,
+                                                                                               kMaximumLaguerrePolynomialDegree>;
+
+            using ScalarBlockTridiagonalByBlockMatrixType = BatchedSolverType::ScalarMatrixType;
+            using ScalarBlockTridiagonalByBlockVectorType = BatchedSolverType::ScalarVectorType;
+
+            using VectorBlockTridiagonalByBlockMatrixType = BatchedSolverType::VectorMatrixType;
+            using VectorBlockTridiagonalByBlockVectorType = BatchedSolverType::VectorVectorType;
+        };
+
+    } // namespace collision
+} // namespace koliop
+
+#endif

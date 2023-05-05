@@ -31,8 +31,8 @@ namespace koliop {
                 }
             };
 
-            for(OrdinalType i = 0; i < Operator::kMaximumLaguerrePolynomialDegree; ++i) {
-                for(OrdinalType j = 0; j < Operator::kMaximumLaguerrePolynomialDegree; ++j) {
+            for(OrdinalType i = 0; i < Constant::kMaximumLaguerrePolynomialDegree; ++i) {
+                for(OrdinalType j = 0; j < Constant::kMaximumLaguerrePolynomialDegree; ++j) {
                     CoreLoop(i, j);
                 }
             }
@@ -51,15 +51,15 @@ namespace koliop {
             // a_host_visible_C_j is zero initialized.
             auto a_host_visible_C_j = Kokkos::create_mirror_view(C_j);
 
-            for(OrdinalType j = 0; j < Operator::kMaximumLaguerrePolynomialDegree; ++j) {
+            for(OrdinalType j = 0; j < Constant::kMaximumLaguerrePolynomialDegree; ++j) {
                 a_host_visible_C_j(0, j) = 1.0;
                 a_host_visible_C_j(1, j) = static_cast<ComputeFloatType>(-static_cast<int64_t>(j));
             }
 
-            if(Operator::kMaximumLaguerrePolynomialDegree > 2) {
+            if(Constant::kMaximumLaguerrePolynomialDegree > 2) {
                 a_host_visible_C_j(2, 2) = 0.5;
-                if(Operator::kMaximumLaguerrePolynomialDegree > 3) {
-                    // NOTE: Assuming kMaximumLaguerrePolynomialDegree = 3, this
+                if(Constant::kMaximumLaguerrePolynomialDegree > 3) {
+                    // NOTE: Assuming Constant::kMaximumLaguerrePolynomialDegree = 3, this
                     // is never evaluated.
                     a_host_visible_C_j(2, 3) = 1.5;
                     a_host_visible_C_j(3, 3) = -1.0 / 6.0;
@@ -71,18 +71,47 @@ namespace koliop {
             DoPrepareCjl(a_host_visible_C_j, C_jl);
         }
 
-        Najl::Najl()
+        static inline void
+        DoComputeI() {
+        }
+
+        static inline void
+        DoComputeL() {
+            DoComputeI();
+        }
+
+        template <typename View6D>
+        static inline void
+        DoComputeNajl(View6D&&) {
+            DoComputeL();
+        }
+
+        Najl::Najl(OrdinalType the_vpar_extent)
             : C_j_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "C_j_"),
-                   static_cast<std::size_t>(Operator::kMaximumLaguerrePolynomialDegree),
-                   static_cast<std::size_t>(Operator::kMaximumLaguerrePolynomialDegree)}
+                   static_cast<std::size_t>(Constant::kMaximumLaguerrePolynomialDegree),
+                   static_cast<std::size_t>(Constant::kMaximumLaguerrePolynomialDegree)}
             , C_jl_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "C_jl_"),
-                    static_cast<std::size_t>(2 * Operator::kMaximumLaguerrePolynomialDegree - 1),
-                    static_cast<std::size_t>(Operator::kMaximumLaguerrePolynomialDegree),
-                    static_cast<std::size_t>(Operator::kMaximumLaguerrePolynomialDegree)} {
+                    static_cast<std::size_t>(2 * Constant::kMaximumLaguerrePolynomialDegree - 1),
+                    static_cast<std::size_t>(Constant::kMaximumLaguerrePolynomialDegree),
+                    static_cast<std::size_t>(Constant::kMaximumLaguerrePolynomialDegree)}
+            , the_vpar_extent_{the_vpar_extent} {
 
             // TODO(Etienne M): Observe how the C_j_ and C_jl_ values are
             // constant. they could be compile time computed or hardcoded.
             DoPrepareCj_Cjl(C_j_, C_jl_);
+        }
+
+        void Najl::Compute(ComputeFloatType* the_Najl) const {
+
+            KOLIOP_ASSERT(the_Najl != nullptr);
+
+            // TODO(Etienne M): Other tests
+
+            VectorBlockTridiagonalByBlockMatrixType the_Najl_view{reinterpret_cast<typename Constant::BatchTraitsType::ThreadVectorType*>(the_Najl),
+                                                                  static_cast<std::size_t>(Constant::kBatchCount),
+                                                                  static_cast<std::size_t>(the_vpar_extent_)};
+
+            DoComputeNajl(the_Najl_view);
         }
 
     } // namespace collision

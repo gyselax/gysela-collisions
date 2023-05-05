@@ -3,9 +3,6 @@
 #ifndef KOLIOP_COLLISION_OPERATOR_H
 #define KOLIOP_COLLISION_OPERATOR_H
 
-#include "KOLIOP/blas/batch.h"
-#include "KOLIOP/blas/mv.h"
-#include "KOLIOP/blas/trf.h"
 #include "KOLIOP/collision/najl.h"
 
 namespace koliop {
@@ -98,29 +95,6 @@ namespace koliop {
         /// counter.
         ///
         class Operator {
-        public:
-            static inline constexpr OrdinalType kMaximumLaguerrePolynomialDegree = 3;
-
-        public:
-            using BatchTraitsType = koliop::blas::BatchTraits<ComputeFloatType,
-                                                              Kokkos::DefaultExecutionSpace>;
-
-            using BatchedSolverType = koliop::blas::BatchedBlockTridiagonalByBlockTRF<BatchTraitsType,
-                                                                                      kMaximumLaguerrePolynomialDegree>;
-
-            using BatchedMVType = koliop::blas::BatchedMatrixSamplingBlockTridiagonalByBlockMV<BatchTraitsType,
-                                                                                               kMaximumLaguerrePolynomialDegree>;
-
-            // TODO(Etienne M): Tune that size or rework batching
-            static inline constexpr OrdinalType kBlockExtentR     = 16;
-            static inline constexpr OrdinalType kBlockExtentTheta = 1;
-            static inline constexpr OrdinalType kBlockExtentPhi   = 1;
-
-            static inline constexpr OffsetType kFlattenedBlockExtent = kBlockExtentR * kBlockExtentTheta * kBlockExtentPhi;
-
-            static inline constexpr OffsetType kBatchCount = kFlattenedBlockExtent / BatchTraitsType::kBatchSize;
-            static_assert(kBatchCount * BatchTraitsType::kBatchSize == kFlattenedBlockExtent, "");
-
         public:
             Operator(uint64_t     pSpecies_id,
                      uint64_t     mu_id,
@@ -232,9 +206,9 @@ namespace koliop {
 
             // Miscellaneous tooling
 
-            Najl              the_najl_;
-            BatchedSolverType the_alpha_solver_;
-            BatchedMVType     the_mv_;
+            Najl                        the_najl_;
+            Constant::BatchedSolverType the_alpha_solver_;
+            Constant::BatchedMVType     the_mv_;
         };
 
     } // namespace collision

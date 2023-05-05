@@ -3,9 +3,7 @@
 #ifndef KOLIOP_COLLISION_NAJL_H
 #define KOLIOP_COLLISION_NAJL_H
 
-#include <Kokkos_Macros.hpp>
-
-#include "KOLIOP/internal/configuration.h"
+#include "KOLIOP/collision/constant.h"
 #include "KOLIOP/utility/view.h"
 
 namespace koliop {
@@ -17,10 +15,15 @@ namespace koliop {
 
         class Najl {
         public:
-            Najl();
+            using ScalarBlockTridiagonalByBlockMatrixType = Constant::ScalarBlockTridiagonalByBlockMatrixType;
+            using VectorBlockTridiagonalByBlockMatrixType = Constant::VectorBlockTridiagonalByBlockMatrixType;
 
-            template <typename View6D>
-            void Compute(View6D&& the_Najl) const;
+        public:
+            Najl(OrdinalType the_vpar_extent);
+
+            /// @param the_Najl respects the format of
+            /// ScalarBlockTridiagonalByBlockMatrixType.
+            void Compute(ComputeFloatType* the_Najl) const;
 
         public:
             // Could be protected but we would have to use friend functions.
@@ -28,32 +31,9 @@ namespace koliop {
 
             koliop::utility::View::MDD2<ComputeFloatType> C_j_;  // TODO(Etienne M): constant extent.
             koliop::utility::View::MDD3<ComputeFloatType> C_jl_; // TODO(Etienne M): constant extent.
+
+            OrdinalType the_vpar_extent_;
         };
-
-
-        ////////////////////////////////////////////////////////////////////////
-        // Najl methods definition
-        ////////////////////////////////////////////////////////////////////////
-
-        namespace detail {
-
-            static inline void
-            DoComputeI() {
-            }
-
-            static inline void
-            DoComputeL() {
-            }
-
-            static inline void
-            DoComputeNajl() {
-            }
-
-        } // namespace detail
-
-        template <typename View6D>
-        void Najl::Compute(View6D&&) const {
-        }
 
     } // namespace collision
 } // namespace koliop

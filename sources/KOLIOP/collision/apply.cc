@@ -61,8 +61,8 @@ namespace koliop {
                                                                      Kokkos::Iterate::Left,
                                                                      Kokkos::Iterate::Left>>{{block_first_r,
                                                                                               block_first_theta},
-                                                                                             {block_first_r + Operator::kBlockExtentR,
-                                                                                              block_first_theta + Operator::kBlockExtentTheta}};
+                                                                                             {block_first_r + Constant::kBlockExtentR,
+                                                                                              block_first_theta + Constant::kBlockExtentTheta}};
 
             Kokkos::parallel_for("DoPrepareCollisionMask",
                                  a_policy, the_kernel);
@@ -98,22 +98,22 @@ namespace koliop {
 
                 // NOTE: kBlockExtentXXX are constant, the compiler can replace
                 // the % with faster instructions.
-                const OrdinalType the_block_local_index_r     = ir % Operator::kBlockExtentR;
-                const OrdinalType the_block_local_index_theta = itheta % Operator::kBlockExtentTheta;
-                const OrdinalType the_block_local_index_phi   = iphi % Operator::kBlockExtentPhi;
+                const OrdinalType the_block_local_index_r     = ir % Constant::kBlockExtentR;
+                const OrdinalType the_block_local_index_theta = itheta % Constant::kBlockExtentTheta;
+                const OrdinalType the_block_local_index_phi   = iphi % Constant::kBlockExtentPhi;
 
-                const OffsetType the_flattened_index = Operator::kBlockExtentR * Operator::kBlockExtentTheta * the_block_local_index_phi +
-                                                       Operator::kBlockExtentR * the_block_local_index_theta +
+                const OffsetType the_flattened_index = Constant::kBlockExtentR * Constant::kBlockExtentTheta * the_block_local_index_phi +
+                                                       Constant::kBlockExtentR * the_block_local_index_theta +
                                                        the_block_local_index_r;
 
-                const OrdinalType the_batch_index         = the_flattened_index / Operator::BatchTraitsType::kBatchSize;
-                const OrdinalType the_batch_element_index = the_flattened_index % Operator::BatchTraitsType::kBatchSize;
+                const OrdinalType the_batch_index         = the_flattened_index / Constant::BatchTraitsType::kBatchSize;
+                const OrdinalType the_batch_element_index = the_flattened_index % Constant::BatchTraitsType::kBatchSize;
 
                 if(mask_coll(ir, itheta)) {
                     const ComputeFloatType BoT = B_norm(ir, itheta) / T_s(ir, itheta, iphi, pSpecies_id);
 
                     for(OrdinalType ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
-                        for(OrdinalType ipol = 0; ipol < Operator::kMaximumLaguerrePolynomialDegree; ++ipol) {
+                        for(OrdinalType ipol = 0; ipol < Constant::kMaximumLaguerrePolynomialDegree; ++ipol) {
                             for(OrdinalType imu = 0; imu < the_mu_extent; ++imu) {
                                 const ComputeFloatType muBoT     = mug(imu) * BoT;
                                 const ComputeFloatType coeff_tot = DoComputeLaguerrePol(ipol, muBoT) * BoT * coeff_intdmu(imu) * Kokkos::exp(-muBoT);
@@ -125,7 +125,7 @@ namespace koliop {
                     }
                 } else {
                     for(OrdinalType ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
-                        for(OrdinalType ipol = 0; ipol < Operator::kMaximumLaguerrePolynomialDegree; ++ipol) {
+                        for(OrdinalType ipol = 0; ipol < Constant::kMaximumLaguerrePolynomialDegree; ++ipol) {
                             the_rhs(the_batch_index, ivpar, ipol, the_batch_element_index) = 0.0;
                         }
                     }
@@ -137,9 +137,9 @@ namespace koliop {
                                                                      Kokkos::Iterate::Left>>{{block_first_r,
                                                                                               block_first_theta,
                                                                                               block_first_phi},
-                                                                                             {block_first_r + Operator::kBlockExtentR,
-                                                                                              block_first_theta + Operator::kBlockExtentTheta,
-                                                                                              block_first_phi + Operator::kBlockExtentPhi}};
+                                                                                             {block_first_r + Constant::kBlockExtentR,
+                                                                                              block_first_theta + Constant::kBlockExtentTheta,
+                                                                                              block_first_phi + Constant::kBlockExtentPhi}};
 
             Kokkos::parallel_for("DoComputeAlphaProjection",
                                  a_policy, the_kernel);
@@ -172,12 +172,12 @@ namespace koliop {
             const auto the_kernel = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi) {
                 // NOTE: kBlockExtentXXX are constant, the compiler can replace
                 // the % with faster instructions.
-                const OrdinalType the_block_local_index_r     = ir % Operator::kBlockExtentR;
-                const OrdinalType the_block_local_index_theta = itheta % Operator::kBlockExtentTheta;
-                const OrdinalType the_block_local_index_phi   = iphi % Operator::kBlockExtentPhi;
+                const OrdinalType the_block_local_index_r     = ir % Constant::kBlockExtentR;
+                const OrdinalType the_block_local_index_theta = itheta % Constant::kBlockExtentTheta;
+                const OrdinalType the_block_local_index_phi   = iphi % Constant::kBlockExtentPhi;
 
-                const OffsetType the_flattened_index = Operator::kBlockExtentR * Operator::kBlockExtentTheta * the_block_local_index_phi +
-                                                       Operator::kBlockExtentR * the_block_local_index_theta +
+                const OffsetType the_flattened_index = Constant::kBlockExtentR * Constant::kBlockExtentTheta * the_block_local_index_phi +
+                                                       Constant::kBlockExtentR * the_block_local_index_theta +
                                                        the_block_local_index_r;
 
                 if(!mask_coll(ir, itheta)) {
@@ -197,9 +197,9 @@ namespace koliop {
                                                                      Kokkos::Iterate::Left>>{{block_first_r,
                                                                                               block_first_theta,
                                                                                               block_first_phi},
-                                                                                             {block_first_r + Operator::kBlockExtentR,
-                                                                                              block_first_theta + Operator::kBlockExtentTheta,
-                                                                                              block_first_phi + Operator::kBlockExtentPhi}};
+                                                                                             {block_first_r + Constant::kBlockExtentR,
+                                                                                              block_first_theta + Constant::kBlockExtentTheta,
+                                                                                              block_first_phi + Constant::kBlockExtentPhi}};
 
             Kokkos::parallel_for("DoComputeBlockTo1D",
                                  a_policy, the_kernel);
@@ -245,11 +245,11 @@ namespace koliop {
             const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<5,
                                                                      Kokkos::Iterate::Left,
                                                                      Kokkos::Iterate::Left>>{{0, 0, 0, 0, 0},
-                                                                                             {Operator::BatchTraitsType::kBatchSize,
-                                                                                              Operator::kMaximumLaguerrePolynomialDegree,
-                                                                                              Operator::kMaximumLaguerrePolynomialDegree,
+                                                                                             {Constant::BatchTraitsType::kBatchSize,
+                                                                                              Constant::kMaximumLaguerrePolynomialDegree,
+                                                                                              Constant::kMaximumLaguerrePolynomialDegree,
                                                                                               the_vpar_extent,
-                                                                                              Operator::kBatchCount}};
+                                                                                              Constant::kBatchCount}};
 
             Kokkos::parallel_for("DoPrepareMatrix",
                                  a_policy, the_kernel);
@@ -276,16 +276,16 @@ namespace koliop {
             const ComputeFloatType dt          = an_operator.dt_;
 
             const auto the_kernel = KOKKOS_LAMBDA(auto ipol, auto ivpar, auto ir, auto itheta, auto iphi) {
-                const OrdinalType the_block_local_index_r     = ir % Operator::kBlockExtentR;
-                const OrdinalType the_block_local_index_theta = itheta % Operator::kBlockExtentTheta;
-                const OrdinalType the_block_local_index_phi   = iphi % Operator::kBlockExtentPhi;
+                const OrdinalType the_block_local_index_r     = ir % Constant::kBlockExtentR;
+                const OrdinalType the_block_local_index_theta = itheta % Constant::kBlockExtentTheta;
+                const OrdinalType the_block_local_index_phi   = iphi % Constant::kBlockExtentPhi;
 
-                const OffsetType the_flattened_index = Operator::kBlockExtentR * Operator::kBlockExtentTheta * the_block_local_index_phi +
-                                                       Operator::kBlockExtentR * the_block_local_index_theta +
+                const OffsetType the_flattened_index = Constant::kBlockExtentR * Constant::kBlockExtentTheta * the_block_local_index_phi +
+                                                       Constant::kBlockExtentR * the_block_local_index_theta +
                                                        the_block_local_index_r;
 
-                const OrdinalType the_batch_index         = the_flattened_index / Operator::BatchTraitsType::kBatchSize;
-                const OrdinalType the_batch_element_index = the_flattened_index % Operator::BatchTraitsType::kBatchSize;
+                const OrdinalType the_batch_index         = the_flattened_index / Constant::BatchTraitsType::kBatchSize;
+                const OrdinalType the_batch_element_index = the_flattened_index % Constant::BatchTraitsType::kBatchSize;
 
                 const ComputeFloatType vpar_tmp       = vparg(ivpar);
                 const ComputeFloatType Ta             = T_s(ir, itheta, iphi, pSpecies_id);
@@ -311,11 +311,11 @@ namespace koliop {
                                                                                               block_first_r,
                                                                                               block_first_theta,
                                                                                               block_first_phi},
-                                                                                             {Operator::kMaximumLaguerrePolynomialDegree,
+                                                                                             {Constant::kMaximumLaguerrePolynomialDegree,
                                                                                               the_vpar_extent,
-                                                                                              block_first_r + Operator::kBlockExtentR,
-                                                                                              block_first_theta + Operator::kBlockExtentTheta,
-                                                                                              block_first_phi + Operator::kBlockExtentPhi}};
+                                                                                              block_first_r + Constant::kBlockExtentR,
+                                                                                              block_first_theta + Constant::kBlockExtentTheta,
+                                                                                              block_first_phi + Constant::kBlockExtentPhi}};
 
             Kokkos::parallel_for("DoComputeCvCdSource",
                                  a_policy, the_kernel);
@@ -348,16 +348,16 @@ namespace koliop {
 
                 // NOTE: kBlockExtentXXX are constant, the compiler can replace
                 // the % with faster instructions.
-                const OrdinalType the_block_local_index_r     = ir % Operator::kBlockExtentR;
-                const OrdinalType the_block_local_index_theta = itheta % Operator::kBlockExtentTheta;
-                const OrdinalType the_block_local_index_phi   = iphi % Operator::kBlockExtentPhi;
+                const OrdinalType the_block_local_index_r     = ir % Constant::kBlockExtentR;
+                const OrdinalType the_block_local_index_theta = itheta % Constant::kBlockExtentTheta;
+                const OrdinalType the_block_local_index_phi   = iphi % Constant::kBlockExtentPhi;
 
-                const OffsetType the_flattened_index = Operator::kBlockExtentR * Operator::kBlockExtentTheta * the_block_local_index_phi +
-                                                       Operator::kBlockExtentR * the_block_local_index_theta +
+                const OffsetType the_flattened_index = Constant::kBlockExtentR * Constant::kBlockExtentTheta * the_block_local_index_phi +
+                                                       Constant::kBlockExtentR * the_block_local_index_theta +
                                                        the_block_local_index_r;
 
-                const OrdinalType the_batch_index         = the_flattened_index / Operator::BatchTraitsType::kBatchSize;
-                const OrdinalType the_batch_element_index = the_flattened_index % Operator::BatchTraitsType::kBatchSize;
+                const OrdinalType the_batch_index         = the_flattened_index / Constant::BatchTraitsType::kBatchSize;
+                const OrdinalType the_batch_element_index = the_flattened_index % Constant::BatchTraitsType::kBatchSize;
 
                 if(!mask_coll(ir, itheta)) {
                     return;
@@ -370,7 +370,7 @@ namespace koliop {
                         const ComputeFloatType muBoT       = mug(imu) * BoT;
                         ComputeFloatType       f5d_s_value = 0.0;
 
-                        for(OrdinalType ipol = 0; ipol < Operator::kMaximumLaguerrePolynomialDegree; ++ipol) {
+                        for(OrdinalType ipol = 0; ipol < Constant::kMaximumLaguerrePolynomialDegree; ++ipol) {
                             f5d_s_value += the_rhs(the_batch_index, ivpar, ipol, the_batch_element_index) *
                                            DoComputeLaguerrePol(ipol, muBoT);
                         }
@@ -385,9 +385,9 @@ namespace koliop {
                                                                      Kokkos::Iterate::Left>>{{block_first_r,
                                                                                               block_first_theta,
                                                                                               block_first_phi},
-                                                                                             {block_first_r + Operator::kBlockExtentR,
-                                                                                              block_first_theta + Operator::kBlockExtentTheta,
-                                                                                              block_first_phi + Operator::kBlockExtentPhi}};
+                                                                                             {block_first_r + Constant::kBlockExtentR,
+                                                                                              block_first_theta + Constant::kBlockExtentTheta,
+                                                                                              block_first_phi + Constant::kBlockExtentPhi}};
 
             Kokkos::parallel_for("DoComputeReconstruction",
                                  a_policy, the_kernel);
@@ -416,17 +416,17 @@ namespace koliop {
             const auto the_alpha_solver = an_operator.the_alpha_solver_;
             const auto the_mv           = an_operator.the_mv_;
 
-            KOLIOP_ASSERT(the_r_extent % Operator::kBlockExtentR == 0);
-            KOLIOP_ASSERT(the_theta_extent % Operator::kBlockExtentTheta == 0);
-            KOLIOP_ASSERT(the_phi_extent % Operator::kBlockExtentPhi == 0);
+            KOLIOP_ASSERT(the_r_extent % Constant::kBlockExtentR == 0);
+            KOLIOP_ASSERT(the_theta_extent % Constant::kBlockExtentTheta == 0);
+            KOLIOP_ASSERT(the_phi_extent % Constant::kBlockExtentPhi == 0);
 
             // TODO(Etienne M): Many opportunities to use constant extent say:
-            // ComputeFloatType *[Operator::kFlattenedBlockExtent].
+            // ComputeFloatType *[Constant::kFlattenedBlockExtent].
 
             // TODO(Etienne M): couldn't we remove mask_coll. Do redundant
             // computation at the benefit of leaner algorithms.
             koliop::utility::View::MDD2<bool> mask_coll{Kokkos::view_alloc(Kokkos::WithoutInitializing, "mask_coll"),
-                                                        Operator::kBlockExtentR, Operator::kBlockExtentTheta};
+                                                        Constant::kBlockExtentR, Constant::kBlockExtentTheta};
 
             // TODO(Etienne M): Remove the *1D* n, T U Nu etc.
             // Then build a matrix builder which samples the matrix returning
@@ -436,33 +436,33 @@ namespace koliop {
             // mask_coll should also be obtained on the fly.
 
             koliop::utility::View::MDD2<ComputeFloatType> n1d_s{Kokkos::view_alloc(Kokkos::WithoutInitializing, "n1d_s"),
-                                                                static_cast<std::size_t>(Operator::kFlattenedBlockExtent), static_cast<std::size_t>(the_species_extent)};
+                                                                static_cast<std::size_t>(Constant::kFlattenedBlockExtent), static_cast<std::size_t>(the_species_extent)};
             koliop::utility::View::MDD2<ComputeFloatType> T1d_s{Kokkos::view_alloc(Kokkos::WithoutInitializing, "T1d_s"),
-                                                                static_cast<std::size_t>(Operator::kFlattenedBlockExtent), static_cast<std::size_t>(the_species_extent)};
+                                                                static_cast<std::size_t>(Constant::kFlattenedBlockExtent), static_cast<std::size_t>(the_species_extent)};
             koliop::utility::View::MDD1<ComputeFloatType> nu1d{Kokkos::view_alloc(Kokkos::WithoutInitializing, "nu1d"),
-                                                               static_cast<std::size_t>(Operator::kFlattenedBlockExtent)};
+                                                               static_cast<std::size_t>(Constant::kFlattenedBlockExtent)};
 
             // TODO(Etienne M): Storing the Najl cost as much as the matrix ! We
             // should try to compute them on the fly so we can have larger block
             // size.
 
             // TODO(Etienne M): Many opportunities to use constant extent say:
-            // ComputeFloatType *[Operator::kFlattenedBlockExtent].
-            Operator::BatchedSolverType::ScalarMatrixType the_Najl{Kokkos::view_alloc(Kokkos::WithoutInitializing,
+            // ComputeFloatType *[Constant::kFlattenedBlockExtent].
+            Constant::BatchedSolverType::ScalarMatrixType the_Najl{Kokkos::view_alloc(Kokkos::WithoutInitializing,
                                                                                       "the_Najl"),
-                                                                   static_cast<std::size_t>(Operator::kBatchCount), static_cast<std::size_t>(the_vpar_extent)};
+                                                                   static_cast<std::size_t>(Constant::kBatchCount), static_cast<std::size_t>(the_vpar_extent)};
 
-            Operator::BatchedSolverType::ScalarMatrixType the_matrix{Kokkos::view_alloc(Kokkos::WithoutInitializing,
+            Constant::BatchedSolverType::ScalarMatrixType the_matrix{Kokkos::view_alloc(Kokkos::WithoutInitializing,
                                                                                         "the_matrix"),
-                                                                     static_cast<std::size_t>(Operator::kBatchCount), static_cast<std::size_t>(the_vpar_extent)};
+                                                                     static_cast<std::size_t>(Constant::kBatchCount), static_cast<std::size_t>(the_vpar_extent)};
 
-            Operator::BatchedSolverType::ScalarVectorType the_alpha_coefficients{Kokkos::view_alloc(Kokkos::WithoutInitializing,
+            Constant::BatchedSolverType::ScalarVectorType the_alpha_coefficients{Kokkos::view_alloc(Kokkos::WithoutInitializing,
                                                                                                     "the_alpha_coefficients"),
-                                                                                 static_cast<std::size_t>(Operator::kBatchCount), static_cast<std::size_t>(the_vpar_extent)};
+                                                                                 static_cast<std::size_t>(Constant::kBatchCount), static_cast<std::size_t>(the_vpar_extent)};
 
-            Operator::BatchedSolverType::ScalarVectorType the_rhs{Kokkos::view_alloc(Kokkos::WithoutInitializing,
+            Constant::BatchedSolverType::ScalarVectorType the_rhs{Kokkos::view_alloc(Kokkos::WithoutInitializing,
                                                                                      "the_rhs"),
-                                                                  static_cast<std::size_t>(Operator::kBatchCount), static_cast<std::size_t>(the_vpar_extent)};
+                                                                  static_cast<std::size_t>(Constant::kBatchCount), static_cast<std::size_t>(the_vpar_extent)};
 
 
             // Samples I - T*dt/4
@@ -482,13 +482,13 @@ namespace koliop {
 
             for(OrdinalType block_first_phi = 0;
                 block_first_phi < the_phi_extent;
-                block_first_phi += Operator::kBlockExtentPhi) {
+                block_first_phi += Constant::kBlockExtentPhi) {
                 for(OrdinalType block_first_theta = 0;
                     block_first_theta < the_theta_extent;
-                    block_first_theta += Operator::kBlockExtentTheta) {
+                    block_first_theta += Constant::kBlockExtentTheta) {
                     for(OrdinalType block_first_r = 0;
                         block_first_r < the_r_extent;
-                        block_first_r += Operator::kBlockExtentR) {
+                        block_first_r += Constant::kBlockExtentR) {
 
                         DoPrepareCollisionMask(an_operator,
                                                block_first_r,
@@ -526,13 +526,13 @@ namespace koliop {
                                                     the_LHS_matrix_sampler, the_matrix);
 
                                     // L*U = (I - T * dt/4)
-                                    the_alpha_solver.Factorize(the_matrix.data(), Operator::kFlattenedBlockExtent, the_vpar_extent);
+                                    the_alpha_solver.Factorize(the_matrix.data(), Constant::kFlattenedBlockExtent, the_vpar_extent);
                                 }
                                 {
                                     // the_rhs = (I + T * dt/4) * alpha(n)
                                     the_mv.Apply(1.0,
                                                  the_RHS_matrix_sampler,
-                                                 Operator::kFlattenedBlockExtent, the_vpar_extent,
+                                                 Constant::kFlattenedBlockExtent, the_vpar_extent,
                                                  the_alpha_coefficients.data(),
                                                  // Discard what the_rhs could contain.
                                                  0.0,
@@ -543,7 +543,7 @@ namespace koliop {
 
                                 {
                                     // the_rhs = alpha~
-                                    the_alpha_solver.SolveVector(the_matrix.data(), Operator::kFlattenedBlockExtent, the_vpar_extent,
+                                    the_alpha_solver.SolveVector(the_matrix.data(), Constant::kFlattenedBlockExtent, the_vpar_extent,
                                                                  the_rhs.data());
 
                                     // the_rhs = alpha~~
@@ -558,13 +558,13 @@ namespace koliop {
                                     // the_rhs = (I + T * dt/4) * alpha~~
                                     the_mv.Apply(1.0,
                                                  the_RHS_matrix_sampler,
-                                                 Operator::kFlattenedBlockExtent, the_vpar_extent,
+                                                 Constant::kFlattenedBlockExtent, the_vpar_extent,
                                                  the_alpha_coefficients.data(),
                                                  0.0,
                                                  the_rhs.data());
 
                                     // the_rhs = alpha(n+1)
-                                    the_alpha_solver.SolveVector(the_matrix.data(), Operator::kFlattenedBlockExtent, the_vpar_extent,
+                                    the_alpha_solver.SolveVector(the_matrix.data(), Constant::kFlattenedBlockExtent, the_vpar_extent,
                                                                  the_rhs.data());
                                 }
                             }

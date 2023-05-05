@@ -93,7 +93,7 @@
 
         if(an_operator_handle == nullptr ||
            // We expect Npolmax to be constant.
-           Npolmax != Operator::kMaximumLaguerrePolynomialDegree ||
+           Npolmax != koliop::collision::Constant::kMaximumLaguerrePolynomialDegree ||
            (index_max != 2 * (Npolmax - 1)) ||
            comb_mat == nullptr ||
            hat_As == nullptr ||
