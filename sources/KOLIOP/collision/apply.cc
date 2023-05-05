@@ -36,6 +36,38 @@ namespace koliop {
 
         } // namespace
 
+        template <typename View2D>
+        static inline void
+        DoPrepareCollisionMask(const Operator& an_operator,
+                               OrdinalType     block_first_r,
+                               OrdinalType     block_first_theta,
+                               View2D&&        mask_coll) {
+
+            const auto& LIM = an_operator.LIM_;
+
+            const auto& mask_buffer_r = an_operator.mask_buffer_r_;
+            const auto& mask_LIM      = an_operator.mask_LIM_;
+
+            const auto the_kernel = KOKKOS_LAMBDA(auto ir, auto itheta) {
+                const bool the_mask_value = static_cast<OrdinalType>(mask_buffer_r(ir) < 0.99) |
+                                            // NOTE: mask_lim may not be allocated ! We need the && first.
+                                            static_cast<OrdinalType>(LIM && (mask_LIM(ir, itheta) < 0.99));
+
+                mask_coll(ir - block_first_r,
+                          itheta - block_first_theta) = the_mask_value;
+            };
+
+            const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<2,
+                                                                     Kokkos::Iterate::Left,
+                                                                     Kokkos::Iterate::Left>>{{block_first_r,
+                                                                                              block_first_theta},
+                                                                                             {block_first_r + Operator::kBlockExtentR,
+                                                                                              block_first_theta + Operator::kBlockExtentTheta}};
+
+            Kokkos::parallel_for("DoPrepareCollisionMask",
+                                 a_policy, the_kernel);
+        }
+
         /// Store the current alpha coefficient in the_rhs.
         ///
         template <typename View6D,
@@ -377,13 +409,9 @@ namespace koliop {
             const auto& the_phi_extent     = an_operator.the_phi_extent_;
             const auto& the_species_extent = an_operator.the_species_extent_;
 
-            const auto&             LIM = an_operator.LIM_;
-            const ComputeFloatType& dt  = an_operator.dt_;
+            const ComputeFloatType& dt = an_operator.dt_;
             // TODO(Etienne M): dvpar should be part of the vpar sampler.
             const ComputeFloatType& dvpar = an_operator.dvpar_;
-
-            const auto& mask_buffer_r = an_operator.mask_buffer_r_;
-            const auto& mask_LIM      = an_operator.mask_LIM_;
 
             const auto the_alpha_solver = an_operator.the_alpha_solver_;
             const auto the_mv           = an_operator.the_mv_;
@@ -460,22 +488,10 @@ namespace koliop {
                         block_first_r < the_r_extent;
                         block_first_r += Operator::kBlockExtentR) {
 
-                        const OrdinalType block_last_r     = block_first_r + Operator::kBlockExtentR;
-                        const OrdinalType block_last_theta = block_first_theta + Operator::kBlockExtentTheta;
-
-                        for(OrdinalType itheta = block_first_theta; itheta < block_last_theta; ++itheta) {
-                            for(OrdinalType ir = block_first_r; ir < block_last_r; ++ir) {
-                                mask_coll(ir - block_first_r, itheta - block_first_theta) = mask_buffer_r(ir) < 0.99;
-                            }
-                        }
-
-                        if(LIM) {
-                            for(OrdinalType itheta = block_first_theta; itheta < block_last_theta; ++itheta) {
-                                for(OrdinalType ir = block_first_r; ir < block_last_r; ++ir) {
-                                    mask_coll(ir - block_first_r, itheta - block_first_theta) |= mask_LIM(ir, itheta) < 0.99;
-                                }
-                            }
-                        }
+                        DoPrepareCollisionMask(an_operator,
+                                               block_first_r,
+                                               block_first_theta,
+                                               mask_coll);
 
                         // NOTE: Skipping would create imbalance and because we
                         // use large blocks, assuming the resolution is not too
