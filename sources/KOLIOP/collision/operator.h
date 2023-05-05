@@ -106,10 +106,10 @@ namespace koliop {
                                                               Kokkos::DefaultExecutionSpace>;
 
             using BatchedSolverType = koliop::blas::BatchedBlockTridiagonalByBlockTRF<BatchTraitsType,
-                                                                                        kMaximumLaguerrePolynomialDegree>;
+                                                                                      kMaximumLaguerrePolynomialDegree>;
 
-            using BatchedGEMVType = koliop::blas::BatchedMatrixSamplingBlockTridiagonalByBlockMV<BatchTraitsType,
-                                                                                                   kMaximumLaguerrePolynomialDegree>;
+            using BatchedMVType = koliop::blas::BatchedMatrixSamplingBlockTridiagonalByBlockMV<BatchTraitsType,
+                                                                                               kMaximumLaguerrePolynomialDegree>;
 
             // TODO(Etienne M): Tune that size or rework batching
             static inline constexpr OrdinalType kBlockExtentR     = 16;
@@ -234,7 +234,7 @@ namespace koliop {
 
             Najl              the_najl_;
             BatchedSolverType the_alpha_solver_;
-            BatchedGEMVType   the_mv_;
+            BatchedMVType     the_mv_;
         };
 
     } // namespace collision
