@@ -20,7 +20,7 @@ namespace koliop {
         class MatrixSampler {
         public:
         public:
-            MatrixSampler(const View6D&    the_Nia,
+            MatrixSampler(const View6D&    the_Najl,
                           ComputeFloatType a_vpar_delta,
                           ComputeFloatType a_time_delta_coefficient);
 
@@ -58,7 +58,7 @@ namespace koliop {
         protected:
             // TODO(Etienne M): having a copy may not be ideal. Maybe we should
             // pass everything the the sampling function.
-            View6D           the_Nia_;
+            View6D           the_Najl_;
             ComputeFloatType the_time_delta_coefficient_;
             ComputeFloatType the_coefficients_[2];
         };
@@ -69,10 +69,10 @@ namespace koliop {
         ////////////////////////////////////////////////////////////////////////
 
         template <typename View6D>
-        MatrixSampler<View6D>::MatrixSampler(const View6D&    the_Nia,
+        MatrixSampler<View6D>::MatrixSampler(const View6D&    the_Najl,
                                              ComputeFloatType a_vpar_delta,
                                              ComputeFloatType a_time_delta_coefficient)
-            : the_Nia_{the_Nia}
+            : the_Najl_{the_Najl}
             , the_time_delta_coefficient_{a_time_delta_coefficient}
             , the_coefficients_{a_time_delta_coefficient / (a_vpar_delta * 2.0),
                                 a_time_delta_coefficient / (a_vpar_delta * a_vpar_delta)} {
@@ -87,11 +87,11 @@ namespace koliop {
                                              OrdinalType jpol,
                                              OrdinalType the_batch_element_index) const {
             // NOTE: Careful with the i,j. The value of the 3x3 matrix block are
-            // given using transposed values of the Nia. With i the row and j
+            // given using transposed values of the Najl. With i the row and j
             // the column:
             // A[i, j] = -N1(j, i) * ...
-            return the_Nia_(the_batch_index, ivpar, 2, jpol, ipol, the_batch_element_index) * the_coefficients_[1] -
-                   the_Nia_(the_batch_index, ivpar, 1, jpol, ipol, the_batch_element_index) * the_coefficients_[0];
+            return the_Najl_(the_batch_index, ivpar, 2, jpol, ipol, the_batch_element_index) * the_coefficients_[1] -
+                   the_Najl_(the_batch_index, ivpar, 1, jpol, ipol, the_batch_element_index) * the_coefficients_[0];
         }
 
         template <typename View6D>
@@ -101,8 +101,8 @@ namespace koliop {
                                               OrdinalType ipol,
                                               OrdinalType jpol,
                                               OrdinalType the_batch_element_index) const {
-            const ComputeFloatType the_value = the_Nia_(the_batch_index, ivpar, 0, jpol, ipol, the_batch_element_index) * the_time_delta_coefficient_ -
-                                               the_Nia_(the_batch_index, ivpar, 2, jpol, ipol, the_batch_element_index) * the_coefficients_[1] * 2.0;
+            const ComputeFloatType the_value = the_Najl_(the_batch_index, ivpar, 0, jpol, ipol, the_batch_element_index) * the_time_delta_coefficient_ -
+                                               the_Najl_(the_batch_index, ivpar, 2, jpol, ipol, the_batch_element_index) * the_coefficients_[1] * 2.0;
 
 
             // the_matrix = I - dt/4 * T
@@ -124,8 +124,8 @@ namespace koliop {
                                              OrdinalType ipol,
                                              OrdinalType jpol,
                                              OrdinalType the_batch_element_index) const {
-            return the_Nia_(the_batch_index, ivpar, 2, jpol, ipol, the_batch_element_index) * the_coefficients_[1] +
-                   the_Nia_(the_batch_index, ivpar, 1, jpol, ipol, the_batch_element_index) * the_coefficients_[0];
+            return the_Najl_(the_batch_index, ivpar, 2, jpol, ipol, the_batch_element_index) * the_coefficients_[1] +
+                   the_Najl_(the_batch_index, ivpar, 1, jpol, ipol, the_batch_element_index) * the_coefficients_[0];
         }
 
         template <typename View6D>
@@ -156,6 +156,7 @@ namespace koliop {
                                                jpol,
                                                the_batch_element_index);
         }
+
     } // namespace collision
 } // namespace koliop
 

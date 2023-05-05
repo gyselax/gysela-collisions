@@ -118,7 +118,7 @@ namespace koliop {
                 typename BatchTraitsType::ThreadVectorType the_dot_product{};
 
                 // TODO(Etienne M): in practice, the_A_matrix_sampler samples
-                // the Nia in a transposed order. That is, it could lead to
+                // the Najl in a transposed order. That is, it could lead to
                 // better access if we iterated faster on the
                 // the_scalar_index than on j.
 

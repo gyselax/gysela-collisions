@@ -262,7 +262,7 @@ namespace koliop {
                             OrdinalType     block_first_r,
                             OrdinalType     block_first_theta,
                             OrdinalType     block_first_phi,
-                            const View6D&   the_Nia,
+                            const View6D&   the_Najl,
                             View4D&&        the_rhs) {
 
             const auto& the_vpar_extent = an_operator.the_vpar_extent_;
@@ -294,14 +294,14 @@ namespace koliop {
 
                 // TODO(Etienne M): Can we simplify that ?
 
-                // TODO(Etienne M): The Nia's matrix indexing is transposed. Careful
+                // TODO(Etienne M): The Najl's matrix indexing is transposed. Careful
                 // with N(k, j, l) which is how it is stored and N(k, l, j) how it
                 // is used when building the matrix T.
 
                 the_rhs(the_batch_index, ivpar, ipol, the_batch_element_index) -= dt / (5.0 * Ta) *
-                                                                                  ((5.0 * U_para - 3.0 * q_para_on_naTa) * (vpar_tmp * the_Nia(the_batch_index, ivpar, 0, 0, ipol, the_batch_element_index) + the_Nia(the_batch_index, ivpar, 1, 0, ipol, the_batch_element_index)) +
-                                                                                   q_para_on_naTa * vpar_tmp * vpar_tmp / Ta * (vpar_tmp * the_Nia(the_batch_index, ivpar, 0, 0, ipol, the_batch_element_index) + 3.0 * the_Nia(the_batch_index, ivpar, 1, 0, ipol, the_batch_element_index)) +
-                                                                                   2.0 * q_para_on_naTa * (3.0 * vpar_tmp / Ta * the_Nia(the_batch_index, ivpar, 2, 0, ipol, the_batch_element_index) - vpar_tmp * the_Nia(the_batch_index, ivpar, 0, 1, ipol, the_batch_element_index) - the_Nia(the_batch_index, ivpar, 1, 1, ipol, the_batch_element_index)));
+                                                                                  ((5.0 * U_para - 3.0 * q_para_on_naTa) * (vpar_tmp * the_Najl(the_batch_index, ivpar, 0, 0, ipol, the_batch_element_index) + the_Najl(the_batch_index, ivpar, 1, 0, ipol, the_batch_element_index)) +
+                                                                                   q_para_on_naTa * vpar_tmp * vpar_tmp / Ta * (vpar_tmp * the_Najl(the_batch_index, ivpar, 0, 0, ipol, the_batch_element_index) + 3.0 * the_Najl(the_batch_index, ivpar, 1, 0, ipol, the_batch_element_index)) +
+                                                                                   2.0 * q_para_on_naTa * (3.0 * vpar_tmp / Ta * the_Najl(the_batch_index, ivpar, 2, 0, ipol, the_batch_element_index) - vpar_tmp * the_Najl(the_batch_index, ivpar, 0, 1, ipol, the_batch_element_index) - the_Najl(the_batch_index, ivpar, 1, 1, ipol, the_batch_element_index)));
             };
 
             const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<5,
@@ -442,15 +442,15 @@ namespace koliop {
             koliop::utility::View::MDD1<ComputeFloatType> nu1d{Kokkos::view_alloc(Kokkos::WithoutInitializing, "nu1d"),
                                                                static_cast<std::size_t>(Operator::kFlattenedBlockExtent)};
 
-            // TODO(Etienne M): Storing the Nia cost as much as the matrix ! We
+            // TODO(Etienne M): Storing the Najl cost as much as the matrix ! We
             // should try to compute them on the fly so we can have larger block
             // size.
 
             // TODO(Etienne M): Many opportunities to use constant extent say:
             // ComputeFloatType *[Operator::kFlattenedBlockExtent].
-            Operator::BatchedSolverType::ScalarMatrixType the_Nia{Kokkos::view_alloc(Kokkos::WithoutInitializing,
-                                                                                     "the_Nia"),
-                                                                  static_cast<std::size_t>(Operator::kBatchCount), static_cast<std::size_t>(the_vpar_extent)};
+            Operator::BatchedSolverType::ScalarMatrixType the_Najl{Kokkos::view_alloc(Kokkos::WithoutInitializing,
+                                                                                      "the_Najl"),
+                                                                   static_cast<std::size_t>(Operator::kBatchCount), static_cast<std::size_t>(the_vpar_extent)};
 
             Operator::BatchedSolverType::ScalarMatrixType the_matrix{Kokkos::view_alloc(Kokkos::WithoutInitializing,
                                                                                         "the_matrix"),
@@ -466,12 +466,12 @@ namespace koliop {
 
 
             // Samples I - T*dt/4
-            const MatrixSampler the_LHS_matrix_sampler{the_Nia,
+            const MatrixSampler the_LHS_matrix_sampler{the_Najl,
                                                        dvpar,
                                                        -dt / 4.0};
 
             // Samples I + T*dt/4
-            const MatrixSampler the_RHS_matrix_sampler{the_Nia,
+            const MatrixSampler the_RHS_matrix_sampler{the_Najl,
                                                        dvpar,
                                                        dt / 4.0};
 
@@ -551,7 +551,7 @@ namespace koliop {
                                                         block_first_r,
                                                         block_first_theta,
                                                         block_first_phi,
-                                                        the_Nia, the_rhs);
+                                                        the_Najl, the_rhs);
 
                                     std::swap(the_rhs, the_alpha_coefficients);
 

@@ -6,7 +6,7 @@
 #include "KOLIOP/blas/batch.h"
 #include "KOLIOP/blas/mv.h"
 #include "KOLIOP/blas/trf.h"
-#include "KOLIOP/utility/view.h"
+#include "KOLIOP/collision/najl.h"
 
 namespace koliop {
     namespace collision {
@@ -172,6 +172,9 @@ namespace koliop {
             void ComputeUparTCorrection(Flo64* f5d_s) const;
 
         public:
+            // Could be protected but we would have to use friend functions.
+            // protected:
+
             // Constant, externally computed values
 
             // TODO(Etienne M): Cleanup unused values
@@ -217,8 +220,6 @@ namespace koliop {
 
             // Constant, internally computed values
 
-            koliop::utility::View::MDD2<ComputeFloatType> C_j_;  // TODO(Etienne M): constant extent.
-            koliop::utility::View::MDD3<ComputeFloatType> C_jl_; // TODO(Etienne M): constant extent.
             koliop::utility::View::MDD3<ComputeFloatType> nustar_coeff_;
 
             // Variable, internally computed values
@@ -231,6 +232,7 @@ namespace koliop {
 
             // Miscellaneous tooling
 
+            Najl              the_najl_;
             BatchedSolverType the_alpha_solver_;
             BatchedGEMVType   the_mv_;
         };
