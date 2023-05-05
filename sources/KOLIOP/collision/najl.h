@@ -30,6 +30,31 @@ namespace koliop {
             koliop::utility::View::MDD3<ComputeFloatType> C_jl_; // TODO(Etienne M): constant extent.
         };
 
+
+        ////////////////////////////////////////////////////////////////////////
+        // Najl methods definition
+        ////////////////////////////////////////////////////////////////////////
+
+        namespace detail {
+
+            static inline void
+            DoComputeI() {
+            }
+
+            static inline void
+            DoComputeL() {
+            }
+
+            static inline void
+            DoComputeNajl() {
+            }
+
+        } // namespace detail
+
+        template <typename View6D>
+        void Najl::Compute(View6D&&) const {
+        }
+
     } // namespace collision
 } // namespace koliop
 
