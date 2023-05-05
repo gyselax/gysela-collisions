@@ -423,6 +423,8 @@ namespace koliop {
             // TODO(Etienne M): Many opportunities to use constant extent say:
             // ComputeFloatType *[Operator::kFlattenedBlockExtent].
 
+            // TODO(Etienne M): couldn't we remove mask_coll. Do redundant
+            // computation at the benefit of leaner algorithms.
             koliop::utility::View::MDD2<bool> mask_coll{Kokkos::view_alloc(Kokkos::WithoutInitializing, "mask_coll"),
                                                         Operator::kBlockExtentR, Operator::kBlockExtentTheta};
 
