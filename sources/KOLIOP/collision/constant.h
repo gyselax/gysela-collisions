@@ -28,6 +28,8 @@ namespace koliop {
             // afford a constraint on the simulation through
             // kBlockExtent[R, Theta, Phi] but on GPU, this constraints would be
             // unaffordable. On GPU we need dynamic kBlockExtent[R, Theta, Phi].
+            // This cost use a *lot* (still has to be measured) in modulo
+            // operations.
 
             // TODO(Etienne M): Tune that size or rework batching
             static inline constexpr OrdinalType kBlockExtentR     = 16;
