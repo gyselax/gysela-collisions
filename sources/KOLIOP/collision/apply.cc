@@ -145,66 +145,6 @@ namespace koliop {
                                  a_policy, the_kernel);
         }
 
-        /// TODO(Etienne M): Try to remove this function. We should not
-        /// needs flattened n, T, U_par etc. version of the arrays.
-        ///
-        template <typename View2D0,
-                  typename View2D1,
-                  typename View1D>
-        static inline void
-        DoComputeBlockTo1D(const Operator& an_operator,
-                           OrdinalType     the_block_first_r,
-                           OrdinalType     the_block_first_theta,
-                           OrdinalType     the_block_first_phi,
-                           const View2D0&  mask_coll,
-                           View2D1&&       n1d_s,
-                           View2D1&&       T1d_s,
-                           View1D&&        nu1d) {
-
-            const auto& the_species_extent = an_operator.the_species_extent_;
-
-            const auto& n_s   = an_operator.n_s_;
-            const auto& T_s   = an_operator.T_s_;
-            const auto& nu_ab = an_operator.nu_ab_;
-
-            const auto& pSpecies_id = an_operator.pSpecies_id_;
-
-            const auto the_kernel = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi) {
-                // NOTE: kBlockExtentXXX are constant, the compiler can replace
-                // the % with faster instructions.
-                const OrdinalType the_block_local_index_r     = ir % Constant::kBlockExtentR;
-                const OrdinalType the_block_local_index_theta = itheta % Constant::kBlockExtentTheta;
-                const OrdinalType the_block_local_index_phi   = iphi % Constant::kBlockExtentPhi;
-
-                const OffsetType the_flattened_index = Constant::kBlockExtentR * Constant::kBlockExtentTheta * the_block_local_index_phi +
-                                                       Constant::kBlockExtentR * the_block_local_index_theta +
-                                                       the_block_local_index_r;
-
-                if(!mask_coll(ir, itheta)) {
-                    return;
-                }
-
-                for(OrdinalType ispecies = 0; ispecies < the_species_extent; ++ispecies) {
-                    n1d_s(the_flattened_index, ispecies) = n_s(ir, itheta, iphi, ispecies);
-                    T1d_s(the_flattened_index, ispecies) = T_s(ir, itheta, iphi, ispecies);
-                }
-
-                nu1d(the_flattened_index) = nu_ab(ir, itheta, iphi, pSpecies_id, pSpecies_id);
-            };
-
-            const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<3,
-                                                                     Kokkos::Iterate::Left,
-                                                                     Kokkos::Iterate::Left>>{{the_block_first_r,
-                                                                                              the_block_first_theta,
-                                                                                              the_block_first_phi},
-                                                                                             {the_block_first_r + Constant::kBlockExtentR,
-                                                                                              the_block_first_theta + Constant::kBlockExtentTheta,
-                                                                                              the_block_first_phi + Constant::kBlockExtentPhi}};
-
-            Kokkos::parallel_for("DoComputeBlockTo1D",
-                                 a_policy, the_kernel);
-        }
-
         template <typename View6D0,
                   typename View6D1>
         static inline void
@@ -514,12 +454,6 @@ namespace koliop {
                                                      the_block_first_theta,
                                                      the_block_first_phi,
                                                      mask_coll, f5d_s, the_alpha_coefficients);
-
-                            DoComputeBlockTo1D(an_operator,
-                                               the_block_first_r,
-                                               the_block_first_theta,
-                                               the_block_first_phi,
-                                               mask_coll, n1d_s, T1d_s, nu1d);
 
                             {
                                 the_najl_provider.Compute(the_block_first_r,

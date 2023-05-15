@@ -179,10 +179,14 @@ namespace koliop {
                                  a_policy, the_kernel);
         }
 
-        Najl::Najl(OrdinalType        the_vpar_extent,
+        Najl::Najl(OrdinalType        pSpecies_id,
+                   OrdinalType        the_vpar_extent,
                    const Flo64*       comb_mat,
                    ExecutionSpaceType an_execution_space)
-            : comb_mat_{koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL2<const Flo64>,
+            : pSpecies_id_{pSpecies_id}
+            , the_vpar_extent_{the_vpar_extent}
+
+            , comb_mat_{koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL2<const Flo64>,
                                                              koliop::utility::View::MDD2>(comb_mat, "comb_mat_", 2 * Constant::kMaximumLaguerrePolynomialDegree, 2 * Constant::kMaximumLaguerrePolynomialDegree)}
             , C_j_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "C_j_"),
                    static_cast<std::size_t>(Constant::kMaximumLaguerrePolynomialDegree),
@@ -191,7 +195,7 @@ namespace koliop {
                     static_cast<std::size_t>(2 * Constant::kMaximumLaguerrePolynomialDegree - 1),
                     static_cast<std::size_t>(Constant::kMaximumLaguerrePolynomialDegree),
                     static_cast<std::size_t>(Constant::kMaximumLaguerrePolynomialDegree)}
-            , the_vpar_extent_{the_vpar_extent}
+
             , the_execution_space_{an_execution_space} {
 
             // TODO(Etienne M): Observe how the C_j_ and C_jl_ values are
