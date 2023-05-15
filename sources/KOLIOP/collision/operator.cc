@@ -72,7 +72,7 @@ namespace koliop {
                                                     // sqrt(2)*(rg*R0_inverse)*sqrt(rg*R0_inverse)*R0_inverse_ =
                                                     // sqrt(2)*pow(r, 5/2)*pow(rg, 3/2)
                                                     // sqrt(2)*pow(r, 5/2) is constant here.
-                                                    koliop::portability::MathematicalConstant<ComputeFloatType>::kSQRT2 *
+                                                    koliop::portability::MathematicalConstant<ComputeFloatType>::kSqrt2 *
                                                     eps *
                                                     Kokkos::sqrt(eps) *
                                                     R0_inverse;
@@ -134,7 +134,6 @@ namespace koliop {
             , ir_SOL_separatrix_{static_cast<OrdinalType>(ir_SOL_separatrix)}
             , dt_{static_cast<ComputeFloatType>(dt)}
             , dvpar_{static_cast<ComputeFloatType>(dvpar)}
-            , comb_mat_{koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL2<const Flo64>, koliop::utility::View::MDD2>(comb_mat, "comb_mat_", 2 * Constant::kMaximumLaguerrePolynomialDegree, 2 * Constant::kMaximumLaguerrePolynomialDegree)}
             , hat_As_{koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL1<const Flo64>, koliop::utility::View::MDD1>(hat_As, "hat_As_", Constant::kMaximumLaguerrePolynomialDegree)}
             , hat_Zs_{koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL1<const Flo64>, koliop::utility::View::MDD1>(hat_Zs, "hat_Zs_", Constant::kMaximumLaguerrePolynomialDegree)}
             , mug_{koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL1<const Flo64>, koliop::utility::View::MDD1>(mug, "mug_", the_mu_extent_)}
@@ -170,8 +169,8 @@ namespace koliop {
 
             // Miscellaneous tooling
 
-            , the_najl_{the_vpar_extent_}
             // TODO(Etienne M): Should we partition ?
+            , the_najl_provider_{the_vpar_extent_, comb_mat, Kokkos::DefaultExecutionSpace{}}
             , the_alpha_solver_{Kokkos::DefaultExecutionSpace{}}
             , the_mv_{Kokkos::DefaultExecutionSpace{}} {
 

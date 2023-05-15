@@ -110,6 +110,7 @@ namespace koliop {
                   // TODO(Etienne M): See if kFlattenedBlockExtent which is
                   // constexpr, can help improve the performance when used as an
                   // template argument. kBigBlockExtent = kFlattenedBlockExtent.
+                  // This would remove the_A_matrix_extent argument.
                   OrdinalType kSmallBlockExtent>
         class BatchedBlockTridiagonalByBlockTRF {
         public:

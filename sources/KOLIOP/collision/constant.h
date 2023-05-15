@@ -18,8 +18,13 @@ namespace koliop {
         public:
             static inline constexpr OrdinalType kMaximumLaguerrePolynomialDegree = 3;
 
+            // TODO(Etienne M): better name
+            static inline constexpr OrdinalType kIndexMax = 2 * (kMaximumLaguerrePolynomialDegree - 1);
+
+            using DeviceExecutionSpaceType = Kokkos::DefaultExecutionSpace;
+
             using BatchTraitsType = koliop::blas::BatchTraits<ComputeFloatType,
-                                                              Kokkos::DefaultExecutionSpace>;
+                                                              DeviceExecutionSpaceType>;
 
             // TODO(Etienne M): Note we should probably not use constant for the
             // blocking. Indeed, on CPU we benefit from a small block and on GPU

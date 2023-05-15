@@ -3,6 +3,7 @@
 #include "KOLIOP/collision/najl.h"
 
 #include "KOLIOP/collision/operator.h"
+#include "KOLIOP/portability/cmath.h"
 #include "KOLIOP/utility/copy.h"
 
 namespace koliop {
@@ -71,47 +72,147 @@ namespace koliop {
             DoPrepareCjl(a_host_visible_C_j, C_jl);
         }
 
+        namespace {
+            // NOTE: I use an unamed namespace because it is unknown to me if
+            // adding static prior KOKKOS_INLINE_FUNCTION is legal.
+
+            template <typename ValueType,
+                      typename View2D>
+            KOKKOS_INLINE_FUNCTION void
+            DoComputeI(const View2D& comb_mat,
+                       OrdinalType   offset_k,
+                       ValueType     Xtr,
+                       ValueType*    I_mat) {
+
+                static constexpr OrdinalType Xtr_pows_size = Constant::kIndexMax + 1 + 1;
+                static constexpr OrdinalType J_vec_size    = Constant::kIndexMax + 2 + 1;
+
+                ValueType Xtr_pows[Xtr_pows_size];
+                ValueType J_vec[J_vec_size];
+
+                Xtr_pows[0] = 1.0;
+
+                for(OrdinalType ind_i = 1; ind_i < Xtr_pows_size; ++ind_i) {
+                    Xtr_pows[ind_i] = -Xtr * Xtr_pows[ind_i - 1];
+                }
+
+                J_vec[0] = 2.0 * (Kokkos::exp(Xtr) / Kokkos::sqrt(Xtr) - koliop::portability::MathematicalConstant<ComputeFloatType>::kSqrtPi * Kokkos::erfc(Kokkos::sqrt(Xtr)));
+                J_vec[1] = koliop::portability::MathematicalConstant<ComputeFloatType>::kSqrtPi * Kokkos::erfc(Kokkos::sqrt(Xtr));
+
+                for(OrdinalType ind_k = 2; ind_k < J_vec_size; ++ind_k) {
+                    J_vec[ind_k] = (Kokkos::exp(Xtr) / Kokkos::sqrt(Xtr)) * Kokkos::abs(Xtr_pows[ind_k - 1]);
+                }
+
+                for(OrdinalType ind_k = 2; ind_k < J_vec_size; ++ind_k) {
+                    J_vec[ind_k] += J_vec[ind_k - 1] * (static_cast<ValueType>(ind_k) - 1.5);
+                }
+
+                // I_mat is assumed to be zeroed.
+
+                for(OrdinalType ind_i = 0; ind_i < Xtr_pows_size; ++ind_i) {
+                    for(OrdinalType ind_k = 0; ind_k < ind_i; ++ind_k) {
+                        I_mat[ind_i] += comb_mat(ind_k, ind_i) *
+                                        J_vec[ind_k - offset_k + 1] *
+                                        Xtr_pows[ind_i - ind_k] *
+                                        Kokkos::exp(Xtr);
+                    }
+                }
+            }
+
+            template <typename ValueType,
+                      typename View2D>
+            KOKKOS_INLINE_FUNCTION void
+            DoComputeL(const View2D& comb_mat) {
+                ValueType I_mat[5 /* TODO */]{};
+                ValueType Xtr = 0.0;
+                DoComputeI<ValueType>(comb_mat, 0, Xtr, I_mat);
+            }
+
+        } // namespace
+
+        template <typename View6D,
+                  typename View2D>
         static inline void
-        DoComputeI() {
+        DoComputeNajl(const Najl&   the_najl_provider,
+                      OrdinalType   the_block_first_r,
+                      OrdinalType   the_block_first_theta,
+                      OrdinalType   the_block_first_phi,
+                      const View2D& comb_mat,
+                      View6D&&) {
+
+            using ValueType = typename std::remove_reference_t<View6D>::value_type;
+
+            const auto& the_vpar_extent = the_najl_provider.the_vpar_extent_;
+
+            const auto& the_execution_space = the_najl_provider.the_execution_space_;
+
+            const auto the_kernel = KOKKOS_LAMBDA(auto ivpar, auto ir, auto itheta, auto iphi) {
+
+                DoComputeL<ValueType>(comb_mat);
+            };
+
+            const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<4,
+                                                                     Kokkos::Iterate::Left,
+                                                                     Kokkos::Iterate::Left>>{the_execution_space,
+                                                                                             {0,
+                                                                                              the_block_first_r,
+                                                                                              the_block_first_theta,
+                                                                                              the_block_first_phi},
+                                                                                             {the_vpar_extent,
+                                                                                              the_block_first_r + Constant::kBlockExtentR,
+                                                                                              the_block_first_theta + Constant::kBlockExtentTheta,
+                                                                                              the_block_first_phi + Constant::kBlockExtentPhi}};
+
+            Kokkos::parallel_for("DoComputeNajl",
+                                 a_policy, the_kernel);
         }
 
-        static inline void
-        DoComputeL() {
-            DoComputeI();
-        }
-
-        template <typename View6D>
-        static inline void
-        DoComputeNajl(View6D&&) {
-            DoComputeL();
-        }
-
-        Najl::Najl(OrdinalType the_vpar_extent)
-            : C_j_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "C_j_"),
+        Najl::Najl(OrdinalType        the_vpar_extent,
+                   const Flo64*       comb_mat,
+                   ExecutionSpaceType an_execution_space)
+            : comb_mat_{koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL2<const Flo64>,
+                                                             koliop::utility::View::MDD2>(comb_mat, "comb_mat_", 2 * Constant::kMaximumLaguerrePolynomialDegree, 2 * Constant::kMaximumLaguerrePolynomialDegree)}
+            , C_j_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "C_j_"),
                    static_cast<std::size_t>(Constant::kMaximumLaguerrePolynomialDegree),
                    static_cast<std::size_t>(Constant::kMaximumLaguerrePolynomialDegree)}
             , C_jl_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "C_jl_"),
                     static_cast<std::size_t>(2 * Constant::kMaximumLaguerrePolynomialDegree - 1),
                     static_cast<std::size_t>(Constant::kMaximumLaguerrePolynomialDegree),
                     static_cast<std::size_t>(Constant::kMaximumLaguerrePolynomialDegree)}
-            , the_vpar_extent_{the_vpar_extent} {
+            , the_vpar_extent_{the_vpar_extent}
+            , the_execution_space_{an_execution_space} {
 
             // TODO(Etienne M): Observe how the C_j_ and C_jl_ values are
             // constant. they could be compile time computed or hardcoded.
             DoPrepareCj_Cjl(C_j_, C_jl_);
         }
 
-        void Najl::Compute(ComputeFloatType* the_Najl) const {
+        void Najl::Compute(OrdinalType       the_block_first_r,
+                           OrdinalType       the_block_first_theta,
+                           OrdinalType       the_block_first_phi,
+                           ComputeFloatType* the_Najl) const {
 
             KOLIOP_ASSERT(the_Najl != nullptr);
 
             // TODO(Etienne M): Other tests
 
-            VectorBlockTridiagonalByBlockMatrixType the_Najl_view{reinterpret_cast<typename Constant::BatchTraitsType::ThreadVectorType*>(the_Najl),
+            // TODO(Etienne M): It is not currently possible to do something
+            // like:
+            // Kokkos::exp(T{}) where T is a KokkosBatched::Vector !
+
+            // VectorBlockTridiagonalByBlockMatrixType the_Najl_view{reinterpret_cast<typename Constant::BatchTraitsType::ThreadVectorType*>(the_Najl),
+            //                                                       static_cast<std::size_t>(Constant::kBatchCount),
+            //                                                       static_cast<std::size_t>(the_vpar_extent_)};
+
+            ScalarBlockTridiagonalByBlockMatrixType the_Najl_view{the_Najl,
                                                                   static_cast<std::size_t>(Constant::kBatchCount),
                                                                   static_cast<std::size_t>(the_vpar_extent_)};
 
-            DoComputeNajl(the_Najl_view);
+            DoComputeNajl(*this,
+                          the_block_first_r,
+                          the_block_first_theta,
+                          the_block_first_phi,
+                          comb_mat_, the_Najl_view);
         }
 
     } // namespace collision

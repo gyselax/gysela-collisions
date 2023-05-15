@@ -173,7 +173,9 @@ namespace koliop {
             // When we start using a sampler, remove this value.
             ComputeFloatType dvpar_;
 
-            koliop::utility::View::MDD2<const ComputeFloatType> comb_mat_; // TODO(Etienne M): constant extent.
+            // TODO(Etienne M): we store Flo64 as ComputeFloatType. If
+            // ComputeFloatType is Flo32 we need a conversion.
+
             koliop::utility::View::MDD1<const ComputeFloatType> hat_As_;   // TODO(Etienne M): constant extent.
             koliop::utility::View::MDD1<const ComputeFloatType> hat_Zs_;   // TODO(Etienne M): constant extent.
             koliop::utility::View::MDD1<const ComputeFloatType> mug_;
@@ -206,7 +208,7 @@ namespace koliop {
 
             // Miscellaneous tooling
 
-            Najl                        the_najl_;
+            Najl                        the_najl_provider_;
             Constant::BatchedSolverType the_alpha_solver_;
             Constant::BatchedMVType     the_mv_;
         };

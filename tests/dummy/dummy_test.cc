@@ -67,12 +67,12 @@ int main(int, char**) {
     // lbound(comb_mat,2) = 0;
     // ubound(comb_mat,2) = 5;
     // size(comb_mat,2) = 6;
-    static constexpr double comb_mat[((index_max + 1) + 1) - 0][((index_max + 1) + 1) - 0] = {{1., 0., 0., 0., 0., 0.},
+    static constexpr double comb_mat[((index_max + 1) + 1) - 0][((index_max + 1) + 1) - 0] = {{1.0, 0.0, 0.0, 0.0, 0.0, 0.0},
                                                                                               {1.0, 1.0, 4.0, 4.0, 4.0, 4.0},
-                                                                                              {1., 2., 1., 0., 0., 0.},
-                                                                                              {1., 3., 3., 1., 0., 0.},
-                                                                                              {1., 4., 6., 4., 1., 0.},
-                                                                                              {1., 5., 10., 10., 5., 1.}};
+                                                                                              {1.0, 2.0, 1.0, 0.0, 0.0, 0.0},
+                                                                                              {1.0, 3.0, 3.0, 1.0, 0.0, 0.0},
+                                                                                              {1.0, 4.0, 6.0, 4.0, 1.0, 0.0},
+                                                                                              {1.0, 5.0, 10.0, 10.0, 5.0, 1.0}};
     // static constexpr uint64_t comb_mat_extent_0 = ((index_max + 1) + 1) - 0;
     // static constexpr uint64_t comb_mat_extent_1 = ((index_max + 1) + 1) - 0;
 

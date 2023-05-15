@@ -34,10 +34,10 @@ namespace koliop {
             static inline constexpr value_type kPi_4     = static_cast<value_type>(0.785398163397448309616); // pi/4
             static inline constexpr value_type k1_Pi     = static_cast<value_type>(0.318309886183790671538); // 1/pi
             static inline constexpr value_type k2_Pi     = static_cast<value_type>(0.636619772367581343076); // 2/pi
-            static inline constexpr value_type kSQRTPI   = static_cast<value_type>(1.772453850905516027298); // sqrt(pi)
-            static inline constexpr value_type k2_SQRTPI = static_cast<value_type>(1.12837916709551257390);  // 2/sqrt(pi)
-            static inline constexpr value_type kSQRT2    = static_cast<value_type>(1.41421356237309504880);  // sqrt(2)
-            static inline constexpr value_type k1_SQRT2  = static_cast<value_type>(0.707106781186547524401); // 1/sqrt(2) or sqrt(1/2)
+            static inline constexpr value_type kSqrtPi   = static_cast<value_type>(1.772453850905516027298); // sqrt(pi)
+            static inline constexpr value_type k2_SqrtPi = static_cast<value_type>(1.12837916709551257390);  // 2/sqrt(pi)
+            static inline constexpr value_type kSqrt2    = static_cast<value_type>(1.41421356237309504880);  // sqrt(2)
+            static inline constexpr value_type k1_Sqrt2  = static_cast<value_type>(0.707106781186547524401); // 1/sqrt(2) or sqrt(1/2)
         };
 
 
@@ -54,8 +54,8 @@ namespace koliop {
 
         public:
             static inline constexpr value_type kInfinity     = static_cast<value_type>(1.0E+30);
-            static inline constexpr value_type kCst_phiprime = static_cast<value_type>(2.0 / MathematicalConstant<value_type>::kSQRTPI);
-            static inline constexpr value_type kConst_theta  = static_cast<value_type>(1.5 * MathematicalConstant<value_type>::kSQRTPI);
+            static inline constexpr value_type kCst_phiprime = static_cast<value_type>(2.0 / MathematicalConstant<value_type>::kSqrtPi);
+            static inline constexpr value_type kConst_theta  = static_cast<value_type>(1.5 * MathematicalConstant<value_type>::kSqrtPi);
         };
 
 

@@ -39,8 +39,8 @@ namespace koliop {
         template <typename View2D>
         static inline void
         DoPrepareCollisionMask(const Operator& an_operator,
-                               OrdinalType     block_first_r,
-                               OrdinalType     block_first_theta,
+                               OrdinalType     the_block_first_r,
+                               OrdinalType     the_block_first_theta,
                                View2D&&        mask_coll) {
 
             const auto& LIM = an_operator.LIM_;
@@ -53,16 +53,16 @@ namespace koliop {
                                             // NOTE: mask_lim may not be allocated ! We need the && first.
                                             static_cast<OrdinalType>(LIM && (mask_LIM(ir, itheta) < 0.99));
 
-                mask_coll(ir - block_first_r,
-                          itheta - block_first_theta) = the_mask_value;
+                mask_coll(ir - the_block_first_r,
+                          itheta - the_block_first_theta) = the_mask_value;
             };
 
             const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<2,
                                                                      Kokkos::Iterate::Left,
-                                                                     Kokkos::Iterate::Left>>{{block_first_r,
-                                                                                              block_first_theta},
-                                                                                             {block_first_r + Constant::kBlockExtentR,
-                                                                                              block_first_theta + Constant::kBlockExtentTheta}};
+                                                                     Kokkos::Iterate::Left>>{{the_block_first_r,
+                                                                                              the_block_first_theta},
+                                                                                             {the_block_first_r + Constant::kBlockExtentR,
+                                                                                              the_block_first_theta + Constant::kBlockExtentTheta}};
 
             Kokkos::parallel_for("DoPrepareCollisionMask",
                                  a_policy, the_kernel);
@@ -75,9 +75,9 @@ namespace koliop {
                   typename View2D>
         static inline void
         DoComputeAlphaProjection(const Operator& an_operator,
-                                 OrdinalType     block_first_r,
-                                 OrdinalType     block_first_theta,
-                                 OrdinalType     block_first_phi,
+                                 OrdinalType     the_block_first_r,
+                                 OrdinalType     the_block_first_theta,
+                                 OrdinalType     the_block_first_phi,
                                  const View2D&   mask_coll,
                                  const View6D&   f5d_s,
                                  View4D&&        the_rhs) {
@@ -134,12 +134,12 @@ namespace koliop {
 
             const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<3,
                                                                      Kokkos::Iterate::Left,
-                                                                     Kokkos::Iterate::Left>>{{block_first_r,
-                                                                                              block_first_theta,
-                                                                                              block_first_phi},
-                                                                                             {block_first_r + Constant::kBlockExtentR,
-                                                                                              block_first_theta + Constant::kBlockExtentTheta,
-                                                                                              block_first_phi + Constant::kBlockExtentPhi}};
+                                                                     Kokkos::Iterate::Left>>{{the_block_first_r,
+                                                                                              the_block_first_theta,
+                                                                                              the_block_first_phi},
+                                                                                             {the_block_first_r + Constant::kBlockExtentR,
+                                                                                              the_block_first_theta + Constant::kBlockExtentTheta,
+                                                                                              the_block_first_phi + Constant::kBlockExtentPhi}};
 
             Kokkos::parallel_for("DoComputeAlphaProjection",
                                  a_policy, the_kernel);
@@ -153,9 +153,9 @@ namespace koliop {
                   typename View1D>
         static inline void
         DoComputeBlockTo1D(const Operator& an_operator,
-                           OrdinalType     block_first_r,
-                           OrdinalType     block_first_theta,
-                           OrdinalType     block_first_phi,
+                           OrdinalType     the_block_first_r,
+                           OrdinalType     the_block_first_theta,
+                           OrdinalType     the_block_first_phi,
                            const View2D0&  mask_coll,
                            View2D1&&       n1d_s,
                            View2D1&&       T1d_s,
@@ -194,12 +194,12 @@ namespace koliop {
 
             const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<3,
                                                                      Kokkos::Iterate::Left,
-                                                                     Kokkos::Iterate::Left>>{{block_first_r,
-                                                                                              block_first_theta,
-                                                                                              block_first_phi},
-                                                                                             {block_first_r + Constant::kBlockExtentR,
-                                                                                              block_first_theta + Constant::kBlockExtentTheta,
-                                                                                              block_first_phi + Constant::kBlockExtentPhi}};
+                                                                     Kokkos::Iterate::Left>>{{the_block_first_r,
+                                                                                              the_block_first_theta,
+                                                                                              the_block_first_phi},
+                                                                                             {the_block_first_r + Constant::kBlockExtentR,
+                                                                                              the_block_first_theta + Constant::kBlockExtentTheta,
+                                                                                              the_block_first_phi + Constant::kBlockExtentPhi}};
 
             Kokkos::parallel_for("DoComputeBlockTo1D",
                                  a_policy, the_kernel);
@@ -259,9 +259,9 @@ namespace koliop {
                   typename View4D>
         static inline void
         DoComputeCvCdSource(const Operator& an_operator,
-                            OrdinalType     block_first_r,
-                            OrdinalType     block_first_theta,
-                            OrdinalType     block_first_phi,
+                            OrdinalType     the_block_first_r,
+                            OrdinalType     the_block_first_theta,
+                            OrdinalType     the_block_first_phi,
                             const View6D&   the_Najl,
                             View4D&&        the_rhs) {
 
@@ -308,14 +308,14 @@ namespace koliop {
                                                                      Kokkos::Iterate::Left,
                                                                      Kokkos::Iterate::Left>>{{0,
                                                                                               0,
-                                                                                              block_first_r,
-                                                                                              block_first_theta,
-                                                                                              block_first_phi},
+                                                                                              the_block_first_r,
+                                                                                              the_block_first_theta,
+                                                                                              the_block_first_phi},
                                                                                              {Constant::kMaximumLaguerrePolynomialDegree,
                                                                                               the_vpar_extent,
-                                                                                              block_first_r + Constant::kBlockExtentR,
-                                                                                              block_first_theta + Constant::kBlockExtentTheta,
-                                                                                              block_first_phi + Constant::kBlockExtentPhi}};
+                                                                                              the_block_first_r + Constant::kBlockExtentR,
+                                                                                              the_block_first_theta + Constant::kBlockExtentTheta,
+                                                                                              the_block_first_phi + Constant::kBlockExtentPhi}};
 
             Kokkos::parallel_for("DoComputeCvCdSource",
                                  a_policy, the_kernel);
@@ -326,9 +326,9 @@ namespace koliop {
                   typename View2D>
         static inline void
         DoComputeReconstruction(const Operator& an_operator,
-                                OrdinalType     block_first_r,
-                                OrdinalType     block_first_theta,
-                                OrdinalType     block_first_phi,
+                                OrdinalType     the_block_first_r,
+                                OrdinalType     the_block_first_theta,
+                                OrdinalType     the_block_first_phi,
                                 const View2D&   mask_coll,
                                 View6D&&        f5d_s,
                                 const View4D&   the_rhs) {
@@ -382,12 +382,12 @@ namespace koliop {
 
             const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<3,
                                                                      Kokkos::Iterate::Left,
-                                                                     Kokkos::Iterate::Left>>{{block_first_r,
-                                                                                              block_first_theta,
-                                                                                              block_first_phi},
-                                                                                             {block_first_r + Constant::kBlockExtentR,
-                                                                                              block_first_theta + Constant::kBlockExtentTheta,
-                                                                                              block_first_phi + Constant::kBlockExtentPhi}};
+                                                                     Kokkos::Iterate::Left>>{{the_block_first_r,
+                                                                                              the_block_first_theta,
+                                                                                              the_block_first_phi},
+                                                                                             {the_block_first_r + Constant::kBlockExtentR,
+                                                                                              the_block_first_theta + Constant::kBlockExtentTheta,
+                                                                                              the_block_first_phi + Constant::kBlockExtentPhi}};
 
             Kokkos::parallel_for("DoComputeReconstruction",
                                  a_policy, the_kernel);
@@ -413,8 +413,9 @@ namespace koliop {
             // TODO(Etienne M): dvpar should be part of the vpar sampler.
             const ComputeFloatType& dvpar = an_operator.dvpar_;
 
-            const auto the_alpha_solver = an_operator.the_alpha_solver_;
-            const auto the_mv           = an_operator.the_mv_;
+            const auto the_najl_provider = an_operator.the_najl_provider_;
+            const auto the_alpha_solver  = an_operator.the_alpha_solver_;
+            const auto the_mv            = an_operator.the_mv_;
 
             KOLIOP_ASSERT(the_r_extent % Constant::kBlockExtentR == 0);
             KOLIOP_ASSERT(the_theta_extent % Constant::kBlockExtentTheta == 0);
@@ -480,19 +481,19 @@ namespace koliop {
             // wouldn't it be netter to compute for everything and only in the
             // end, reconstruct f based on the mask ?
 
-            for(OrdinalType block_first_phi = 0;
-                block_first_phi < the_phi_extent;
-                block_first_phi += Constant::kBlockExtentPhi) {
-                for(OrdinalType block_first_theta = 0;
-                    block_first_theta < the_theta_extent;
-                    block_first_theta += Constant::kBlockExtentTheta) {
-                    for(OrdinalType block_first_r = 0;
-                        block_first_r < the_r_extent;
-                        block_first_r += Constant::kBlockExtentR) {
+            for(OrdinalType the_block_first_phi = 0;
+                the_block_first_phi < the_phi_extent;
+                the_block_first_phi += Constant::kBlockExtentPhi) {
+                for(OrdinalType the_block_first_theta = 0;
+                    the_block_first_theta < the_theta_extent;
+                    the_block_first_theta += Constant::kBlockExtentTheta) {
+                    for(OrdinalType the_block_first_r = 0;
+                        the_block_first_r < the_r_extent;
+                        the_block_first_r += Constant::kBlockExtentR) {
 
                         DoPrepareCollisionMask(an_operator,
-                                               block_first_r,
-                                               block_first_theta,
+                                               the_block_first_r,
+                                               the_block_first_theta,
                                                mask_coll);
 
                         // NOTE: Skipping would create imbalance and because we
@@ -505,19 +506,22 @@ namespace koliop {
 
                         {
                             DoComputeAlphaProjection(an_operator,
-                                                     block_first_r,
-                                                     block_first_theta,
-                                                     block_first_phi,
+                                                     the_block_first_r,
+                                                     the_block_first_theta,
+                                                     the_block_first_phi,
                                                      mask_coll, f5d_s, the_alpha_coefficients);
 
                             DoComputeBlockTo1D(an_operator,
-                                               block_first_r,
-                                               block_first_theta,
-                                               block_first_phi,
+                                               the_block_first_r,
+                                               the_block_first_theta,
+                                               the_block_first_phi,
                                                mask_coll, n1d_s, T1d_s, nu1d);
 
                             {
-                                // call libcoll_N_a_jl(Nspace, vparg, C_jl_, n1d_s, T1d_s, nu1d, N0, N1, N2);
+                                the_najl_provider.Compute(the_block_first_r,
+                                                          the_block_first_theta,
+                                                          the_block_first_phi,
+                                                          the_Najl.data());
 
                                 // Fence for N0, N1, N2
 
@@ -548,9 +552,9 @@ namespace koliop {
 
                                     // the_rhs = alpha~~
                                     DoComputeCvCdSource(an_operator,
-                                                        block_first_r,
-                                                        block_first_theta,
-                                                        block_first_phi,
+                                                        the_block_first_r,
+                                                        the_block_first_theta,
+                                                        the_block_first_phi,
                                                         the_Najl, the_rhs);
 
                                     std::swap(the_rhs, the_alpha_coefficients);
@@ -570,9 +574,9 @@ namespace koliop {
                             }
 
                             DoComputeReconstruction(an_operator,
-                                                    block_first_r,
-                                                    block_first_theta,
-                                                    block_first_phi,
+                                                    the_block_first_r,
+                                                    the_block_first_theta,
+                                                    the_block_first_phi,
                                                     mask_coll, f5d_s, the_rhs);
 
                             // TODO(Etienne M): Fence for DoComputeReconstruction.

@@ -60,7 +60,7 @@ namespace koliop {
                 const ComputeFloatType vTa       = Kokkos::sqrt(Ta / hat_Aa);
                 const ComputeFloatType coeff1    = 1.0 / (2.0 * Ta);
                 const ComputeFloatType coeff3    = na / (koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta * Kokkos::sqrt(koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta));
-                const ComputeFloatType AD        = nustaR0_i * koliop::portability::MathematicalConstant<ComputeFloatType>::kSQRT2 * epstemp * Kokkos::sqrt(epstemp) / ((1.0 / R0_inverse) * (smcsfqri != koliop::portability::GyselaConstant<Flo64>::kInfinity ? smcsfqri : 1.0));
+                const ComputeFloatType AD        = nustaR0_i * koliop::portability::MathematicalConstant<ComputeFloatType>::kSqrt2 * epstemp * Kokkos::sqrt(epstemp) / ((1.0 / R0_inverse) * (smcsfqri != koliop::portability::GyselaConstant<Flo64>::kInfinity ? smcsfqri : 1.0));
 
                 for(OrdinalType ispecies = 0; ispecies < the_species_extent; ++ispecies) {
                     const ComputeFloatType hat_Ab         = hat_As(ispecies);
