@@ -25,12 +25,13 @@ namespace koliop {
                  const Flo64*       comb_mat,
                  ExecutionSpaceType an_execution_space);
 
-            /// @param the_Najl respects the format of
-            /// ScalarBlockTridiagonalByBlockMatrixType.
-            void Compute(OrdinalType       the_block_first_r,
-                         OrdinalType       the_block_first_theta,
-                         OrdinalType       the_block_first_phi,
-                         ComputeFloatType* the_Najl) const;
+            void Compute(OrdinalType                                          the_block_first_r,
+                         OrdinalType                                          the_block_first_theta,
+                         OrdinalType                                          the_block_first_phi,
+                         const koliop::utility::View::MDD4<ComputeFloatType>& n_s,
+                         const koliop::utility::View::MDD4<ComputeFloatType>& T_s,
+                         const koliop::utility::View::MDD5<ComputeFloatType>& nu_ab,
+                         Constant::ScalarBlockTridiagonalByBlockMatrixType&   the_Najl) const;
 
         public:
             // Could be protected but we would have to use friend functions.

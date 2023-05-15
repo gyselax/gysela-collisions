@@ -77,17 +77,18 @@ namespace koliop {
             // adding static prior KOKKOS_INLINE_FUNCTION is legal.
 
             template <typename ValueType,
-                      typename View2D>
+                      typename View2D,
+                      typename Array1D>
             KOKKOS_INLINE_FUNCTION void
             DoComputeI(const View2D& comb_mat,
                        OrdinalType   offset_k,
                        ValueType     Xtr,
-                       ValueType*    I_mat) {
+                       Array1D       I_mat) {
 
                 static constexpr OrdinalType Xtr_pows_size = Constant::kIndexMax + 1 + 1;
                 static constexpr OrdinalType J_vec_size    = Constant::kIndexMax + 2 + 1;
 
-                ValueType Xtr_pows[Xtr_pows_size];
+                ValueType Xtr_pows[Xtr_pows_size]; // std::pow(-Xtr, i);
                 ValueType J_vec[J_vec_size];
 
                 Xtr_pows[0] = 1.0;
@@ -120,9 +121,11 @@ namespace koliop {
             }
 
             template <typename ValueType,
-                      typename View2D>
+                      typename View2D,
+                      typename Array2D>
             KOKKOS_INLINE_FUNCTION void
-            DoComputeL(const View2D& comb_mat) {
+            DoComputeL(const View2D& comb_mat,
+                       Array2D       L_mat) {
                 ValueType I_mat[5 /* TODO */]{};
                 ValueType Xtr = 0.0;
                 DoComputeI<ValueType>(comb_mat, 0, Xtr, I_mat);
@@ -131,6 +134,8 @@ namespace koliop {
         } // namespace
 
         template <typename View6D,
+                  typename View5D,
+                  typename View4D,
                   typename View2D>
         static inline void
         DoComputeNajl(const Najl&   the_najl_provider,
@@ -138,7 +143,13 @@ namespace koliop {
                       OrdinalType   the_block_first_theta,
                       OrdinalType   the_block_first_phi,
                       const View2D& comb_mat,
-                      View6D&&) {
+                      const View4D& n_s,
+                      const View4D& T_s,
+                      const View5D& nu_ab,
+                      View6D&&      the_Najl) {
+
+            // NOTE: We use ValueType due to an hypothetical future Kokkos
+            // release that would enable Kokkos::exp() on KokkosBatched::Vector.
 
             using ValueType = typename std::remove_reference_t<View6D>::value_type;
 
@@ -147,8 +158,9 @@ namespace koliop {
             const auto& the_execution_space = the_najl_provider.the_execution_space_;
 
             const auto the_kernel = KOKKOS_LAMBDA(auto ivpar, auto ir, auto itheta, auto iphi) {
+                ValueType L_mat[Constant::kIndexMax + 1 + 1][5];
 
-                DoComputeL<ValueType>(comb_mat);
+                DoComputeL<ValueType>(comb_mat, L_mat);
             };
 
             const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<4,
@@ -187,12 +199,15 @@ namespace koliop {
             DoPrepareCj_Cjl(C_j_, C_jl_);
         }
 
-        void Najl::Compute(OrdinalType       the_block_first_r,
-                           OrdinalType       the_block_first_theta,
-                           OrdinalType       the_block_first_phi,
-                           ComputeFloatType* the_Najl) const {
+        void Najl::Compute(OrdinalType                                          the_block_first_r,
+                           OrdinalType                                          the_block_first_theta,
+                           OrdinalType                                          the_block_first_phi,
+                           const koliop::utility::View::MDD4<ComputeFloatType>& n_s,
+                           const koliop::utility::View::MDD4<ComputeFloatType>& T_s,
+                           const koliop::utility::View::MDD5<ComputeFloatType>& nu_ab,
+                           Constant::ScalarBlockTridiagonalByBlockMatrixType&   the_Najl) const {
 
-            KOLIOP_ASSERT(the_Najl != nullptr);
+            KOLIOP_ASSERT(the_Najl.size() != 0);
 
             // TODO(Etienne M): Other tests
 
@@ -200,11 +215,11 @@ namespace koliop {
             // like:
             // Kokkos::exp(T{}) where T is a KokkosBatched::Vector !
 
-            // VectorBlockTridiagonalByBlockMatrixType the_Najl_view{reinterpret_cast<typename Constant::BatchTraitsType::ThreadVectorType*>(the_Najl),
+            // VectorBlockTridiagonalByBlockMatrixType the_Najl_view{reinterpret_cast<typename Constant::BatchTraitsType::ThreadVectorType*>(the_Najl.data()),
             //                                                       static_cast<std::size_t>(Constant::kBatchCount),
             //                                                       static_cast<std::size_t>(the_vpar_extent_)};
 
-            ScalarBlockTridiagonalByBlockMatrixType the_Najl_view{the_Najl,
+            ScalarBlockTridiagonalByBlockMatrixType the_Najl_view{the_Najl.data(),
                                                                   static_cast<std::size_t>(Constant::kBatchCount),
                                                                   static_cast<std::size_t>(the_vpar_extent_)};
 
@@ -212,7 +227,11 @@ namespace koliop {
                           the_block_first_r,
                           the_block_first_theta,
                           the_block_first_phi,
-                          comb_mat_, the_Najl_view);
+                          comb_mat_,
+                          n_s,
+                          T_s,
+                          nu_ab,
+                          the_Najl_view);
         }
 
     } // namespace collision

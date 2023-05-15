@@ -413,6 +413,10 @@ namespace koliop {
             // TODO(Etienne M): dvpar should be part of the vpar sampler.
             const ComputeFloatType& dvpar = an_operator.dvpar_;
 
+            const auto& n_s   = an_operator.n_s_;
+            const auto& T_s   = an_operator.T_s_;
+            const auto& nu_ab = an_operator.nu_ab_;
+
             const auto the_najl_provider = an_operator.the_najl_provider_;
             const auto the_alpha_solver  = an_operator.the_alpha_solver_;
             const auto the_mv            = an_operator.the_mv_;
@@ -449,21 +453,21 @@ namespace koliop {
 
             // TODO(Etienne M): Many opportunities to use constant extent say:
             // ComputeFloatType *[Constant::kFlattenedBlockExtent].
-            Constant::BatchedSolverType::ScalarMatrixType the_Najl{Kokkos::view_alloc(Kokkos::WithoutInitializing,
-                                                                                      "the_Najl"),
-                                                                   static_cast<std::size_t>(Constant::kBatchCount), static_cast<std::size_t>(the_vpar_extent)};
+            Constant::ScalarBlockTridiagonalByBlockMatrixType the_Najl{Kokkos::view_alloc(Kokkos::WithoutInitializing,
+                                                                                          "the_Najl"),
+                                                                       static_cast<std::size_t>(Constant::kBatchCount), static_cast<std::size_t>(the_vpar_extent)};
 
-            Constant::BatchedSolverType::ScalarMatrixType the_matrix{Kokkos::view_alloc(Kokkos::WithoutInitializing,
-                                                                                        "the_matrix"),
-                                                                     static_cast<std::size_t>(Constant::kBatchCount), static_cast<std::size_t>(the_vpar_extent)};
+            Constant::ScalarBlockTridiagonalByBlockMatrixType the_matrix{Kokkos::view_alloc(Kokkos::WithoutInitializing,
+                                                                                            "the_matrix"),
+                                                                         static_cast<std::size_t>(Constant::kBatchCount), static_cast<std::size_t>(the_vpar_extent)};
 
-            Constant::BatchedSolverType::ScalarVectorType the_alpha_coefficients{Kokkos::view_alloc(Kokkos::WithoutInitializing,
-                                                                                                    "the_alpha_coefficients"),
-                                                                                 static_cast<std::size_t>(Constant::kBatchCount), static_cast<std::size_t>(the_vpar_extent)};
+            Constant::ScalarBlockTridiagonalByBlockVectorType the_alpha_coefficients{Kokkos::view_alloc(Kokkos::WithoutInitializing,
+                                                                                                        "the_alpha_coefficients"),
+                                                                                     static_cast<std::size_t>(Constant::kBatchCount), static_cast<std::size_t>(the_vpar_extent)};
 
-            Constant::BatchedSolverType::ScalarVectorType the_rhs{Kokkos::view_alloc(Kokkos::WithoutInitializing,
-                                                                                     "the_rhs"),
-                                                                  static_cast<std::size_t>(Constant::kBatchCount), static_cast<std::size_t>(the_vpar_extent)};
+            Constant::ScalarBlockTridiagonalByBlockVectorType the_rhs{Kokkos::view_alloc(Kokkos::WithoutInitializing,
+                                                                                         "the_rhs"),
+                                                                      static_cast<std::size_t>(Constant::kBatchCount), static_cast<std::size_t>(the_vpar_extent)};
 
 
             // Samples I - T*dt/4
@@ -521,7 +525,10 @@ namespace koliop {
                                 the_najl_provider.Compute(the_block_first_r,
                                                           the_block_first_theta,
                                                           the_block_first_phi,
-                                                          the_Najl.data());
+                                                          n_s,
+                                                          T_s,
+                                                          nu_ab,
+                                                          the_Najl);
 
                                 // Fence for N0, N1, N2
 
