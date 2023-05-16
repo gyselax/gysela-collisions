@@ -170,7 +170,7 @@ namespace koliop {
             // Miscellaneous tooling
 
             // TODO(Etienne M): Should we partition ?
-            , the_najl_provider_{pSpecies_id_, the_vpar_extent_, comb_mat, hat_As_, hat_Zs_, Kokkos::DefaultExecutionSpace{}}
+            , the_najl_provider_{pSpecies_id_, the_vpar_extent_, the_species_extent_, comb_mat, hat_As_, hat_Zs_, Kokkos::DefaultExecutionSpace{}}
             , the_alpha_solver_{Kokkos::DefaultExecutionSpace{}}
             , the_mv_{Kokkos::DefaultExecutionSpace{}} {
 

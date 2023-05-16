@@ -108,7 +108,8 @@ namespace koliop {
                     J_vec[ind_k] += J_vec[ind_k - 1] * (static_cast<ValueType>(ind_k) - 1.5);
                 }
 
-                // I_mat is assumed to be zeroed.
+                // Assumes I_mat is zeroed.
+                // I_mat(:) = 0.0;
 
                 for(OrdinalType ind_i = 0; ind_i < Xtr_pows_size; ++ind_i) {
                     for(OrdinalType ind_k = 0; ind_k < ind_i; ++ind_k) {
@@ -127,7 +128,8 @@ namespace koliop {
                       typename View1D,
                       typename Array2D>
             KOKKOS_INLINE_FUNCTION void
-            DoComputeL(OrdinalType   pSpecies_id,
+            DoComputeL(OrdinalType   the_species_extent,
+                       OrdinalType   pSpecies_id,
                        const View2D& comb_mat,
                        const View1D& hat_As,
                        const View1D& hat_Zs,
@@ -160,7 +162,8 @@ namespace koliop {
 
             using ValueType = typename std::remove_reference_t<View6D>::value_type;
 
-            const auto& the_vpar_extent = the_najl_provider.the_vpar_extent_;
+            const auto& the_vpar_extent    = the_najl_provider.the_vpar_extent_;
+            const auto& the_species_extent = the_najl_provider.the_species_extent_;
 
             const auto& comb_mat = the_najl_provider.comb_mat_;
             const auto& hat_As   = the_najl_provider.hat_As_;
@@ -173,7 +176,8 @@ namespace koliop {
             const auto the_kernel = KOKKOS_LAMBDA(auto ivpar, auto ir, auto itheta, auto iphi) {
                 ValueType L_mat[Constant::kIndexMax + 1 + 1][5];
 
-                DoComputeL<ValueType>(pSpecies_id,
+                DoComputeL<ValueType>(the_species_extent,
+                                      pSpecies_id,
                                       comb_mat,
                                       hat_As, hat_Zs,
                                       n_s, T_s,
@@ -198,12 +202,14 @@ namespace koliop {
 
         Najl::Najl(OrdinalType                                          pSpecies_id,
                    OrdinalType                                          the_vpar_extent,
+                   OrdinalType                                          the_species_extent,
                    const Flo64*                                         comb_mat,
                    koliop::utility::View::MDD1<const ComputeFloatType>& hat_As,
                    koliop::utility::View::MDD1<const ComputeFloatType>& hat_Zs,
                    ExecutionSpaceType                                   an_execution_space)
             : pSpecies_id_{pSpecies_id}
             , the_vpar_extent_{the_vpar_extent}
+            , the_species_extent_{the_species_extent}
 
             , comb_mat_{koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL2<const Flo64>,
                                                              koliop::utility::View::MDD2>(comb_mat, "comb_mat_", 2 * Constant::kMaximumLaguerrePolynomialDegree, 2 * Constant::kMaximumLaguerrePolynomialDegree)}
