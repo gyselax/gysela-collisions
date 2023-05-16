@@ -124,9 +124,13 @@ namespace koliop {
                       typename View5D,
                       typename View4D,
                       typename View2D,
+                      typename View1D,
                       typename Array2D>
             KOKKOS_INLINE_FUNCTION void
-            DoComputeL(const View2D& comb_mat,
+            DoComputeL(OrdinalType   pSpecies_id,
+                       const View2D& comb_mat,
+                       const View1D& hat_As,
+                       const View1D& hat_Zs,
                        const View4D& n_s,
                        const View4D& T_s,
                        const View5D& nu_ab,
@@ -140,14 +144,12 @@ namespace koliop {
 
         template <typename View6D,
                   typename View5D,
-                  typename View4D,
-                  typename View2D>
+                  typename View4D>
         static inline void
         DoComputeNajl(const Najl&   the_najl_provider,
                       OrdinalType   the_block_first_r,
                       OrdinalType   the_block_first_theta,
                       OrdinalType   the_block_first_phi,
-                      const View2D& comb_mat,
                       const View4D& n_s,
                       const View4D& T_s,
                       const View5D& nu_ab,
@@ -160,12 +162,20 @@ namespace koliop {
 
             const auto& the_vpar_extent = the_najl_provider.the_vpar_extent_;
 
+            const auto& comb_mat = the_najl_provider.comb_mat_;
+            const auto& hat_As   = the_najl_provider.hat_As_;
+            const auto& hat_Zs   = the_najl_provider.hat_Zs_;
+
+            const auto& pSpecies_id = the_najl_provider.pSpecies_id_;
+
             const auto& the_execution_space = the_najl_provider.the_execution_space_;
 
             const auto the_kernel = KOKKOS_LAMBDA(auto ivpar, auto ir, auto itheta, auto iphi) {
                 ValueType L_mat[Constant::kIndexMax + 1 + 1][5];
 
-                DoComputeL<ValueType>(comb_mat,
+                DoComputeL<ValueType>(pSpecies_id,
+                                      comb_mat,
+                                      hat_As, hat_Zs,
                                       n_s, T_s,
                                       nu_ab, L_mat);
             };
@@ -186,15 +196,19 @@ namespace koliop {
                                  a_policy, the_kernel);
         }
 
-        Najl::Najl(OrdinalType        pSpecies_id,
-                   OrdinalType        the_vpar_extent,
-                   const Flo64*       comb_mat,
-                   ExecutionSpaceType an_execution_space)
+        Najl::Najl(OrdinalType                                          pSpecies_id,
+                   OrdinalType                                          the_vpar_extent,
+                   const Flo64*                                         comb_mat,
+                   koliop::utility::View::MDD1<const ComputeFloatType>& hat_As,
+                   koliop::utility::View::MDD1<const ComputeFloatType>& hat_Zs,
+                   ExecutionSpaceType                                   an_execution_space)
             : pSpecies_id_{pSpecies_id}
             , the_vpar_extent_{the_vpar_extent}
 
             , comb_mat_{koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL2<const Flo64>,
                                                              koliop::utility::View::MDD2>(comb_mat, "comb_mat_", 2 * Constant::kMaximumLaguerrePolynomialDegree, 2 * Constant::kMaximumLaguerrePolynomialDegree)}
+            , hat_As_{hat_As}
+            , hat_Zs_{hat_Zs}
             , C_j_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "C_j_"),
                    static_cast<std::size_t>(Constant::kMaximumLaguerrePolynomialDegree),
                    static_cast<std::size_t>(Constant::kMaximumLaguerrePolynomialDegree)}
@@ -238,7 +252,6 @@ namespace koliop {
                           the_block_first_r,
                           the_block_first_theta,
                           the_block_first_phi,
-                          comb_mat_,
                           n_s,
                           T_s,
                           nu_ab,

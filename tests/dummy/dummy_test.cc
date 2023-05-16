@@ -76,17 +76,21 @@ int main(int, char**) {
     // static constexpr uint64_t comb_mat_extent_0 = ((index_max + 1) + 1) - 0;
     // static constexpr uint64_t comb_mat_extent_1 = ((index_max + 1) + 1) - 0;
 
+    // TODO(Etienne M): Is that a bug that hat_As contains more than Nspecies
+    // values ?
     // lbound(hat_As,1) = 0;
     // ubound(hat_As,1) = 2;
     // size(hat_As,1) = 3;
-    static constexpr double hat_As[Npolmax] = {1.0, 0.0, 0.0};
-    // static constexpr uint64_t hat_As_extent_0 = Npolmax;
+    static constexpr double hat_As[the_species_extent] = {1.0};
+    // static constexpr uint64_t hat_As_extent_0 = the_species_extent;
 
+    // TODO(Etienne M): Is that a bug that hat_As contains more than Nspecies
+    //  values ?
     // lbound(hat_Zs,1) = 0;
     // ubound(hat_Zs,1) = 2;
     // size(hat_Zs,1) = 3;
-    static constexpr double hat_Zs[Npolmax] = {1.0, 0.0, 0.0};
-    // static constexpr uint64_t hat_Zs_extent_0 = Npolmax;
+    static constexpr double hat_Zs[the_species_extent] = {1.0};
+    // static constexpr uint64_t hat_Zs_extent_0 = the_species_extent;
 
     // lbound(mug,1) = 0;
     // ubound(mug,1) = 47;

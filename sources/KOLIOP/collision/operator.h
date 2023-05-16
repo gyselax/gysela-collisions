@@ -176,8 +176,8 @@ namespace koliop {
             // TODO(Etienne M): we store Flo64 as ComputeFloatType. If
             // ComputeFloatType is Flo32 we need a conversion.
 
-            koliop::utility::View::MDD1<const ComputeFloatType> hat_As_;   // TODO(Etienne M): constant extent.
-            koliop::utility::View::MDD1<const ComputeFloatType> hat_Zs_;   // TODO(Etienne M): constant extent.
+            koliop::utility::View::MDD1<const ComputeFloatType> hat_As_;
+            koliop::utility::View::MDD1<const ComputeFloatType> hat_Zs_;
             koliop::utility::View::MDD1<const ComputeFloatType> mug_;
             // NOTE: In practice the grid is uniform in vparg so you
             // could compute vparg(n) = vparg(0) + dvpar * n.

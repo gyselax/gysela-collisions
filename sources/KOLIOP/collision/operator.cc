@@ -134,8 +134,8 @@ namespace koliop {
             , ir_SOL_separatrix_{static_cast<OrdinalType>(ir_SOL_separatrix)}
             , dt_{static_cast<ComputeFloatType>(dt)}
             , dvpar_{static_cast<ComputeFloatType>(dvpar)}
-            , hat_As_{koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL1<const Flo64>, koliop::utility::View::MDD1>(hat_As, "hat_As_", Constant::kMaximumLaguerrePolynomialDegree)}
-            , hat_Zs_{koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL1<const Flo64>, koliop::utility::View::MDD1>(hat_Zs, "hat_Zs_", Constant::kMaximumLaguerrePolynomialDegree)}
+            , hat_As_{koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL1<const Flo64>, koliop::utility::View::MDD1>(hat_As, "hat_As_", the_species_extent_)} // NOTE: in practice, this hat_Xs contains 3 values. The size being hardcoded in global::Nspecies_max = 2
+            , hat_Zs_{koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL1<const Flo64>, koliop::utility::View::MDD1>(hat_Zs, "hat_Zs_", the_species_extent_)} // NOTE: in practice, this hat_Xs contains 3 values. The size being hardcoded in global::Nspecies_max = 2
             , mug_{koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL1<const Flo64>, koliop::utility::View::MDD1>(mug, "mug_", the_mu_extent_)}
             , vparg_{koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL1<const Flo64>, koliop::utility::View::MDD1>(vparg, "vparg_", the_vpar_extent_)}
             , coeff_intdmu_{koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL1<const Flo64>, koliop::utility::View::MDD1>(coeff_intdmu, "coeff_intdmu_", the_mu_extent_)}
@@ -170,7 +170,7 @@ namespace koliop {
             // Miscellaneous tooling
 
             // TODO(Etienne M): Should we partition ?
-            , the_najl_provider_{pSpecies_id_, the_vpar_extent_, comb_mat, Kokkos::DefaultExecutionSpace{}}
+            , the_najl_provider_{pSpecies_id_, the_vpar_extent_, comb_mat, hat_As_, hat_Zs_, Kokkos::DefaultExecutionSpace{}}
             , the_alpha_solver_{Kokkos::DefaultExecutionSpace{}}
             , the_mv_{Kokkos::DefaultExecutionSpace{}} {
 

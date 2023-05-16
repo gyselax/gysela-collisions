@@ -21,10 +21,12 @@ namespace koliop {
             using VectorBlockTridiagonalByBlockMatrixType = Constant::VectorBlockTridiagonalByBlockMatrixType;
 
         public:
-            Najl(OrdinalType        pSpecies_id,
-                 OrdinalType        the_vpar_extent,
-                 const Flo64*       comb_mat,
-                 ExecutionSpaceType an_execution_space);
+            Najl(OrdinalType                                          pSpecies_id,
+                 OrdinalType                                          the_vpar_extent,
+                 const Flo64*                                         comb_mat,
+                 koliop::utility::View::MDD1<const ComputeFloatType>& hat_As,
+                 koliop::utility::View::MDD1<const ComputeFloatType>& hat_Zs,
+                 ExecutionSpaceType                                   an_execution_space);
 
             void Compute(OrdinalType                                          the_block_first_r,
                          OrdinalType                                          the_block_first_theta,
@@ -38,12 +40,21 @@ namespace koliop {
             // Could be protected but we would have to use friend functions.
             // protected:
 
+            // Constant, externally computed values
+
             OrdinalType pSpecies_id_;
             OrdinalType the_vpar_extent_;
 
             koliop::utility::View::MDD2<const ComputeFloatType> comb_mat_; // TODO(Etienne M): constant extent.
-            koliop::utility::View::MDD2<ComputeFloatType>       C_j_;      // TODO(Etienne M): constant extent.
-            koliop::utility::View::MDD3<ComputeFloatType>       C_jl_;     // TODO(Etienne M): constant extent.
+            koliop::utility::View::MDD1<const ComputeFloatType> hat_As_;
+            koliop::utility::View::MDD1<const ComputeFloatType> hat_Zs_;
+
+            // Constant, internally computed values
+
+            koliop::utility::View::MDD2<ComputeFloatType> C_j_;  // TODO(Etienne M): constant extent.
+            koliop::utility::View::MDD3<ComputeFloatType> C_jl_; // TODO(Etienne M): constant extent.
+
+            // Miscellaneous tooling
 
             ExecutionSpaceType the_execution_space_;
         };
