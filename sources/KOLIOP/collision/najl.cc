@@ -83,63 +83,142 @@ namespace koliop {
             DoComputeI(const View2D& comb_mat,
                        OrdinalType   offset_k,
                        ValueType     Xtr,
+                       ValueType     sqrtXtr,
+                       ValueType     sqrtXtr_inv,
                        Array1D       I_mat) {
 
-                static constexpr OrdinalType Xtr_pows_size = Constant::kIndexMax + 1 + 1;
-                static constexpr OrdinalType J_vec_size    = Constant::kIndexMax + 2 + 1;
+                static constexpr OrdinalType the_Xtr_pows_size = Constant::kIndexMax + 1 + 1;
+                static constexpr OrdinalType the_J_vec_size    = Constant::kIndexMax + 2 + 1;
 
-                ValueType Xtr_pows[Xtr_pows_size]; // std::pow(-Xtr, i);
-                ValueType J_vec[J_vec_size];
+                ValueType Xtr_pows[the_Xtr_pows_size]; // std::pow(-Xtr, i);
+                ValueType J_vec[the_J_vec_size];
 
                 Xtr_pows[0] = 1.0;
 
-                for(OrdinalType ind_i = 1; ind_i < Xtr_pows_size; ++ind_i) {
+                for(OrdinalType ind_i = 1; ind_i < the_Xtr_pows_size; ++ind_i) {
                     Xtr_pows[ind_i] = -Xtr * Xtr_pows[ind_i - 1];
                 }
 
-                J_vec[0] = 2.0 * (Kokkos::exp(Xtr) / Kokkos::sqrt(Xtr) - koliop::portability::MathematicalConstant<ComputeFloatType>::kSqrtPi * Kokkos::erfc(Kokkos::sqrt(Xtr)));
-                J_vec[1] = koliop::portability::MathematicalConstant<ComputeFloatType>::kSqrtPi * Kokkos::erfc(Kokkos::sqrt(Xtr));
+                const ValueType the_exp_Xtr       = Kokkos::exp(Xtr);
+                const ValueType the_erfc_sqrt_Xtr = Kokkos::erfc(sqrtXtr);
 
-                for(OrdinalType ind_k = 2; ind_k < J_vec_size; ++ind_k) {
-                    J_vec[ind_k] = (Kokkos::exp(Xtr) / Kokkos::sqrt(Xtr)) * Kokkos::abs(Xtr_pows[ind_k - 1]);
+                J_vec[0] = 2.0 * (the_exp_Xtr * sqrtXtr_inv - koliop::portability::MathematicalConstant<ValueType>::kSqrtPi * the_erfc_sqrt_Xtr);
+                J_vec[1] = koliop::portability::MathematicalConstant<ValueType>::kSqrtPi * the_erfc_sqrt_Xtr;
+
+                for(OrdinalType ind_k = 2; ind_k < the_J_vec_size; ++ind_k) {
+                    J_vec[ind_k] = (the_exp_Xtr * sqrtXtr_inv) * Kokkos::abs(Xtr_pows[ind_k - 1]);
                 }
 
-                for(OrdinalType ind_k = 2; ind_k < J_vec_size; ++ind_k) {
+                for(OrdinalType ind_k = 2; ind_k < the_J_vec_size; ++ind_k) {
                     J_vec[ind_k] += J_vec[ind_k - 1] * (static_cast<ValueType>(ind_k) - 1.5);
                 }
 
                 // Assumes I_mat is zeroed.
                 // I_mat(:) = 0.0;
 
-                for(OrdinalType ind_i = 0; ind_i < Xtr_pows_size; ++ind_i) {
+                for(OrdinalType ind_i = 0; ind_i < the_Xtr_pows_size; ++ind_i) {
                     for(OrdinalType ind_k = 0; ind_k < ind_i; ++ind_k) {
                         I_mat[ind_i] += comb_mat(ind_k, ind_i) *
                                         J_vec[ind_k - offset_k + 1] *
                                         Xtr_pows[ind_i - ind_k] *
-                                        Kokkos::exp(Xtr);
+                                        the_exp_Xtr;
                     }
                 }
             }
 
             template <typename ValueType,
-                      typename View5D,
-                      typename View4D,
                       typename View2D,
-                      typename View1D,
+                      typename View1D0,
+                      typename View1D1,
                       typename Array2D>
             KOKKOS_INLINE_FUNCTION void
-            DoComputeL(OrdinalType   the_species_extent,
-                       OrdinalType   pSpecies_id,
-                       const View2D& comb_mat,
-                       const View1D& hat_As,
-                       const View1D& hat_Zs,
-                       const View4D& n_s,
-                       const View4D& T_s,
-                       const View5D& nu_ab,
-                       Array2D       L_mat) {
-                ValueType I_mat[5 /* TODO */]{};
-                ValueType Xtr = 0.0;
-                DoComputeI<ValueType>(comb_mat, 0, Xtr, I_mat);
+            DoComputeL(OrdinalType    the_species_extent,
+                       OrdinalType    pSpecies_id,
+                       bool           collision_interspecies,
+                       const View2D&  comb_mat,
+                       const View1D0& hat_As,
+                       const View1D0& hat_Zs,
+                       const View1D1& local_n_s,
+                       const View1D1& local_T_s,
+                       ValueType      nu,
+                       ValueType      vpar2_on_Ta,
+                       Array2D        L_mat) {
+
+                const ValueType hat_Aa = hat_As(pSpecies_id);
+                const ValueType hat_Za = hat_Zs(pSpecies_id);
+
+                // Assumes L_mat is zeroed.
+                // L_mat(:,:) = 0.0;
+
+                for(OrdinalType ispeciesB = 0; ispeciesB < the_species_extent; ++ispeciesB) {
+                    if(!(collision_interspecies || pSpecies_id == ispeciesB)) {
+                        continue;
+                    }
+
+                    const ValueType hat_Ab = hat_As(ispeciesB);
+                    const ValueType hat_Zb = hat_Zs(ispeciesB);
+
+                    const ValueType coeff_L = (0.75 * koliop::portability::MathematicalConstant<ValueType>::kSqrtPi * koliop::portability::MathematicalConstant<ValueType>::kSqrt2) *
+                                              nu * (hat_Zb * hat_Zb * local_n_s(ispeciesB)) / (hat_Za * hat_Za * local_n_s(pSpecies_id));
+
+                    const ValueType vTb_on_vta_2 = (hat_Aa * local_T_s(ispeciesB)) / (hat_Ab * local_T_s(pSpecies_id));
+
+                    {
+                        const ValueType Xtr         = vpar2_on_Ta * 0.5 + (9.0 * koliop::portability::MathematicalConstant<ValueType>::kPi / 16.0) * vTb_on_vta_2;
+                        const ValueType sqrtXtr     = Kokkos::sqrt(Xtr);
+                        const ValueType sqrtXtr_inv = 1.0 / sqrtXtr;
+
+                        ValueType I_mat[Constant::kIndexMax + 1 + 1]{};
+
+                        DoComputeI(comb_mat, 0, Xtr, sqrtXtr, sqrtXtr_inv, I_mat);
+
+                        for(OrdinalType ind_i = 0; ind_i <= Constant::kIndexMax; ++ind_i) {
+                            L_mat[0][ind_i] /* += */ = coeff_L * I_mat[ind_i];
+                        }
+
+                        L_mat[1][0] /* -= */ = -coeff_L * sqrtXtr_inv;
+                    }
+                    {
+                        const ValueType Xtr         = vpar2_on_Ta * 0.5 + 2.1 * vTb_on_vta_2;
+                        const ValueType sqrtXtr     = Kokkos::sqrt(Xtr);
+                        const ValueType sqrtXtr_inv = 1.0 / sqrtXtr;
+
+                        ValueType I_mat[Constant::kIndexMax + 1 + 1]{};
+                        DoComputeI(comb_mat, 1, Xtr, sqrtXtr, sqrtXtr_inv, I_mat);
+
+                        for(OrdinalType ind_i = 0; ind_i <= Constant::kIndexMax; ++ind_i) {
+                            L_mat[2][ind_i] /* -= */ = -coeff_L * I_mat[ind_i];
+                        }
+
+                        L_mat[3][0] /* += */ = (sqrtXtr_inv * sqrtXtr_inv * sqrtXtr_inv) * (coeff_L * vpar2_on_Ta * 0.5);
+
+                        L_mat[4][0] /* += */ = (sqrtXtr_inv * sqrtXtr_inv * sqrtXtr_inv) * (coeff_L);
+                    }
+                }
+
+                L_mat[1][0] += L_mat[0][0];
+
+                for(OrdinalType ind_i = 1; ind_i <= Constant::kIndexMax; ++ind_i) {
+                    L_mat[1][ind_i] += L_mat[0][ind_i] -
+                                       L_mat[0][ind_i - 1] * static_cast<ValueType>(ind_i);
+                }
+
+                L_mat[3][0] += L_mat[2][0] * vpar2_on_Ta * 0.5 +
+                               L_mat[2][1] -
+                               L_mat[2][0];
+
+                for(OrdinalType ind_i = 1; ind_i <= Constant::kIndexMax; ++ind_i) {
+                    L_mat[3][ind_i] -= L_mat[2][ind_i - 1] * static_cast<ValueType>(ind_i) * vpar2_on_Ta * 0.5 +
+                                       L_mat[2][ind_i] * (vpar2_on_Ta * 0.5 - static_cast<ValueType>(ind_i - 1)) +
+                                       L_mat[2][ind_i + 1];
+                }
+
+                L_mat[4][0] += L_mat[2][0];
+
+                for(OrdinalType ind_i = 1; ind_i <= Constant::kIndexMax; ++ind_i) {
+                    L_mat[4][ind_i] += L_mat[2][ind_i] -
+                                       L_mat[2][ind_i - 1] * static_cast<ValueType>(ind_i);
+                }
             }
 
         } // namespace
@@ -169,19 +248,38 @@ namespace koliop {
             const auto& hat_As   = the_najl_provider.hat_As_;
             const auto& hat_Zs   = the_najl_provider.hat_Zs_;
 
-            const auto& pSpecies_id = the_najl_provider.pSpecies_id_;
+            const auto& pSpecies_id            = the_najl_provider.pSpecies_id_;
+            const auto& collision_interspecies = the_najl_provider.collision_interspecies_;
 
             const auto& the_execution_space = the_najl_provider.the_execution_space_;
 
             const auto the_kernel = KOKKOS_LAMBDA(auto ivpar, auto ir, auto itheta, auto iphi) {
-                ValueType L_mat[Constant::kIndexMax + 1 + 1][5];
+                // NOTE: Careful, L_mat is layout right
+                ValueType L_mat[5][Constant::kIndexMax + 1 + 1];
+
+                const auto local_n_s = Kokkos::subview(n_s,
+                                                       ir,
+                                                       itheta,
+                                                       iphi,
+                                                       Kokkos::ALL());
+
+                const auto local_T_s = Kokkos::subview(T_s,
+                                                       ir,
+                                                       itheta,
+                                                       iphi,
+                                                       Kokkos::ALL());
+
+                ValueType vpar2_on_Ta{};
 
                 DoComputeL<ValueType>(the_species_extent,
                                       pSpecies_id,
+                                      collision_interspecies,
                                       comb_mat,
                                       hat_As, hat_Zs,
-                                      n_s, T_s,
-                                      nu_ab, L_mat);
+                                      local_n_s, local_T_s,
+                                      nu_ab(ir, itheta, iphi, pSpecies_id, pSpecies_id),
+                                      vpar2_on_Ta,
+                                      L_mat);
             };
 
             const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<4,
@@ -203,6 +301,7 @@ namespace koliop {
         Najl::Najl(OrdinalType                                          pSpecies_id,
                    OrdinalType                                          the_vpar_extent,
                    OrdinalType                                          the_species_extent,
+                   bool                                                 collision_interspecies,
                    const Flo64*                                         comb_mat,
                    koliop::utility::View::MDD1<const ComputeFloatType>& hat_As,
                    koliop::utility::View::MDD1<const ComputeFloatType>& hat_Zs,
@@ -210,6 +309,7 @@ namespace koliop {
             : pSpecies_id_{pSpecies_id}
             , the_vpar_extent_{the_vpar_extent}
             , the_species_extent_{the_species_extent}
+            , collision_interspecies_{collision_interspecies}
 
             , comb_mat_{koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL2<const Flo64>,
                                                              koliop::utility::View::MDD2>(comb_mat, "comb_mat_", 2 * Constant::kMaximumLaguerrePolynomialDegree, 2 * Constant::kMaximumLaguerrePolynomialDegree)}

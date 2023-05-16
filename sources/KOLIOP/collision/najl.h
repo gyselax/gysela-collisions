@@ -24,6 +24,7 @@ namespace koliop {
             Najl(OrdinalType                                          pSpecies_id,
                  OrdinalType                                          the_vpar_extent,
                  OrdinalType                                          the_species_extent,
+                 bool                                                 collision_interspecies,
                  const Flo64*                                         comb_mat,
                  koliop::utility::View::MDD1<const ComputeFloatType>& hat_As,
                  koliop::utility::View::MDD1<const ComputeFloatType>& hat_Zs,
@@ -46,6 +47,7 @@ namespace koliop {
             OrdinalType pSpecies_id_;
             OrdinalType the_vpar_extent_;
             OrdinalType the_species_extent_;
+            bool        collision_interspecies_;
 
             koliop::utility::View::MDD2<const ComputeFloatType> comb_mat_; // TODO(Etienne M): constant extent.
             koliop::utility::View::MDD1<const ComputeFloatType> hat_As_;
