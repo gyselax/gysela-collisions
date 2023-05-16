@@ -173,10 +173,10 @@ namespace koliop {
                         DoComputeI(comb_mat, 0, Xtr, sqrtXtr, sqrtXtr_inv, I_mat);
 
                         for(OrdinalType ind_i = 0; ind_i <= Constant::kIndexMax; ++ind_i) {
-                            L_mat[0][ind_i] /* += */ = coeff_L * I_mat[ind_i];
+                            L_mat[0][ind_i] += coeff_L * I_mat[ind_i];
                         }
 
-                        L_mat[1][0] /* -= */ = -coeff_L * sqrtXtr_inv;
+                        L_mat[1][0] -= coeff_L * sqrtXtr_inv;
                     }
                     {
                         const ValueType Xtr         = vpar2_on_Ta * 0.5 + 2.1 * vTb_on_vta_2;
@@ -187,12 +187,11 @@ namespace koliop {
                         DoComputeI(comb_mat, 1, Xtr, sqrtXtr, sqrtXtr_inv, I_mat);
 
                         for(OrdinalType ind_i = 0; ind_i <= Constant::kIndexMax; ++ind_i) {
-                            L_mat[2][ind_i] /* -= */ = -coeff_L * I_mat[ind_i];
+                            L_mat[2][ind_i] -= coeff_L * I_mat[ind_i];
                         }
 
-                        L_mat[3][0] /* += */ = (sqrtXtr_inv * sqrtXtr_inv * sqrtXtr_inv) * (coeff_L * vpar2_on_Ta * 0.5);
-
-                        L_mat[4][0] /* += */ = (sqrtXtr_inv * sqrtXtr_inv * sqrtXtr_inv) * (coeff_L);
+                        L_mat[3][0] += (sqrtXtr_inv * sqrtXtr_inv * sqrtXtr_inv) * (coeff_L * vpar2_on_Ta * 0.5);
+                        L_mat[4][0] += (sqrtXtr_inv * sqrtXtr_inv * sqrtXtr_inv) * (coeff_L);
                     }
                 }
 
