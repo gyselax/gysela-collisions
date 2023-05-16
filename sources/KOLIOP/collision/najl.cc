@@ -121,10 +121,15 @@ namespace koliop {
             }
 
             template <typename ValueType,
+                      typename View5D,
+                      typename View4D,
                       typename View2D,
                       typename Array2D>
             KOKKOS_INLINE_FUNCTION void
             DoComputeL(const View2D& comb_mat,
+                       const View4D& n_s,
+                       const View4D& T_s,
+                       const View5D& nu_ab,
                        Array2D       L_mat) {
                 ValueType I_mat[5 /* TODO */]{};
                 ValueType Xtr = 0.0;
@@ -160,7 +165,9 @@ namespace koliop {
             const auto the_kernel = KOKKOS_LAMBDA(auto ivpar, auto ir, auto itheta, auto iphi) {
                 ValueType L_mat[Constant::kIndexMax + 1 + 1][5];
 
-                DoComputeL<ValueType>(comb_mat, L_mat);
+                DoComputeL<ValueType>(comb_mat,
+                                      n_s, T_s,
+                                      nu_ab, L_mat);
             };
 
             const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<4,
