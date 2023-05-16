@@ -234,9 +234,9 @@ namespace koliop {
 
                 // TODO(Etienne M): Can we simplify that ?
 
-                // TODO(Etienne M): The Najl's matrix indexing is transposed. Careful
-                // with N(k, j, l) which is how it is stored and N(k, l, j) how it
-                // is used when building the matrix T.
+                // TODO(Etienne M): The Najl's matrix indexing is transposed.
+                // Careful with N(k, j, l) which is how it is stored and
+                // N(k, l, j) how it is used when building the matrix T.
 
                 the_rhs(the_batch_index, ivpar, ipol, the_batch_element_index) -= dt / (5.0 * Ta) *
                                                                                   ((5.0 * U_para - 3.0 * q_para_on_naTa) * (vpar_tmp * the_Najl(the_batch_index, ivpar, 0, 0, ipol, the_batch_element_index) + the_Najl(the_batch_index, ivpar, 1, 0, ipol, the_batch_element_index)) +

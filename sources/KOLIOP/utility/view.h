@@ -13,8 +13,8 @@ namespace koliop {
         ////////////////////////////////////////////////////////////////////////
 
         /// TODO(Etienne M): Cleanup that stuff.
-        /// View[U|M][H|D][L|R|D][1-9]
-        /// Unmanaged/Managed | Host or Default (device or host) | Left or Right layout | Dimension
+        /// View[U|M]               [H|D]                              [L|R|D]                [1-8]
+        ///      Unmanaged/Managed | Host or Default (device or host) | Left or Right layout | Dimension
         ///
         struct View {
         public:
@@ -67,6 +67,8 @@ namespace koliop {
             using MHL = Kokkos::View<Extent, Kokkos::LayoutLeft, Kokkos::DefaultHostExecutionSpace::memory_space>;
             template <typename T>
             using MHL1 = MHL<T*>;
+            template <typename T>
+            using MHL2 = MHL<T**>;
         };
 
     } // namespace utility

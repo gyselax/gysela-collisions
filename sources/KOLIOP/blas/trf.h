@@ -54,7 +54,7 @@ namespace koliop {
         /// ScalarMatrixType{}(5, 4, 2, 2, 1, 0)
         /// represents the first (0) batch element of the second (1) column of
         /// the third (2) row of the upper (2) diagonal block at the fifth row
-        /// (4) of batch sixth batch.
+        /// (4) of the sixth batch (5).
         ///
         /// The matrix should be in layout right and we justify that due to a
         /// limitation in Kokkos for representing constant extent, indeed they

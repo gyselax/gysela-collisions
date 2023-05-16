@@ -13,10 +13,29 @@ namespace koliop {
         // Najl definition
         ////////////////////////////////////////////////////////////////////////
 
+        /// Computes the Najl coefficients.
+        /// The N0 coefficients are stored in a
+        /// ScalarBlockTridiagonalByBlockMatrixType. See
+        /// BatchedBlockTridiagonalByBlockTRF for the layout. Note that the Najl
+        /// coefficients are accessed by selecting the proper diagonal of the
+        /// matrix representation.
+        ///
+        /// For instance:
+        /// ScalarMatrixType{}(5, 4, 2, 2, 1, 0)
+        /// represents the first (0) batch element l=1 and j=2
+        /// of the N2 (2) coefficient block at the fifth vpar
+        /// (4) of the sixth batch (5).
+        /// And similary:
+        /// ScalarMatrixType{}(5, 4, 1, 2, 1, 0) is the same thing but for N1.
+        /// ScalarMatrixType{}(5, 4, 0, 2, 1, 0) is the same thing but for N0.
+        ///
         class Najl {
         public:
             using ExecutionSpaceType = typename Constant::DeviceExecutionSpaceType;
 
+            /// The Najl coefficients are stored in a data structure similar to
+            /// how the one used for the matrix in Operator::Apply().
+            ///
             using ScalarBlockTridiagonalByBlockMatrixType = Constant::ScalarBlockTridiagonalByBlockMatrixType;
             using VectorBlockTridiagonalByBlockMatrixType = Constant::VectorBlockTridiagonalByBlockMatrixType;
 
@@ -28,6 +47,7 @@ namespace koliop {
                  const Flo64*                                         comb_mat,
                  koliop::utility::View::MDD1<const ComputeFloatType>& hat_As,
                  koliop::utility::View::MDD1<const ComputeFloatType>& hat_Zs,
+                 koliop::utility::View::MDD1<const ComputeFloatType>& vparg,
                  ExecutionSpaceType                                   an_execution_space);
 
             void Compute(OrdinalType                                          the_block_first_r,
@@ -52,10 +72,10 @@ namespace koliop {
             koliop::utility::View::MDD2<const ComputeFloatType> comb_mat_; // TODO(Etienne M): constant extent.
             koliop::utility::View::MDD1<const ComputeFloatType> hat_As_;
             koliop::utility::View::MDD1<const ComputeFloatType> hat_Zs_;
+            koliop::utility::View::MDD1<const ComputeFloatType> vparg_;
 
             // Constant, internally computed values
 
-            koliop::utility::View::MDD2<ComputeFloatType> C_j_;  // TODO(Etienne M): constant extent.
             koliop::utility::View::MDD3<ComputeFloatType> C_jl_; // TODO(Etienne M): constant extent.
 
             // Miscellaneous tooling

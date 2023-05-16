@@ -9,11 +9,31 @@
 namespace koliop {
     namespace collision {
 
-        template <typename View3D,
-                  typename MirrorView2D>
+        template <typename View3D>
         static inline void
-        DoPrepareCjl(const MirrorView2D& a_host_visible_C_j,
-                     View3D&             C_jl) {
+        DoPrepareCjl(View3D& C_jl) {
+
+            // TODO(Etienne M): This small matrix is know at compile time !
+
+            // a_host_visible_C_j is zero initialized.
+            koliop::utility::View::MHL2<ComputeFloatType> a_host_visible_C_j{Kokkos::view_alloc("C_j"),
+                                                                             static_cast<std::size_t>(Constant::kMaximumLaguerrePolynomialDegree),
+                                                                             static_cast<std::size_t>(Constant::kMaximumLaguerrePolynomialDegree)};
+
+            for(OrdinalType j = 0; j < Constant::kMaximumLaguerrePolynomialDegree; ++j) {
+                a_host_visible_C_j(0, j) = 1.0;
+                a_host_visible_C_j(1, j) = static_cast<ComputeFloatType>(-static_cast<int64_t>(j));
+            }
+
+            if(Constant::kMaximumLaguerrePolynomialDegree > 2) {
+                a_host_visible_C_j(2, 2) = 0.5;
+                if(Constant::kMaximumLaguerrePolynomialDegree > 3) {
+                    // NOTE: Assuming Constant::kMaximumLaguerrePolynomialDegree = 3, this
+                    // is never evaluated.
+                    a_host_visible_C_j(2, 3) = 1.5;
+                    a_host_visible_C_j(3, 3) = -1.0 / 6.0;
+                }
+            }
 
             // a_host_visible_C_jl is zero initialized.
             auto a_host_visible_C_jl = Kokkos::create_mirror_view(C_jl);
@@ -39,37 +59,6 @@ namespace koliop {
             }
 
             koliop::utility::Copy::Shallow(a_host_visible_C_jl, C_jl);
-        }
-
-        template <typename View3D,
-                  typename View2D>
-        static inline void
-        DoPrepareCj_Cjl(View2D& C_j,
-                        View3D& C_jl) {
-
-            // TODO(Etienne M): This small matrix is know at compile time !
-
-            // a_host_visible_C_j is zero initialized.
-            auto a_host_visible_C_j = Kokkos::create_mirror_view(C_j);
-
-            for(OrdinalType j = 0; j < Constant::kMaximumLaguerrePolynomialDegree; ++j) {
-                a_host_visible_C_j(0, j) = 1.0;
-                a_host_visible_C_j(1, j) = static_cast<ComputeFloatType>(-static_cast<int64_t>(j));
-            }
-
-            if(Constant::kMaximumLaguerrePolynomialDegree > 2) {
-                a_host_visible_C_j(2, 2) = 0.5;
-                if(Constant::kMaximumLaguerrePolynomialDegree > 3) {
-                    // NOTE: Assuming Constant::kMaximumLaguerrePolynomialDegree = 3, this
-                    // is never evaluated.
-                    a_host_visible_C_j(2, 3) = 1.5;
-                    a_host_visible_C_j(3, 3) = -1.0 / 6.0;
-                }
-            }
-
-            koliop::utility::Copy::Shallow(a_host_visible_C_j, C_j);
-
-            DoPrepareCjl(a_host_visible_C_j, C_jl);
         }
 
         namespace {
@@ -246,6 +235,9 @@ namespace koliop {
             const auto& comb_mat = the_najl_provider.comb_mat_;
             const auto& hat_As   = the_najl_provider.hat_As_;
             const auto& hat_Zs   = the_najl_provider.hat_Zs_;
+            const auto& vparg    = the_najl_provider.vparg_;
+
+            const auto& C_jl = the_najl_provider.C_jl_;
 
             const auto& pSpecies_id            = the_najl_provider.pSpecies_id_;
             const auto& collision_interspecies = the_najl_provider.collision_interspecies_;
@@ -253,8 +245,43 @@ namespace koliop {
             const auto& the_execution_space = the_najl_provider.the_execution_space_;
 
             const auto the_kernel = KOKKOS_LAMBDA(auto ivpar, auto ir, auto itheta, auto iphi) {
-                // NOTE: Careful, L_mat is layout right
-                ValueType L_mat[5][Constant::kIndexMax + 1 + 1];
+
+                // NOTE: kBlockExtentXXX are constant, the compiler can replace
+                // the % with faster instructions.
+                const OrdinalType the_block_local_index_r     = ir % Constant::kBlockExtentR;
+                const OrdinalType the_block_local_index_theta = itheta % Constant::kBlockExtentTheta;
+                const OrdinalType the_block_local_index_phi   = iphi % Constant::kBlockExtentPhi;
+
+                const OffsetType the_flattened_index = Constant::kBlockExtentR * Constant::kBlockExtentTheta * the_block_local_index_phi +
+                                                       Constant::kBlockExtentR * the_block_local_index_theta +
+                                                       the_block_local_index_r;
+
+                const OrdinalType the_batch_index         = the_flattened_index / Constant::BatchTraitsType::kBatchSize;
+                const OrdinalType the_batch_element_index = the_flattened_index % Constant::BatchTraitsType::kBatchSize;
+
+                auto local_N0 = Kokkos::subview(the_Najl,
+                                                the_batch_index,
+                                                ivpar,
+                                                0,
+                                                Kokkos::ALL(), // j
+                                                Kokkos::ALL(), // l
+                                                the_batch_element_index);
+
+                auto local_N1 = Kokkos::subview(the_Najl,
+                                                the_batch_index,
+                                                ivpar,
+                                                1,
+                                                Kokkos::ALL(), // j
+                                                Kokkos::ALL(), // l
+                                                the_batch_element_index);
+
+                auto local_N2 = Kokkos::subview(the_Najl,
+                                                the_batch_index,
+                                                ivpar,
+                                                2,
+                                                Kokkos::ALL(), // j
+                                                Kokkos::ALL(), // l
+                                                the_batch_element_index);
 
                 const auto local_n_s = Kokkos::subview(n_s,
                                                        ir,
@@ -268,7 +295,10 @@ namespace koliop {
                                                        iphi,
                                                        Kokkos::ALL());
 
-                ValueType vpar2_on_Ta{};
+                const ValueType vpar2_on_Ta = vparg(ivpar) * vparg(ivpar) / local_T_s(pSpecies_id);
+
+                // NOTE: Careful, L_mat is layout right
+                ValueType L_mat[5][Constant::kIndexMax + 1 + 1];
 
                 DoComputeL<ValueType>(the_species_extent,
                                       pSpecies_id,
@@ -279,6 +309,64 @@ namespace koliop {
                                       nu_ab(ir, itheta, iphi, pSpecies_id, pSpecies_id),
                                       vpar2_on_Ta,
                                       L_mat);
+
+                for(OrdinalType ind_i = 0; ind_i <= Constant::kIndexMax; ++ind_i) {
+                    ValueType N_coeff = L_mat[1][ind_i] * 2.0 +
+                                        L_mat[2][ind_i] * (3.0 - vpar2_on_Ta) +
+                                        L_mat[4][ind_i] * (2.0 + vpar2_on_Ta);
+
+                    if(ind_i != Constant::kIndexMax) {
+                        for(OrdinalType l = 0; l < Constant::kMaximumLaguerrePolynomialDegree; ++l) {
+                            for(OrdinalType j = 1; j < Constant::kMaximumLaguerrePolynomialDegree; ++j) {
+                                local_N0(j, l) -= static_cast<ValueType>(j) * N_coeff * C_jl(ind_i, j - 1, l);
+                            }
+                        }
+                    }
+
+                    N_coeff -= L_mat[0][ind_i] * 2.0 -
+                               L_mat[2][ind_i + 1] * 2.0;
+
+                    for(OrdinalType l = 0; l < Constant::kMaximumLaguerrePolynomialDegree; ++l) {
+                        for(OrdinalType j = 1; j < Constant::kMaximumLaguerrePolynomialDegree; ++j) {
+                            local_N0(j, l) += static_cast<ValueType>(j) * N_coeff * C_jl(ind_i, j, l);
+                        }
+                    }
+
+                    N_coeff = -L_mat[0][ind_i] +
+                              L_mat[1][ind_i] -
+                              L_mat[2][ind_i + 1] +
+                              L_mat[2][ind_i] * (2.0 - vpar2_on_Ta * 0.5) +
+                              L_mat[3][ind_i];
+
+                    if(ind_i != Constant::kIndexMax) {
+                        for(OrdinalType l = 0; l < Constant::kMaximumLaguerrePolynomialDegree; ++l) {
+                            local_N1(0, l) += vparg(ivpar) * C_jl(ind_i, 0, l) * N_coeff;
+                            for(OrdinalType j = 1; j < Constant::kMaximumLaguerrePolynomialDegree; ++j) {
+                                local_N1(j, l) += vparg(ivpar) * (C_jl(ind_i, j, l) * N_coeff +
+                                                                  2.0 * static_cast<ValueType>(j) * L_mat[2][ind_i] * (C_jl(ind_i, j, l) - C_jl(ind_i, j - 1, l)));
+                            }
+                        }
+
+                    } else {
+                        for(OrdinalType l = 0; l < Constant::kMaximumLaguerrePolynomialDegree; ++l) {
+                            for(OrdinalType j = 0; j < Constant::kMaximumLaguerrePolynomialDegree; ++j) {
+                                local_N1(j, l) += vparg(ivpar) *
+                                                  C_jl(Constant::kIndexMax, j, l) *
+                                                  (N_coeff +
+                                                   2.0 * static_cast<ValueType>(j) * L_mat[2][Constant::kIndexMax]);
+                            }
+                        }
+                    }
+
+                    N_coeff = local_T_s(pSpecies_id) * (L_mat[0][ind_i] +
+                                                        L_mat[2][ind_i] * vpar2_on_Ta * 0.5);
+
+                    for(OrdinalType l = 0; l < Constant::kMaximumLaguerrePolynomialDegree; ++l) {
+                        for(OrdinalType j = 0; j < Constant::kMaximumLaguerrePolynomialDegree; ++j) {
+                            local_N2(j, l) += C_jl(ind_i, j, l) * N_coeff;
+                        }
+                    }
+                }
             };
 
             const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<4,
@@ -304,6 +392,7 @@ namespace koliop {
                    const Flo64*                                         comb_mat,
                    koliop::utility::View::MDD1<const ComputeFloatType>& hat_As,
                    koliop::utility::View::MDD1<const ComputeFloatType>& hat_Zs,
+                   koliop::utility::View::MDD1<const ComputeFloatType>& vparg,
                    ExecutionSpaceType                                   an_execution_space)
             : pSpecies_id_{pSpecies_id}
             , the_vpar_extent_{the_vpar_extent}
@@ -314,9 +403,8 @@ namespace koliop {
                                                              koliop::utility::View::MDD2>(comb_mat, "comb_mat_", 2 * Constant::kMaximumLaguerrePolynomialDegree, 2 * Constant::kMaximumLaguerrePolynomialDegree)}
             , hat_As_{hat_As}
             , hat_Zs_{hat_Zs}
-            , C_j_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "C_j_"),
-                   static_cast<std::size_t>(Constant::kMaximumLaguerrePolynomialDegree),
-                   static_cast<std::size_t>(Constant::kMaximumLaguerrePolynomialDegree)}
+            , vparg_{vparg}
+
             , C_jl_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "C_jl_"),
                     static_cast<std::size_t>(2 * Constant::kMaximumLaguerrePolynomialDegree - 1),
                     static_cast<std::size_t>(Constant::kMaximumLaguerrePolynomialDegree),
@@ -326,7 +414,7 @@ namespace koliop {
 
             // TODO(Etienne M): Observe how the C_j_ and C_jl_ values are
             // constant. they could be compile time computed or hardcoded.
-            DoPrepareCj_Cjl(C_j_, C_jl_);
+            DoPrepareCjl(C_jl_);
         }
 
         void Najl::Compute(OrdinalType                                          the_block_first_r,
