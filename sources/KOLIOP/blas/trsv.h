@@ -3,6 +3,10 @@
 #ifndef KOLIOP_BLAS_TRSV_H
 #define KOLIOP_BLAS_TRSV_H
 
+#include <KokkosBatched_Trsv_Decl.hpp>
+#include <KokkosBatched_Trsv_Serial_Impl.hpp>
+#include <KokkosBlas2_gemv.hpp>
+
 #include "KOLIOP/blas/kind.h"
 
 namespace koliop {
@@ -37,6 +41,23 @@ namespace koliop {
                                                                                 kSmallBlockExtent>;
 
         protected:
+            // using ConcurrencyPolicy = KokkosBatched::Mode::Serial;
+            using CachingPolicy = KokkosBatched::Algo::Level3::Unblocked;
+
+            using TRSVLower = KokkosBatched::SerialTrsv<KokkosBatched::Uplo::Lower,
+                                                        KokkosBatched::Trans::NoTranspose,
+                                                        KokkosBatched::Diag::Unit,
+                                                        CachingPolicy>;
+
+            using TRSVUpper = KokkosBatched::SerialTrsv<KokkosBatched::Uplo::Upper,
+                                                        KokkosBatched::Trans::NoTranspose,
+                                                        KokkosBatched::Diag::NonUnit,
+                                                        CachingPolicy>;
+
+            using GEMV = KokkosBatched::SerialGemm<KokkosBatched::Trans::NoTranspose,
+                                                   KokkosBatched::Trans::NoTranspose,
+                                                   CachingPolicy>;
+
         public:
             BatchedBlockTridiagonalByBlockTRSV(ExecutionSpaceType an_execution_space);
 
@@ -113,11 +134,66 @@ namespace koliop {
                                                                 Kokkos::ALL(), // kSmallBlockExtent
                                                                 the_batch_element_index);
 
+                // Solves Mx = vec, overwriting vec with x.
+
                 // M =
                 // B_0 C_0       0
                 // A_1 B_1 C_1
                 //     A_. A_. B_.
                 // 0       A_n B_n
+
+                // the_rhs =
+                // b_0
+                // b_1
+                // b_.
+                // b_n
+
+                // B_n = L x U
+                // With kSmallBlockExtent == 3
+                // L =
+                // 1   0
+                // a 1
+                // b c 1
+
+                // U =
+                // a b c
+                //   d e
+                // 0   f
+
+                // b_n =
+                // a
+                // b
+                // c
+
+                // Applying the naming above, we have:
+                auto B      = Kokkos::subview(the_matrix_batch_element, 0, 1, Kokkos::ALL(), Kokkos::ALL());
+                auto A_next = Kokkos::subview(the_matrix_batch_element, 0 /* Putting 1 here is illegal ? */, 0, Kokkos::ALL(), Kokkos::ALL());
+
+                auto b      = Kokkos::subview(the_vector_batch_element, 0, Kokkos::ALL());
+                auto b_next = Kokkos::subview(the_vector_batch_element, 0 /* Putting 1 here is illegal ? */, Kokkos::ALL());
+
+                for(OrdinalType the_small_block_index = 0;
+                    the_small_block_index < (kBigBlockExtent - 1);
+                    ++the_small_block_index) {
+
+                    // TODO(Etienne M): Recreate view or assign ? Which is
+                    // faster ?
+
+                    B.assign_data(&the_matrix_batch_element(the_small_block_index, 1, 0, 0));
+
+                    TRSVLower::invoke(1.0, B, b); // Solve: B_lower * x = b, x is put into b
+
+                    A_next.assign_data(&the_matrix_batch_element(the_small_block_index + 1, 0, 0, 0));
+                    b_next.assign_data(&the_vector_batch_element(the_small_block_index + 1, 0));
+
+                    GEMV::invoke(-1.0, A_next, b, 1.0, b_next); // b_next = 1.0 * b_next + -1.0 * A_next * b
+
+                    b = b_next;
+                }
+
+                B.assign_data(&the_matrix_batch_element(kBigBlockExtent - 1, 1, 0, 0));
+
+                TRSVLower::invoke(1.0, B, b);
             };
 
             const auto a_policy = Kokkos::MDRangePolicy<ExecutionSpaceType,

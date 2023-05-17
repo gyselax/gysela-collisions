@@ -253,7 +253,7 @@ namespace koliop {
                         LU::invoke(B);                              // B = L+U-I
                         TRSMLower::invoke(1.0, B, C);               // Solve: B_lower * X = C, X is put into C
                         TRSMUpper::invoke(1.0, B, A_next);          // Solve: B_upper * X = A_next, X is put into A_next
-                        GEMM::invoke(-1.0, A_next, C, 1.0, B_next); // B_next = 1.0 * B_next + -1 * A_next * C
+                        GEMM::invoke(-1.0, A_next, C, 1.0, B_next); // B_next = 1.0 * B_next + -1.0 * A_next * C
                     }
 
                     KokkosBatched::SerialLU<CachingPolicy>::invoke(B_next);
