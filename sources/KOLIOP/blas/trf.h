@@ -116,7 +116,8 @@ namespace koliop {
         public:
             using BatchTraitsType = BatchTraits;
 
-            using ValueType          = typename BatchTraitsType::ValueType;
+            using ValueType = typename BatchTraitsType::ValueType;
+
             using ExecutionSpaceType = typename BatchTraitsType::ExecutionSpaceType;
 
             using MatrixKindType = kind::matrix::BatchedBlockTridiagonalByBlock<BatchTraitsType,
@@ -211,25 +212,21 @@ namespace koliop {
 
             const auto the_kernel = KOKKOS_LAMBDA(auto the_batch_element_index, auto the_batch_index) {
 
-                const auto the_batch_element = Kokkos::subview(the_A_matrix_view,
-                                                               the_batch_index,
-                                                               // TODO(Etienne M): These ALL() are constant, should we
-                                                               // hardcode them to facilitate the compiler's work ?
-                                                               Kokkos::ALL(), // kBigBlockExtent
-                                                               Kokkos::ALL(), // kDiagonalCount
-                                                               Kokkos::ALL(), // kSmallBlockExtent
-                                                               Kokkos::ALL(), // kSmallBlockExtent
-                                                               the_batch_element_index);
+                auto the_batch_element = Kokkos::subview(the_A_matrix_view,
+                                                         the_batch_index,
+                                                         // TODO(Etienne M): These ALL() are constant, should we
+                                                         // hardcode them to facilitate the compiler's work ?
+                                                         Kokkos::ALL(), // kBigBlockExtent
+                                                         Kokkos::ALL(), // kDiagonalCount
+                                                         Kokkos::ALL(), // kSmallBlockExtent
+                                                         Kokkos::ALL(), // kSmallBlockExtent
+                                                         the_batch_element_index);
 
-                // NOTE: This layout is more elegant but less Gysela friendly.
-                // It is less intuitive and does not match the vpar representing
-                // rows.
-                //
                 // M =
-                // A_0 B_0       0
-                // C_0 A_1 B_1
-                //     C_1 A_. B_.
-                // 0       C_. A_n
+                // B_0 C_0       0
+                // A_1 B_1 C_1
+                //     A_. A_. B_.
+                // 0       A_n B_n
 
                 // Applying the naming above, we have:
                 auto B = Kokkos::subview(the_batch_element, 0, 1, Kokkos::ALL(), Kokkos::ALL());

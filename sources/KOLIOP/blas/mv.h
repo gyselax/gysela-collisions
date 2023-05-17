@@ -21,7 +21,8 @@ namespace koliop {
         public:
             using BatchTraitsType = BatchTraits;
 
-            using ValueType          = typename BatchTraitsType::ValueType;
+            using ValueType = typename BatchTraitsType::ValueType;
+
             using ExecutionSpaceType = typename BatchTraitsType::ExecutionSpaceType;
 
             using VectorKindType = kind::vector::BatchedBlockByBlock<BatchTraitsType,

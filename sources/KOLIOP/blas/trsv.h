@@ -26,11 +26,13 @@ namespace koliop {
         public:
             using BatchTraitsType = BatchTraits;
 
-            using ValueType          = typename BatchTraitsType::ValueType;
+            using ValueType = typename BatchTraitsType::ValueType;
+
             using ExecutionSpaceType = typename BatchTraitsType::ExecutionSpaceType;
 
             using VectorKindType = kind::vector::BatchedBlockByBlock<BatchTraitsType,
                                                                      kSmallBlockExtent>;
+
             using MatrixKindType = kind::matrix::BatchedBlockTridiagonalByBlock<BatchTraitsType,
                                                                                 kSmallBlockExtent>;
 
@@ -72,6 +74,7 @@ namespace koliop {
                                                                           ValueType*       the_rhs) const {
 
             KOLIOP_ASSERT(the_A_matrix != nullptr);
+            KOLIOP_ASSERT(the_rhs != nullptr);
             // the_A_matrix_extent must be divisible by
             // BatchTraitsType::kBatchSize. Else we need padding.
             KOLIOP_ASSERT(the_A_matrix_extent % BatchTraitsType::kBatchSize == 0);
@@ -86,7 +89,35 @@ namespace koliop {
                                                                        static_cast<std::size_t>(kBatchCount),
                                                                        static_cast<std::size_t>(kBigBlockExtent)};
 
-            const auto the_kernel = KOKKOS_LAMBDA(auto the_batch_element_index, auto the_batch_index){
+            typename VectorKindType::VectorType the_rhs_vector_view{reinterpret_cast<typename BatchTraitsType::ThreadVectorType*>(the_rhs),
+                                                                    static_cast<std::size_t>(kBatchCount),
+                                                                    static_cast<std::size_t>(kBigBlockExtent)};
+
+            const auto the_kernel = KOKKOS_LAMBDA(auto the_batch_element_index, auto the_batch_index) {
+
+                auto the_matrix_batch_element = Kokkos::subview(the_A_matrix_view,
+                                                                the_batch_index,
+                                                                // TODO(Etienne M): These ALL() are constant, should we
+                                                                // hardcode them to facilitate the compiler's work ?
+                                                                Kokkos::ALL(), // kBigBlockExtent
+                                                                Kokkos::ALL(), // kDiagonalCount
+                                                                Kokkos::ALL(), // kSmallBlockExtent
+                                                                Kokkos::ALL(), // kSmallBlockExtent
+                                                                the_batch_element_index);
+
+                auto the_vector_batch_element = Kokkos::subview(the_rhs_vector_view,
+                                                                the_batch_index,
+                                                                // TODO(Etienne M): These ALL() are constant, should we
+                                                                // hardcode them to facilitate the compiler's work ?
+                                                                Kokkos::ALL(), // kBigBlockExtent
+                                                                Kokkos::ALL(), // kSmallBlockExtent
+                                                                the_batch_element_index);
+
+                // M =
+                // B_0 C_0       0
+                // A_1 B_1 C_1
+                //     A_. A_. B_.
+                // 0       A_n B_n
             };
 
             const auto a_policy = Kokkos::MDRangePolicy<ExecutionSpaceType,

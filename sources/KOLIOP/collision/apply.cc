@@ -347,7 +347,6 @@ namespace koliop {
             const auto& the_r_extent       = an_operator.the_r_extent_;
             const auto& the_theta_extent   = an_operator.the_theta_extent_;
             const auto& the_phi_extent     = an_operator.the_phi_extent_;
-            const auto& the_species_extent = an_operator.the_species_extent_;
 
             const ComputeFloatType& dt = an_operator.dt_;
             // TODO(Etienne M): dvpar should be part of the vpar sampler.
@@ -370,23 +369,9 @@ namespace koliop {
             // ComputeFloatType *[Constant::kFlattenedBlockExtent].
 
             // TODO(Etienne M): couldn't we remove mask_coll. Do redundant
-            // computation at the benefit of leaner algorithms.
+            // computation at the benefit of leaner algorithms ?
             koliop::utility::View::MDD2<bool> mask_coll{Kokkos::view_alloc(Kokkos::WithoutInitializing, "mask_coll"),
                                                         Constant::kBlockExtentR, Constant::kBlockExtentTheta};
-
-            // TODO(Etienne M): Remove the *1D* n, T U Nu etc.
-            // Then build a matrix builder which samples the matrix returning
-            // the value which we can then cache and use in
-            // the_differential_operator and the_rhs. The builder produces the
-            // dt/4*T piece of matrix.
-            // mask_coll should also be obtained on the fly.
-
-            koliop::utility::View::MDD2<ComputeFloatType> n1d_s{Kokkos::view_alloc(Kokkos::WithoutInitializing, "n1d_s"),
-                                                                static_cast<std::size_t>(Constant::kFlattenedBlockExtent), static_cast<std::size_t>(the_species_extent)};
-            koliop::utility::View::MDD2<ComputeFloatType> T1d_s{Kokkos::view_alloc(Kokkos::WithoutInitializing, "T1d_s"),
-                                                                static_cast<std::size_t>(Constant::kFlattenedBlockExtent), static_cast<std::size_t>(the_species_extent)};
-            koliop::utility::View::MDD1<ComputeFloatType> nu1d{Kokkos::view_alloc(Kokkos::WithoutInitializing, "nu1d"),
-                                                               static_cast<std::size_t>(Constant::kFlattenedBlockExtent)};
 
             // TODO(Etienne M): Storing the Najl cost as much as the matrix ! We
             // should try to compute them on the fly so we can have larger block
