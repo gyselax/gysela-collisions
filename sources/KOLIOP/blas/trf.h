@@ -10,7 +10,7 @@
 #include <KokkosBatched_Trsm_Decl.hpp>
 #include <KokkosBatched_Trsm_Serial_Impl.hpp>
 
-#include "KOLIOP/internal/configuration.h"
+#include "KOLIOP/blas/kind.h"
 
 namespace koliop {
     namespace blas {
@@ -119,29 +119,8 @@ namespace koliop {
             using ValueType          = typename BatchTraitsType::ValueType;
             using ExecutionSpaceType = typename BatchTraitsType::ExecutionSpaceType;
 
-        public:
-            /// We could make this more general but for now the code is assuming
-            /// this is fixed to 3.
-            static inline constexpr OrdinalType kDiagonalCount = 3;
-
-            using ScalarMatrixType = Kokkos::View<ValueType** [kDiagonalCount][kSmallBlockExtent][kSmallBlockExtent][BatchTraitsType::kBatchSize],
-                                                  Kokkos::LayoutRight,
-                                                  ExecutionSpaceType>;
-
-            using ScalarVectorType = Kokkos::View<ValueType** [kSmallBlockExtent][BatchTraitsType::kBatchSize],
-                                                  Kokkos::LayoutRight,
-                                                  ExecutionSpaceType>;
-
-            /// The batch count did not changed compared to ScalarMatrixType
-            /// but the batch potentially gets subdivided in vectors.
-            /// NOTE: We changed the View's type.
-            using VectorMatrixType = Kokkos::View<typename BatchTraitsType::ThreadVectorType** [kDiagonalCount][kSmallBlockExtent][kSmallBlockExtent][BatchTraitsType::kVectorPerBatch],
-                                                  Kokkos::LayoutRight,
-                                                  ExecutionSpaceType>;
-
-            using VectorVectorType = Kokkos::View<typename BatchTraitsType::ThreadVectorType** [kSmallBlockExtent][BatchTraitsType::kVectorPerBatch],
-                                                  Kokkos::LayoutRight,
-                                                  ExecutionSpaceType>;
+            using MatrixKindType = kind::matrix::BatchedBlockTridiagonalByBlock<BatchTraitsType,
+                                                                                kSmallBlockExtent>;
 
         protected:
             // using ConcurrencyPolicy = KokkosBatched::Mode::Serial;
@@ -180,22 +159,6 @@ namespace koliop {
                            OrdinalType the_A_matrix_extent,
                            OrdinalType the_M_matrix_extent) const;
 
-            /// @brief TRSV
-            /// @param the_A_matrix Must respect the format described in the
-            /// BatchedBlockTridiagonalByBlockTRF notes.
-            /// @param the_A_matrix_extent The number of independent block
-            /// diagonal problem. Must be a multiple of
-            /// BatchTraitsType::kBatchSize.
-            /// @param the_M_matrix_extent The number extent of the block
-            /// diagonal problem.
-            /// @param the_rhs A vector of the_A_matrix_extent *
-            /// the_M_matrix_extent * kSmallBlockExtent rows. for the format,
-            /// see above.
-            void SolveVector(const ValueType* the_A_matrix,
-                             OrdinalType      the_A_matrix_extent,
-                             OrdinalType      the_M_matrix_extent,
-                             ValueType*       the_rhs) const;
-
         protected:
             ExecutionSpaceType the_execution_space_;
         };
@@ -229,9 +192,11 @@ namespace koliop {
             const OrdinalType kBatchCount     = BatchTraitsType::BatchCount(the_A_matrix_extent);
             const OrdinalType kBigBlockExtent = the_M_matrix_extent;
 
-            VectorMatrixType the_A_matrix_view{reinterpret_cast<typename BatchTraitsType::ThreadVectorType*>(the_A_matrix),
-                                               static_cast<std::size_t>(kBatchCount),
-                                               static_cast<std::size_t>(kBigBlockExtent)};
+            static_assert(MatrixKindType::kDiagonalCount == 3, "");
+
+            typename MatrixKindType::VectorType the_A_matrix_view{reinterpret_cast<typename BatchTraitsType::ThreadVectorType*>(the_A_matrix),
+                                                                  static_cast<std::size_t>(kBatchCount),
+                                                                  static_cast<std::size_t>(kBigBlockExtent)};
 
             // TODO(Etienne M): Check that we do not benefit from using
             // TeamLU/TRSM/GEMM. This require a trick with vector threads.
@@ -245,7 +210,6 @@ namespace koliop {
             // (8 * 1024 * (3 * (3*3))) * 225280 = 49'828'331'520 o.
 
             const auto the_kernel = KOKKOS_LAMBDA(auto the_batch_element_index, auto the_batch_index) {
-                static_assert(kDiagonalCount == 3, "");
 
                 const auto the_batch_element = Kokkos::subview(the_A_matrix_view,
                                                                the_batch_index,
@@ -309,15 +273,6 @@ namespace koliop {
 
             Kokkos::parallel_for("BatchedBlockTridiagonalByBlockTRF::Factorize",
                                  a_policy, the_kernel);
-        }
-
-        template <typename BatchTraits,
-                  OrdinalType kSmallBlockExtent>
-        void BatchedBlockTridiagonalByBlockTRF<BatchTraits,
-                                               kSmallBlockExtent>::SolveVector(const ValueType*,
-                                                                               OrdinalType,
-                                                                               OrdinalType,
-                                                                               ValueType*) const {
         }
 
     } // namespace blas

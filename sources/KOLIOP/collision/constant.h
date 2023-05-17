@@ -4,8 +4,7 @@
 #define KOLIOP_COLLISION_CONSTANT_H
 
 #include "KOLIOP/blas/batch.h"
-#include "KOLIOP/blas/mv.h"
-#include "KOLIOP/blas/trf.h"
+#include "KOLIOP/blas/kind.h"
 
 namespace koliop {
     namespace collision {
@@ -46,17 +45,12 @@ namespace koliop {
             static inline constexpr OffsetType kBatchCount = BatchTraitsType::BatchCount(kFlattenedBlockExtent);
             static_assert(kBatchCount * BatchTraitsType::kBatchSize == kFlattenedBlockExtent, "");
 
-            using BatchedSolverType = koliop::blas::BatchedBlockTridiagonalByBlockTRF<BatchTraitsType,
-                                                                                      kMaximumLaguerrePolynomialDegree>;
+        public:
+            using VectorKindType = koliop::blas::kind::vector::BatchedBlockByBlock<BatchTraitsType,
+                                                                                   kMaximumLaguerrePolynomialDegree>;
 
-            using BatchedMVType = koliop::blas::BatchedMatrixSamplingBlockTridiagonalByBlockMV<BatchTraitsType,
-                                                                                               kMaximumLaguerrePolynomialDegree>;
-
-            using ScalarBlockTridiagonalByBlockMatrixType = BatchedSolverType::ScalarMatrixType;
-            using ScalarBlockTridiagonalByBlockVectorType = BatchedSolverType::ScalarVectorType;
-
-            using VectorBlockTridiagonalByBlockMatrixType = BatchedSolverType::VectorMatrixType;
-            using VectorBlockTridiagonalByBlockVectorType = BatchedSolverType::VectorVectorType;
+            using MatrixKindType = koliop::blas::kind::matrix::BatchedBlockTridiagonalByBlock<BatchTraitsType,
+                                                                                              kMaximumLaguerrePolynomialDegree>;
         };
 
     } // namespace collision

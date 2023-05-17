@@ -36,8 +36,7 @@ namespace koliop {
             /// The Najl coefficients are stored in a data structure similar to
             /// how the one used for the matrix in Operator::Apply().
             ///
-            using ScalarBlockTridiagonalByBlockMatrixType = Constant::ScalarBlockTridiagonalByBlockMatrixType;
-            using VectorBlockTridiagonalByBlockMatrixType = Constant::VectorBlockTridiagonalByBlockMatrixType;
+            using MatrixKindType = Constant::MatrixKindType;
 
         public:
             Najl(OrdinalType                                          pSpecies_id,
@@ -56,7 +55,7 @@ namespace koliop {
                          const koliop::utility::View::MDD4<ComputeFloatType>& n_s,
                          const koliop::utility::View::MDD4<ComputeFloatType>& T_s,
                          const koliop::utility::View::MDD5<ComputeFloatType>& nu_ab,
-                         Constant::ScalarBlockTridiagonalByBlockMatrixType&   the_Najl) const;
+                         typename MatrixKindType::ScalarType&                 the_Najl) const;
 
         public:
             // Could be protected but we would have to use friend functions.

@@ -3,6 +3,9 @@
 #ifndef KOLIOP_COLLISION_OPERATOR_H
 #define KOLIOP_COLLISION_OPERATOR_H
 
+#include "KOLIOP/blas/mv.h"
+#include "KOLIOP/blas/trf.h"
+#include "KOLIOP/blas/trsv.h"
 #include "KOLIOP/collision/najl.h"
 
 namespace koliop {
@@ -208,9 +211,17 @@ namespace koliop {
 
             // Miscellaneous tooling
 
-            Najl                        the_najl_provider_;
-            Constant::BatchedSolverType the_alpha_solver_;
-            Constant::BatchedMVType     the_mv_;
+            Najl the_najl_provider_;
+
+            koliop::blas::BatchedBlockTridiagonalByBlockTRF<Constant::BatchTraitsType,
+                                                            Constant::kMaximumLaguerrePolynomialDegree>
+                the_factorizer_;
+            koliop::blas::BatchedBlockTridiagonalByBlockTRSV<Constant::BatchTraitsType,
+                                                             Constant::kMaximumLaguerrePolynomialDegree>
+                the_solver_;
+            koliop::blas::BatchedMatrixSamplingBlockTridiagonalByBlockMV<Constant::BatchTraitsType,
+                                                                         Constant::kMaximumLaguerrePolynomialDegree>
+                the_mv_;
         };
 
     } // namespace collision

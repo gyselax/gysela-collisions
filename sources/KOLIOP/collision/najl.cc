@@ -283,6 +283,8 @@ namespace koliop {
                                                 Kokkos::ALL(), // l
                                                 the_batch_element_index);
 
+                // TODO(Etienne M): memset(0) of local_N*
+
                 const auto local_n_s = Kokkos::subview(n_s,
                                                        ir,
                                                        itheta,
@@ -423,7 +425,7 @@ namespace koliop {
                            const koliop::utility::View::MDD4<ComputeFloatType>& n_s,
                            const koliop::utility::View::MDD4<ComputeFloatType>& T_s,
                            const koliop::utility::View::MDD5<ComputeFloatType>& nu_ab,
-                           Constant::ScalarBlockTridiagonalByBlockMatrixType&   the_Najl) const {
+                           typename MatrixKindType::ScalarType&                 the_Najl) const {
 
             KOLIOP_ASSERT(the_Najl.size() != 0);
 
@@ -433,13 +435,13 @@ namespace koliop {
             // like:
             // Kokkos::exp(T{}) where T is a KokkosBatched::Vector !
 
-            // VectorBlockTridiagonalByBlockMatrixType the_Najl_view{reinterpret_cast<typename Constant::BatchTraitsType::ThreadVectorType*>(the_Najl.data()),
-            //                                                       static_cast<std::size_t>(Constant::kBatchCount),
-            //                                                       static_cast<std::size_t>(the_vpar_extent_)};
+            // typename MatrixKindType::VectorType the_Najl_view{reinterpret_cast<typename Constant::BatchTraitsType::ThreadVectorType*>(the_Najl.data()),
+            //                                                   static_cast<std::size_t>(Constant::kBatchCount),
+            //                                                   static_cast<std::size_t>(the_vpar_extent_)};
 
-            ScalarBlockTridiagonalByBlockMatrixType the_Najl_view{the_Najl.data(),
-                                                                  static_cast<std::size_t>(Constant::kBatchCount),
-                                                                  static_cast<std::size_t>(the_vpar_extent_)};
+            typename MatrixKindType::ScalarType the_Najl_view{the_Najl.data(),
+                                                              static_cast<std::size_t>(Constant::kBatchCount),
+                                                              static_cast<std::size_t>(the_vpar_extent_)};
 
             DoComputeNajl(*this,
                           the_block_first_r,

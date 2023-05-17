@@ -358,7 +358,8 @@ namespace koliop {
             const auto& nu_ab = an_operator.nu_ab_;
 
             const auto the_najl_provider = an_operator.the_najl_provider_;
-            const auto the_alpha_solver  = an_operator.the_alpha_solver_;
+            const auto the_factorizer    = an_operator.the_factorizer_;
+            const auto the_solver        = an_operator.the_solver_;
             const auto the_mv            = an_operator.the_mv_;
 
             KOLIOP_ASSERT(the_r_extent % Constant::kBlockExtentR == 0);
@@ -393,21 +394,21 @@ namespace koliop {
 
             // TODO(Etienne M): Many opportunities to use constant extent say:
             // ComputeFloatType *[Constant::kFlattenedBlockExtent].
-            Constant::ScalarBlockTridiagonalByBlockMatrixType the_Najl{Kokkos::view_alloc(Kokkos::WithoutInitializing,
-                                                                                          "the_Najl"),
-                                                                       static_cast<std::size_t>(Constant::kBatchCount), static_cast<std::size_t>(the_vpar_extent)};
+            typename Constant::MatrixKindType::ScalarType the_Najl{Kokkos::view_alloc(Kokkos::WithoutInitializing,
+                                                                                      "the_Najl"),
+                                                                   static_cast<std::size_t>(Constant::kBatchCount), static_cast<std::size_t>(the_vpar_extent)};
 
-            Constant::ScalarBlockTridiagonalByBlockMatrixType the_matrix{Kokkos::view_alloc(Kokkos::WithoutInitializing,
-                                                                                            "the_matrix"),
-                                                                         static_cast<std::size_t>(Constant::kBatchCount), static_cast<std::size_t>(the_vpar_extent)};
+            typename Constant::MatrixKindType::ScalarType the_matrix{Kokkos::view_alloc(Kokkos::WithoutInitializing,
+                                                                                        "the_matrix"),
+                                                                     static_cast<std::size_t>(Constant::kBatchCount), static_cast<std::size_t>(the_vpar_extent)};
 
-            Constant::ScalarBlockTridiagonalByBlockVectorType the_alpha_coefficients{Kokkos::view_alloc(Kokkos::WithoutInitializing,
-                                                                                                        "the_alpha_coefficients"),
-                                                                                     static_cast<std::size_t>(Constant::kBatchCount), static_cast<std::size_t>(the_vpar_extent)};
+            typename Constant::VectorKindType::ScalarType the_alpha_coefficients{Kokkos::view_alloc(Kokkos::WithoutInitializing,
+                                                                                                    "the_alpha_coefficients"),
+                                                                                 static_cast<std::size_t>(Constant::kBatchCount), static_cast<std::size_t>(the_vpar_extent)};
 
-            Constant::ScalarBlockTridiagonalByBlockVectorType the_rhs{Kokkos::view_alloc(Kokkos::WithoutInitializing,
-                                                                                         "the_rhs"),
-                                                                      static_cast<std::size_t>(Constant::kBatchCount), static_cast<std::size_t>(the_vpar_extent)};
+            typename Constant::VectorKindType::ScalarType the_rhs{Kokkos::view_alloc(Kokkos::WithoutInitializing,
+                                                                                     "the_rhs"),
+                                                                  static_cast<std::size_t>(Constant::kBatchCount), static_cast<std::size_t>(the_vpar_extent)};
 
 
             // Samples I - T*dt/4
@@ -471,7 +472,7 @@ namespace koliop {
                                                     the_LHS_matrix_sampler, the_matrix);
 
                                     // L*U = (I - T * dt/4)
-                                    the_alpha_solver.Factorize(the_matrix.data(), Constant::kFlattenedBlockExtent, the_vpar_extent);
+                                    the_factorizer.Factorize(the_matrix.data(), Constant::kFlattenedBlockExtent, the_vpar_extent);
                                 }
                                 {
                                     // the_rhs = (I + T * dt/4) * alpha(n)
@@ -488,8 +489,8 @@ namespace koliop {
 
                                 {
                                     // the_rhs = alpha~
-                                    the_alpha_solver.SolveVector(the_matrix.data(), Constant::kFlattenedBlockExtent, the_vpar_extent,
-                                                                 the_rhs.data());
+                                    the_solver.Solve(the_matrix.data(), Constant::kFlattenedBlockExtent, the_vpar_extent,
+                                                     the_rhs.data());
 
                                     // the_rhs = alpha~~
                                     DoComputeCvCdSource(an_operator,
@@ -509,8 +510,8 @@ namespace koliop {
                                                  the_rhs.data());
 
                                     // the_rhs = alpha(n+1)
-                                    the_alpha_solver.SolveVector(the_matrix.data(), Constant::kFlattenedBlockExtent, the_vpar_extent,
-                                                                 the_rhs.data());
+                                    the_solver.Solve(the_matrix.data(), Constant::kFlattenedBlockExtent, the_vpar_extent,
+                                                     the_rhs.data());
                                 }
                             }
 

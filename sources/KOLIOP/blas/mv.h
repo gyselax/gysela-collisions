@@ -3,7 +3,7 @@
 #ifndef KOLIOP_BLAS_MV_H
 #define KOLIOP_BLAS_MV_H
 
-#include "KOLIOP/internal/configuration.h"
+#include "KOLIOP/blas/kind.h"
 
 namespace koliop {
     namespace blas {
@@ -24,22 +24,8 @@ namespace koliop {
             using ValueType          = typename BatchTraitsType::ValueType;
             using ExecutionSpaceType = typename BatchTraitsType::ExecutionSpaceType;
 
-        public:
-            using ScalarVectorType = Kokkos::View<ValueType** [kSmallBlockExtent][BatchTraitsType::kBatchSize],
-                                                  Kokkos::LayoutRight,
-                                                  ExecutionSpaceType>;
-
-            using VectorVectorType = Kokkos::View<typename BatchTraitsType::ThreadVectorType** [kSmallBlockExtent][BatchTraitsType::kVectorPerBatch],
-                                                  Kokkos::LayoutRight,
-                                                  ExecutionSpaceType>;
-
-            using ConstVectorVectorType = Kokkos::View<const typename BatchTraitsType::ThreadVectorType** [kSmallBlockExtent][BatchTraitsType::kVectorPerBatch],
-                                                       Kokkos::LayoutRight,
-                                                       ExecutionSpaceType>;
-
-        protected:
-            // using ConcurrencyPolicy = KokkosBatched::Mode::Serial;
-            using CachingPolicy = KokkosBatched::Algo::Level3::Unblocked;
+            using VectorKindType = kind::vector::BatchedBlockByBlock<BatchTraitsType,
+                                                                     kSmallBlockExtent>;
 
         public:
             BatchedMatrixSamplingBlockTridiagonalByBlockMV(ExecutionSpaceType an_execution_space);
@@ -95,13 +81,13 @@ namespace koliop {
             const OrdinalType kBatchCount     = BatchTraitsType::BatchCount(the_A_matrix_extent);
             const OrdinalType kBigBlockExtent = the_M_matrix_extent;
 
-            ConstVectorVectorType the_x_vector_view{reinterpret_cast<const typename BatchTraitsType::ThreadVectorType*>(the_x_vector),
-                                                    static_cast<std::size_t>(kBatchCount),
-                                                    static_cast<std::size_t>(kBigBlockExtent)};
+            typename VectorKindType::ConstVectorType the_x_vector_view{reinterpret_cast<const typename BatchTraitsType::ThreadVectorType*>(the_x_vector),
+                                                                       static_cast<std::size_t>(kBatchCount),
+                                                                       static_cast<std::size_t>(kBigBlockExtent)};
 
-            VectorVectorType the_y_vector_view{reinterpret_cast<typename BatchTraitsType::ThreadVectorType*>(the_y_vector),
-                                               static_cast<std::size_t>(kBatchCount),
-                                               static_cast<std::size_t>(kBigBlockExtent)};
+            typename VectorKindType::VectorType the_y_vector_view{reinterpret_cast<typename BatchTraitsType::ThreadVectorType*>(the_y_vector),
+                                                                  static_cast<std::size_t>(kBatchCount),
+                                                                  static_cast<std::size_t>(kBigBlockExtent)};
 
             // TODO(Etienne M): Check that we do not benefit from using
             // TeamGEMV This require a trick with vector threads.
