@@ -165,35 +165,76 @@ namespace koliop {
                 // b
                 // c
 
-                // Applying the naming above, we have:
-                auto B      = Kokkos::subview(the_matrix_batch_element, 0, 1, Kokkos::ALL(), Kokkos::ALL());
-                auto A_next = Kokkos::subview(the_matrix_batch_element, 0 /* Putting 1 here is illegal ? */, 0, Kokkos::ALL(), Kokkos::ALL());
+                // Forward substitution
+                {
+                    // Applying the naming above, we have:
+                    auto B      = Kokkos::subview(the_matrix_batch_element, 0, 1, Kokkos::ALL(), Kokkos::ALL());
+                    auto A_next = Kokkos::subview(the_matrix_batch_element, 0 /* Putting 1 here is illegal ? */, 0, Kokkos::ALL(), Kokkos::ALL());
 
-                auto b      = Kokkos::subview(the_vector_batch_element, 0, Kokkos::ALL());
-                auto b_next = Kokkos::subview(the_vector_batch_element, 0 /* Putting 1 here is illegal ? */, Kokkos::ALL());
+                    auto b      = Kokkos::subview(the_vector_batch_element, 0, Kokkos::ALL());
+                    auto b_next = Kokkos::subview(the_vector_batch_element, 0 /* Putting 1 here is illegal ? */, Kokkos::ALL());
 
-                for(OrdinalType the_small_block_index = 0;
-                    the_small_block_index < (kBigBlockExtent - 1);
-                    ++the_small_block_index) {
+                    for(OrdinalType the_small_block_index = 0;
+                        the_small_block_index != (kBigBlockExtent - 1);
+                        ++the_small_block_index) {
 
-                    // TODO(Etienne M): Recreate view or assign ? Which is
-                    // faster ?
+                        // TODO(Etienne M): Recreate view or assign ? Which is
+                        // faster ?
 
-                    B.assign_data(&the_matrix_batch_element(the_small_block_index, 1, 0, 0));
+                        B.assign_data(&the_matrix_batch_element(the_small_block_index, 1, 0, 0));
 
-                    TRSVLower::invoke(1.0, B, b); // Solve: B_lower * x = b, x is put into b
+                        TRSVLower::invoke(1.0, B, b); // Solve: B_lower * y = b, y is put into b
 
-                    A_next.assign_data(&the_matrix_batch_element(the_small_block_index + 1, 0, 0, 0));
-                    b_next.assign_data(&the_vector_batch_element(the_small_block_index + 1, 0));
+                        A_next.assign_data(&the_matrix_batch_element(the_small_block_index + 1, 0, 0, 0));
+                        b_next.assign_data(&the_vector_batch_element(the_small_block_index + 1, 0));
 
-                    GEMV::invoke(-1.0, A_next, b, 1.0, b_next); // b_next = 1.0 * b_next + -1.0 * A_next * b
+                        GEMV::invoke(-1.0, A_next, b, 1.0, b_next); // b_next = 1.0 * b_next + -1.0 * A_next * b
 
-                    b = b_next;
+                        b = b_next;
+                    }
+
+                    B.assign_data(&the_matrix_batch_element(kBigBlockExtent - 1, 1, 0, 0));
+
+                    TRSVLower::invoke(1.0, B, b);
                 }
 
-                B.assign_data(&the_matrix_batch_element(kBigBlockExtent - 1, 1, 0, 0));
+                // Backward substitution
+                {
+                    // Applying the naming above, we have:
+                    auto B      = Kokkos::subview(the_matrix_batch_element, 0, 1, Kokkos::ALL(), Kokkos::ALL());
+                    auto C_next = Kokkos::subview(the_matrix_batch_element, 0, 0, Kokkos::ALL(), Kokkos::ALL());
 
-                TRSVLower::invoke(1.0, B, b);
+                    auto b      = Kokkos::subview(the_vector_batch_element, kBigBlockExtent - 1, Kokkos::ALL());
+                    auto b_next = Kokkos::subview(the_vector_batch_element, 0, Kokkos::ALL());
+
+                    // NOTE: *next* when iterating in reverse order is
+                    // *previous* when iterating in natural order.
+
+                    for(OrdinalType the_reversed_small_block_index = kBigBlockExtent;
+                        the_reversed_small_block_index != 1;
+                        --the_reversed_small_block_index) {
+
+                        const OrdinalType the_small_block_index = the_reversed_small_block_index - 1;
+
+                        // TODO(Etienne M): Recreate view or assign ? Which is
+                        // faster ?
+
+                        B.assign_data(&the_matrix_batch_element(the_small_block_index, 1, 0, 0));
+
+                        TRSVUpper::invoke(1.0, B, b); // Solve: B_upper * x = b, x is put into b
+
+                        C_next.assign_data(&the_matrix_batch_element(the_small_block_index - 1, 2, 0, 0));
+                        b_next.assign_data(&the_vector_batch_element(the_small_block_index - 1, 0));
+
+                        GEMV::invoke(-1.0, C_next, b, 1.0, b_next); // b_next = 1.0 * b_next + -1.0 * C_next * b
+
+                        b = b_next;
+                    }
+
+                    B.assign_data(&the_matrix_batch_element(0, 1, 0, 0));
+
+                    TRSVLower::invoke(1.0, B, b);
+                }
             };
 
             const auto a_policy = Kokkos::MDRangePolicy<ExecutionSpaceType,

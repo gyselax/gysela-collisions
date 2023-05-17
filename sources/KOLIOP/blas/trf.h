@@ -229,35 +229,30 @@ namespace koliop {
                 // 0       A_n B_n
 
                 // Applying the naming above, we have:
-                auto B = Kokkos::subview(the_batch_element, 0, 1, Kokkos::ALL(), Kokkos::ALL());
+                auto B      = Kokkos::subview(the_batch_element, 0, 1, Kokkos::ALL(), Kokkos::ALL());
+                auto C      = Kokkos::subview(the_batch_element, 0, 2, Kokkos::ALL(), Kokkos::ALL());
+                auto A_next = Kokkos::subview(the_batch_element, 0, 0, Kokkos::ALL(), Kokkos::ALL());
+                auto B_next = Kokkos::subview(the_batch_element, kBigBlockExtent - 1, 1, Kokkos::ALL(), Kokkos::ALL());
 
-                if(kBigBlockExtent == 1) {
-                    LU::invoke(B);
-                } else {
-                    auto C      = Kokkos::subview(the_batch_element, 0, 2, Kokkos::ALL(), Kokkos::ALL());
-                    auto A_next = Kokkos::subview(the_batch_element, 1, 0, Kokkos::ALL(), Kokkos::ALL());
-                    auto B_next = Kokkos::subview(the_batch_element, 1, 1, Kokkos::ALL(), Kokkos::ALL());
+                for(OrdinalType the_small_block_index = 0;
+                    the_small_block_index != (kBigBlockExtent - 1);
+                    ++the_small_block_index) {
 
-                    for(OrdinalType the_small_block_index = 0;
-                        the_small_block_index < (kBigBlockExtent - 1);
-                        ++the_small_block_index) {
+                    // TODO(Etienne M): Recreate view or assign ? Which is
+                    // faster ?
 
-                        // TODO(Etienne M): Recreate view or assign ? Which is
-                        // faster ?
+                    B.assign_data(&the_batch_element(the_small_block_index, 1, 0, 0));
+                    C.assign_data(&the_batch_element(the_small_block_index, 2, 0, 0));
+                    A_next.assign_data(&the_batch_element(the_small_block_index + 1, 0, 0, 0));
+                    B_next.assign_data(&the_batch_element(the_small_block_index + 1, 1, 0, 0));
 
-                        B.assign_data(&the_batch_element(the_small_block_index, 1, 0, 0));
-                        C.assign_data(&the_batch_element(the_small_block_index, 2, 0, 0));
-                        A_next.assign_data(&the_batch_element(the_small_block_index + 1, 0, 0, 0));
-                        B_next.assign_data(&the_batch_element(the_small_block_index + 1, 1, 0, 0));
-
-                        LU::invoke(B);                              // B = L+U-I
-                        TRSMLower::invoke(1.0, B, C);               // Solve: B_lower * X = C, X is put into C
-                        TRSMUpper::invoke(1.0, B, A_next);          // Solve: B_upper * X = A_next, X is put into A_next
-                        GEMM::invoke(-1.0, A_next, C, 1.0, B_next); // B_next = 1.0 * B_next + -1.0 * A_next * C
-                    }
-
-                    KokkosBatched::SerialLU<CachingPolicy>::invoke(B_next);
+                    LU::invoke(B);                              // B = L+U-I
+                    TRSMLower::invoke(1.0, B, C);               // Solve: B_lower * X = C, X is put into C
+                    TRSMUpper::invoke(1.0, B, A_next);          // Solve: B_upper * X = A_next, X is put into A_next
+                    GEMM::invoke(-1.0, A_next, C, 1.0, B_next); // B_next = 1.0 * B_next + -1.0 * A_next * C
                 }
+
+                KokkosBatched::SerialLU<CachingPolicy>::invoke(B_next);
             };
 
             const auto a_policy = Kokkos::MDRangePolicy<ExecutionSpaceType,
