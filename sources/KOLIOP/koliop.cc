@@ -12,9 +12,9 @@
 // koliop method definition
 ////////////////////////////////////////////////////////////////////////////////
 
-::koliop_Status koliop_Initialize(uint32_t a_host_thread_count,
-                                  uint32_t a_device_index,
-                                  int32_t  with_verbose_initialization) {
+::koliop_Status koliop_Initialize(size_t a_host_thread_count,
+                                  size_t a_device_index,
+                                  int8_t with_verbose_initialization) {
     return koliop::error::FromException([&]() {
         if(Kokkos::is_initialized()) {
             return KOLIOP_STATUS_INITIALIZATION_FAILURE;
@@ -57,21 +57,21 @@
 }
 
 ::koliop_Status koliop_Create(::koliop_Operator* an_operator_handle,
-                              uint64_t           Npolmax,
-                              uint64_t           index_max,
-                              uint64_t           pSpecies_id,
-                              uint64_t           mu_id,
-                              uint64_t           the_mu_extent,
-                              uint64_t           the_vpar_extent,
-                              uint64_t           the_r_extent,
-                              uint64_t           the_theta_extent,
-                              uint64_t           the_phi_extent,
-                              uint64_t           the_species_extent,
+                              size_t             Npolmax,
+                              size_t             index_max,
+                              int64_t            pSpecies_id,
+                              int64_t            mu_id,
+                              size_t             the_mu_extent,
+                              size_t             the_vpar_extent,
+                              size_t             the_r_extent,
+                              size_t             the_theta_extent,
+                              size_t             the_phi_extent,
+                              size_t             the_species_extent,
                               double             R0,
-                              uint32_t           collision_interspecies,
-                              uint32_t           SOL,
-                              uint32_t           LIM,
-                              uint64_t           ir_SOL_separatrix,
+                              int8_t             collision_interspecies,
+                              int8_t             SOL,
+                              int8_t             LIM,
+                              int64_t            ir_SOL_separatrix,
                               double             dt,
                               double             dvpar,
                               const double*      comb_mat,
@@ -95,6 +95,9 @@
            // We expect Npolmax to be constant.
            Npolmax != koliop::collision::Constant::kMaximumLaguerrePolynomialDegree ||
            (index_max != 2 * (Npolmax - 1)) ||
+           pSpecies_id < 0 ||
+           mu_id < 0 ||
+           ir_SOL_separatrix < 0 ||
            comb_mat == nullptr ||
            hat_As == nullptr ||
            hat_Zs == nullptr ||
@@ -114,19 +117,19 @@
             return KOLIOP_STATUS_INVALID_VALUE;
         }
 
-        auto* const an_operator = new Operator{pSpecies_id,
-                                               mu_id,
-                                               the_mu_extent,
-                                               the_vpar_extent,
-                                               the_r_extent,
-                                               the_theta_extent,
-                                               the_phi_extent,
-                                               the_species_extent,
+        auto* const an_operator = new Operator{static_cast<uint64_t>(pSpecies_id),
+                                               static_cast<uint64_t>(mu_id),
+                                               static_cast<uint64_t>(the_mu_extent),
+                                               static_cast<uint64_t>(the_vpar_extent),
+                                               static_cast<uint64_t>(the_r_extent),
+                                               static_cast<uint64_t>(the_theta_extent),
+                                               static_cast<uint64_t>(the_phi_extent),
+                                               static_cast<uint64_t>(the_species_extent),
                                                R0,
                                                static_cast<bool>(collision_interspecies),
                                                static_cast<bool>(SOL),
                                                static_cast<bool>(LIM),
-                                               ir_SOL_separatrix,
+                                               static_cast<uint64_t>(ir_SOL_separatrix),
                                                dt,
                                                dvpar,
                                                comb_mat,
@@ -231,7 +234,7 @@
 
 ::koliop_Status koliop_ComputeMaxwellianUnshiftedLoc(::koliop_Operator an_operator,
                                                      double*           f5d_s,
-                                                     uint32_t          choice) {
+                                                     int32_t           choice) {
     return koliop::error::FromException([&]() {
         if(an_operator == nullptr ||
            f5d_s == nullptr ||
@@ -239,7 +242,7 @@
             return KOLIOP_STATUS_INVALID_VALUE;
         }
 
-        reinterpret_cast<const koliop::collision::Operator*>(an_operator)->ComputeMaxwellianUnshiftedLoc(f5d_s, choice);
+        reinterpret_cast<const koliop::collision::Operator*>(an_operator)->ComputeMaxwellianUnshiftedLoc(f5d_s, static_cast<uint32_t>(choice));
 
         return KOLIOP_STATUS_SUCCESS;
     });

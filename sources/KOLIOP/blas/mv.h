@@ -31,7 +31,7 @@ namespace koliop {
         public:
             BatchedMatrixSamplingBlockTridiagonalByBlockMV(ExecutionSpaceType an_execution_space);
 
-            /// @brief Computes the_y_vector = the_alpha_scalar * the_A_matrix(...) * the_x_vector +
+            /// Computes the_y_vector = the_alpha_scalar * the_A_matrix(...) * the_x_vector +
             /// the_beta_scalar * the_y_vector
             ///
             template <typename MatrixSampler>

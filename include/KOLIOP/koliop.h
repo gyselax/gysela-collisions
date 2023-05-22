@@ -5,6 +5,7 @@
 
 // NOTE: Everything in this file should be C99.
 
+#include <stddef.h>
 #include <stdint.h>
 
 #include "KOLIOP/error/status.h"
@@ -27,7 +28,7 @@
 extern "C" {
 #endif
 
-/// @brief Has to be called before any other koliop function is called.
+/// Has to be called before any other koliop function is called.
 /// @param a_host_thread_count The host threads to use to drive the device or to
 /// do the computation. Depending on how koliop was built.
 /// @param a_device_index The device koliop will use to offload the work. The
@@ -36,17 +37,17 @@ extern "C" {
 /// present additional information.
 /// @return KOLIOP_STATUS_SUCCESS on success TODO(Etienne M): more.
 ///
-koliop_Status koliop_Initialize(uint32_t a_host_thread_count,
-                                uint32_t a_device_index,
-                                int32_t  with_verbose_initialization);
+koliop_Status koliop_Initialize(size_t a_host_thread_count,
+                                size_t a_device_index,
+                                int8_t with_verbose_initialization);
 
-/// @brief Has to be called when koliop is not to be used anymore for the
+/// Has to be called when koliop is not to be used anymore for the
 /// lifetime of the program.
 /// @return KOLIOP_STATUS_SUCCESS on success TODO(Etienne M): more.
 ///
 koliop_Status koliop_Deinitialize(void);
 
-/// @brief Represent a collision operator.
+/// Represent a collision operator.
 ///
 typedef struct _koliop_Operator* koliop_Operator;
 
@@ -57,21 +58,21 @@ typedef struct _koliop_Operator* koliop_Operator;
 /// TODO(Etienne M): remove vparg when we have the vpar sampler.
 ///
 koliop_Status koliop_Create(koliop_Operator* an_operator_handle,
-                            uint64_t         Npolmax,
-                            uint64_t         index_max,
-                            uint64_t         pSpecies_id,
-                            uint64_t         mu_id,
-                            uint64_t         the_mu_extent,
-                            uint64_t         the_vpar_extent,
-                            uint64_t         the_r_extent,
-                            uint64_t         the_theta_extent,
-                            uint64_t         the_phi_extent,
-                            uint64_t         the_species_extent,
+                            size_t           Npolmax,
+                            size_t           index_max,
+                            int64_t          pSpecies_id,
+                            int64_t          mu_id,
+                            size_t           the_mu_extent,
+                            size_t           the_vpar_extent,
+                            size_t           the_r_extent,
+                            size_t           the_theta_extent,
+                            size_t           the_phi_extent,
+                            size_t           the_species_extent,
                             double           R0,
-                            uint32_t         collision_interspecies,
-                            uint32_t         SOL,
-                            uint32_t         LIM,
-                            uint64_t         ir_SOL_separatrix,
+                            int8_t           collision_interspecies,
+                            int8_t           SOL,
+                            int8_t           LIM,
+                            int64_t          ir_SOL_separatrix,
                             double           dt,
                             double           dvpar,
                             const double*    comb_mat,
@@ -90,7 +91,7 @@ koliop_Status koliop_Create(koliop_Operator* an_operator_handle,
                             const double*    Bstar_s);
 koliop_Status koliop_Release(koliop_Operator an_operator);
 
-/// @brief Computation of fluid moments term:
+/// Computation of fluid moments term:
 ///   na =  int 2 * Pi * Bstar * dmu * dvpar * Fa
 ///   Vpara = (1/na) * int 2 * Pi * Bstar * dmu * dvpar * vpar * Fa
 ///   Ta = (1/(3*na)) * int 2 * Pi * Bstar * dmu * dvpar * Fa * &
@@ -101,7 +102,7 @@ koliop_Status koliop_ComputeMoments(koliop_Operator an_operator,
 
 koliop_Status koliop_PrecomputeNu(koliop_Operator an_operator);
 
-/// @brief Remove the Maxwellian to the distribution function Fa = Fa - FMa
+/// Remove the Maxwellian to the distribution function Fa = Fa - FMa
 /// Evolve temperature
 /// Compute the new Maxwellian
 /// Add it to the function distribution Fa = Fa + FMa
@@ -112,7 +113,7 @@ koliop_Status koliop_PrecomputeNu(koliop_Operator an_operator);
 koliop_Status koliop_ComputeMaxwellianEvolution(koliop_Operator an_operator,
                                                 double*         f5d_s);
 
-/// @brief Computation of q_para/(na*Ta)
+/// Computation of q_para/(na*Ta)
 ///   q_par_on_nT = 0.5*int (2 * Pi * Bstar) *  dmu * dvpar * &
 ///       (vpar-Vpara) * ((vpar-Vpara)^2 + vperp^2) * (Fa - FMa)
 ///  Indeed  q_par_on_nT = 0 for a Maxwellian distribution function
@@ -120,7 +121,7 @@ koliop_Status koliop_ComputeMaxwellianEvolution(koliop_Operator an_operator,
 koliop_Status koliop_ComputeQparOnNT(koliop_Operator an_operator,
                                      const double*   f5d_s);
 
-/// @brief Evolution of f due to the Cpar
+/// Evolution of f due to the Cpar
 ///   f = f + dt * sum_b (nu_sab(xb) * vpar / Ta) * F_M0a * &
 ///           (Rat * Vparb - Vpara + (q_para / (na * Ta)) * (1 - 2*xa*xa/5) -
 ///           (3/5) *  Rat * (q_parb / (nb * Tb)) / (1 + (vTa/vTb)^2 ))
@@ -131,7 +132,7 @@ koliop_Status koliop_ComputeQparOnNT(koliop_Operator an_operator,
 koliop_Status koliop_ComputeCpar(koliop_Operator an_operator,
                                  double*         f5d_s);
 
-/// @brief This routine compute one of the following operation on the
+/// This routine compute one of the following operation on the
 /// distribution function:
 ///  - choice 3 : Fa = Fa * FM0a
 ///  - choice 4 : Fa = Fa / FM0a
@@ -140,7 +141,7 @@ koliop_Status koliop_ComputeCpar(koliop_Operator an_operator,
 ///
 koliop_Status koliop_ComputeMaxwellianUnshiftedLoc(koliop_Operator an_operator,
                                                    double*         f5d_s,
-                                                   uint32_t        choice);
+                                                   int32_t         choice);
 
 koliop_Status koliop_Apply(koliop_Operator an_operator,
                            double*         f5d_s);

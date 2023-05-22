@@ -204,8 +204,16 @@ namespace koliop {
     // TODO(Etienne M): Using Flo32 requires doing conversion from the Float64
     // input data.
     using ComputeFloatType = Flo64;
-    using OrdinalType      = int64_t;
-    using OffsetType       = uint64_t;
+
+    /// Represent a coordinate. Can be negative. Should not used to store
+    /// offsets as they may be too large.
+    /// TODO(Etienne M): Try using uint32 ?
+    ///
+    using OrdinalType = int64_t;
+
+    /// Represent an offset in memory. Can be negative.
+    ///
+    using OffsetType = int64_t;
 
 } // namespace koliop
 

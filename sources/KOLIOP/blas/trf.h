@@ -93,6 +93,20 @@ namespace koliop {
         /// used in Linpack implementations. A description is given in
         /// Introduction to Algorithms, ISBN 978-0-262-03293-3 by Cormen, Thomas
         /// H. et al., page 819.
+        /// That is, we observe that:
+        /// A =      L =      U =
+        /// A11 A12  L11 0    U11 U12
+        /// A21 A22  L21 L22  0   U22 where A = L U.
+        /// We thus have:
+        /// A11 = L11 * U11             # LU decomposition of a small block.
+        /// A12 = L11 * U12             # TRSM, solve L11 * U12=A12 for U12.
+        /// A21 = L21 * U11             # TRSM, solve L21 * U11=A21 for L21.
+        /// A22 = L21 * U12 + L22 * U22 # GEMM, A22 = L22 * U22=A22 - L21 * U12.
+        /// Then work on factorizing A22 = L22 * U22.
+        ///
+        /// So factorizing A can be done by doing a smaller LU factorization of
+        /// A11 and then, doing two TRSM and a GEMM.
+        ///
         /// - Due to the independent nature of the M_n blocks, we can treat them
         /// in batch of BatchTraitsType::kBatchSize per thread or team. In
         /// practice, this means that:
@@ -148,7 +162,7 @@ namespace koliop {
         public:
             BatchedBlockTridiagonalByBlockTRF(ExecutionSpaceType an_execution_space);
 
-            /// @brief TRF
+            /// TRF
             /// @param the_A_matrix Must respect the format described in the
             /// BatchedBlockTridiagonalByBlockTRF notes.
             /// @param the_A_matrix_extent The number of independent block

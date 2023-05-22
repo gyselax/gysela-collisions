@@ -33,13 +33,13 @@ int main(int, char**) {
 
     // TODO(Etienne M): Use small values for non indexing integer ?
 
-    static constexpr uint64_t Npolmax                = 3;
-    static constexpr uint64_t index_max              = 4;
+    static constexpr size_t   Npolmax                = 3;
+    static constexpr size_t   index_max              = 4;
     static constexpr uint64_t Nmu                    = 47;
     static constexpr uint64_t Nvpar                  = 127;
     static constexpr uint64_t Nspecies               = 1;
-    static constexpr uint64_t pSpecies_id            = 0;
-    static constexpr uint64_t mu_id                  = 4;  // [0, nrank)
+    static constexpr int64_t  pSpecies_id            = 0;
+    static constexpr int64_t  mu_id                  = 4;  // [0, nrank)
     static constexpr uint64_t istart                 = 0;  // r (radius)
     static constexpr uint64_t iend                   = 31; // r (radius)
     static constexpr uint64_t jstart                 = 0;  // Theta (poloidal)
@@ -47,19 +47,19 @@ int main(int, char**) {
     static constexpr int64_t  collstart              = 0;  // Phi (toroidal) [0, nrank)
     static constexpr int64_t  collend                = 0;  // Phi (toroidal) [0, nrank)
     static constexpr double   R0                     = 320.0;
-    static constexpr uint32_t collision_interspecies = true;
-    static constexpr uint32_t SOL                    = false;
-    static constexpr uint32_t LIM                    = false;
-    static constexpr uint64_t ir_SOL_separatrix      = 32;
+    static constexpr int8_t   collision_interspecies = true;
+    static constexpr int8_t   SOL                    = false;
+    static constexpr int8_t   LIM                    = false;
+    static constexpr int64_t  ir_SOL_separatrix      = 32;
     static constexpr double   dt                     = 50.0;
     static constexpr double   dvpar                  = 0.18897637795;
 
-    static constexpr uint64_t the_mu_extent      = Nmu + 1;
-    static constexpr uint64_t the_vpar_extent    = Nvpar + 1;
-    static constexpr uint64_t the_r_extent       = (iend + 1) - istart;
-    static constexpr uint64_t the_theta_extent   = (jend + 1) - jstart;
-    static constexpr uint64_t the_phi_extent     = static_cast<uint64_t>((collend + 1) - collstart);
-    static constexpr uint64_t the_species_extent = Nspecies;
+    static constexpr size_t the_mu_extent      = Nmu + 1;
+    static constexpr size_t the_vpar_extent    = Nvpar + 1;
+    static constexpr size_t the_r_extent       = (iend + 1) - istart;
+    static constexpr size_t the_theta_extent   = (jend + 1) - jstart;
+    static constexpr size_t the_phi_extent     = static_cast<size_t>((collend + 1) - collstart);
+    static constexpr size_t the_species_extent = Nspecies;
 
     // lbound(comb_mat,1) = 0;
     // ubound(comb_mat,1) = 5;
@@ -193,7 +193,8 @@ int main(int, char**) {
                        &mask_LIM[0][0],
                        &B_norm[0][0],
                        &Bstar_s[0][0][0][0]) != KOLIOP_STATUS_SUCCESS) {
-        std::cout << "::koliop_Initialize() failed\n";
+        std::cout << "::koliop_Create() failed\n";
+        return -1;
     }
 
     std::cout << an_operator << "\n";
@@ -232,7 +233,7 @@ int main(int, char**) {
     ::koliop_ComputeCpar(an_operator,
                          &f5d_s[0][0][0][0][0][0]);
 
-    static constexpr uint32_t choice = 4;
+    static constexpr int32_t choice = 4;
 
     ::koliop_ComputeMaxwellianUnshiftedLoc(an_operator,
                                            &f5d_s[0][0][0][0][0][0],

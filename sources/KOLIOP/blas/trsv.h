@@ -16,7 +16,7 @@ namespace koliop {
         // BatchedBlockTridiagonalByBlockTRSV definition
         ////////////////////////////////////////////////////////////////////////
 
-        /// @brief See BatchedBlockTridiagonalByBlockTRSV for a detailed matrix
+        /// See BatchedBlockTridiagonalByBlockTRSV for a detailed matrix
         /// layout explanation.
         /// @tparam BatchTraits
         /// @tparam kSmallBlockExtent
@@ -61,7 +61,7 @@ namespace koliop {
         public:
             BatchedBlockTridiagonalByBlockTRSV(ExecutionSpaceType an_execution_space);
 
-            /// @brief TRSV, solve Ax = b where A is a LU factorization output
+            /// TRSV, solve Ax = b where A is a LU factorization output
             /// by BatchedBlockTridiagonalByBlockTRF::Factorize().
             /// @param the_rhs In place resolution. the_rhs is overwritten.
             void Solve(const ValueType* the_A_matrix,
