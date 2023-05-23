@@ -6,7 +6,43 @@ MODULE koliop
 
    IMPLICIT NONE
 
+   PRIVATE
+
+   PUBLIC :: koliop_Status
+   PUBLIC :: koliop_Initialize
+
    INTEGER, PARAMETER :: koliop_Status = C_INT32_T
+
+   INTERFACE
+      ! koliop_Status koliop_Initialize(size_t a_host_thread_count,
+      !                              size_t a_device_index,
+      !                              int8_t with_verbose_initialization);
+      INTEGER(koliop_Status) FUNCTION koliop_Initialize_c( &
+         a_host_thread_count, &
+         a_device_index, &
+         with_verbose_initialization) &
+         BIND(C, NAME='koliop_Initialize')
+
+         IMPORT :: C_INT8_T
+         IMPORT :: C_SIZE_T
+         IMPORT :: koliop_Status
+
+         IMPLICIT NONE
+
+         INTEGER(C_SIZE_T), VALUE, INTENT(IN) :: a_host_thread_count
+         INTEGER(C_SIZE_T), VALUE, INTENT(IN) :: a_device_index
+         INTEGER(C_INT8_T), VALUE, INTENT(IN) :: with_verbose_initialization
+      END FUNCTION
+
+      ! koliop_Status koliop_Deinitialize(void);
+      INTEGER(koliop_Status) FUNCTION koliop_Deinitialize_c() &
+         BIND(C, NAME='koliop_Deinitialize')
+
+         IMPORT :: koliop_Status
+
+         IMPLICIT NONE
+      END FUNCTION
+   END INTERFACE
 
 CONTAINS
 
@@ -24,25 +60,6 @@ CONTAINS
       INTEGER(koliop_Status), INTENT(OUT) :: an_error_code
 
       INTEGER(C_INT8_T) :: with_verbose_initialization_cast
-
-      INTERFACE
-         INTEGER(koliop_Status) FUNCTION koliop_Initialize_c( &
-            a_host_thread_count, &
-            a_device_index, &
-            with_verbose_initialization) &
-            BIND(C, NAME='koliop_Initialize')
-
-            IMPORT :: C_INT8_T
-            IMPORT :: C_SIZE_T
-            IMPORT :: koliop_Status
-
-            IMPLICIT NONE
-
-            INTEGER(C_SIZE_T), VALUE, INTENT(IN) :: a_host_thread_count
-            INTEGER(C_SIZE_T), VALUE, INTENT(IN) :: a_device_index
-            INTEGER(C_INT8_T), VALUE, INTENT(IN) :: with_verbose_initialization
-         END FUNCTION
-      END INTERFACE
 
       IF (with_verbose_initialization) THEN
          with_verbose_initialization_cast = 1
