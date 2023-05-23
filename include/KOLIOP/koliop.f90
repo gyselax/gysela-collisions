@@ -195,12 +195,15 @@ MODULE koliop
    END INTERFACE
 
    PUBLIC :: koliop_Status
-   PUBLIC :: koliop_Initialize
-   PUBLIC :: koliop_Deinitialize
+   PUBLIC :: koliop_Initialize_f
+   PUBLIC :: koliop_Deinitialize_f
+   PUBLIC :: koliop_Create_f
+   PUBLIC :: koliop_Release_f
+   PUBLIC :: koliop_ComputeMoments_f
 
 CONTAINS
 
-   SUBROUTINE koliop_Initialize( &
+   SUBROUTINE koliop_Initialize_f( &
       a_host_thread_count, &
       a_device_index, &
       with_verbose_initialization, &
@@ -227,7 +230,7 @@ CONTAINS
          with_verbose_initialization_cast)
    END SUBROUTINE
 
-   SUBROUTINE koliop_Deinitialize( &
+   SUBROUTINE koliop_Deinitialize_f( &
       an_error_code)
 
       IMPLICIT NONE
@@ -236,29 +239,256 @@ CONTAINS
 
       an_error_code = koliop_Deinitialize_c()
    END SUBROUTINE
+
+   SUBROUTINE koliop_Create_f(&
+      an_operator_handle, &
+      Npolmax, &
+      index_max, &
+      pSpecies_id, &
+      mu_id, &
+      the_mu_extent, &
+      the_vpar_extent, &
+      the_r_extent, &
+      the_theta_extent, &
+      the_phi_extent, &
+      the_species_extent, &
+      R0, &
+      collision_interspecies, &
+      SOL, &
+      LIM, &
+      ir_SOL_separatrix, &
+      dt, &
+      dvpar, &
+      comb_mat, &
+      hat_As, &
+      hat_Zs, &
+      mug, &
+      vparg, &
+      coeff_intdmu, &
+      coeff_intdvpar, &
+      rg, &
+      nustar0_r, &
+      q_r, &
+      mask_buffer_r, &
+      mask_LIM, &
+      B_norm, &
+      Bstar_s, &
+      an_error_code)
+
+      IMPLICIT NONE
+
+      TYPE(C_PTR), INTENT(INOUT) :: an_operator_handle
+      INTEGER, INTENT(IN) :: Npolmax
+      INTEGER, INTENT(IN) :: index_max
+      INTEGER, INTENT(IN) :: pSpecies_id
+      INTEGER, INTENT(IN) :: mu_id
+      INTEGER, INTENT(IN) :: the_mu_extent
+      INTEGER, INTENT(IN) :: the_vpar_extent
+      INTEGER, INTENT(IN) :: the_r_extent
+      INTEGER, INTENT(IN) :: the_theta_extent
+      INTEGER, INTENT(IN) :: the_phi_extent
+      INTEGER, INTENT(IN) :: the_species_extent
+      REAL(C_DOUBLE), INTENT(IN) :: R0
+      LOGICAL, INTENT(IN) :: collision_interspecies
+      LOGICAL, INTENT(IN) :: SOL
+      LOGICAL, INTENT(IN) :: LIM
+      INTEGER, INTENT(IN) :: ir_SOL_separatrix
+      REAL(C_DOUBLE), INTENT(IN) :: dt
+      REAL(C_DOUBLE), INTENT(IN) :: dvpar
+      REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(IN) :: comb_mat
+      REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(IN) :: hat_As
+      REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(IN) :: hat_Zs
+      REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(IN) :: mug
+      REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(IN) :: vparg
+      REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(IN) :: coeff_intdmu
+      REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(IN) :: coeff_intdvpar
+      REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(IN) :: rg
+      REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(IN) :: nustar0_r
+      REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(IN) :: q_r
+      REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(IN) :: mask_buffer_r
+      REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(IN) :: mask_LIM
+      REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(IN) :: B_norm
+      REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(IN) :: Bstar_s
+      INTEGER(koliop_Status), INTENT(OUT) :: an_error_code
+
+      INTEGER(C_INT8_T) :: collision_interspecies_cast
+      INTEGER(C_INT8_T) :: SOL_cast
+      INTEGER(C_INT8_T) :: LIM_cast
+
+      IF (collision_interspecies) THEN
+         collision_interspecies_cast = 1
+      ELSE
+         collision_interspecies_cast = 0
+      END IF
+
+      IF (SOL) THEN
+         SOL_cast = 1
+      ELSE
+         SOL_cast = 0
+      END IF
+
+      IF (LIM) THEN
+         LIM_cast = 1
+      ELSE
+         LIM_cast = 0
+      END IF
+
+      an_error_code = koliop_Create_c( &
+         an_operator_handle, &
+         INT(Npolmax, C_SIZE_T), &
+         INT(index_max, C_SIZE_T), &
+         INT(pSpecies_id, C_INT64_T), &
+         INT(mu_id, C_INT64_T), &
+         INT(the_mu_extent, C_SIZE_T), &
+         INT(the_vpar_extent, C_SIZE_T), &
+         INT(the_r_extent, C_SIZE_T), &
+         INT(the_theta_extent, C_SIZE_T), &
+         INT(the_phi_extent, C_SIZE_T), &
+         INT(the_species_extent, C_SIZE_T), &
+         R0, &
+         collision_interspecies_cast, &
+         SOL_cast, &
+         LIM_cast, &
+         INT(ir_SOL_separatrix, C_INT64_T), &
+         dt, &
+         dvpar, &
+         C_LOC(comb_mat), &
+         C_LOC(hat_As), &
+         C_LOC(hat_Zs), &
+         C_LOC(mug), &
+         C_LOC(vparg), &
+         C_LOC(coeff_intdmu), &
+         C_LOC(coeff_intdvpar), &
+         C_LOC(rg), &
+         C_LOC(nustar0_r), &
+         C_LOC(q_r), &
+         C_LOC(mask_buffer_r), &
+         C_LOC(mask_LIM), &
+         C_LOC(B_norm), &
+         C_LOC(Bstar_s))
+   END SUBROUTINE
+
+   SUBROUTINE koliop_Release_f( &
+      an_operator_handle, &
+      an_error_code)
+
+      IMPLICIT NONE
+
+      TYPE(C_PTR), INTENT(INOUT) :: an_operator_handle
+      INTEGER(koliop_Status), INTENT(OUT) :: an_error_code
+
+      an_error_code = koliop_Release_c(an_operator_handle)
+   END SUBROUTINE
+
+   SUBROUTINE koliop_ComputeMoments_f( &
+      an_operator_handle, &
+      f5d_s, &
+      an_error_code)
+
+      IMPLICIT NONE
+
+      TYPE(C_PTR), INTENT(INOUT) :: an_operator_handle
+      REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(IN) :: f5d_s
+      INTEGER(koliop_Status), INTENT(OUT) :: an_error_code
+
+      an_error_code = koliop_ComputeMoments_c( &
+         an_operator_handle, &
+         C_LOC(f5d_s))
+   END SUBROUTINE
 END MODULE
 
-program test
+PROGRAM Testing
    USE koliop
    USE ISO_C_Binding
 
-   implicit none
+   IMPLICIT NONE
+
    INTEGER :: a_host_thread_count
    INTEGER :: a_device_index
    LOGICAL :: with_verbose_initialization
+
+   INTEGER :: Npolmax
+   INTEGER :: index_max
+   INTEGER :: pSpecies_id
+   INTEGER :: mu_id
+   INTEGER :: the_mu_extent
+   INTEGER :: the_vpar_extent
+   INTEGER :: the_r_extent
+   INTEGER :: the_theta_extent
+   INTEGER :: the_phi_extent
+   INTEGER :: the_species_extent
+   REAL(C_DOUBLE) :: R0
+   LOGICAL :: collision_interspecies
+   LOGICAL :: SOL
+   LOGICAL :: LIM
+   INTEGER :: ir_SOL_separatrix
+   REAL(C_DOUBLE) :: dt
+   REAL(C_DOUBLE) :: dvpar
+
+   REAL(C_DOUBLE), DIMENSION(:,:), ALLOCATABLE :: comb_mat
+   REAL(C_DOUBLE), DIMENSION(:), ALLOCATABLE :: hat_As
+   REAL(C_DOUBLE), DIMENSION(:), ALLOCATABLE :: hat_Zs
+   REAL(C_DOUBLE), DIMENSION(:), ALLOCATABLE :: mug
+   REAL(C_DOUBLE), DIMENSION(:), ALLOCATABLE :: vparg
+   REAL(C_DOUBLE), DIMENSION(:), ALLOCATABLE :: coeff_intdmu
+   REAL(C_DOUBLE), DIMENSION(:), ALLOCATABLE :: coeff_intdvpar
+   REAL(C_DOUBLE), DIMENSION(:), ALLOCATABLE :: rg
+   REAL(C_DOUBLE), DIMENSION(:), ALLOCATABLE :: nustar0_r
+   REAL(C_DOUBLE), DIMENSION(:), ALLOCATABLE :: q_r
+   REAL(C_DOUBLE), DIMENSION(:), ALLOCATABLE :: mask_buffer_r
+   REAL(C_DOUBLE), DIMENSION(:,:), ALLOCATABLE :: mask_LIM
+   REAL(C_DOUBLE), DIMENSION(:,:), ALLOCATABLE :: B_norm
+   REAL(C_DOUBLE), DIMENSION(:,:,:,:), ALLOCATABLE :: Bstar_s
+
    INTEGER(koliop_Status) :: an_error_code
-   INTEGER(C_SIZE_T) :: test1
+
+   REAL(C_DOUBLE), DIMENSION(:,:,:,:,:,:), ALLOCATABLE :: f5d_s
+
+   TYPE(C_PTR) :: an_operator_handle
 
    a_host_thread_count = 8
    a_device_index = 0
    with_verbose_initialization = .TRUE.
 
-   call koliop_Initialize(a_host_thread_count, a_device_index, with_verbose_initialization, an_error_code)
+   call koliop_Initialize_f(a_host_thread_count, &
+      a_device_index, &
+      with_verbose_initialization, &
+      an_error_code)
 
+   print *, "koliop_Initialize_f:an_error_code", an_error_code
 
-   call koliop_Deinitialize(an_error_code)
+   call koliop_Create_f(an_operator_handle, &
+      Npolmax, index_max, &
+      pSpecies_id, mu_id, &
+      the_mu_extent, the_vpar_extent, the_r_extent, &
+      the_theta_extent, the_phi_extent, the_species_extent, &
+      R0,&
+      collision_interspecies, SOL, LIM, &
+      ir_SOL_separatrix, &
+      dt, dvpar, &
+      comb_mat, &
+      hat_As, hat_Zs, &
+      mug, vparg, &
+      coeff_intdmu, coeff_intdvpar, &
+      rg, nustar0_r, q_r, &
+      mask_buffer_r, mask_LIM, &
+      B_norm, Bstar_s, &
+      an_error_code)
 
-   test1 = INT(a_device_index, C_SIZE_T)
+   print *, "koliop_Create_f:an_error_code", an_error_code
 
-   print *, "hi", an_error_code
-end program
+   call koliop_Release_f(an_operator_handle, &
+      an_error_code)
+
+   print *, "koliop_Release_f:an_error_code", an_error_code
+
+   call koliop_ComputeMoments_f(an_operator_handle, &
+      f5d_s, &
+      an_error_code)
+
+   print *, "koliop_ComputeMoments_f:an_error_code", an_error_code
+
+   call koliop_Deinitialize_f(an_error_code)
+
+   print *, "koliop_Deinitialize_f:an_error_code", an_error_code
+END PROGRAM
