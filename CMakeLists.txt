@@ -38,7 +38,7 @@ endforeach()
 ################################################################################
 
 message(STATUS "[koliop] Build type is '${CMAKE_BUILD_TYPE}', configuration types are '${CMAKE_CONFIGURATION_TYPES}'.")
-message(STATUS "[koliop] Assuming the compiler is ${CMAKE_CXX_COMPILER_ID}.")
+message(STATUS "[koliop] Assuming the compiler is '${CMAKE_CXX_COMPILER_ID}'.")
 
 # Basis used by the tests. Does not link with private (internal) interfaces like
 # Kokkos.
