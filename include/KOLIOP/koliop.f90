@@ -397,33 +397,44 @@ CONTAINS
    END SUBROUTINE
 END MODULE
 
+! Compile:
+! ! ftn -O3 -Wall -Wextra -pedantic ../include/KOLIOP/koliop.f90 -c
+! ftn -v -m 2 -O3 ../include/KOLIOP/koliop.f90 -c
+! ninja
+
+! Link:
+! cc -v -o test_dummy_test_f koliop.o -Wl,-rpath,/opt/rocm-5.3.0/lib:/opt/rocm-5.3.0/hip/lib libkoliop.a  _deps/kokkoskernels-build/libkokkoskernels.a _deps/kokkos-build/containers/src/libkokkoscontainers.a _deps/kokkos-build/core/src/libkokkoscore.a -ldl /opt/rocm-5.3.0/lib/libhsa-runtime64.so /opt/rocm-5.3.0/hip/lib/libamdhip64.so /opt/rocm-5.3.0/llvm/lib/clang/15.0.0/lib/linux/libclang_rt.builtins-x86_64.a /opt/cray/pe/libsci/22.11.1.2/CRAY/9.0/x86_64/lib/libsci_cray_mpi_mp.so /opt/cray/pe/libsci/22.11.1.2/CRAY/9.0/x86_64/lib/libsci_cray_mp.so /opt/cray/pe/cce/15.0.0/cce/x86_64/lib/libcraymp.so _deps/kokkos-build/simd/src/libkokkossimd.a
+
+! Build:
+! ninja && ftn -v -m 2 -O3 ../include/KOLIOP/koliop.f90 -c && cc -v -o test_dummy_test_f koliop.o -Wl,-rpath,/opt/rocm-5.3.0/lib:/opt/rocm-5.3.0/hip/lib libkoliop.a  _deps/kokkoskernels-build/libkokkoskernels.a _deps/kokkos-build/containers/src/libkokkoscontainers.a _deps/kokkos-build/core/src/libkokkoscore.a -ldl /opt/rocm-5.3.0/lib/libhsa-runtime64.so /opt/rocm-5.3.0/hip/lib/libamdhip64.so /opt/rocm-5.3.0/llvm/lib/clang/15.0.0/lib/linux/libclang_rt.builtins-x86_64.a /opt/cray/pe/libsci/22.11.1.2/CRAY/9.0/x86_64/lib/libsci_cray_mpi_mp.so /opt/cray/pe/libsci/22.11.1.2/CRAY/9.0/x86_64/lib/libsci_cray_mp.so /opt/cray/pe/cce/15.0.0/cce/x86_64/lib/libcraymp.so _deps/kokkos-build/simd/src/libkokkossimd.a
+
 PROGRAM Testing
    USE koliop
    USE ISO_C_Binding
 
    IMPLICIT NONE
 
-   INTEGER :: a_host_thread_count
-   INTEGER :: a_device_index
-   LOGICAL :: with_verbose_initialization
+   INTEGER :: a_host_thread_count = 8
+   INTEGER :: a_device_index = 0
+   LOGICAL :: with_verbose_initialization = .TRUE.
 
-   INTEGER :: Npolmax
-   INTEGER :: index_max
-   INTEGER :: pSpecies_id
-   INTEGER :: mu_id
-   INTEGER :: the_mu_extent
-   INTEGER :: the_vpar_extent
-   INTEGER :: the_r_extent
-   INTEGER :: the_theta_extent
-   INTEGER :: the_phi_extent
-   INTEGER :: the_species_extent
-   REAL(C_DOUBLE) :: R0
-   LOGICAL :: collision_interspecies
-   LOGICAL :: SOL
-   LOGICAL :: LIM
-   INTEGER :: ir_SOL_separatrix
-   REAL(C_DOUBLE) :: dt
-   REAL(C_DOUBLE) :: dvpar
+   INTEGER :: Npolmax = 3
+   INTEGER :: index_max = 4
+   INTEGER :: pSpecies_id = 0
+   INTEGER :: mu_id = 4
+   INTEGER :: the_mu_extent = 48
+   INTEGER :: the_vpar_extent = 128
+   INTEGER :: the_r_extent = 32
+   INTEGER :: the_theta_extent = 32
+   INTEGER :: the_phi_extent = 1
+   INTEGER :: the_species_extent = 1
+   REAL(C_DOUBLE) :: R0 = 320.0_C_DOUBLE
+   LOGICAL :: collision_interspecies = .TRUE.
+   LOGICAL :: SOL = .FALSE.
+   LOGICAL :: LIM = .FALSE.
+   INTEGER :: ir_SOL_separatrix = 32
+   REAL(C_DOUBLE) :: dt = 50.0_C_DOUBLE
+   REAL(C_DOUBLE) :: dvpar = 0.18897637795_C_DOUBLE
 
    REAL(C_DOUBLE), DIMENSION(:,:), ALLOCATABLE :: comb_mat
    REAL(C_DOUBLE), DIMENSION(:), ALLOCATABLE :: hat_As
@@ -446,9 +457,21 @@ PROGRAM Testing
 
    TYPE(C_PTR) :: an_operator_handle
 
-   a_host_thread_count = 8
-   a_device_index = 0
-   with_verbose_initialization = .TRUE.
+   allocate(comb_mat(index_max + 1 + 1, index_max + 1 + 1))
+   allocate(hat_As(the_species_extent))
+   allocate(hat_Zs(the_species_extent))
+   allocate(mug(the_mu_extent))
+   allocate(vparg(the_vpar_extent))
+   allocate(coeff_intdmu(the_mu_extent))
+   allocate(coeff_intdvpar(the_vpar_extent))
+   allocate(rg(the_r_extent))
+   allocate(nustar0_r(the_r_extent))
+   allocate(q_r(the_r_extent))
+   allocate(mask_buffer_r(the_r_extent))
+   allocate(mask_LIM(the_r_extent, the_theta_extent))
+   allocate(B_norm(the_r_extent, the_theta_extent + 1)) ! This +1 is weird.
+   allocate(Bstar_s(the_vpar_extent, the_r_extent, the_theta_extent, the_species_extent))
+   allocate(f5d_s(the_mu_extent, the_vpar_extent, the_r_extent, the_theta_extent, the_phi_extent, the_species_extent))
 
    call koliop_Initialize_f(a_host_thread_count, &
       a_device_index, &
@@ -477,16 +500,16 @@ PROGRAM Testing
 
    print *, "koliop_Create_f:an_error_code", an_error_code
 
-   call koliop_Release_f(an_operator_handle, &
-      an_error_code)
-
-   print *, "koliop_Release_f:an_error_code", an_error_code
-
    call koliop_ComputeMoments_f(an_operator_handle, &
       f5d_s, &
       an_error_code)
 
    print *, "koliop_ComputeMoments_f:an_error_code", an_error_code
+
+   call koliop_Release_f(an_operator_handle, &
+      an_error_code)
+
+   print *, "koliop_Release_f:an_error_code", an_error_code
 
    call koliop_Deinitialize_f(an_error_code)
 

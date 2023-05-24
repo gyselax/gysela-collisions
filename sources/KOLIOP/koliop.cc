@@ -23,16 +23,16 @@
         Kokkos::initialize(Kokkos::InitializationSettings()
                                .set_num_threads(static_cast<int>(a_host_thread_count))
                                .set_device_id(static_cast<int>(a_device_index))
-                               .set_disable_warnings(!with_verbose_initialization)
+                               .set_disable_warnings(!static_cast<bool>(with_verbose_initialization))
                                // NOTE: As of version 4.0.0
                                // set_print_configuration does not work ?
-                               .set_print_configuration(with_verbose_initialization));
+                               .set_print_configuration(static_cast<bool>(with_verbose_initialization)));
 
         if(!Kokkos::is_initialized()) {
             return KOLIOP_STATUS_INITIALIZATION_FAILURE;
         }
 
-        if(with_verbose_initialization) {
+        if(static_cast<bool>(with_verbose_initialization)) {
             Kokkos::print_configuration(std::cout, false);
         }
 
