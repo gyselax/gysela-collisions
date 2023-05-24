@@ -109,11 +109,9 @@
            nustar0_r == nullptr ||
            q_r == nullptr ||
            mask_buffer_r == nullptr ||
-           // TODO(Etienne M): Is that nullptr when LIM is false ?
-           (static_cast<bool>(LIM) && mask_LIM == nullptr) ||
+           (static_cast<bool>(LIM) == (mask_LIM != nullptr)) ||
            B_norm == nullptr ||
            Bstar_s == nullptr) {
-            // TODO(Etienne M): More checks
             return KOLIOP_STATUS_INVALID_VALUE;
         }
 

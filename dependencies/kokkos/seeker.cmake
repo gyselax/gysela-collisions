@@ -11,8 +11,8 @@ if(NOT koliop_USE_SYSTEM_PROVIDED_KOKKOS)
     include(FetchContent)
     # cmake_policy(SET CMP0135 NEW)
     FetchContent_Declare(Kokkos
-                         SYSTEM                # Affects only with CMake v3.25 and up.
-                         OVERRIDE_FIND_PACKAGE # Affects only with CMake v3.24 and up.
+                         SYSTEM                # For CMake v3.25 and up.
+                         OVERRIDE_FIND_PACKAGE # For CMake v3.24 and up.
                          # URL https://github.com/kokkos/kokkos/archive/refs/tags/3.7.01.tar.gz
                          # URL_HASH "SHA512=97cb7e05aec145ba9adae30b20ae3138a532db3a56cdd5e092d8f9c1e1788efe7a6f721282e2a5c5bf9c0da4c53d28f30b27fcb546b68aa8eaa589a362eb40c1"
                          URL https://github.com/kokkos/kokkos/archive/refs/tags/4.0.00.tar.gz
@@ -30,8 +30,8 @@ if(NOT koliop_USE_SYSTEM_PROVIDED_KOKKOS_KERNEL)
     include(FetchContent)
     # cmake_policy(SET CMP0135 NEW)
     FetchContent_Declare(KokkosKernels
-                         SYSTEM                # Affects only with CMake v3.25 and up.
-                         OVERRIDE_FIND_PACKAGE # Affects only with CMake v3.24 and up.
+                         SYSTEM                # For CMake v3.25 and up.
+                         OVERRIDE_FIND_PACKAGE # For CMake v3.24 and up.
                          URL https://github.com/kokkos/kokkos-kernels/archive/refs/tags/4.0.00.tar.gz
                          URL_HASH "SHA512=97a2c24150eb2fd64599337248f77b3e4350164fee01656cf3d71c55dfd5733657e53c70b31dc2872c1a6d63ce679e1c61ce45a236f8ac5927ae6eac85f9cdfe")
     FetchContent_MakeAvailable(KokkosKernels)

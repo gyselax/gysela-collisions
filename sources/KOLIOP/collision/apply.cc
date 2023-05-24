@@ -216,6 +216,9 @@ namespace koliop {
             const ComputeFloatType dt          = an_operator.dt_;
 
             const auto the_kernel = KOKKOS_LAMBDA(auto ipol, auto ivpar, auto ir, auto itheta, auto iphi) {
+
+                // NOTE: kBlockExtentXXX are constant, the compiler can replace
+                // the % with faster instructions.
                 const OrdinalType the_block_local_index_r     = ir % Constant::kBlockExtentR;
                 const OrdinalType the_block_local_index_theta = itheta % Constant::kBlockExtentTheta;
                 const OrdinalType the_block_local_index_phi   = iphi % Constant::kBlockExtentPhi;

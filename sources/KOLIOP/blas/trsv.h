@@ -207,8 +207,8 @@ namespace koliop {
                     auto b      = Kokkos::subview(the_vector_batch_element, kBigBlockExtent - 1, Kokkos::ALL());
                     auto b_next = Kokkos::subview(the_vector_batch_element, 0, Kokkos::ALL());
 
-                    // NOTE: *next* when iterating in reverse order is
-                    // *previous* when iterating in natural order.
+                    // NOTE: when iterating in reverse order, the *next* element
+                    // is the *previous* one when iterating in natural order.
 
                     for(OrdinalType the_reversed_small_block_index = kBigBlockExtent;
                         the_reversed_small_block_index != 1;

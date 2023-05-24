@@ -77,51 +77,26 @@ NOTE:
 
 ## TODOs
 
-- CvCd
-    - LU factorization is serial.
-    - Assuming tridiagonal by block it can be parallelized via omp or vectorized in SPMD (ispc/one factorization per thread)
-    - LU / TRSM / GEMM can be used to factorize the matrix in doolittle format
-    - What about the layotu of the data, it'l depend on the factorization and solving
-    - Kokkos kernel
-    - Proof test tridiag by block LU factorization algo with preparation for later solving:
-
-```c
-    for each block do:
-        for each 2x2 matrix:
-            // A_r B_r
-            // C_r A_r+1 B_r+1
-            //     C_r+1 A_r+2
-
-            A_r B_r
-            C_r A_r+1
-
-            A_r   := LU(A_r);           // LU
-            B_r   := L^-1 * B_r;        // TRSM
-            C_r   := C_r * U^-1;        // TRSM
-            A_r+1 := C_r+1 - C_r * B_r; // GEMM
-```
-
-- Which blas implementation for the LU decomposition
-- Port more kernels
-- Test KOKKOS_BOUNDS_CHECK Kokkos_ENABLE_DEBUG_BOUNDS_CHECKS Kokkos_ENABLE_DEBUG
-- Create the fortran bindings
-- Quick recheck of the kernel and their fortran equivalent
-- Test in Gysela (progressively replace libcoll with koliop)
-- Observ performance changes depending on the choice of Ordinal/Offset/FloatType
-- https://github.com/cpm-cmake/CPM.cmake
-
-- Simplify operations
-
-- Run on GPU (assume we get GPU views as input)
-
-- Inter exchange loops
-- Tune for GPU (coalesced reads)
-- Reduce register usage. Each time you use a view, you consume a LOT of register (dimension/stride storage ?).. much more than a simple pointer.
-
-- Remove reference to std:: in kernels
 - Cleanup redundant names, long namespaces, View naming
-- Try validating using floats
-- Split the implementation in more files (one per function ?)
-- Document the C interface
-- Make sure the C interface does not leak (exception et al.)
+- Document the C interface:
+    - Assuming we CPUs for computation, the input buffer are expected to be on the CPU.
+    - Assuming we GPUs for computation, the input buffer are expected to be on the CPU too! `koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL6<Flo64>, koliop::utility::View::MDL6>` vs `koliop::utility::Copy::RawDataToView<koliop::utility::View::UDL6<Flo64>, koliop::utility::View::MDL6>`
+
+- Validation:
+    - Test in Gysela (progressively replace libcoll with koliop)
+    - Quick recheck of the kernel and their fortran equivalent
+    - Solver:
+        - LU factorization is serial, we could use some tricks do further parallelize. But the complexity and gain are yet to be measured.
+        - Residual tests for the solver
+    - Test KOKKOS_BOUNDS_CHECK Kokkos_ENABLE_DEBUG_BOUNDS_CHECKS Kokkos_ENABLE_DEBUG
+
+- Tuning:
+    - Simplify computations
+    - Inter exchange loops
+    - Tune for GPU (coalesced reads)
+    - Reduce register usage. Each time you use a view, you consume a LOT of register (dimension/stride storage ?).. much more than a simple pointer.
+    - Performance depending on the choice of OrdinalType/ComputeFloatType (32bits / 64bits)
+
 - auto should not be used in computations (Flo64 or an other alias)
+- Make sure the C interface does not leak (exception et al.)
+- https://github.com/cpm-cmake/CPM.cmake

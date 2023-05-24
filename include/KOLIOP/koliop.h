@@ -35,7 +35,7 @@ extern "C" {
 /// value as no meaning if koliop was not built with device support enabled.
 /// @param with_verbose_initialization KOLIOP_FALSE to disable or KOLIOP_TRUE to
 /// present additional information.
-/// @return KOLIOP_STATUS_SUCCESS on success TODO(Etienne M): more.
+/// @return KOLIOP_STATUS_SUCCESS on success.
 ///
 koliop_Status koliop_Initialize(size_t a_host_thread_count,
                                 size_t a_device_index,
@@ -43,7 +43,7 @@ koliop_Status koliop_Initialize(size_t a_host_thread_count,
 
 /// Has to be called when koliop is not to be used anymore for the
 /// lifetime of the program.
-/// @return KOLIOP_STATUS_SUCCESS on success TODO(Etienne M): more.
+/// @return KOLIOP_STATUS_SUCCESS on success.
 ///
 koliop_Status koliop_Deinitialize(void);
 

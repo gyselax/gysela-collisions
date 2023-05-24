@@ -102,10 +102,10 @@
 #endif
 
 #if !(defined(KOLIOP_COMPILER_IS_CLANG) || \
-      defined(KOLIOP_COMPILER_IS_GCC) ||   \
-      defined(KOLIOP_COMPILER_IS_MSVC))
+      defined(KOLIOP_COMPILER_IS_GCC))
 // defined(KOLIOP_COMPILER_IS_ICX)
 // defined(KOLIOP_COMPILER_IS_ICC)
+// defined(KOLIOP_COMPILER_IS_MSVC)
 static_assert(false, "This library doesn't support your compiler.");
 #endif
 
