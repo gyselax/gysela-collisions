@@ -10,6 +10,21 @@ MODULE koliop
 
    INTEGER, PARAMETER :: koliop_Status = C_INT32_T
 
+   PUBLIC :: koliop_Status
+   PUBLIC :: koliop_Initialize_f
+   PUBLIC :: koliop_Deinitialize_f
+   PUBLIC :: koliop_Create_f
+   PUBLIC :: koliop_Release_f
+   PUBLIC :: koliop_ComputeMoments_f
+   PUBLIC :: koliop_PrecomputeNu_f
+   PUBLIC :: koliop_ComputeMaxwellianEvolution_f
+   PUBLIC :: koliop_ComputeQparOnNT_f
+   PUBLIC :: koliop_ComputeCpar_f
+   PUBLIC :: koliop_ComputeMaxwellianUnshiftedLoc_f
+   PUBLIC :: koliop_Apply_f
+   PUBLIC :: koliop_ComputeDensityCorrection_f
+   PUBLIC :: koliop_ComputeUparTCorrection_f
+
    ! NOTE: Sources:
    ! https://www.cism.ucl.ac.be/Services/Formations/ICS/ics_2013.0.028/composer_xe_2013.1.117/Documentation/en_US/compiler_f/main_for/GUID-ECF6FF36-1397-43D8-88BB-CCD2F6108DA5.htm
    ! https://docs.oracle.com/cd/E19422-01/819-3685/11_cfort.html
@@ -320,21 +335,6 @@ MODULE koliop
          TYPE(C_PTR), VALUE, INTENT(IN) :: f5d_s
       END FUNCTION
    END INTERFACE
-
-   PUBLIC :: koliop_Status
-   PUBLIC :: koliop_Initialize_f
-   PUBLIC :: koliop_Deinitialize_f
-   PUBLIC :: koliop_Create_f
-   PUBLIC :: koliop_Release_f
-   PUBLIC :: koliop_ComputeMoments_f
-   PUBLIC :: koliop_PrecomputeNu_f
-   PUBLIC :: koliop_ComputeMaxwellianEvolution_f
-   PUBLIC :: koliop_ComputeQparOnNT_f
-   PUBLIC :: koliop_ComputeCpar_f
-   PUBLIC :: koliop_ComputeMaxwellianUnshiftedLoc_f
-   PUBLIC :: koliop_Apply_f
-   PUBLIC :: koliop_ComputeDensityCorrection_f
-   PUBLIC :: koliop_ComputeUparTCorrection_f
 
 CONTAINS
 
@@ -660,6 +660,178 @@ CONTAINS
    END SUBROUTINE
 END MODULE
 
+MODULE koliop_test
+   USE koliop
+   USE ISO_C_Binding
+
+   IMPLICIT NONE
+
+   PRIVATE
+
+   PUBLIC :: koliop_test_Run
+
+CONTAINS
+
+   SUBROUTINE koliop_test_Run()
+
+      IMPLICIT NONE
+
+      INTEGER :: a_host_thread_count = 8
+      INTEGER :: a_device_index = 0
+      LOGICAL :: with_verbose_initialization = .TRUE.
+
+      INTEGER :: Npolmax = 3
+      INTEGER :: index_max = 4
+      INTEGER :: pSpecies_id = 0
+      INTEGER :: mu_id = 4
+      INTEGER :: the_mu_extent = 48
+      INTEGER :: the_vpar_extent = 128
+      INTEGER :: the_r_extent = 32
+      INTEGER :: the_theta_extent = 32
+      INTEGER :: the_phi_extent = 1
+      INTEGER :: the_species_extent = 1
+      REAL(C_DOUBLE) :: R0 = 320.0_C_DOUBLE
+      LOGICAL :: collision_interspecies = .TRUE.
+      LOGICAL :: SOL = .FALSE.
+      LOGICAL :: LIM = .FALSE.
+      INTEGER :: ir_SOL_separatrix = 32
+      REAL(C_DOUBLE) :: dt = 50.0_C_DOUBLE
+      REAL(C_DOUBLE) :: dvpar = 0.18897637795_C_DOUBLE
+
+      REAL(C_DOUBLE), DIMENSION(:,:), ALLOCATABLE :: comb_mat
+      REAL(C_DOUBLE), DIMENSION(:), ALLOCATABLE :: hat_As
+      REAL(C_DOUBLE), DIMENSION(:), ALLOCATABLE :: hat_Zs
+      REAL(C_DOUBLE), DIMENSION(:), ALLOCATABLE :: mug
+      REAL(C_DOUBLE), DIMENSION(:), ALLOCATABLE :: vparg
+      REAL(C_DOUBLE), DIMENSION(:), ALLOCATABLE :: coeff_intdmu
+      REAL(C_DOUBLE), DIMENSION(:), ALLOCATABLE :: coeff_intdvpar
+      REAL(C_DOUBLE), DIMENSION(:), ALLOCATABLE :: rg
+      REAL(C_DOUBLE), DIMENSION(:), ALLOCATABLE :: nustar0_r
+      REAL(C_DOUBLE), DIMENSION(:), ALLOCATABLE :: q_r
+      REAL(C_DOUBLE), DIMENSION(:), ALLOCATABLE :: mask_buffer_r
+      REAL(C_DOUBLE), DIMENSION(:,:), ALLOCATABLE :: mask_LIM
+      REAL(C_DOUBLE), DIMENSION(:,:), ALLOCATABLE :: B_norm
+      REAL(C_DOUBLE), DIMENSION(:,:,:,:), ALLOCATABLE :: Bstar_s
+
+      INTEGER(koliop_Status) :: an_error_code
+
+      REAL(C_DOUBLE), DIMENSION(:,:,:,:,:,:), ALLOCATABLE :: f5d_s
+
+      TYPE(C_PTR) :: an_operator_handle
+
+      allocate(comb_mat(index_max + 1 + 1, index_max + 1 + 1))
+      allocate(hat_As(the_species_extent))
+      allocate(hat_Zs(the_species_extent))
+      allocate(mug(the_mu_extent))
+      allocate(vparg(the_vpar_extent))
+      allocate(coeff_intdmu(the_mu_extent))
+      allocate(coeff_intdvpar(the_vpar_extent))
+      allocate(rg(the_r_extent))
+      allocate(nustar0_r(the_r_extent))
+      allocate(q_r(the_r_extent))
+      allocate(mask_buffer_r(the_r_extent))
+      allocate(mask_LIM(the_r_extent, the_theta_extent))
+      allocate(B_norm(the_r_extent, the_theta_extent + 1)) ! This +1 is weird.
+      allocate(Bstar_s(the_vpar_extent, the_r_extent, the_theta_extent, the_species_extent))
+      allocate(f5d_s(the_mu_extent, the_vpar_extent, the_r_extent, the_theta_extent, the_phi_extent, the_species_extent))
+
+      comb_mat = 42.0_C_DOUBLE
+      hat_As = 42.0_C_DOUBLE
+      hat_Zs = 42.0_C_DOUBLE
+      mug = 42.0_C_DOUBLE
+      vparg = 42.0_C_DOUBLE
+      coeff_intdmu = 42.0_C_DOUBLE
+      coeff_intdvpar = 42.0_C_DOUBLE
+      rg = 42.0_C_DOUBLE
+      nustar0_r = 42.0_C_DOUBLE
+      q_r = 42.0_C_DOUBLE
+      mask_buffer_r = 42.0_C_DOUBLE
+      mask_LIM = 42.0_C_DOUBLE
+      B_norm = 42.0_C_DOUBLE
+      Bstar_s = 42.0_C_DOUBLE
+      f5d_s = 42.0_C_DOUBLE
+
+      call koliop_Initialize_f(a_host_thread_count, &
+         a_device_index, &
+         with_verbose_initialization, &
+         an_error_code)
+      print *, "koliop_Initialize_f:an_error_code", an_error_code
+
+      call koliop_Create_f(an_operator_handle, &
+         Npolmax, index_max, &
+         pSpecies_id, mu_id, &
+         the_mu_extent, the_vpar_extent, the_r_extent, &
+         the_theta_extent, the_phi_extent, the_species_extent, &
+         R0,&
+         collision_interspecies, SOL, LIM, &
+         ir_SOL_separatrix, &
+         dt, dvpar, &
+         comb_mat, &
+         hat_As, hat_Zs, &
+         mug, vparg, &
+         coeff_intdmu, coeff_intdvpar, &
+         rg, nustar0_r, q_r, &
+         mask_buffer_r, mask_LIM, &
+         B_norm, Bstar_s, &
+         an_error_code)
+      print *, "koliop_Create_f:an_error_code", an_error_code
+
+      call koliop_ComputeMoments_f(an_operator_handle, &
+         f5d_s, &
+         an_error_code)
+      print *, "koliop_ComputeMoments_f:an_error_code", an_error_code
+
+      call koliop_PrecomputeNu_f(an_operator_handle, &
+         an_error_code)
+      print *, "koliop_PrecomputeNu_f:an_error_code", an_error_code
+
+      call koliop_ComputeMaxwellianEvolution_f(an_operator_handle, &
+         f5d_s, &
+         an_error_code)
+      print *, "koliop_ComputeMaxwellianEvolution_f:an_error_code", an_error_code
+
+      call koliop_ComputeQparOnNT_f(an_operator_handle, &
+         f5d_s, &
+         an_error_code)
+      print *, "koliop_ComputeQparOnNT_f:an_error_code", an_error_code
+
+      call koliop_ComputeCpar_f(an_operator_handle, &
+         f5d_s, &
+         an_error_code)
+      print *, "koliop_ComputeCpar_f:an_error_code", an_error_code
+
+      call koliop_ComputeMaxwellianUnshiftedLoc_f(an_operator_handle, &
+         f5d_s, &
+         4, &
+         an_error_code)
+      print *, "koliop_ComputeMaxwellianUnshiftedLoc_f:an_error_code", an_error_code
+
+      call koliop_Apply_f(an_operator_handle, &
+         f5d_s, &
+         an_error_code)
+      print *, "koliop_Apply_f:an_error_code", an_error_code
+
+      call koliop_ComputeDensityCorrection_f(an_operator_handle, &
+         f5d_s, &
+         an_error_code)
+      print *, "koliop_ComputeDensityCorrection_f:an_error_code", an_error_code
+
+      call koliop_ComputeUparTCorrection_f(an_operator_handle, &
+         f5d_s, &
+         an_error_code)
+      print *, "koliop_ComputeUparTCorrection_f:an_error_code", an_error_code
+
+      call koliop_Release_f(an_operator_handle, &
+         an_error_code)
+      print *, "koliop_Release_f:an_error_code", an_error_code
+
+      call koliop_Deinitialize_f(an_error_code)
+      print *, "koliop_Deinitialize_f:an_error_code", an_error_code
+   END SUBROUTINE
+END MODULE
+
+! To test the interface, uncomment the PROGRAM below.
+
 ! Compile:
 ! ! ftn -O3 -Wall -Wextra -pedantic ../include/KOLIOP/koliop.f90 -c
 ! ftn -v -m 2 -O3 ../include/KOLIOP/koliop.f90 -c
@@ -671,161 +843,11 @@ END MODULE
 ! Build:
 ! ninja && ftn -v -m 2 -O3 ../include/KOLIOP/koliop.f90 -c && cc -v -o test_dummy_test_f koliop.o -Wl,-rpath,/opt/rocm-5.3.0/lib:/opt/rocm-5.3.0/hip/lib libkoliop.a  _deps/kokkoskernels-build/libkokkoskernels.a _deps/kokkos-build/containers/src/libkokkoscontainers.a _deps/kokkos-build/core/src/libkokkoscore.a -ldl /opt/rocm-5.3.0/lib/libhsa-runtime64.so /opt/rocm-5.3.0/hip/lib/libamdhip64.so /opt/rocm-5.3.0/llvm/lib/clang/15.0.0/lib/linux/libclang_rt.builtins-x86_64.a /opt/cray/pe/libsci/22.11.1.2/CRAY/9.0/x86_64/lib/libsci_cray_mpi_mp.so /opt/cray/pe/libsci/22.11.1.2/CRAY/9.0/x86_64/lib/libsci_cray_mp.so /opt/cray/pe/cce/15.0.0/cce/x86_64/lib/libcraymp.so _deps/kokkos-build/simd/src/libkokkossimd.a
 
-PROGRAM Testing
-   USE koliop
-   USE ISO_C_Binding
+! PROGRAM Testing
+!    USE koliop_test
+!    USE ISO_C_Binding
 
-   IMPLICIT NONE
+!    IMPLICIT NONE
 
-   INTEGER :: a_host_thread_count = 8
-   INTEGER :: a_device_index = 0
-   LOGICAL :: with_verbose_initialization = .TRUE.
-
-   INTEGER :: Npolmax = 3
-   INTEGER :: index_max = 4
-   INTEGER :: pSpecies_id = 0
-   INTEGER :: mu_id = 4
-   INTEGER :: the_mu_extent = 48
-   INTEGER :: the_vpar_extent = 128
-   INTEGER :: the_r_extent = 32
-   INTEGER :: the_theta_extent = 32
-   INTEGER :: the_phi_extent = 1
-   INTEGER :: the_species_extent = 1
-   REAL(C_DOUBLE) :: R0 = 320.0_C_DOUBLE
-   LOGICAL :: collision_interspecies = .TRUE.
-   LOGICAL :: SOL = .FALSE.
-   LOGICAL :: LIM = .FALSE.
-   INTEGER :: ir_SOL_separatrix = 32
-   REAL(C_DOUBLE) :: dt = 50.0_C_DOUBLE
-   REAL(C_DOUBLE) :: dvpar = 0.18897637795_C_DOUBLE
-
-   REAL(C_DOUBLE), DIMENSION(:,:), ALLOCATABLE :: comb_mat
-   REAL(C_DOUBLE), DIMENSION(:), ALLOCATABLE :: hat_As
-   REAL(C_DOUBLE), DIMENSION(:), ALLOCATABLE :: hat_Zs
-   REAL(C_DOUBLE), DIMENSION(:), ALLOCATABLE :: mug
-   REAL(C_DOUBLE), DIMENSION(:), ALLOCATABLE :: vparg
-   REAL(C_DOUBLE), DIMENSION(:), ALLOCATABLE :: coeff_intdmu
-   REAL(C_DOUBLE), DIMENSION(:), ALLOCATABLE :: coeff_intdvpar
-   REAL(C_DOUBLE), DIMENSION(:), ALLOCATABLE :: rg
-   REAL(C_DOUBLE), DIMENSION(:), ALLOCATABLE :: nustar0_r
-   REAL(C_DOUBLE), DIMENSION(:), ALLOCATABLE :: q_r
-   REAL(C_DOUBLE), DIMENSION(:), ALLOCATABLE :: mask_buffer_r
-   REAL(C_DOUBLE), DIMENSION(:,:), ALLOCATABLE :: mask_LIM
-   REAL(C_DOUBLE), DIMENSION(:,:), ALLOCATABLE :: B_norm
-   REAL(C_DOUBLE), DIMENSION(:,:,:,:), ALLOCATABLE :: Bstar_s
-
-   INTEGER(koliop_Status) :: an_error_code
-
-   REAL(C_DOUBLE), DIMENSION(:,:,:,:,:,:), ALLOCATABLE :: f5d_s
-
-   TYPE(C_PTR) :: an_operator_handle
-
-   allocate(comb_mat(index_max + 1 + 1, index_max + 1 + 1))
-   allocate(hat_As(the_species_extent))
-   allocate(hat_Zs(the_species_extent))
-   allocate(mug(the_mu_extent))
-   allocate(vparg(the_vpar_extent))
-   allocate(coeff_intdmu(the_mu_extent))
-   allocate(coeff_intdvpar(the_vpar_extent))
-   allocate(rg(the_r_extent))
-   allocate(nustar0_r(the_r_extent))
-   allocate(q_r(the_r_extent))
-   allocate(mask_buffer_r(the_r_extent))
-   allocate(mask_LIM(the_r_extent, the_theta_extent))
-   allocate(B_norm(the_r_extent, the_theta_extent + 1)) ! This +1 is weird.
-   allocate(Bstar_s(the_vpar_extent, the_r_extent, the_theta_extent, the_species_extent))
-   allocate(f5d_s(the_mu_extent, the_vpar_extent, the_r_extent, the_theta_extent, the_phi_extent, the_species_extent))
-
-   comb_mat = 42.0_C_DOUBLE
-   hat_As = 42.0_C_DOUBLE
-   hat_Zs = 42.0_C_DOUBLE
-   mug = 42.0_C_DOUBLE
-   vparg = 42.0_C_DOUBLE
-   coeff_intdmu = 42.0_C_DOUBLE
-   coeff_intdvpar = 42.0_C_DOUBLE
-   rg = 42.0_C_DOUBLE
-   nustar0_r = 42.0_C_DOUBLE
-   q_r = 42.0_C_DOUBLE
-   mask_buffer_r = 42.0_C_DOUBLE
-   mask_LIM = 42.0_C_DOUBLE
-   B_norm = 42.0_C_DOUBLE
-   Bstar_s = 42.0_C_DOUBLE
-   f5d_s = 42.0_C_DOUBLE
-
-   call koliop_Initialize_f(a_host_thread_count, &
-      a_device_index, &
-      with_verbose_initialization, &
-      an_error_code)
-   print *, "koliop_Initialize_f:an_error_code", an_error_code
-
-   call koliop_Create_f(an_operator_handle, &
-      Npolmax, index_max, &
-      pSpecies_id, mu_id, &
-      the_mu_extent, the_vpar_extent, the_r_extent, &
-      the_theta_extent, the_phi_extent, the_species_extent, &
-      R0,&
-      collision_interspecies, SOL, LIM, &
-      ir_SOL_separatrix, &
-      dt, dvpar, &
-      comb_mat, &
-      hat_As, hat_Zs, &
-      mug, vparg, &
-      coeff_intdmu, coeff_intdvpar, &
-      rg, nustar0_r, q_r, &
-      mask_buffer_r, mask_LIM, &
-      B_norm, Bstar_s, &
-      an_error_code)
-   print *, "koliop_Create_f:an_error_code", an_error_code
-
-   call koliop_ComputeMoments_f(an_operator_handle, &
-      f5d_s, &
-      an_error_code)
-   print *, "koliop_ComputeMoments_f:an_error_code", an_error_code
-
-   call koliop_PrecomputeNu_f(an_operator_handle, &
-      an_error_code)
-   print *, "koliop_PrecomputeNu_f:an_error_code", an_error_code
-
-   call koliop_ComputeMaxwellianEvolution_f(an_operator_handle, &
-      f5d_s, &
-      an_error_code)
-   print *, "koliop_ComputeMaxwellianEvolution_f:an_error_code", an_error_code
-
-   call koliop_ComputeQparOnNT_f(an_operator_handle, &
-      f5d_s, &
-      an_error_code)
-   print *, "koliop_ComputeQparOnNT_f:an_error_code", an_error_code
-
-   call koliop_ComputeCpar_f(an_operator_handle, &
-      f5d_s, &
-      an_error_code)
-   print *, "koliop_ComputeCpar_f:an_error_code", an_error_code
-
-   call koliop_ComputeMaxwellianUnshiftedLoc_f(an_operator_handle, &
-      f5d_s, &
-      4, &
-      an_error_code)
-   print *, "koliop_ComputeMaxwellianUnshiftedLoc_f:an_error_code", an_error_code
-
-   call koliop_Apply_f(an_operator_handle, &
-      f5d_s, &
-      an_error_code)
-   print *, "koliop_Apply_f:an_error_code", an_error_code
-
-   call koliop_ComputeDensityCorrection_f(an_operator_handle, &
-      f5d_s, &
-      an_error_code)
-   print *, "koliop_ComputeDensityCorrection_f:an_error_code", an_error_code
-
-   call koliop_ComputeUparTCorrection_f(an_operator_handle, &
-      f5d_s, &
-      an_error_code)
-   print *, "koliop_ComputeUparTCorrection_f:an_error_code", an_error_code
-
-   call koliop_Release_f(an_operator_handle, &
-      an_error_code)
-   print *, "koliop_Release_f:an_error_code", an_error_code
-
-   call koliop_Deinitialize_f(an_error_code)
-   print *, "koliop_Deinitialize_f:an_error_code", an_error_code
-END PROGRAM
+!    call koliop_test_Run()
+! END PROGRAM
