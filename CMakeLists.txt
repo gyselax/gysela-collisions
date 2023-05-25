@@ -114,15 +114,20 @@ if(koliop_BUILD_FORTRAN_INTERFACE)
 
     enable_language(Fortran)
 
-    add_library(koliop_fortran INTERFACE)
+    add_library(koliop_fortran STATIC)
 
     target_include_directories(koliop_fortran
-                               INTERFACE "${koliop_INCLUDE_DIRECTORY}/KOLIOP/")
+                               # TODO(Etienne M): PRIVATE or PUBLIC ?
+                               PUBLIC "${koliop_INCLUDE_DIRECTORY}/KOLIOP/")
+
+    target_sources(koliop_fortran
+                   # TODO(Etienne M): PRIVATE or PUBLIC ?
+                   PRIVATE "${koliop_INCLUDE_DIRECTORY}/KOLIOP/koliop.f90")
 
     target_link_libraries(koliop_fortran
                           # NOTE: PUBLIC due to this issue:
                           # https://gitlab.kitware.com/cmake/cmake/-/issues/24402
-                          INTERFACE koliop)
+                          PUBLIC koliop)
 endif()
 
 ########################################
