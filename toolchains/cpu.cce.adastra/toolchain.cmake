@@ -18,7 +18,7 @@ set(Kokkos_ARCH_ZEN3 ON CACHE BOOL "Optimize for AMD Zen3 architecture (HOST).")
 # Koliop options:
 
 set(koliop_TOOLCHAIN_NAME "cpu.cce.adastra")
-set(koliop_BUILD_FORTRAN_INTERFACE ON CACHE BOOL "")
+set(koliop_BUILD_FORTRAN_INTERFACE OFF CACHE BOOL "")
 
 # The rest is optional:
 
@@ -28,6 +28,10 @@ set(koliop_FLAGS_DEBUG           -Og -fno-omit-frame-pointer -fno-optimize-sibli
 set(koliop_FLAGS_MINSIZEREL      -Os)
 set(koliop_FLAGS_RELEASE         -O3)
 set(koliop_FLAGS_RELWITHDEBINFO  -O3 -fno-omit-frame-pointer -fno-optimize-sibling-calls)
+
+
+
+
 
 set(koliop_LINKER_FLAGS_DEBUG          ${koliop_FLAGS_DEBUG})
 set(koliop_LINKER_FLAGS_MINSIZEREL     ${koliop_FLAGS_MINSIZEREL})
