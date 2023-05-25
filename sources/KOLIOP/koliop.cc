@@ -89,7 +89,9 @@
                               const double*      B_norm,
                               const double*      Bstar_s) {
     return koliop::error::FromException([&]() {
-        using Operator = koliop::collision::Operator;
+        if(!Kokkos::is_initialized()) {
+            return KOLIOP_STATUS_INITIALIZATION_FAILURE;
+        }
 
         if(an_operator_handle == nullptr ||
            // We expect Npolmax to be constant.
@@ -114,6 +116,8 @@
            Bstar_s == nullptr) {
             return KOLIOP_STATUS_INVALID_VALUE;
         }
+
+        using Operator = koliop::collision::Operator;
 
         auto* const an_operator = new Operator{static_cast<uint64_t>(pSpecies_id),
                                                static_cast<uint64_t>(mu_id),
@@ -155,6 +159,10 @@
 
 ::koliop_Status koliop_Release(::koliop_Operator an_operator) {
     return koliop::error::FromException([&]() {
+        if(!Kokkos::is_initialized()) {
+            return KOLIOP_STATUS_INITIALIZATION_FAILURE;
+        }
+
         // Freeing a nullptr is *fine*.
         delete reinterpret_cast<const koliop::collision::Operator*>(an_operator);
 
@@ -165,6 +173,10 @@
 ::koliop_Status koliop_ComputeMoments(::koliop_Operator an_operator,
                                       double*           f5d_s) {
     return koliop::error::FromException([&]() {
+        if(!Kokkos::is_initialized()) {
+            return KOLIOP_STATUS_INITIALIZATION_FAILURE;
+        }
+
         if(an_operator == nullptr ||
            f5d_s == nullptr) {
             return KOLIOP_STATUS_INVALID_VALUE;
@@ -178,6 +190,10 @@
 
 ::koliop_Status koliop_PrecomputeNu(::koliop_Operator an_operator) {
     return koliop::error::FromException([&]() {
+        if(!Kokkos::is_initialized()) {
+            return KOLIOP_STATUS_INITIALIZATION_FAILURE;
+        }
+
         if(an_operator == nullptr) {
             return KOLIOP_STATUS_INVALID_VALUE;
         }
@@ -191,6 +207,10 @@
 ::koliop_Status koliop_ComputeMaxwellianEvolution(::koliop_Operator an_operator,
                                                   double*           f5d_s) {
     return koliop::error::FromException([&]() {
+        if(!Kokkos::is_initialized()) {
+            return KOLIOP_STATUS_INITIALIZATION_FAILURE;
+        }
+
         if(an_operator == nullptr ||
            f5d_s == nullptr) {
             return KOLIOP_STATUS_INVALID_VALUE;
@@ -205,6 +225,10 @@
 ::koliop_Status koliop_ComputeQparOnNT(::koliop_Operator an_operator,
                                        const double*     f5d_s) {
     return koliop::error::FromException([&]() {
+        if(!Kokkos::is_initialized()) {
+            return KOLIOP_STATUS_INITIALIZATION_FAILURE;
+        }
+
         if(an_operator == nullptr ||
            f5d_s == nullptr) {
             return KOLIOP_STATUS_INVALID_VALUE;
@@ -219,6 +243,10 @@
 ::koliop_Status koliop_ComputeCpar(::koliop_Operator an_operator,
                                    double*           f5d_s) {
     return koliop::error::FromException([&]() {
+        if(!Kokkos::is_initialized()) {
+            return KOLIOP_STATUS_INITIALIZATION_FAILURE;
+        }
+
         if(an_operator == nullptr ||
            f5d_s == nullptr) {
             return KOLIOP_STATUS_INVALID_VALUE;
@@ -234,6 +262,10 @@
                                                      double*           f5d_s,
                                                      int32_t           choice) {
     return koliop::error::FromException([&]() {
+        if(!Kokkos::is_initialized()) {
+            return KOLIOP_STATUS_INITIALIZATION_FAILURE;
+        }
+
         if(an_operator == nullptr ||
            f5d_s == nullptr ||
            !(choice == 3 || choice == 4)) {
@@ -249,6 +281,10 @@
 ::koliop_Status koliop_Apply(::koliop_Operator an_operator,
                              double*           f5d_s) {
     return koliop::error::FromException([&]() {
+        if(!Kokkos::is_initialized()) {
+            return KOLIOP_STATUS_INITIALIZATION_FAILURE;
+        }
+
         if(an_operator == nullptr ||
            f5d_s == nullptr) {
             return KOLIOP_STATUS_INVALID_VALUE;
@@ -263,6 +299,10 @@
 ::koliop_Status koliop_ComputeDensityCorrection(::koliop_Operator an_operator,
                                                 double*           f5d_s) {
     return koliop::error::FromException([&]() {
+        if(!Kokkos::is_initialized()) {
+            return KOLIOP_STATUS_INITIALIZATION_FAILURE;
+        }
+
         if(an_operator == nullptr ||
            f5d_s == nullptr) {
             return KOLIOP_STATUS_INVALID_VALUE;
@@ -277,6 +317,10 @@
 ::koliop_Status koliop_ComputeUparTCorrection(::koliop_Operator an_operator,
                                               double*           f5d_s) {
     return koliop::error::FromException([&]() {
+        if(!Kokkos::is_initialized()) {
+            return KOLIOP_STATUS_INITIALIZATION_FAILURE;
+        }
+
         if(an_operator == nullptr ||
            f5d_s == nullptr) {
             return KOLIOP_STATUS_INVALID_VALUE;

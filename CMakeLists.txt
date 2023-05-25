@@ -107,23 +107,34 @@ target_include_directories(koliop
                            PUBLIC   "$<BUILD_INTERFACE:${koliop_INCLUDE_DIRECTORY}/>"
                                     "$<INSTALL_INTERFACE:include/>")
 
-option(koliop_BUILD_FORTRAN_INTERFACE "Expose the koliop_fortran glue code needed to interface koliop from Fortran." OFF)
+option(koliop_BUILD_FORTRAN_INTERFACE "Enable the koliop_fortran glue code needed to interface koliop from Fortran." OFF)
 
 if(koliop_BUILD_FORTRAN_INTERFACE)
-    message(STATUS "[koliop] Building the Fortran interface.")
+    message(STATUS "[koliop] Enabling the Fortran interface.")
 
+    enable_language(C)
     enable_language(Fortran)
+
+    include(FortranCInterface)
+
+    FortranCInterface_VERIFY(CXX)
 
     add_library(koliop_fortran STATIC)
 
+    target_include_directories(koliop_fortran
+                               INTERFACE "${CMAKE_CURRENT_BINARY_DIR}/koliop_fortran_FMOD")
+
+    set_target_properties(koliop_fortran
+                          PROPERTIES Fortran_MODULE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/koliop_fortran_FMOD")
+
     target_sources(koliop_fortran
-                   # TODO(Etienne M): PRIVATE or PUBLIC ?
                    PRIVATE "${koliop_INCLUDE_DIRECTORY}/KOLIOP/koliop.f90")
 
     target_link_libraries(koliop_fortran
-                          # NOTE: PUBLIC due to this issue:
+                          # NOTE: I set it to PRIVATE, but this may cause
+                          # issues:
                           # https://gitlab.kitware.com/cmake/cmake/-/issues/24402
-                          PUBLIC koliop)
+                          PRIVATE koliop)
 endif()
 
 ########################################
