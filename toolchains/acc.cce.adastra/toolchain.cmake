@@ -18,7 +18,6 @@ set(Kokkos_ARCH_ZEN3 ON CACHE BOOL "Optimize for AMD Zen3 architecture (HOST).")
 # Koliop options:
 
 set(koliop_TOOLCHAIN_NAME "acc.cce.adastra")
-set(koliop_BUILD_FORTRAN_INTERFACE OFF CACHE BOOL "")
 
 # The rest is optional:
 
