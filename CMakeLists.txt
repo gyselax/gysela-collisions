@@ -112,7 +112,12 @@ option(koliop_BUILD_FORTRAN_INTERFACE "Enable the koliop_fortran glue code neede
 if(koliop_BUILD_FORTRAN_INTERFACE)
     message(STATUS "[koliop] Enabling the Fortran interface.")
 
+    enable_language(C)
     enable_language(Fortran)
+
+    include(FortranCInterface)
+
+    FortranCInterface_VERIFY(CXX)
 
     add_library(koliop_fortran STATIC)
 
@@ -122,7 +127,7 @@ if(koliop_BUILD_FORTRAN_INTERFACE)
 
     target_sources(koliop_fortran
                    # TODO(Etienne M): PRIVATE or PUBLIC ?
-                   PRIVATE "${koliop_INCLUDE_DIRECTORY}/KOLIOP/koliop.f90")
+                   PUBLIC "${koliop_INCLUDE_DIRECTORY}/KOLIOP/koliop.f90")
 
     target_link_libraries(koliop_fortran
                           # NOTE: PUBLIC due to this issue:
