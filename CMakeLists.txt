@@ -17,6 +17,7 @@ endif()
 ### Global options. Dependency specific options are defined in the dependencies.
 ################################################################################
 
+# NOTE: majuscule due to the definition in buildspecificities.h
 option(KOLIOP_ASSERT_ENABLED "Enable assertions. This enable/disable KOLIOP_ASSERT() but not C's assert()." ON)
 
 
@@ -105,6 +106,22 @@ target_include_directories(koliop
 target_include_directories(koliop
                            PUBLIC   "$<BUILD_INTERFACE:${koliop_INCLUDE_DIRECTORY}/>"
                                     "$<INSTALL_INTERFACE:include/>")
+
+option(koliop_BUILD_FORTRAN_INTERFACE "Expose the koliop_fortran glue code needed to interface koliop from Fortran." OFF)
+
+if(koliop_BUILD_FORTRAN_INTERFACE)
+    message(STATUS "[koliop] Building the Fortran interface.")
+
+    enable_language(Fortran)
+
+    add_library(koliop_fortran STATIC)
+
+    target_sources(koliop_fortran
+                   PRIVATE "${koliop_INCLUDE_DIRECTORY}/KOLIOP/koliop.f90")
+
+    target_link_libraries(koliop_fortran
+                          PRIVATE koliop)
+endif()
 
 ########################################
 ### Compilation and linking
