@@ -117,10 +117,13 @@ if(koliop_BUILD_FORTRAN_INTERFACE)
     add_library(koliop_fortran STATIC)
 
     target_sources(koliop_fortran
+                   # TODO(Etienne M): PRIVATE or PUBLIC ?
                    PRIVATE "${koliop_INCLUDE_DIRECTORY}/KOLIOP/koliop.f90")
 
     target_link_libraries(koliop_fortran
-                          PRIVATE koliop)
+                          # NOTE: PUBLIC due to this issue:
+                          # https://gitlab.kitware.com/cmake/cmake/-/issues/24402
+                          PUBLIC koliop)
 endif()
 
 ########################################
