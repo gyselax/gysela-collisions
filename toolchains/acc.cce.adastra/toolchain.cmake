@@ -1,6 +1,7 @@
-set(koliop_TOOLCHAIN_NAME "acc.cce.adastra")
+set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/installation")
 
 set(CMAKE_CXX_COMPILER CC)
+set(CMAKE_Fortran_COMPILER ftn)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_BUILD_TYPE Release) # Debug, Release, RelWithDebInfo and MinSizeRel
@@ -13,6 +14,11 @@ set(Kokkos_ARCH_VEGA90A ON CACHE BOOL "Enable support for AMD GPU MI200 series (
 
 set(Kokkos_ENABLE_OPENMP ON CACHE BOOL "Defined if the OpenMP execution space is enabled.")
 set(Kokkos_ARCH_ZEN3 ON CACHE BOOL "Optimize for AMD Zen3 architecture (HOST).")
+
+# Koliop options:
+
+set(koliop_TOOLCHAIN_NAME "acc.cce.adastra")
+set(koliop_BUILD_FORTRAN_INTERFACE ON CACHE BOOL "")
 
 # The rest is optional:
 
