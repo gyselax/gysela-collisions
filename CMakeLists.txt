@@ -128,8 +128,7 @@ if(koliop_BUILD_FORTRAN_INTERFACE)
                           PROPERTIES Fortran_MODULE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/koliop_fortran_FMOD")
 
     target_sources(koliop_fortran
-                   # TODO(Etienne M): PRIVATE or PUBLIC ?
-                   PUBLIC "${koliop_INCLUDE_DIRECTORY}/KOLIOP/koliop.f90")
+                   PRIVATE "${koliop_INCLUDE_DIRECTORY}/KOLIOP/koliop.f90")
 
     target_link_libraries(koliop_fortran
                           # NOTE: I set it to PRIVATE, but this may cause
