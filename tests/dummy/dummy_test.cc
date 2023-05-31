@@ -189,7 +189,7 @@ int main(int, char**) {
                        &nustar0_r[0],
                        &q_r[0],
                        &mask_buffer_r[0],
-                       &mask_LIM[0][0],
+                       nullptr, // &mask_LIM[0][0],
                        &B_norm[0][0],
                        &Bstar_s[0][0][0][0]) != KOLIOP_STATUS_SUCCESS) {
         std::cout << "::koliop_Create() failed\n";

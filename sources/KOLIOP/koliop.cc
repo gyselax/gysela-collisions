@@ -110,7 +110,8 @@
            nustar0_r == nullptr ||
            q_r == nullptr ||
            mask_buffer_r == nullptr ||
-           (static_cast<bool>(LIM) == (mask_LIM != nullptr)) ||
+           // NOTE: XNOR on booleans is ==
+           (static_cast<bool>(LIM) == (mask_LIM == nullptr)) ||
            B_norm == nullptr ||
            Bstar_s == nullptr) {
             return KOLIOP_STATUS_INVALID_VALUE;
