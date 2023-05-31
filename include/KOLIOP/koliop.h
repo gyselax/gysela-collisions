@@ -31,6 +31,8 @@ extern "C" {
 /// Has to be called before any other koliop function is called.
 /// @param a_host_thread_count The host threads to use to drive the device or to
 /// do the computation. Depending on how koliop was built.
+/// NOTE: under the hood, we call ::omp_set_num_threads(a_host_thread_count). So
+/// make sure you pass a correct value.
 /// @param a_device_index The device koliop will use to offload the work. The
 /// value as no meaning if koliop was not built with device support enabled.
 /// @param with_verbose_initialization KOLIOP_FALSE to disable or KOLIOP_TRUE to
@@ -153,6 +155,10 @@ koliop_Status koliop_ComputeUparTCorrection(koliop_Operator an_operator,
                                             double*         f5d_s);
 
 // TODO(Etienne M): diags.
+
+koliop_Status koliop_Extract(koliop_Operator an_operator,
+                             int32_t         the_value_identifier,
+                             void*           the_output_buffer);
 
 koliop_Status koliop_ExtractUrtheta(koliop_Operator an_operator,
                                     double*         U_par_a_rtheta);
