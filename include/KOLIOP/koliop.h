@@ -75,7 +75,6 @@ koliop_Status koliop_Create(koliop_Operator* an_operator_handle,
                             int8_t           SOL,
                             int8_t           LIM,
                             int64_t          ir_SOL_separatrix,
-                            double           dt,
                             double           dvpar,
                             const double*    comb_mat,
                             const double*    hat_As,
@@ -113,6 +112,7 @@ koliop_Status koliop_PrecomputeNu(koliop_Operator an_operator);
 ///     (2/3) * Vpara *(Vpara - Vparb))
 ///
 koliop_Status koliop_ComputeMaxwellianEvolution(koliop_Operator an_operator,
+                                                double          dt,
                                                 double*         f5d_s);
 
 /// Computation of q_para/(na*Ta)
@@ -132,6 +132,7 @@ koliop_Status koliop_ComputeQparOnNT(koliop_Operator an_operator,
 ///   xb = xa * vTa / vTb
 ///
 koliop_Status koliop_ComputeCpar(koliop_Operator an_operator,
+                                 double          dt,
                                  double*         f5d_s);
 
 /// This routine compute one of the following operation on the
@@ -146,12 +147,14 @@ koliop_Status koliop_ComputeMaxwellianUnshiftedLoc(koliop_Operator an_operator,
                                                    int32_t         choice);
 
 koliop_Status koliop_Apply(koliop_Operator an_operator,
+                           double          dt,
                            double*         f5d_s);
 
 koliop_Status koliop_ComputeDensityCorrection(koliop_Operator an_operator,
                                               double*         f5d_s);
 
 koliop_Status koliop_ComputeUparTCorrection(koliop_Operator an_operator,
+                                            double          dt,
                                             double*         f5d_s);
 
 // TODO(Etienne M): diags.

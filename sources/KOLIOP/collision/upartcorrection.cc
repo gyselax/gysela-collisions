@@ -10,9 +10,10 @@ namespace koliop {
         template <typename View6D,
                   typename View4D>
         static inline void
-        DoComputeUparTCorrection(const Operator& an_operator,
-                                 View6D&&        f5d_s,
-                                 View4D&&        U_par_s) {
+        DoComputeUparTCorrection(const Operator&  an_operator,
+                                 ComputeFloatType dt,
+                                 View6D&&         f5d_s,
+                                 View4D&&         U_par_s) {
 
             const auto& the_mu_extent      = an_operator.the_mu_extent_;
             const auto& the_vpar_extent    = an_operator.the_vpar_extent_;
@@ -35,7 +36,6 @@ namespace koliop {
 
             const auto&            pSpecies_id            = an_operator.pSpecies_id_;
             const auto&            collision_interspecies = an_operator.collision_interspecies_;
-            const ComputeFloatType dt                     = an_operator.dt_;
 
             const auto the_kernel = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi) {
                 // TODO(Etienne M): INDEX not coalesced. Flatten more ?
@@ -137,7 +137,8 @@ namespace koliop {
                                  a_policy, the_kernel);
         }
 
-        void Operator::ComputeUparTCorrection(Flo64* f5d_s) const {
+        void Operator::ComputeUparTCorrection(ComputeFloatType dt,
+                                              Flo64*           f5d_s) const {
 
             auto a_device_visible_f5d_s = koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL6<Flo64>,
                                                                                koliop::utility::View::MDL6>(f5d_s, "f5d_s",
@@ -145,7 +146,7 @@ namespace koliop {
                                                                                                             the_r_extent_, the_theta_extent_, the_phi_extent_,
                                                                                                             the_species_extent_);
 
-            DoComputeUparTCorrection(*this, a_device_visible_f5d_s, U_par_s_);
+            DoComputeUparTCorrection(*this, dt, a_device_visible_f5d_s, U_par_s_);
 
             koliop::utility::Copy::Shallow(a_device_visible_f5d_s,
                                            koliop::utility::View::UHL6<Flo64>{f5d_s,

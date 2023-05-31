@@ -198,12 +198,13 @@ namespace koliop {
         template <typename View6D,
                   typename View4D>
         static inline void
-        DoComputeCvCdSource(const Operator& an_operator,
-                            OrdinalType     the_block_first_r,
-                            OrdinalType     the_block_first_theta,
-                            OrdinalType     the_block_first_phi,
-                            const View6D&   the_Najl,
-                            View4D&&        the_rhs) {
+        DoComputeCvCdSource(const Operator&  an_operator,
+                            ComputeFloatType dt,
+                            OrdinalType      the_block_first_r,
+                            OrdinalType      the_block_first_theta,
+                            OrdinalType      the_block_first_phi,
+                            const View6D&    the_Najl,
+                            View4D&&         the_rhs) {
 
             const auto& the_vpar_extent = an_operator.the_vpar_extent_;
             const auto& U_par_s         = an_operator.U_par_s_;
@@ -212,8 +213,7 @@ namespace koliop {
 
             const auto& vparg = an_operator.vparg_;
 
-            const auto&            pSpecies_id = an_operator.pSpecies_id_;
-            const ComputeFloatType dt          = an_operator.dt_;
+            const auto& pSpecies_id = an_operator.pSpecies_id_;
 
             const auto the_kernel = KOKKOS_LAMBDA(auto ipol, auto ivpar, auto ir, auto itheta, auto iphi) {
 
@@ -338,20 +338,20 @@ namespace koliop {
 
         template <typename View6D>
         static inline void
-        DoApply(const Operator& an_operator,
-                View6D&&        f5d_s) {
+        DoApply(const Operator&  an_operator,
+                ComputeFloatType dt,
+                View6D&&         f5d_s) {
             // TODO(Etienne M): The blocking is mainly done for memory consumption reasons,
             // we have to do something similar.
 
             // TODO(Etienne M): we can drop the ir_start/ir_end and just pass the range as
             // the arrays are not subarrays.
 
-            const auto& the_vpar_extent    = an_operator.the_vpar_extent_;
-            const auto& the_r_extent       = an_operator.the_r_extent_;
-            const auto& the_theta_extent   = an_operator.the_theta_extent_;
-            const auto& the_phi_extent     = an_operator.the_phi_extent_;
+            const auto& the_vpar_extent  = an_operator.the_vpar_extent_;
+            const auto& the_r_extent     = an_operator.the_r_extent_;
+            const auto& the_theta_extent = an_operator.the_theta_extent_;
+            const auto& the_phi_extent   = an_operator.the_phi_extent_;
 
-            const ComputeFloatType& dt = an_operator.dt_;
             // TODO(Etienne M): dvpar should be part of the vpar sampler.
             const ComputeFloatType& dvpar = an_operator.dvpar_;
 
@@ -482,6 +482,7 @@ namespace koliop {
 
                                     // the_rhs = alpha~~
                                     DoComputeCvCdSource(an_operator,
+                                                        dt,
                                                         the_block_first_r,
                                                         the_block_first_theta,
                                                         the_block_first_phi,
@@ -516,7 +517,8 @@ namespace koliop {
             }
         }
 
-        void Operator::Apply(Flo64* f5d_s) const {
+        void Operator::Apply(ComputeFloatType dt,
+                             Flo64*           f5d_s) const {
 
             auto a_device_visible_f5d_s = koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL6<Flo64>,
                                                                                koliop::utility::View::MDL6>(f5d_s, "f5d_s",
@@ -524,7 +526,7 @@ namespace koliop {
                                                                                                             the_r_extent_, the_theta_extent_, the_phi_extent_,
                                                                                                             the_species_extent_);
 
-            DoApply(*this, a_device_visible_f5d_s);
+            DoApply(*this, dt, a_device_visible_f5d_s);
 
             koliop::utility::Copy::Shallow(a_device_visible_f5d_s,
                                            koliop::utility::View::UHL6<Flo64>{f5d_s,

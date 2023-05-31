@@ -177,7 +177,6 @@ int main(int, char**) {
                        SOL,
                        LIM,
                        ir_SOL_separatrix,
-                       dt,
                        dvpar,
                        &comb_mat[0][0],
                        &hat_As[0],
@@ -225,12 +224,14 @@ int main(int, char**) {
     ::koliop_PrecomputeNu(an_operator);
 
     ::koliop_ComputeMaxwellianEvolution(an_operator,
+                                        dt,
                                         &f5d_s[0][0][0][0][0][0]);
 
     ::koliop_ComputeQparOnNT(an_operator,
                              &f5d_s[0][0][0][0][0][0]);
 
     ::koliop_ComputeCpar(an_operator,
+                         dt,
                          &f5d_s[0][0][0][0][0][0]);
 
     static constexpr int32_t choice = 4;
@@ -240,12 +241,14 @@ int main(int, char**) {
                                            choice);
 
     ::koliop_Apply(an_operator,
+                   dt,
                    &f5d_s[0][0][0][0][0][0]);
 
     ::koliop_ComputeDensityCorrection(an_operator,
                                       &f5d_s[0][0][0][0][0][0]);
 
     ::koliop_ComputeUparTCorrection(an_operator,
+                                    dt,
                                     &f5d_s[0][0][0][0][0][0]);
 
     // TODO(Etienne M):

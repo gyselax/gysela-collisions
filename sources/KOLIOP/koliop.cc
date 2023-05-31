@@ -72,7 +72,6 @@
                               int8_t             SOL,
                               int8_t             LIM,
                               int64_t            ir_SOL_separatrix,
-                              double             dt,
                               double             dvpar,
                               const double*      comb_mat,
                               const double*      hat_As,
@@ -132,8 +131,7 @@
                                                static_cast<bool>(SOL),
                                                static_cast<bool>(LIM),
                                                static_cast<uint64_t>(ir_SOL_separatrix),
-                                               dt,
-                                               dvpar,
+                                               static_cast<koliop::ComputeFloatType>(dvpar),
                                                comb_mat,
                                                hat_As,
                                                hat_Zs,
@@ -205,6 +203,7 @@
 }
 
 ::koliop_Status koliop_ComputeMaxwellianEvolution(::koliop_Operator an_operator,
+                                                  double            dt,
                                                   double*           f5d_s) {
     return koliop::error::FromException([&]() {
         if(!Kokkos::is_initialized()) {
@@ -216,7 +215,7 @@
             return KOLIOP_STATUS_INVALID_VALUE;
         }
 
-        reinterpret_cast<koliop::collision::Operator*>(an_operator)->ComputeMaxwellianEvolution(f5d_s);
+        reinterpret_cast<koliop::collision::Operator*>(an_operator)->ComputeMaxwellianEvolution(static_cast<koliop::ComputeFloatType>(dt), f5d_s);
 
         return KOLIOP_STATUS_SUCCESS;
     });
@@ -241,6 +240,7 @@
 }
 
 ::koliop_Status koliop_ComputeCpar(::koliop_Operator an_operator,
+                                   double            dt,
                                    double*           f5d_s) {
     return koliop::error::FromException([&]() {
         if(!Kokkos::is_initialized()) {
@@ -252,7 +252,7 @@
             return KOLIOP_STATUS_INVALID_VALUE;
         }
 
-        reinterpret_cast<const koliop::collision::Operator*>(an_operator)->ComputeCpar(f5d_s);
+        reinterpret_cast<const koliop::collision::Operator*>(an_operator)->ComputeCpar(static_cast<koliop::ComputeFloatType>(dt), f5d_s);
 
         return KOLIOP_STATUS_SUCCESS;
     });
@@ -279,6 +279,7 @@
 }
 
 ::koliop_Status koliop_Apply(::koliop_Operator an_operator,
+                             double            dt,
                              double*           f5d_s) {
     return koliop::error::FromException([&]() {
         if(!Kokkos::is_initialized()) {
@@ -290,7 +291,7 @@
             return KOLIOP_STATUS_INVALID_VALUE;
         }
 
-        reinterpret_cast<const koliop::collision::Operator*>(an_operator)->Apply(f5d_s);
+        reinterpret_cast<const koliop::collision::Operator*>(an_operator)->Apply(static_cast<koliop::ComputeFloatType>(dt), f5d_s);
 
         return KOLIOP_STATUS_SUCCESS;
     });
@@ -315,6 +316,7 @@
 }
 
 ::koliop_Status koliop_ComputeUparTCorrection(::koliop_Operator an_operator,
+                                              double            dt,
                                               double*           f5d_s) {
     return koliop::error::FromException([&]() {
         if(!Kokkos::is_initialized()) {
@@ -326,7 +328,7 @@
             return KOLIOP_STATUS_INVALID_VALUE;
         }
 
-        reinterpret_cast<koliop::collision::Operator*>(an_operator)->ComputeUparTCorrection(f5d_s);
+        reinterpret_cast<koliop::collision::Operator*>(an_operator)->ComputeUparTCorrection(static_cast<koliop::ComputeFloatType>(dt), f5d_s);
 
         return KOLIOP_STATUS_SUCCESS;
     });
