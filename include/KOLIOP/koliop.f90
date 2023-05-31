@@ -8,9 +8,14 @@ MODULE koliop
 
    PRIVATE
 
-   INTEGER, PARAMETER :: koliop_Status = C_INT32_T
-
    PUBLIC :: koliop_Status
+
+   PUBLIC :: KOLIOP_STATUS_SUCCESS
+   PUBLIC :: KOLIOP_STATUS_UNKOWN_FAILURE
+   PUBLIC :: KOLIOP_STATUS_INITIALIZATION_FAILURE
+   PUBLIC :: KOLIOP_STATUS_DEINITIALIZATION_FAILURE
+   PUBLIC :: KOLIOP_STATUS_INVALID_VALUE
+
    PUBLIC :: koliop_Initialize_f
    PUBLIC :: koliop_Deinitialize_f
    PUBLIC :: koliop_Create_f
@@ -24,6 +29,14 @@ MODULE koliop
    PUBLIC :: koliop_Apply_f
    PUBLIC :: koliop_ComputeDensityCorrection_f
    PUBLIC :: koliop_ComputeUparTCorrection_f
+
+   INTEGER, PARAMETER :: koliop_Status = C_INT32_T
+
+   INTEGER(koliop_Status), PARAMETER :: KOLIOP_STATUS_SUCCESS = 0
+   INTEGER(koliop_Status), PARAMETER :: KOLIOP_STATUS_UNKOWN_FAILURE = -1
+   INTEGER(koliop_Status), PARAMETER :: KOLIOP_STATUS_INITIALIZATION_FAILURE = -2
+   INTEGER(koliop_Status), PARAMETER :: KOLIOP_STATUS_DEINITIALIZATION_FAILURE = -3
+   INTEGER(koliop_Status), PARAMETER :: KOLIOP_STATUS_INVALID_VALUE = -30
 
    ! NOTE: Sources:
    ! https://www.cism.ucl.ac.be/Services/Formations/ICS/ics_2013.0.028/composer_xe_2013.1.117/Documentation/en_US/compiler_f/main_for/GUID-ECF6FF36-1397-43D8-88BB-CCD2F6108DA5.htm
