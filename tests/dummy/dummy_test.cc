@@ -137,7 +137,7 @@ int main(int, char**) {
     static constexpr double mask_buffer_r[the_r_extent] = {0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 2.81000711525697389E-3, 9.85588964179064941E-2, 0.80923908090803054, 0.99396116715554794};
 
     // NOTE: May not always be allocated.
-    static constexpr double mask_LIM[the_theta_extent][the_r_extent]{};
+    // static constexpr double mask_LIM[the_theta_extent][the_r_extent]{};
 
     // mom B_norm lbound 1   1
     // mom B_norm lbound 2   1
