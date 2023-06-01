@@ -159,9 +159,22 @@ koliop_Status koliop_ComputeUparTCorrection(koliop_Operator an_operator,
 
 // TODO(Etienne M): diags.
 
-koliop_Status koliop_Extract(koliop_Operator an_operator,
-                             int32_t         the_value_identifier,
-                             void*           the_output_buffer);
+#define KOLIOP_EXTRACTION_IDENTIFIER_nustar_coeff 1
+#define KOLIOP_EXTRACTION_IDENTIFIER_n_s 2
+#define KOLIOP_EXTRACTION_IDENTIFIER_U_par_s 3
+#define KOLIOP_EXTRACTION_IDENTIFIER_T_s 4
+#define KOLIOP_EXTRACTION_IDENTIFIER_nu_ab 5
+#define KOLIOP_EXTRACTION_IDENTIFIER_q_par_on_nT_s 6
+
+/// @brief Extract an internal buffer into the_output_buffer. The buffer in
+/// question is specified using the_value_identifier and the
+/// KOLIOP_EXTRACTION_IDENTIFIER_* preprocessor definition.
+/// @param the_value_identifier A KOLIOP_EXTRACTION_IDENTIFIER_* preprocessor
+/// definition.
+/// @param the_output_buffer A correctly sized buffer.
+koliop_Status koliop_ExtractRaw(koliop_Operator an_operator,
+                                int32_t         the_value_identifier,
+                                void*           an_output_buffer);
 
 koliop_Status koliop_ExtractUrtheta(koliop_Operator an_operator,
                                     double*         U_par_a_rtheta);

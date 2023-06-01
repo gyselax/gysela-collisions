@@ -89,8 +89,7 @@ namespace koliop {
                     break;
                 }
                 default:
-                    // TODO(Etienne M): Should this case be reachable ?
-                    KOLIOP_ASSERT(false);
+                    throw std::domain_error{"DoComputeMaxwellianUnshiftedLoc: Invalid choice:" + std::to_string(choice)};
                     break;
             }
         }

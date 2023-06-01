@@ -151,6 +151,9 @@ namespace koliop {
             void ComputeUparTCorrection(ComputeFloatType dt,
                                         Flo64*           f5d_s) const;
 
+            void ExtractRaw(uint32_t the_value_identifier,
+                            void*    an_output_buffer) const;
+
         public:
             // Could be protected but we would have to use friend functions.
             // protected:

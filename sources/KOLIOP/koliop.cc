@@ -334,3 +334,23 @@
         return KOLIOP_STATUS_SUCCESS;
     });
 }
+
+::koliop_Status koliop_ExtractRaw(::koliop_Operator an_operator,
+                                  int32_t           the_value_identifier,
+                                  void*             an_output_buffer) {
+    return koliop::error::FromException([&]() {
+        if(!Kokkos::is_initialized()) {
+            return KOLIOP_STATUS_INITIALIZATION_FAILURE;
+        }
+
+        if(an_operator == nullptr ||
+           the_value_identifier < 0 ||
+           an_output_buffer == nullptr) {
+            return KOLIOP_STATUS_INVALID_VALUE;
+        }
+
+        reinterpret_cast<koliop::collision::Operator*>(an_operator)->ExtractRaw(static_cast<uint32_t>(the_value_identifier), an_output_buffer);
+
+        return KOLIOP_STATUS_SUCCESS;
+    });
+}
