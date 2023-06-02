@@ -9,8 +9,9 @@ namespace koliop {
 
         template <typename View6D>
         static inline void
-        DoComputeCpar(const Operator& an_operator,
-                      View6D&&        f5d_s) {
+        DoComputeCpar(const Operator&  an_operator,
+                      ComputeFloatType dt,
+                      View6D&&         f5d_s) {
 
             const auto& the_mu_extent      = an_operator.the_mu_extent_;
             const auto& the_vpar_extent    = an_operator.the_vpar_extent_;
@@ -34,7 +35,7 @@ namespace koliop {
 
             const auto&            pSpecies_id = an_operator.pSpecies_id_;
             const ComputeFloatType R0_inverse  = 1.0 / an_operator.R0_;
-            const ComputeFloatType dt          = an_operator.dt_ / 2.0;
+            const ComputeFloatType half_dt     = dt / 2.0;
 
             const auto the_kernel = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi) {
                 // TODO(Etienne M): Assuming materialization, we could flatten
@@ -87,7 +88,7 @@ namespace koliop {
                                                                         1.0;
                             const ComputeFloatType nu_sab         = (AD * hat_Za * hat_Za * hat_Zb * hat_Zb * nb) * inv_hat_Aa * (inv_hat_Aa + inv_hat_Ab) * Theta_func_tmp / (vTb * vTb * vTb);
 
-                            f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id) += dt * FM0a * nu_sab * coeff5 * (Rat * Vparb - Vpara + q_par_on_nT * (1.0 - 2.0 * xa * xa * 0.2) - coeff4);
+                            f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id) += half_dt * FM0a * nu_sab * coeff5 * (Rat * Vparb - Vpara + q_par_on_nT * (1.0 - 2.0 * xa * xa * 0.2) - coeff4);
                         }
                     }
                 }
@@ -104,7 +105,8 @@ namespace koliop {
                                  a_policy, the_kernel);
         }
 
-        void Operator::ComputeCpar(Flo64* f5d_s) const {
+        void Operator::ComputeCpar(ComputeFloatType dt,
+                                   Flo64*           f5d_s) const {
 
             auto a_device_visible_f5d_s = koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL6<Flo64>,
                                                                                koliop::utility::View::MDL6>(f5d_s, "f5d_s",
@@ -112,7 +114,7 @@ namespace koliop {
                                                                                                             the_r_extent_, the_theta_extent_, the_phi_extent_,
                                                                                                             the_species_extent_);
 
-            DoComputeCpar(*this, a_device_visible_f5d_s);
+            DoComputeCpar(*this, dt, a_device_visible_f5d_s);
 
             koliop::utility::Copy::Shallow(a_device_visible_f5d_s,
                                            koliop::utility::View::UHL6<Flo64>{f5d_s,

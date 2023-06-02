@@ -137,7 +137,7 @@ int main(int, char**) {
     static constexpr double mask_buffer_r[the_r_extent] = {0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 2.81000711525697389E-3, 9.85588964179064941E-2, 0.80923908090803054, 0.99396116715554794};
 
     // NOTE: May not always be allocated.
-    static constexpr double mask_LIM[the_theta_extent][the_r_extent]{};
+    // static constexpr double mask_LIM[the_theta_extent][the_r_extent]{};
 
     // mom B_norm lbound 1   1
     // mom B_norm lbound 2   1
@@ -177,7 +177,6 @@ int main(int, char**) {
                        SOL,
                        LIM,
                        ir_SOL_separatrix,
-                       dt,
                        dvpar,
                        &comb_mat[0][0],
                        &hat_As[0],
@@ -190,7 +189,7 @@ int main(int, char**) {
                        &nustar0_r[0],
                        &q_r[0],
                        &mask_buffer_r[0],
-                       &mask_LIM[0][0],
+                       nullptr, // &mask_LIM[0][0],
                        &B_norm[0][0],
                        &Bstar_s[0][0][0][0]) != KOLIOP_STATUS_SUCCESS) {
         std::cout << "::koliop_Create() failed\n";
@@ -225,12 +224,14 @@ int main(int, char**) {
     ::koliop_PrecomputeNu(an_operator);
 
     ::koliop_ComputeMaxwellianEvolution(an_operator,
+                                        dt,
                                         &f5d_s[0][0][0][0][0][0]);
 
     ::koliop_ComputeQparOnNT(an_operator,
                              &f5d_s[0][0][0][0][0][0]);
 
     ::koliop_ComputeCpar(an_operator,
+                         dt,
                          &f5d_s[0][0][0][0][0][0]);
 
     static constexpr int32_t choice = 4;
@@ -240,12 +241,14 @@ int main(int, char**) {
                                            choice);
 
     ::koliop_Apply(an_operator,
+                   dt,
                    &f5d_s[0][0][0][0][0][0]);
 
     ::koliop_ComputeDensityCorrection(an_operator,
                                       &f5d_s[0][0][0][0][0][0]);
 
     ::koliop_ComputeUparTCorrection(an_operator,
+                                    dt,
                                     &f5d_s[0][0][0][0][0][0]);
 
     // TODO(Etienne M):

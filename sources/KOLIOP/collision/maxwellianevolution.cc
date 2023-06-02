@@ -10,9 +10,10 @@ namespace koliop {
         template <typename View6D,
                   typename View4D>
         static inline void
-        DoComputeMaxwellianEvolution(const Operator& an_operator,
-                                     View6D&&        f5d_s,
-                                     View4D&&        T_s) {
+        DoComputeMaxwellianEvolution(const Operator&  an_operator,
+                                     ComputeFloatType dt,
+                                     View6D&&         f5d_s,
+                                     View4D&&         T_s) {
 
             const auto& the_mu_extent      = an_operator.the_mu_extent_;
             const auto& the_vpar_extent    = an_operator.the_vpar_extent_;
@@ -29,7 +30,7 @@ namespace koliop {
             const auto& U_par_s = an_operator.U_par_s_;
             const auto& nu_ab   = an_operator.nu_ab_;
 
-            const ComputeFloatType dt = an_operator.dt_ / 2.0;
+            const ComputeFloatType half_dt = dt / 2.0;
 
             // TODO(Etienne M): I wish we had MDRange with scratch memory.
             // Instead of having to use a TeamPolicy and computing MDRange index
@@ -75,7 +76,7 @@ namespace koliop {
 
                             const ComputeFloatType nu = nu_ab(ir, itheta, iphi, ispeciesA, ispeciesB);
 
-                            Ta_new += dt * nu * (2.0 * hat_Aa * (Tb - Ta) / (hat_Aa + hat_Ab) + (2.0 / 3.0) * Vpara * (Vpara - sqrt(hat_Aa / hat_Ab) * Vparb));
+                            Ta_new += half_dt * nu * (2.0 * hat_Aa * (Tb - Ta) / (hat_Aa + hat_Ab) + (2.0 / 3.0) * Vpara * (Vpara - sqrt(hat_Aa / hat_Ab) * Vparb));
                         }
 
                         // We can not overwrite the T_s until all the new_T_s are
@@ -138,7 +139,8 @@ namespace koliop {
                                  a_policy, the_kernel);
         }
 
-        void Operator::ComputeMaxwellianEvolution(Flo64* f5d_s) {
+        void Operator::ComputeMaxwellianEvolution(ComputeFloatType dt,
+                                                  Flo64*           f5d_s) {
 
             auto a_device_visible_f5d_s = koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL6<Flo64>,
                                                                                koliop::utility::View::MDL6>(f5d_s, "f5d_s",
@@ -146,7 +148,7 @@ namespace koliop {
                                                                                                             the_r_extent_, the_theta_extent_, the_phi_extent_,
                                                                                                             the_species_extent_);
 
-            DoComputeMaxwellianEvolution(*this, a_device_visible_f5d_s, T_s_);
+            DoComputeMaxwellianEvolution(*this, dt, a_device_visible_f5d_s, T_s_);
 
             koliop::utility::Copy::Shallow(a_device_visible_f5d_s,
                                            koliop::utility::View::UHL6<Flo64>{f5d_s,

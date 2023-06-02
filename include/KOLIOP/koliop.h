@@ -31,6 +31,8 @@ extern "C" {
 /// Has to be called before any other koliop function is called.
 /// @param a_host_thread_count The host threads to use to drive the device or to
 /// do the computation. Depending on how koliop was built.
+/// NOTE: under the hood, we call ::omp_set_num_threads(a_host_thread_count). So
+/// make sure you pass a correct value.
 /// @param a_device_index The device koliop will use to offload the work. The
 /// value as no meaning if koliop was not built with device support enabled.
 /// @param with_verbose_initialization KOLIOP_FALSE to disable or KOLIOP_TRUE to
@@ -73,7 +75,6 @@ koliop_Status koliop_Create(koliop_Operator* an_operator_handle,
                             int8_t           SOL,
                             int8_t           LIM,
                             int64_t          ir_SOL_separatrix,
-                            double           dt,
                             double           dvpar,
                             const double*    comb_mat,
                             const double*    hat_As,
@@ -111,6 +112,7 @@ koliop_Status koliop_PrecomputeNu(koliop_Operator an_operator);
 ///     (2/3) * Vpara *(Vpara - Vparb))
 ///
 koliop_Status koliop_ComputeMaxwellianEvolution(koliop_Operator an_operator,
+                                                double          dt,
                                                 double*         f5d_s);
 
 /// Computation of q_para/(na*Ta)
@@ -130,6 +132,7 @@ koliop_Status koliop_ComputeQparOnNT(koliop_Operator an_operator,
 ///   xb = xa * vTa / vTb
 ///
 koliop_Status koliop_ComputeCpar(koliop_Operator an_operator,
+                                 double          dt,
                                  double*         f5d_s);
 
 /// This routine compute one of the following operation on the
@@ -144,15 +147,34 @@ koliop_Status koliop_ComputeMaxwellianUnshiftedLoc(koliop_Operator an_operator,
                                                    int32_t         choice);
 
 koliop_Status koliop_Apply(koliop_Operator an_operator,
+                           double          dt,
                            double*         f5d_s);
 
 koliop_Status koliop_ComputeDensityCorrection(koliop_Operator an_operator,
                                               double*         f5d_s);
 
 koliop_Status koliop_ComputeUparTCorrection(koliop_Operator an_operator,
+                                            double          dt,
                                             double*         f5d_s);
 
 // TODO(Etienne M): diags.
+
+#define KOLIOP_EXTRACTION_IDENTIFIER_nustar_coeff 1
+#define KOLIOP_EXTRACTION_IDENTIFIER_n_s 2
+#define KOLIOP_EXTRACTION_IDENTIFIER_U_par_s 3
+#define KOLIOP_EXTRACTION_IDENTIFIER_T_s 4
+#define KOLIOP_EXTRACTION_IDENTIFIER_nu_ab 5
+#define KOLIOP_EXTRACTION_IDENTIFIER_q_par_on_nT_s 6
+
+/// @brief Extract an internal buffer into the_output_buffer. The buffer in
+/// question is specified using the_value_identifier and the
+/// KOLIOP_EXTRACTION_IDENTIFIER_* preprocessor definition.
+/// @param the_value_identifier A KOLIOP_EXTRACTION_IDENTIFIER_* preprocessor
+/// definition.
+/// @param the_output_buffer A correctly sized buffer.
+koliop_Status koliop_ExtractRaw(koliop_Operator an_operator,
+                                int32_t         the_value_identifier,
+                                void*           an_output_buffer);
 
 koliop_Status koliop_ExtractUrtheta(koliop_Operator an_operator,
                                     double*         U_par_a_rtheta);

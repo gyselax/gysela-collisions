@@ -112,7 +112,6 @@ namespace koliop {
                      bool         SOL,
                      bool         LIM,
                      uint64_t     ir_SOL_separatrix,
-                     Flo64        dt,
                      Flo64        dvpar,
                      const Flo64* comb_mat,
                      const Flo64* hat_As,
@@ -133,20 +132,27 @@ namespace koliop {
 
             void PrecomputeNu();
 
-            void ComputeMaxwellianEvolution(Flo64* f5d_s);
+            void ComputeMaxwellianEvolution(ComputeFloatType dt,
+                                            Flo64*           f5d_s);
 
             void ComputeQparOnNT(const Flo64* f5d_s);
 
-            void ComputeCpar(Flo64* f5d_s) const;
+            void ComputeCpar(ComputeFloatType dt,
+                             Flo64*           f5d_s) const;
 
             void ComputeMaxwellianUnshiftedLoc(Flo64*   f5d_s,
                                                uint32_t choice) const;
 
-            void Apply(Flo64* f5d_s) const;
+            void Apply(ComputeFloatType dt,
+                       Flo64*           f5d_s) const;
 
             void ComputeDensityCorrection(Flo64* f5d_s) const;
 
-            void ComputeUparTCorrection(Flo64* f5d_s) const;
+            void ComputeUparTCorrection(ComputeFloatType dt,
+                                        Flo64*           f5d_s) const;
+
+            void ExtractRaw(uint32_t the_value_identifier,
+                            void*    an_output_buffer) const;
 
         public:
             // Could be protected but we would have to use friend functions.
@@ -168,7 +174,6 @@ namespace koliop {
             bool             SOL_;
             bool             LIM_;
             OrdinalType      ir_SOL_separatrix_;
-            ComputeFloatType dt_;
             // TODO(Etienne M): dvpar is already present in gysela. Because we
             // assume (for now) an uniform vpar discretization, vparg could be
             // removed in favor of a closed formula. To avoid changing the
