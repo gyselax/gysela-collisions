@@ -60,8 +60,8 @@ namespace koliop {
                 const ComputeFloatType epstemp   = rg(ir) * R0_inverse;
                 const ComputeFloatType vTa       = Kokkos::sqrt(Ta / hat_Aa);
                 const ComputeFloatType coeff1    = 1.0 / (2.0 * Ta);
-                const ComputeFloatType coeff3    = na / (koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta * Kokkos::sqrt(koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta));
-                const ComputeFloatType AD        = nustaR0_i * koliop::portability::MathematicalConstant<ComputeFloatType>::kSqrt2 * epstemp * Kokkos::sqrt(epstemp) / ((1.0 / R0_inverse) * (smcsfqri != koliop::portability::GyselaConstant<Flo64>::kInfinity ? smcsfqri : 1.0));
+                const ComputeFloatType coeff3    = na / (koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta * Kokkos::sqrt(koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta));
+                const ComputeFloatType AD        = nustaR0_i * koliop::portability::MathematicalConstant<ComputeFloatType>::kSqrt2 * epstemp * Kokkos::sqrt(epstemp) / ((1.0 / R0_inverse) * (smcsfqri != koliop::portability::GyselaConstant<ComputeFloatType>::kInfinity ? smcsfqri : 1.0));
 
                 for(OrdinalType ispecies = 0; ispecies < the_species_extent; ++ispecies) {
                     const ComputeFloatType hat_Ab         = hat_As(ispecies);
@@ -84,7 +84,7 @@ namespace koliop {
                             const ComputeFloatType xb             = xa * coeff2;
                             const ComputeFloatType FM0a           = coeff3 * Kokkos::exp(-xa * xa);
                             const ComputeFloatType Theta_func_tmp = xb > 1E-15 ?
-                                                                        koliop::portability::GyselaConstant<ComputeFloatType>::kConst_theta * ((Kokkos::erf(xb) - xb * (koliop::portability::GyselaConstant<Flo64>::kCst_phiprime * exp(-xb * xb))) / (2.0 * xb * xb)) / xb :
+                                                                        koliop::portability::GyselaConstant<ComputeFloatType>::kConst_theta * ((Kokkos::erf(xb) - xb * (koliop::portability::GyselaConstant<ComputeFloatType>::kCst_phiprime * exp(-xb * xb))) / (2.0 * xb * xb)) / xb :
                                                                         1.0;
                             const ComputeFloatType nu_sab         = (AD * hat_Za * hat_Za * hat_Zb * hat_Zb * nb) * inv_hat_Aa * (inv_hat_Aa + inv_hat_Ab) * Theta_func_tmp / (vTb * vTb * vTb);
 

@@ -43,7 +43,7 @@ namespace koliop {
                 const ComputeFloatType Vpara = U_par_s(ir, itheta, iphi, ispecies);
                 const ComputeFloatType Ta    = T_s(ir, itheta, iphi, ispecies);
                 // TODO(Etienne M): SIMPLIFY as std::pow(koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta, -3 / 2);
-                const ComputeFloatType coeff = 1.0 / (koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta * Kokkos::sqrt(koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta));
+                const ComputeFloatType coeff = 1.0 / (koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta * Kokkos::sqrt(koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta));
 
                 ComputeFloatType q_par_on_nT_s_reduction = 0.0;
 

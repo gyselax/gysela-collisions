@@ -48,7 +48,7 @@ namespace koliop {
                         const ComputeFloatType Ta     = T_s(ir, itheta, iphi, pSpecies_id);
                         const ComputeFloatType BijoTa = Bij / Ta;
                         const ComputeFloatType f2oTa  = 0.5 / Ta;
-                        const ComputeFloatType coeff  = na / (koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta * Kokkos::sqrt(koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta));
+                        const ComputeFloatType coeff  = na / (koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta * Kokkos::sqrt(koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta));
 
                         for(OrdinalType ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
                             for(OrdinalType imu = 0; imu < the_mu_extent; ++imu) {
@@ -72,7 +72,7 @@ namespace koliop {
                         const ComputeFloatType Ta     = T_s(ir, itheta, iphi, pSpecies_id);
                         const ComputeFloatType BijoTa = Bij / Ta;
                         const ComputeFloatType f2oTa  = 0.5 / Ta;
-                        const ComputeFloatType coeff  = (koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta * Kokkos::sqrt(koliop::portability::MathematicalConstant<Flo64>::k2Pi * Ta)) / na;
+                        const ComputeFloatType coeff  = (koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta * Kokkos::sqrt(koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta)) / na;
                         for(OrdinalType ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
                             for(OrdinalType imu = 0; imu < the_mu_extent; ++imu) {
                                 const ComputeFloatType v2oTa = mug(imu) * BijoTa + vparg(ivpar) * vparg(ivpar) * f2oTa;

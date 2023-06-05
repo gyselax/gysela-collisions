@@ -41,12 +41,6 @@ namespace koliop {
 
             const uint64_t the_scratch_memory_bytes_per_thread = the_species_extent * sizeof(ComputeFloatType);
 
-            using KernelIterationPolicy = Kokkos::TeamPolicy<Kokkos::DefaultExecutionSpace>;
-
-            const uint64_t the_team_count = the_theta_extent * the_phi_extent;
-            // Due to the inherent cuda/HIP threadblock limit.
-            KOLIOP_ASSERT(the_team_count <= std::numeric_limits<int>::max());
-
             const auto the_kernel = KOKKOS_LAMBDA(const auto& a_team_handle) {
                 // Reference to the_kernel's member variable copy.
                 const auto the_kernel_core = [&](auto ir, auto itheta, auto iphi, auto& Ta_tmp) {
@@ -57,7 +51,6 @@ namespace koliop {
 
                     for(OrdinalType ispeciesA = 0; ispeciesA < the_species_extent; ++ispeciesA) {
                         const ComputeFloatType hat_Aa = hat_As(ispeciesA);
-                        const ComputeFloatType na     = n_s(ir, itheta, iphi, ispeciesA);
                         const ComputeFloatType Vpara  = U_par_s(ir, itheta, iphi, ispeciesA);
                         const ComputeFloatType Ta     = T_s(ir, itheta, iphi, ispeciesA);
 
@@ -76,26 +69,31 @@ namespace koliop {
 
                             const ComputeFloatType nu = nu_ab(ir, itheta, iphi, ispeciesA, ispeciesB);
 
-                            Ta_new += half_dt * nu * (2.0 * hat_Aa * (Tb - Ta) / (hat_Aa + hat_Ab) + (2.0 / 3.0) * Vpara * (Vpara - sqrt(hat_Aa / hat_Ab) * Vparb));
+                            Ta_new += half_dt * nu * (2.0 * hat_Aa * (Tb - Ta) / (hat_Aa + hat_Ab) + (2.0 / 3.0) * Vpara * (Vpara - Kokkos::sqrt(hat_Aa / hat_Ab) * Vparb));
                         }
 
-                        // We can not overwrite the T_s until all the new_T_s are
-                        // computed.
+                        // We can not overwrite the T_s until all the new_T_s
+                        // are computed.
                         Ta_tmp(ispeciesA) = Ta_new;
 
+                        const ComputeFloatType na = n_s(ir, itheta, iphi, ispeciesA);
+
                         const ComputeFloatType coeff_old = na / (koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta *
-                                                      Kokkos::sqrt(koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta));
+                                                                 Kokkos::sqrt(koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta));
                         const ComputeFloatType coeff_new = na / (koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta_new *
-                                                      Kokkos::sqrt(koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta_new));
-                        const ComputeFloatType Bij       = B_norm(ir, itheta);
-                        const ComputeFloatType bot_old   = Bij / Ta;
-                        const ComputeFloatType bot_new   = Bij / Ta_new;
+                                                                 Kokkos::sqrt(koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta_new));
+
+                        const ComputeFloatType Bij = B_norm(ir, itheta);
+
+                        const ComputeFloatType bot_old = Bij / Ta;
+                        const ComputeFloatType bot_new = Bij / Ta_new;
 
                         for(OrdinalType ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
                             const ComputeFloatType vp2_old = (vparg(ivpar) - Vpara) * (vparg(ivpar) - Vpara) / (2.0 * Ta);
                             const ComputeFloatType vp2_new = (vparg(ivpar) - Vpara) * (vparg(ivpar) - Vpara) / (2.0 * Ta_new);
+
                             for(OrdinalType imu = 0; imu < the_mu_extent; ++imu) {
-                                f5d_s(imu, ivpar, ir, itheta, iphi, ispeciesA) -= coeff_old * Kokkos::exp(-bot_old * mug(imu) - vp2_old) +
+                                f5d_s(imu, ivpar, ir, itheta, iphi, ispeciesA) += -coeff_old * Kokkos::exp(-bot_old * mug(imu) - vp2_old) +
                                                                                   coeff_new * Kokkos::exp(-bot_new * mug(imu) - vp2_new);
                             }
                         }
@@ -111,12 +109,8 @@ namespace koliop {
                 const auto iphi   = the_team_index / the_theta_extent;
                 const auto itheta = the_team_index % the_theta_extent;
 
-                // TODO(Etienne M): Should be put that view allocation in the
-                // parallel_for below ? I dont think so as it would lead to
-                // bumping the LDS pointer for each R iteration. I think this
-                // should be done once per thread.
-                // TODO(Etienne M): Should we a_team_handle.team_barrier() ?
-                ScratchMemory the_thread_scratch_memory{a_team_handle.team_scratch(0),
+                // TODO(Etienne M): Should we use a_team_handle.team_barrier()?
+                ScratchMemory the_thread_scratch_memory{a_team_handle.thread_scratch(0),
                                                         the_scratch_memory_bytes_per_thread};
 
                 const auto a_policy = Kokkos::TeamThreadRange(a_team_handle,
@@ -129,8 +123,13 @@ namespace koliop {
                                      });
             };
 
-            auto a_policy = KernelIterationPolicy(the_team_count,
-                                                  Kokkos::AUTO);
+            const uint64_t the_team_count = the_theta_extent * the_phi_extent;
+
+            // Due to the inherent cuda/HIP threadblock limit.
+            KOLIOP_ASSERT(the_team_count <= std::numeric_limits<int>::max());
+
+            auto a_policy = Kokkos::TeamPolicy<Kokkos::DefaultExecutionSpace>(the_team_count,
+                                                                              Kokkos::AUTO);
 
             a_policy.set_scratch_size(0,
                                       Kokkos::PerThread(ScratchMemory::shmem_size(the_scratch_memory_bytes_per_thread)));
