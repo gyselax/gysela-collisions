@@ -93,8 +93,8 @@ namespace koliop {
                             const ComputeFloatType vp2_new = (vparg(ivpar) - Vpara) * (vparg(ivpar) - Vpara) / (2.0 * Ta_new);
 
                             for(OrdinalType imu = 0; imu < the_mu_extent; ++imu) {
-                                f5d_s(imu, ivpar, ir, itheta, iphi, ispeciesA) += -coeff_old * Kokkos::exp(-bot_old * mug(imu) - vp2_old) +
-                                                                                  coeff_new * Kokkos::exp(-bot_new * mug(imu) - vp2_new);
+                                f5d_s(imu, ivpar, ir, itheta, iphi, ispeciesA) += coeff_new * Kokkos::exp(-bot_new * mug(imu) - vp2_new) -
+                                                                                  coeff_old * Kokkos::exp(-bot_old * mug(imu) - vp2_old);
                             }
                         }
                     }
