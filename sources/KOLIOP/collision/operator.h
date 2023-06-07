@@ -112,7 +112,6 @@ namespace koliop {
                      bool         SOL,
                      bool         LIM,
                      uint64_t     ir_SOL_separatrix,
-                     Flo64        dvpar,
                      const Flo64* comb_mat,
                      const Flo64* hat_As,
                      const Flo64* hat_Zs,
@@ -174,12 +173,6 @@ namespace koliop {
             bool             SOL_;
             bool             LIM_;
             OrdinalType      ir_SOL_separatrix_;
-            // TODO(Etienne M): dvpar is already present in gysela. Because we
-            // assume (for now) an uniform vpar discretization, vparg could be
-            // removed in favor of a closed formula. To avoid changing the
-            // interface we recompute it
-            // When we start using a sampler, remove this value.
-            ComputeFloatType dvpar_;
 
             // TODO(Etienne M): we store Flo64 as ComputeFloatType. If
             // ComputeFloatType is Flo32 we need a conversion.
@@ -187,10 +180,6 @@ namespace koliop {
             koliop::utility::View::MDD1<const ComputeFloatType> hat_As_;
             koliop::utility::View::MDD1<const ComputeFloatType> hat_Zs_;
             koliop::utility::View::MDD1<const ComputeFloatType> mug_;
-            // NOTE: In practice the grid is uniform in vparg so you
-            // could compute vparg(n) = vparg(0) + dvpar * n.
-            // TODO(Etienne M): replace vparg by a sampler and it should be
-            // mostly transparent to the user
             koliop::utility::View::MDD1<const ComputeFloatType> vparg_;
             koliop::utility::View::MDD1<const ComputeFloatType> coeff_intdmu_;
             koliop::utility::View::MDD1<const ComputeFloatType> coeff_intdvpar_;

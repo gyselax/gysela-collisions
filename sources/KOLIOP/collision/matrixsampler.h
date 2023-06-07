@@ -16,12 +16,13 @@ namespace koliop {
 
         ///
         ///
-        template <typename View6D>
+        template <typename View6D,
+                  typename View1D>
         class MatrixSampler {
         public:
         public:
             MatrixSampler(const View6D&    the_Najl,
-                          ComputeFloatType a_vpar_delta,
+                          const View1D&    vparg,
                           ComputeFloatType a_time_delta_coefficient);
 
             KOKKOS_INLINE_FUNCTION ComputeFloatType
@@ -59,8 +60,8 @@ namespace koliop {
             // TODO(Etienne M): having a copy may not be ideal. Maybe we should
             // pass everything the the sampling function.
             View6D           the_Najl_;
+            View1D           vparg_;
             ComputeFloatType the_time_delta_coefficient_;
-            ComputeFloatType the_coefficients_[2];
         };
 
 
@@ -68,41 +69,43 @@ namespace koliop {
         // MatrixSampler methods definition
         ////////////////////////////////////////////////////////////////////////
 
-        template <typename View6D>
-        MatrixSampler<View6D>::MatrixSampler(const View6D&    the_Najl,
-                                             ComputeFloatType a_vpar_delta,
-                                             ComputeFloatType a_time_delta_coefficient)
+        template <typename View6D,
+                  typename View1D>
+        MatrixSampler<View6D, View1D>::MatrixSampler(const View6D&    the_Najl,
+                                                     const View1D&    vparg,
+                                                     ComputeFloatType a_time_delta_coefficient)
             : the_Najl_{the_Najl}
-            , the_time_delta_coefficient_{a_time_delta_coefficient}
-            , the_coefficients_{a_time_delta_coefficient / (a_vpar_delta * 2.0),
-                                a_time_delta_coefficient / (a_vpar_delta * a_vpar_delta)} {
+            , vparg_{vparg}
+            , the_time_delta_coefficient_{a_time_delta_coefficient} {
             // EMPTY
         }
 
-        template <typename View6D>
+        template <typename View6D,
+                  typename View1D>
         KOKKOS_INLINE_FUNCTION ComputeFloatType
-        MatrixSampler<View6D>::LowerDiagonal(OrdinalType the_batch_index,
-                                             OrdinalType ivpar,
-                                             OrdinalType ipol,
-                                             OrdinalType jpol,
-                                             OrdinalType the_batch_element_index) const {
+        MatrixSampler<View6D, View1D>::LowerDiagonal(OrdinalType the_batch_index,
+                                                     OrdinalType ivpar,
+                                                     OrdinalType ipol,
+                                                     OrdinalType jpol,
+                                                     OrdinalType the_batch_element_index) const {
             // NOTE: Careful with the i,j. The value of the 3x3 matrix block are
             // given using transposed values of the Najl. With i the row and j
             // the column:
             // A[i, j] = -N1(j, i) * ...
-            return the_Najl_(the_batch_index, ivpar, 2, jpol, ipol, the_batch_element_index) * the_coefficients_[1] -
-                   the_Najl_(the_batch_index, ivpar, 1, jpol, ipol, the_batch_element_index) * the_coefficients_[0];
+            return the_time_delta_coefficient_ * (the_Najl_(the_batch_index, ivpar, 2, jpol, ipol, the_batch_element_index) / (vparg_(ivpar) * vparg_(ivpar)) -
+                                                  the_Najl_(the_batch_index, ivpar, 1, jpol, ipol, the_batch_element_index) / (vparg_(ivpar) * 2.0));
         }
 
-        template <typename View6D>
+        template <typename View6D,
+                  typename View1D>
         KOKKOS_INLINE_FUNCTION ComputeFloatType
-        MatrixSampler<View6D>::MiddleDiagonal(OrdinalType the_batch_index,
-                                              OrdinalType ivpar,
-                                              OrdinalType ipol,
-                                              OrdinalType jpol,
-                                              OrdinalType the_batch_element_index) const {
-            const ComputeFloatType the_value = the_Najl_(the_batch_index, ivpar, 0, jpol, ipol, the_batch_element_index) * the_time_delta_coefficient_ -
-                                               the_Najl_(the_batch_index, ivpar, 2, jpol, ipol, the_batch_element_index) * the_coefficients_[1] * 2.0;
+        MatrixSampler<View6D, View1D>::MiddleDiagonal(OrdinalType the_batch_index,
+                                                      OrdinalType ivpar,
+                                                      OrdinalType ipol,
+                                                      OrdinalType jpol,
+                                                      OrdinalType the_batch_element_index) const {
+            const ComputeFloatType the_value = the_time_delta_coefficient_ * (the_Najl_(the_batch_index, ivpar, 0, jpol, ipol, the_batch_element_index) -
+                                                                              (the_Najl_(the_batch_index, ivpar, 2, jpol, ipol, the_batch_element_index) * 2.0) / (vparg_(ivpar) * vparg_(ivpar)));
 
 
             // the_matrix = I - dt/4 * T
@@ -117,27 +120,29 @@ namespace koliop {
                        the_value;
         }
 
-        template <typename View6D>
+        template <typename View6D,
+                  typename View1D>
         KOKKOS_INLINE_FUNCTION ComputeFloatType
-        MatrixSampler<View6D>::UpperDiagonal(OrdinalType the_batch_index,
-                                             OrdinalType ivpar,
-                                             OrdinalType ipol,
-                                             OrdinalType jpol,
-                                             OrdinalType the_batch_element_index) const {
-            return the_Najl_(the_batch_index, ivpar, 2, jpol, ipol, the_batch_element_index) * the_coefficients_[1] +
-                   the_Najl_(the_batch_index, ivpar, 1, jpol, ipol, the_batch_element_index) * the_coefficients_[0];
+        MatrixSampler<View6D, View1D>::UpperDiagonal(OrdinalType the_batch_index,
+                                                     OrdinalType ivpar,
+                                                     OrdinalType ipol,
+                                                     OrdinalType jpol,
+                                                     OrdinalType the_batch_element_index) const {
+            return the_time_delta_coefficient_ * (the_Najl_(the_batch_index, ivpar, 2, jpol, ipol, the_batch_element_index) / (vparg_(ivpar) * vparg_(ivpar)) +
+                                                  the_Najl_(the_batch_index, ivpar, 1, jpol, ipol, the_batch_element_index) / (vparg_(ivpar) * 2.0));
         }
 
-        template <typename View6D>
+        template <typename View6D,
+                  typename View1D>
         KOKKOS_INLINE_FUNCTION void
-        MatrixSampler<View6D>::AllDiagonals(OrdinalType       the_batch_index,
-                                            OrdinalType       ivpar,
-                                            OrdinalType       ipol,
-                                            OrdinalType       jpol,
-                                            OrdinalType       the_batch_element_index,
-                                            ComputeFloatType& the_lower_diagonal,
-                                            ComputeFloatType& the_middle_diagonal,
-                                            ComputeFloatType& the_upper_diagonal) const {
+        MatrixSampler<View6D, View1D>::AllDiagonals(OrdinalType       the_batch_index,
+                                                    OrdinalType       ivpar,
+                                                    OrdinalType       ipol,
+                                                    OrdinalType       jpol,
+                                                    OrdinalType       the_batch_element_index,
+                                                    ComputeFloatType& the_lower_diagonal,
+                                                    ComputeFloatType& the_middle_diagonal,
+                                                    ComputeFloatType& the_upper_diagonal) const {
             the_lower_diagonal = LowerDiagonal(the_batch_index,
                                                ivpar,
                                                ipol,

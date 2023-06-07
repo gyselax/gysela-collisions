@@ -56,8 +56,6 @@ typedef struct _koliop_Operator* koliop_Operator;
 /// The values given below are expected NOT to change during the lifetime
 /// of the operator.
 /// NOTE: Npolmax is expected to be 3 and index_max = 2 * (index_max - 1) = 4
-/// NOTE: dvpar is used internally and is expected to be uniform.
-/// TODO(Etienne M): remove vparg when we have the vpar sampler.
 ///
 koliop_Status koliop_Create(koliop_Operator* an_operator_handle,
                             size_t           Npolmax,
@@ -75,7 +73,6 @@ koliop_Status koliop_Create(koliop_Operator* an_operator_handle,
                             int8_t           SOL,
                             int8_t           LIM,
                             int64_t          ir_SOL_separatrix,
-                            double           dvpar,
                             const double*    comb_mat,
                             const double*    hat_As,
                             const double*    hat_Zs,

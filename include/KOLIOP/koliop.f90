@@ -111,7 +111,6 @@ MODULE koliop
       !                             int8_t           SOL,
       !                             int8_t           LIM,
       !                             int64_t          ir_SOL_separatrix,
-      !                             double           dvpar,
       !                             const double*    comb_mat,
       !                             const double*    hat_As,
       !                             const double*    hat_Zs,
@@ -143,7 +142,6 @@ MODULE koliop
          SOL, &
          LIM, &
          ir_SOL_separatrix, &
-         dvpar, &
          comb_mat, &
          hat_As, &
          hat_Zs, &
@@ -185,7 +183,6 @@ MODULE koliop
          INTEGER(C_INT8_T), VALUE, INTENT(IN) :: SOL
          INTEGER(C_INT8_T), VALUE, INTENT(IN) :: LIM
          INTEGER(C_INT64_T), VALUE, INTENT(IN) :: ir_SOL_separatrix
-         REAL(C_DOUBLE), VALUE, INTENT(IN) :: dvpar
          TYPE(C_PTR), VALUE, INTENT(IN) :: comb_mat
          TYPE(C_PTR), VALUE, INTENT(IN) :: hat_As
          TYPE(C_PTR), VALUE, INTENT(IN) :: hat_Zs
@@ -449,7 +446,6 @@ CONTAINS
       SOL, &
       LIM, &
       ir_SOL_separatrix, &
-      dvpar, &
       comb_mat, &
       hat_As, &
       hat_Zs, &
@@ -484,7 +480,6 @@ CONTAINS
       LOGICAL, INTENT(IN) :: SOL
       LOGICAL, INTENT(IN) :: LIM
       INTEGER, INTENT(IN) :: ir_SOL_separatrix
-      REAL(C_DOUBLE), INTENT(IN) :: dvpar
       REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(IN) :: comb_mat
       REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(IN) :: hat_As
       REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(IN) :: hat_Zs
@@ -540,7 +535,6 @@ CONTAINS
          SOL_cast, &
          LIM_cast, &
          INT(ir_SOL_separatrix, C_INT64_T), &
-         dvpar, &
          C_LOC(comb_mat), &
          C_LOC(hat_As), &
          C_LOC(hat_Zs), &
@@ -783,7 +777,6 @@ END MODULE
 !       LOGICAL :: LIM = .FALSE.
 !       INTEGER :: ir_SOL_separatrix = 32
 !       REAL(C_DOUBLE) :: dt = 50.0_C_DOUBLE
-!       REAL(C_DOUBLE) :: dvpar = 0.18897637795_C_DOUBLE
 
 !       REAL(C_DOUBLE), DIMENSION(:,:), ALLOCATABLE :: comb_mat
 !       REAL(C_DOUBLE), DIMENSION(:), ALLOCATABLE :: hat_As
@@ -858,7 +851,6 @@ END MODULE
 !          R0,&
 !          collision_interspecies, SOL, LIM, &
 !          ir_SOL_separatrix, &
-!          dvpar, &
 !          comb_mat, &
 !          hat_As, hat_Zs, &
 !          mug, vparg, &

@@ -29,6 +29,10 @@ else()
 endif()
 
 if(NOT koliop_USE_SYSTEM_PROVIDED_KOKKOS_KERNEL)
+    set(KokkosKernels_ENABLE_ALL_COMPONENTS OFF CACHE BOOL "")
+    set(KokkosKernels_ENABLE_COMPONENT_BATCHED ON CACHE BOOL "")
+    set(KokkosKernels_ENABLE_COMPONENT_BLAS ON CACHE BOOL "")
+
     include(FetchContent)
     # cmake_policy(SET CMP0135 NEW)
     FetchContent_Declare(KokkosKernels
