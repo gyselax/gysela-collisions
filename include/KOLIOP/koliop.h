@@ -31,7 +31,7 @@ extern "C" {
 /// Has to be called before any other koliop function is called.
 /// @param a_host_thread_count The host threads to use to drive the device or to
 /// do the computation. Depending on how koliop was built.
-/// NOTE: under the hood, we call ::omp_set_num_threads(a_host_thread_count). So
+/// NOTE: Under the hood, we call ::omp_set_num_threads(a_host_thread_count). So
 /// make sure you pass a correct value.
 /// @param a_device_index The device koliop will use to offload the work. The
 /// value as no meaning if koliop was not built with device support enabled.

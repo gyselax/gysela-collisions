@@ -161,7 +161,7 @@
         }
 
         // Freeing a nullptr is *fine*.
-        delete reinterpret_cast<const koliop::collision::Operator*>(an_operator);
+        delete reinterpret_cast<koliop::collision::Operator*>(an_operator);
 
         return KOLIOP_STATUS_SUCCESS;
     });
