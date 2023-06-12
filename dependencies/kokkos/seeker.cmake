@@ -8,7 +8,6 @@ option(koliop_USE_SYSTEM_PROVIDED_KOKKOS_KERNEL "Look for a system provided inst
 # NOTE: Kokkos options provided in the toolchains.
 
 if(NOT koliop_USE_SYSTEM_PROVIDED_KOKKOS)
-    include(FetchContent)
     # cmake_policy(SET CMP0135 NEW)
     FetchContent_Declare(Kokkos
                          SYSTEM                # For CMake v3.25 and up.
@@ -33,7 +32,6 @@ if(NOT koliop_USE_SYSTEM_PROVIDED_KOKKOS_KERNEL)
     set(KokkosKernels_ENABLE_COMPONENT_BATCHED ON CACHE BOOL "")
     set(KokkosKernels_ENABLE_COMPONENT_BLAS ON CACHE BOOL "")
 
-    include(FetchContent)
     # cmake_policy(SET CMP0135 NEW)
     FetchContent_Declare(KokkosKernels
                          SYSTEM                # For CMake v3.25 and up.
