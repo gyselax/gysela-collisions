@@ -72,7 +72,6 @@
                               int8_t             SOL,
                               int8_t             LIM,
                               int64_t            ir_SOL_separatrix,
-                              double             dvpar,
                               const double*      comb_mat,
                               const double*      hat_As,
                               const double*      hat_Zs,
@@ -132,7 +131,6 @@
                                                static_cast<bool>(SOL),
                                                static_cast<bool>(LIM),
                                                static_cast<uint64_t>(ir_SOL_separatrix),
-                                               static_cast<koliop::ComputeFloatType>(dvpar),
                                                comb_mat,
                                                hat_As,
                                                hat_Zs,
@@ -163,7 +161,7 @@
         }
 
         // Freeing a nullptr is *fine*.
-        delete reinterpret_cast<const koliop::collision::Operator*>(an_operator);
+        delete reinterpret_cast<koliop::collision::Operator*>(an_operator);
 
         return KOLIOP_STATUS_SUCCESS;
     });

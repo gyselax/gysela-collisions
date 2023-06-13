@@ -42,7 +42,8 @@ namespace koliop {
 
                 const ComputeFloatType Bij            = B_norm(ir, itheta);
                 const ComputeFloatType na             = n_s(ir, itheta, iphi, pSpecies_id);
-                ComputeFloatType       impulsion_coll = 0.0;
+
+                ComputeFloatType impulsion_coll = 0.0;
 
                 for(OrdinalType ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
                     const ComputeFloatType jacob_vel = koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Bstar_s(ivpar, ir, itheta, pSpecies_id);
@@ -56,7 +57,8 @@ namespace koliop {
                 }
 
                 const ComputeFloatType U_par_coll = impulsion_coll / na;
-                ComputeFloatType       T_coll     = 0.0;
+
+                ComputeFloatType T_coll = 0.0;
 
                 for(OrdinalType ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
                     const ComputeFloatType jacob_vel = koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Bstar_s(ivpar, ir, itheta, pSpecies_id) / na;
@@ -65,38 +67,40 @@ namespace koliop {
                                   coeff_intdmu(imu) *
                                   (jacob_vel / 3.0) *
                                   ((vparg(ivpar) - U_par_coll) * (vparg(ivpar) - U_par_coll) +
-                                   2 * mug(imu) * Bij) *
+                                   2.0 * mug(imu) * Bij) *
                                   f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id);
                     }
                 }
 
-                const ComputeFloatType hat_Aa      = (pSpecies_id);
+                const ComputeFloatType hat_Aa      = hat_As(pSpecies_id);
                 const ComputeFloatType Vpara       = U_par_s(ir, itheta, iphi, pSpecies_id);
-                ComputeFloatType       U_par_new   = U_par_s(ir, itheta, iphi, pSpecies_id);
+                ComputeFloatType       U_par_new   = Vpara;
                 const ComputeFloatType q_par_on_nT = q_par_on_nT_s(ir, itheta, iphi, pSpecies_id);
                 const ComputeFloatType T_new       = T_s(ir, itheta, iphi, pSpecies_id);
 
                 for(OrdinalType ispecies = 0; ispecies < the_species_extent; ++ispecies) {
-                    if((ispecies != pSpecies_id) && collision_interspecies) {
-                        const ComputeFloatType hat_Ab         = hat_As(ispecies);
-                        const ComputeFloatType Rat            = Kokkos::sqrt(hat_Aa / hat_Ab);
-                        const ComputeFloatType Vparb          = U_par_s(ir, itheta, iphi, ispecies);
-                        const ComputeFloatType q_parb_on_nbTb = q_par_on_nT_s(ir, itheta, iphi, ispecies);
-
-                        const ComputeFloatType k_ab = 1.0 / (1.0 +
-                                                             hat_Aa * T_s(ir, itheta, iphi, ispecies) /
-                                                                 (hat_Ab * T_s(ir, itheta, iphi, pSpecies_id)));
-                        const ComputeFloatType k_ba = 1.0 / (1.0 +
-                                                             hat_Ab * T_s(ir, itheta, iphi, pSpecies_id) /
-                                                                 (hat_Aa * T_s(ir, itheta, iphi, ispecies)));
-
-                        const ComputeFloatType nu = nu_ab(ir, itheta, iphi, pSpecies_id, ispecies);
-
-                        const ComputeFloatType R_ab = -nu * (Vpara - Rat * Vparb -
-                                                             0.6 * k_ab * q_par_on_nT +
-                                                             Rat * 0.6 * k_ba * q_parb_on_nbTb);
-                        U_par_new += dt * R_ab;
+                    if((ispecies == pSpecies_id) || !collision_interspecies) {
+                        continue;
                     }
+
+                    const ComputeFloatType hat_Ab         = hat_As(ispecies);
+                    const ComputeFloatType Rat            = Kokkos::sqrt(hat_Aa / hat_Ab);
+                    const ComputeFloatType Vparb          = U_par_s(ir, itheta, iphi, ispecies);
+                    const ComputeFloatType q_parb_on_nbTb = q_par_on_nT_s(ir, itheta, iphi, ispecies);
+
+                    const ComputeFloatType k_ab = 1.0 / (1.0 +
+                                                         hat_Aa * T_s(ir, itheta, iphi, ispecies) /
+                                                             (hat_Ab * T_s(ir, itheta, iphi, pSpecies_id)));
+                    const ComputeFloatType k_ba = 1.0 / (1.0 +
+                                                         hat_Ab * T_s(ir, itheta, iphi, pSpecies_id) /
+                                                             (hat_Aa * T_s(ir, itheta, iphi, ispecies)));
+
+                    const ComputeFloatType nu = nu_ab(ir, itheta, iphi, pSpecies_id, ispecies);
+
+                    const ComputeFloatType R_ab = -nu * (Vpara - Rat * Vparb -
+                                                         0.6 * k_ab * q_par_on_nT +
+                                                         Rat * 0.6 * k_ba * q_parb_on_nbTb);
+                    U_par_new += dt * R_ab;
                 }
 
                 const ComputeFloatType coeff_Max_coll = na / (koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi *

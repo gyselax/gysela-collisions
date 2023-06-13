@@ -83,7 +83,6 @@ NOTE:
     - Assuming we GPUs for computation, the input buffer are expected to be on the CPU too! `koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL6<Flo64>, koliop::utility::View::MDL6>` vs `koliop::utility::Copy::RawDataToView<koliop::utility::View::UDL6<Flo64>, koliop::utility::View::MDL6>`
 
 - Validation:
-    - dvpar vs vparg
     - Test in Gysela (progressively replace libcoll with koliop)
     - Quick recheck of the kernel and their fortran equivalent
     - Solver:

@@ -31,7 +31,7 @@ extern "C" {
 /// Has to be called before any other koliop function is called.
 /// @param a_host_thread_count The host threads to use to drive the device or to
 /// do the computation. Depending on how koliop was built.
-/// NOTE: under the hood, we call ::omp_set_num_threads(a_host_thread_count). So
+/// NOTE: Under the hood, we call ::omp_set_num_threads(a_host_thread_count). So
 /// make sure you pass a correct value.
 /// @param a_device_index The device koliop will use to offload the work. The
 /// value as no meaning if koliop was not built with device support enabled.
@@ -56,8 +56,6 @@ typedef struct _koliop_Operator* koliop_Operator;
 /// The values given below are expected NOT to change during the lifetime
 /// of the operator.
 /// NOTE: Npolmax is expected to be 3 and index_max = 2 * (index_max - 1) = 4
-/// NOTE: dvpar is used internally and is expected to be uniform.
-/// TODO(Etienne M): remove vparg when we have the vpar sampler.
 ///
 koliop_Status koliop_Create(koliop_Operator* an_operator_handle,
                             size_t           Npolmax,
@@ -75,7 +73,6 @@ koliop_Status koliop_Create(koliop_Operator* an_operator_handle,
                             int8_t           SOL,
                             int8_t           LIM,
                             int64_t          ir_SOL_separatrix,
-                            double           dvpar,
                             const double*    comb_mat,
                             const double*    hat_As,
                             const double*    hat_Zs,

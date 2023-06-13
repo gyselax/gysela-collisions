@@ -52,7 +52,6 @@ int main(int, char**) {
     static constexpr int8_t   LIM                    = false;
     static constexpr int64_t  ir_SOL_separatrix      = 32;
     static constexpr double   dt                     = 50.0;
-    static constexpr double   dvpar                  = 0.18897637795;
 
     static constexpr size_t the_mu_extent      = Nmu + 1;
     static constexpr size_t the_vpar_extent    = Nvpar + 1;
@@ -177,7 +176,6 @@ int main(int, char**) {
                        SOL,
                        LIM,
                        ir_SOL_separatrix,
-                       dvpar,
                        &comb_mat[0][0],
                        &hat_As[0],
                        &hat_Zs[0],

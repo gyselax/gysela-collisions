@@ -146,11 +146,12 @@ namespace koliop {
         }
 
         template <typename View6D0,
-                  typename View6D1>
+                  typename View6D1,
+                  typename View1D>
         static inline void
-        DoPrepareMatrix(const Operator&               an_operator,
-                        const MatrixSampler<View6D0>& the_matrix_sampler,
-                        View6D1&&                     the_output_matrix) {
+        DoPrepareMatrix(const Operator&                       an_operator,
+                        const MatrixSampler<View6D0, View1D>& the_matrix_sampler,
+                        View6D1&&                             the_output_matrix) {
 
             // TODO(Etienne M): We could reduce the loads by preparing
             // the_output_matrix and the_rhs. Indeed the sampling of the T
@@ -352,8 +353,7 @@ namespace koliop {
             const auto& the_theta_extent = an_operator.the_theta_extent_;
             const auto& the_phi_extent   = an_operator.the_phi_extent_;
 
-            // TODO(Etienne M): dvpar should be part of the vpar sampler.
-            const ComputeFloatType& dvpar = an_operator.dvpar_;
+            const auto& vparg = an_operator.vparg_;
 
             const auto& n_s   = an_operator.n_s_;
             const auto& T_s   = an_operator.T_s_;
@@ -401,12 +401,12 @@ namespace koliop {
 
             // Samples I - T*dt/4
             const MatrixSampler the_LHS_matrix_sampler{the_Najl,
-                                                       dvpar,
+                                                       vparg,
                                                        -dt / 4.0};
 
             // Samples I + T*dt/4
             const MatrixSampler the_RHS_matrix_sampler{the_Najl,
-                                                       dvpar,
+                                                       vparg,
                                                        dt / 4.0};
 
             // TODO(Etienne M): On GPU, should we just scale the block size ?
