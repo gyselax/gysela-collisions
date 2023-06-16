@@ -35,7 +35,10 @@ namespace koliop {
             // This cost use a *lot* (still has to be measured) in modulo
             // operations.
 
-            // TODO(Etienne M): Tune that size or rework batching
+            // TODO(Etienne M): Tune that size or rework batching. If we can not
+            // have larger block, we have to check if kokkos supports
+            // distributing on vector/teams.
+            //
             static inline constexpr OrdinalType kBlockExtentR     = 32;
             static inline constexpr OrdinalType kBlockExtentTheta = 16;
             static inline constexpr OrdinalType kBlockExtentPhi   = 2;
