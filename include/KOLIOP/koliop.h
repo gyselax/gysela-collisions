@@ -154,8 +154,6 @@ koliop_Status koliop_ComputeUparTCorrection(koliop_Operator an_operator,
                                             double          dt,
                                             double*         f5d_s);
 
-// TODO(Etienne M): diags.
-
 #define KOLIOP_EXTRACTION_IDENTIFIER_nustar_coeff 1
 #define KOLIOP_EXTRACTION_IDENTIFIER_n_s 2
 #define KOLIOP_EXTRACTION_IDENTIFIER_U_par_s 3
@@ -172,6 +170,9 @@ koliop_Status koliop_ComputeUparTCorrection(koliop_Operator an_operator,
 koliop_Status koliop_ExtractRaw(koliop_Operator an_operator,
                                 int32_t         the_value_identifier,
                                 void*           an_output_buffer);
+
+// TODO(Etienne M): Diags, not that making copies back into gysela could be
+// unecessary. Could we avoid copies ? Should we do everything in koliop or not ?
 
 koliop_Status koliop_ExtractUrtheta(koliop_Operator an_operator,
                                     double*         U_par_a_rtheta);

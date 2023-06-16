@@ -36,9 +36,9 @@ namespace koliop {
             // operations.
 
             // TODO(Etienne M): Tune that size or rework batching
-            static inline constexpr OrdinalType kBlockExtentR     = 16;
-            static inline constexpr OrdinalType kBlockExtentTheta = 1;
-            static inline constexpr OrdinalType kBlockExtentPhi   = 1;
+            static inline constexpr OrdinalType kBlockExtentR     = 32;
+            static inline constexpr OrdinalType kBlockExtentTheta = 16;
+            static inline constexpr OrdinalType kBlockExtentPhi   = 2;
 
             static inline constexpr OffsetType kFlattenedBlockExtent = kBlockExtentR * kBlockExtentTheta * kBlockExtentPhi;
 
