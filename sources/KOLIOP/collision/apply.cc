@@ -19,18 +19,19 @@ namespace koliop {
                     case 0:
                         return 1.0;
                     case 1:
-                        return -x + 1.0;
+                        return 1.0 - x;
                     case 2:
-                        return (1.0 / 2.0) + (-4 + /* 1 * */ x) * x;
-                    case 3:
-                        // Horner -> dependency            : 1 + (-3 + (1.5 - 1/6 * x) * x) * x
-                        // but FMA friendly.
-                        // Naive  -> latency and dependency: (1.0 / 6.0) * (-(x * x * x) + 9.0 * x * x - 18.0 * x + 6.0);
-                        // Slow.
-                        // Factorized -> low latency       : ((-1.0 / 6.0) * (x - 0.41577455678347908331)) * ((x - 2.29428036027904171982) * (x - 6.28994508293747919686))
-                        return 1.0 + (-3.0 + (1.5 - (1.0 / 6.0) * x) * x) * x;
+                        return 1.0 + ((-2.0 + (1.0 / 2.0) * x) * x);
+                    // case 3:
+                    //     // Horner -> dependency            : 1 + (-3 + (1.5 - 1/6 * x) * x) * x
+                    //     // but FMA friendly.
+                    //     // Naive  -> latency and dependency: (1.0 / 6.0) * (-(x * x * x) + 9.0 * x * x - 18.0 * x + 6.0);
+                    //     // Slow.
+                    //     // Factorized -> low latency       : ((-1.0 / 6.0) * (x - 0.41577455678347908331)) * ((x - 2.29428036027904171982) * (x - 6.28994508293747919686))
+                    //     return 1.0 + (-3.0 + ((3.0 / 2.0) - (1.0 / 6.0) * x) * x) * x;
                     default:
-                        return -1.0;
+                        return -1.0; // TODO(Etienne M): Should we specify some
+                                     // garbage?
                 }
             }
 
@@ -114,6 +115,7 @@ namespace koliop {
 
                     for(OrdinalType ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
                         for(OrdinalType ipol = 0; ipol < Constant::kMaximumLaguerrePolynomialDegree; ++ipol) {
+                            the_rhs(the_batch_index, ivpar, ipol, the_batch_element_index) = 0.0;
                             for(OrdinalType imu = 0; imu < the_mu_extent; ++imu) {
                                 const ComputeFloatType muBoT     = mug(imu) * BoT;
                                 const ComputeFloatType coeff_tot = DoComputeLaguerrePol(ipol, muBoT) * BoT * coeff_intdmu(imu) * Kokkos::exp(-muBoT);
@@ -424,6 +426,8 @@ namespace koliop {
                         the_block_first_r < the_r_extent;
                         the_block_first_r += Constant::kBlockExtentR) {
 
+                        // TODO(Etienne M): If mask_coll depends on r and theta,
+                        // we could bring it up two loops.
                         DoPrepareCollisionMask(an_operator,
                                                the_block_first_r,
                                                the_block_first_theta,
@@ -442,7 +446,9 @@ namespace koliop {
                                                      the_block_first_r,
                                                      the_block_first_theta,
                                                      the_block_first_phi,
-                                                     mask_coll, f5d_s, the_alpha_coefficients);
+                                                     mask_coll,
+                                                     f5d_s,
+                                                     the_alpha_coefficients);
 
                             {
                                 the_najl_provider.Compute(the_block_first_r,
@@ -511,6 +517,7 @@ namespace koliop {
                                                     mask_coll, f5d_s, the_rhs);
 
                             // TODO(Etienne M): Fence for DoComputeReconstruction.
+                            Kokkos::fence();
                         }
                     }
                 }

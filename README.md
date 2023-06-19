@@ -91,6 +91,7 @@ NOTE:
     - Test KOKKOS_BOUNDS_CHECK Kokkos_ENABLE_DEBUG_BOUNDS_CHECKS Kokkos_ENABLE_DEBUG
 
 - Tuning:
+    - compute during species transfer ? Few par of the code rely on Nspecies, most only need pspecies_id.
     - Simplify computations
     - Inter exchange loops
     - Tune for GPU (coalesced reads)
