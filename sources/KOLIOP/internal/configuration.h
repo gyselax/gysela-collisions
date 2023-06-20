@@ -205,7 +205,7 @@ namespace koliop {
     // input data.
     using ComputeFloatType = Flo64;
 
-    /// Represent a coordinate. Can be negative. Should not used to store
+    /// Represent a coordinate. Can be negative. Should not be used to store
     /// offsets as they may be too large.
     /// TODO(Etienne M): Try using uint32 ?
     ///

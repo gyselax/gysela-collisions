@@ -73,6 +73,10 @@ namespace koliop {
             using MHL3 = MHL<T***>;
             template <typename T>
             using MHL4 = MHL<T****>;
+            template <typename T>
+            using MHL5 = MHL<T*****>;
+            template <typename T>
+            using MHL6 = MHL<T******>;
         };
 
     } // namespace utility

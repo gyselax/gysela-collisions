@@ -70,7 +70,7 @@ namespace koliop {
                       typename Array1D>
             KOKKOS_INLINE_FUNCTION void
             DoComputeI(const View2D& comb_mat,
-                       OrdinalType   offset_k,
+                       OffsetType    offset,
                        ValueType     Xtr,
                        ValueType     sqrtXtr,
                        ValueType     sqrtXtr_inv,
@@ -106,9 +106,9 @@ namespace koliop {
                 // I_mat(:) = 0.0;
 
                 for(OrdinalType ind_i = 0; ind_i < the_Xtr_pows_size; ++ind_i) {
-                    for(OrdinalType ind_k = 0; ind_k < ind_i; ++ind_k) {
+                    for(OrdinalType ind_k = 0; ind_k <= ind_i; ++ind_k) {
                         I_mat[ind_i] += comb_mat(ind_k, ind_i) *
-                                        J_vec[ind_k - offset_k + 1] *
+                                        J_vec[ind_k + offset] *
                                         Xtr_pows[ind_i - ind_k] *
                                         the_exp_Xtr;
                     }
@@ -159,7 +159,7 @@ namespace koliop {
 
                         ValueType I_mat[Constant::kIndexMax + 1 + 1]{};
 
-                        DoComputeI(comb_mat, 0, Xtr, sqrtXtr, sqrtXtr_inv, I_mat);
+                        DoComputeI(comb_mat, 1, Xtr, sqrtXtr, sqrtXtr_inv, I_mat);
 
                         for(OrdinalType ind_i = 0; ind_i <= Constant::kIndexMax; ++ind_i) {
                             L_mat[0][ind_i] += coeff_L * I_mat[ind_i];
@@ -173,7 +173,7 @@ namespace koliop {
                         const ValueType sqrtXtr_inv = 1.0 / sqrtXtr;
 
                         ValueType I_mat[Constant::kIndexMax + 1 + 1]{};
-                        DoComputeI(comb_mat, 1, Xtr, sqrtXtr, sqrtXtr_inv, I_mat);
+                        DoComputeI(comb_mat, 0, Xtr, sqrtXtr, sqrtXtr_inv, I_mat);
 
                         for(OrdinalType ind_i = 0; ind_i <= Constant::kIndexMax; ++ind_i) {
                             L_mat[2][ind_i] -= coeff_L * I_mat[ind_i];
@@ -300,7 +300,7 @@ namespace koliop {
                 const ValueType vpar2_on_Ta = vparg(ivpar) * vparg(ivpar) / local_T_s(pSpecies_id);
 
                 // NOTE: Careful, L_mat is layout right
-                ValueType L_mat[5][Constant::kIndexMax + 1 + 1];
+                ValueType L_mat[5][Constant::kIndexMax + 1 + 1]{};
 
                 DoComputeL<ValueType>(the_species_extent,
                                       pSpecies_id,
