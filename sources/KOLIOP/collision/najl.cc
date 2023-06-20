@@ -88,14 +88,14 @@ namespace koliop {
                     Xtr_pows[ind_i] = -Xtr * Xtr_pows[ind_i - 1];
                 }
 
-                const ValueType the_exp_Xtr       = Kokkos::exp(Xtr);
-                const ValueType the_erfc_sqrt_Xtr = Kokkos::erfc(sqrtXtr);
+                const ValueType the_exp_Xtr                = Kokkos::exp(Xtr);
+                const ValueType the_sqrtXtr_inv_on_exp_Xtr = sqrtXtr_inv / the_exp_Xtr;
 
-                J_vec[0] = 2.0 * (the_exp_Xtr * sqrtXtr_inv - koliop::portability::MathematicalConstant<ValueType>::kSqrtPi * the_erfc_sqrt_Xtr);
-                J_vec[1] = koliop::portability::MathematicalConstant<ValueType>::kSqrtPi * the_erfc_sqrt_Xtr;
+                J_vec[1] = koliop::portability::MathematicalConstant<ValueType>::kSqrtPi * Kokkos::erfc(sqrtXtr);
+                J_vec[0] = 2.0 * (the_sqrtXtr_inv_on_exp_Xtr- J_vec[1]);
 
                 for(OrdinalType ind_k = 2; ind_k < the_J_vec_size; ++ind_k) {
-                    J_vec[ind_k] = (the_exp_Xtr * sqrtXtr_inv) * Kokkos::abs(Xtr_pows[ind_k - 1]);
+                    J_vec[ind_k] = the_sqrtXtr_inv_on_exp_Xtr * Kokkos::abs(Xtr_pows[ind_k - 1]);
                 }
 
                 for(OrdinalType ind_k = 2; ind_k < the_J_vec_size; ++ind_k) {
