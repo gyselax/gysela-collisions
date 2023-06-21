@@ -92,7 +92,7 @@ namespace koliop {
                 const ValueType the_sqrtXtr_inv_on_exp_Xtr = sqrtXtr_inv / the_exp_Xtr;
 
                 J_vec[1] = koliop::portability::MathematicalConstant<ValueType>::kSqrtPi * Kokkos::erfc(sqrtXtr);
-                J_vec[0] = 2.0 * (the_sqrtXtr_inv_on_exp_Xtr- J_vec[1]);
+                J_vec[0] = 2.0 * (the_sqrtXtr_inv_on_exp_Xtr - J_vec[1]);
 
                 for(OrdinalType ind_k = 2; ind_k < the_J_vec_size; ++ind_k) {
                     J_vec[ind_k] = the_sqrtXtr_inv_on_exp_Xtr * Kokkos::abs(Xtr_pows[ind_k - 1]);
@@ -107,10 +107,12 @@ namespace koliop {
 
                 for(OrdinalType ind_i = 0; ind_i < the_Xtr_pows_size; ++ind_i) {
                     for(OrdinalType ind_k = 0; ind_k <= ind_i; ++ind_k) {
-                        I_mat[ind_i] += comb_mat(ind_k, ind_i) *
-                                        J_vec[ind_k + offset] *
-                                        Xtr_pows[ind_i - ind_k] *
-                                        the_exp_Xtr;
+                        // NOTE: The numerical stability of this whole operation
+                        // is not good !
+                        I_mat[ind_i] += (comb_mat(ind_k, ind_i) *
+                                         Xtr_pows[ind_i - ind_k]) *
+                                        (J_vec[ind_k + offset] *
+                                         the_exp_Xtr);
                     }
                 }
             }
