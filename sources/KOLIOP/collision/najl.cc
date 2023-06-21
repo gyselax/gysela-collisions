@@ -196,8 +196,8 @@ namespace koliop {
                                L_mat[2][0];
 
                 for(OrdinalType ind_i = 1; ind_i <= Constant::kIndexMax; ++ind_i) {
-                    L_mat[3][ind_i] -= L_mat[2][ind_i - 1] * static_cast<ValueType>(ind_i) * vpar2_on_Ta * 0.5 +
-                                       L_mat[2][ind_i] * (vpar2_on_Ta * 0.5 - static_cast<ValueType>(ind_i - 1)) +
+                    L_mat[3][ind_i] += -L_mat[2][ind_i - 1] * static_cast<ValueType>(ind_i) * vpar2_on_Ta * 0.5 +
+                                       L_mat[2][ind_i] * (vpar2_on_Ta * 0.5 - static_cast<ValueType>(ind_i + 1)) +
                                        L_mat[2][ind_i + 1];
                 }
 
@@ -259,6 +259,7 @@ namespace koliop {
                 const OrdinalType the_batch_index         = the_flattened_index / Constant::BatchTraitsType::kBatchSize;
                 const OrdinalType the_batch_element_index = the_flattened_index % Constant::BatchTraitsType::kBatchSize;
 
+                // NOTE: The memset(0) of the local_Nn is done in Najl::Compute.
                 auto local_N0 = Kokkos::subview(the_Najl,
                                                 the_batch_index,
                                                 ivpar,
@@ -282,8 +283,6 @@ namespace koliop {
                                                 Kokkos::ALL(), // j
                                                 Kokkos::ALL(), // l
                                                 the_batch_element_index);
-
-                // TODO(Etienne M): memset(0) of local_N*
 
                 const auto local_n_s = Kokkos::subview(n_s,
                                                        ir,
@@ -325,8 +324,7 @@ namespace koliop {
                         }
                     }
 
-                    N_coeff -= L_mat[0][ind_i] * 2.0 -
-                               L_mat[2][ind_i + 1] * 2.0;
+                    N_coeff -= (L_mat[0][ind_i] + L_mat[2][ind_i + 1]) * 2.0;
 
                     for(OrdinalType l = 0; l < Constant::kMaximumLaguerrePolynomialDegree; ++l) {
                         for(OrdinalType j = 1; j < Constant::kMaximumLaguerrePolynomialDegree; ++j) {
@@ -430,6 +428,9 @@ namespace koliop {
             KOLIOP_ASSERT(the_Najl.size() != 0);
 
             // TODO(Etienne M): Other tests
+
+            // TODO(Etienne M): what is the perf of such memset:
+            Kokkos::deep_copy(/* TODO(Etienne M): execution space ,*/ the_Najl, 0.0);
 
             // TODO(Etienne M): It is not currently possible to do something
             // like:
