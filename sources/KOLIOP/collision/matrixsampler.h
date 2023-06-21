@@ -93,8 +93,9 @@ namespace koliop {
             // the column:
             // A[i, j] = -N1(j, i) * ...
             // NOTE: vparg_(ivpar) - vparg_(ivpar + 1) would overflow
-            return the_time_delta_coefficient_ * (the_Najl_(the_batch_index, ivpar, 2, jpol, ipol, the_batch_element_index) / ((vparg_(1) - vparg_(0)) * (vparg_(1) - vparg_(0))) -
-                                                  the_Najl_(the_batch_index, ivpar, 1, jpol, ipol, the_batch_element_index) / ((vparg_(1) - vparg_(0)) * 2.0));
+            const auto a_vpar_delta = vparg_(1) - vparg_(0);
+            return the_time_delta_coefficient_ * (the_Najl_(the_batch_index, ivpar, 2, jpol, ipol, the_batch_element_index) / (a_vpar_delta * a_vpar_delta) -
+                                                  the_Najl_(the_batch_index, ivpar, 1, jpol, ipol, the_batch_element_index) / (a_vpar_delta * 2.0));
         }
 
         template <typename View6D,
@@ -106,8 +107,9 @@ namespace koliop {
                                                       OrdinalType jpol,
                                                       OrdinalType the_batch_element_index) const {
             // NOTE: vparg_(ivpar) - vparg_(ivpar + 1) would overflow
+            const auto             a_vpar_delta = vparg_(1) - vparg_(0);
             const ComputeFloatType the_value = the_time_delta_coefficient_ * (the_Najl_(the_batch_index, ivpar, 0, jpol, ipol, the_batch_element_index) -
-                                                                              (the_Najl_(the_batch_index, ivpar, 2, jpol, ipol, the_batch_element_index) * 2.0) / ((vparg_(1) - vparg_(0)) * (vparg_(1) - vparg_(0))));
+                                                                              (the_Najl_(the_batch_index, ivpar, 2, jpol, ipol, the_batch_element_index) * 2.0) / (a_vpar_delta * a_vpar_delta));
 
 
             // the_matrix = I - dt/4 * T
@@ -131,8 +133,9 @@ namespace koliop {
                                                      OrdinalType jpol,
                                                      OrdinalType the_batch_element_index) const {
             // NOTE: vparg_(ivpar) - vparg_(ivpar + 1) would overflow
-            return the_time_delta_coefficient_ * (the_Najl_(the_batch_index, ivpar, 2, jpol, ipol, the_batch_element_index) / ((vparg_(1) - vparg_(0)) * (vparg_(1) - vparg_(0))) +
-                                                  the_Najl_(the_batch_index, ivpar, 1, jpol, ipol, the_batch_element_index) / ((vparg_(1) - vparg_(0)) * 2.0));
+            const auto a_vpar_delta = vparg_(1) - vparg_(0);
+            return the_time_delta_coefficient_ * (the_Najl_(the_batch_index, ivpar, 2, jpol, ipol, the_batch_element_index) / (a_vpar_delta * a_vpar_delta) +
+                                                  the_Najl_(the_batch_index, ivpar, 1, jpol, ipol, the_batch_element_index) / (a_vpar_delta * 2.0));
         }
 
         template <typename View6D,
