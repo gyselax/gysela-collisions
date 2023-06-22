@@ -432,8 +432,7 @@ namespace koliop {
                         // TODO(Etienne M): If mask_coll depends on r and theta,
                         // we could bring it up two loops.
                         DoPrepareCollisionMask(an_operator,
-                                               the_block_first_r,
-                                               the_block_first_theta,
+                                               the_block_first_r, the_block_first_theta,
                                                mask_coll);
 
                         // NOTE: Skipping would create imbalance and because we
@@ -446,30 +445,23 @@ namespace koliop {
 
                         {
                             DoComputeAlphaProjection(an_operator,
-                                                     the_block_first_r,
-                                                     the_block_first_theta,
-                                                     the_block_first_phi,
-                                                     mask_coll,
-                                                     f5d_s,
-                                                     the_alpha_coefficients);
+                                                     the_block_first_r, the_block_first_theta, the_block_first_phi,
+                                                     mask_coll, f5d_s, the_alpha_coefficients);
 
                             {
-                                the_najl_provider.Compute(the_block_first_r,
-                                                          the_block_first_theta,
-                                                          the_block_first_phi,
-                                                          n_s,
-                                                          T_s,
-                                                          nu_ab,
-                                                          the_Najl);
+                                the_najl_provider.Compute(the_block_first_r, the_block_first_theta, the_block_first_phi,
+                                                          n_s, T_s, nu_ab, the_Najl);
 
                                 // Fence for N0, N1, N2
 
                                 {
                                     DoPrepareMatrix(an_operator,
-                                                    the_LHS_matrix_sampler, the_matrix);
+                                                    the_LHS_matrix_sampler,
+                                                    the_matrix);
 
                                     // L*U = (I - T * dt/4)
-                                    the_factorizer.Factorize(the_matrix.data(), Constant::kFlattenedBlockExtent, the_vpar_extent);
+                                    the_factorizer.Factorize(the_matrix.data(),
+                                                             Constant::kFlattenedBlockExtent, the_vpar_extent);
                                 }
                                 {
                                     // the_rhs = (I + T * dt/4) * alpha(n)
@@ -487,15 +479,14 @@ namespace koliop {
 
                                 {
                                     // the_rhs = alpha~
-                                    the_solver.Solve(the_matrix.data(), Constant::kFlattenedBlockExtent, the_vpar_extent,
+                                    the_solver.Solve(the_matrix.data(),
+                                                     Constant::kFlattenedBlockExtent, the_vpar_extent,
                                                      the_rhs.data());
 
                                     // the_rhs = alpha~~
                                     DoComputeCvCdSource(an_operator,
                                                         dt,
-                                                        the_block_first_r,
-                                                        the_block_first_theta,
-                                                        the_block_first_phi,
+                                                        the_block_first_r, the_block_first_theta, the_block_first_phi,
                                                         the_Najl, the_rhs);
 
                                     std::swap(the_rhs, the_alpha_coefficients);
@@ -509,15 +500,14 @@ namespace koliop {
                                                  the_rhs.data());
 
                                     // the_rhs = alpha(n+1)
-                                    the_solver.Solve(the_matrix.data(), Constant::kFlattenedBlockExtent, the_vpar_extent,
+                                    the_solver.Solve(the_matrix.data(),
+                                                     Constant::kFlattenedBlockExtent, the_vpar_extent,
                                                      the_rhs.data());
                                 }
                             }
 
                             DoComputeReconstruction(an_operator,
-                                                    the_block_first_r,
-                                                    the_block_first_theta,
-                                                    the_block_first_phi,
+                                                    the_block_first_r, the_block_first_theta, the_block_first_phi,
                                                     mask_coll, f5d_s, the_rhs);
 
                             // TODO(Etienne M): Fence for DoComputeReconstruction.
