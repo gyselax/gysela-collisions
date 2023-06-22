@@ -109,6 +109,8 @@ namespace koliop {
                     for(OrdinalType ind_k = 0; ind_k <= ind_i; ++ind_k) {
                         // NOTE: The numerical stability of this whole operation
                         // is not good !
+                        // TODO(Etienne M): Analyze the numerical stability of
+                        // the Najl
                         I_mat[ind_i] += (comb_mat(ind_k, ind_i) *
                                          Xtr_pows[ind_i - ind_k]) *
                                         (J_vec[ind_k + offset] *
