@@ -413,8 +413,11 @@ namespace koliop {
 
             // TODO(Etienne M): On GPU, should we just scale the block size ?
             // TODO(Etienne M): We use mask to avoid some computation, but
-            // wouldn't it be netter to compute for everything and only in the
+            // wouldn't it be better to compute for everything and only in the
             // end, reconstruct f based on the mask ?
+            // TODO(Etienne M): On GPU we want big blocks and a single thread,
+            // unparallelized host loop is enough to saturate the GPU. Would
+            // this also work correctly on CPU ?
 
             for(OrdinalType the_block_first_phi = 0;
                 the_block_first_phi < the_phi_extent;
@@ -474,7 +477,8 @@ namespace koliop {
                                                  the_RHS_matrix_sampler,
                                                  Constant::kFlattenedBlockExtent, the_vpar_extent,
                                                  the_alpha_coefficients.data(),
-                                                 // Discard what the_rhs could contain.
+                                                 // Discards whatever garbage
+                                                 // the_rhs could contain.
                                                  0.0,
                                                  the_rhs.data());
                                 }

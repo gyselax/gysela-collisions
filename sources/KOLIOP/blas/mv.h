@@ -105,9 +105,13 @@ namespace koliop {
                 typename BatchTraitsType::ThreadVectorType the_dot_product{};
 
                 // TODO(Etienne M): in practice, the_A_matrix_sampler samples
-                // the Najl in a transposed order. That is, it could lead to
-                // better access if we iterated faster on the
+                // the Najl in a *transposed* way. That is, it could lead to
+                // better accesses if we iterated faster on the
                 // the_scalar_index than on j.
+
+                // TODO(Etienne M): These reduction are not ideal for numerical
+                // stability. Using more threads, we could do some kind of tree
+                // like reduction with better properties.
 
                 if(the_small_block_index > 0) {
                     // Every time, except for the first small block row.
