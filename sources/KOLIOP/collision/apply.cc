@@ -293,6 +293,7 @@ namespace koliop {
                 }
 
                 // TODO(Etienne M): INDEX not coalesced. Flatten more ?
+                // parallelize in vpar too.
                 // TODO(Etienne M): Expensive DoComputeLaguerrePol call.
 
                 // NOTE: kBlockExtentXXX are constant, the compiler can replace
