@@ -26,6 +26,14 @@ namespace koliop {
                           ComputeFloatType a_time_delta_coefficient);
 
             KOKKOS_INLINE_FUNCTION ComputeFloatType
+            operator()(OrdinalType the_batch_index,
+                       OrdinalType ivpar,
+                       OrdinalType the_diagonal,
+                       OrdinalType ipol,
+                       OrdinalType jpol,
+                       OrdinalType the_batch_element_index) const;
+
+            KOKKOS_INLINE_FUNCTION ComputeFloatType
             LowerDiagonal(OrdinalType the_batch_index,
                           OrdinalType ivpar,
                           OrdinalType ipol,
@@ -78,6 +86,39 @@ namespace koliop {
             , vparg_{vparg}
             , the_time_delta_coefficient_{a_time_delta_coefficient} {
             // EMPTY
+        }
+
+        template <typename View6D,
+                  typename View1D>
+        KOKKOS_INLINE_FUNCTION ComputeFloatType
+        MatrixSampler<View6D, View1D>::operator()(OrdinalType the_batch_index,
+                                                  OrdinalType ivpar,
+                                                  OrdinalType the_diagonal,
+                                                  OrdinalType ipol,
+                                                  OrdinalType jpol,
+                                                  OrdinalType the_batch_element_index) const {
+            if(the_diagonal == 0) {
+                return LowerDiagonal(the_batch_index,
+                                     ivpar,
+                                     ipol,
+                                     jpol,
+                                     the_batch_element_index);
+            } else if(the_diagonal == 1) {
+                return MiddleDiagonal(the_batch_index,
+                                      ivpar,
+                                      ipol,
+                                      jpol,
+                                      the_batch_element_index);
+            } else if(the_diagonal == 2) {
+                return UpperDiagonal(the_batch_index,
+                                     ivpar,
+                                     ipol,
+                                     jpol,
+                                     the_batch_element_index);
+            } else {
+                // GPU assert ?
+                return -1.0;
+            }
         }
 
         template <typename View6D,

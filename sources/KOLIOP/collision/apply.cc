@@ -7,7 +7,6 @@
 
 namespace koliop {
     namespace collision {
-
         namespace {
             // NOTE: I use an unamed namespace because it is unknown to me if
             // adding static prior KOKKOS_INLINE_FUNCTION is legal.
@@ -400,6 +399,10 @@ namespace koliop {
                                                                                      "the_rhs"),
                                                                   static_cast<std::size_t>(Constant::kBatchCount), static_cast<std::size_t>(the_vpar_extent)};
 
+            // // NOTE: For debug purposes
+            // koliop::blas::detail::DoResidualTest(the_factorizer, the_solver, the_mv,
+            //                                      the_matrix,
+            //                                      the_alpha_coefficients, the_rhs);
 
             // Samples I - T*dt/4
             const MatrixSampler the_LHS_matrix_sampler{the_Najl,
