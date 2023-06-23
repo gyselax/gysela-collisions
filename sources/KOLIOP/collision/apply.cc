@@ -288,6 +288,10 @@ namespace koliop {
             const auto& pSpecies_id = an_operator.pSpecies_id_;
 
             const auto the_kernel = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi) {
+                if(!mask_coll(ir, itheta)) {
+                    return;
+                }
+
                 // TODO(Etienne M): INDEX not coalesced. Flatten more ?
                 // TODO(Etienne M): Expensive DoComputeLaguerrePol call.
 
@@ -304,9 +308,6 @@ namespace koliop {
                 const OrdinalType the_batch_index         = the_flattened_index / Constant::BatchTraitsType::kBatchSize;
                 const OrdinalType the_batch_element_index = the_flattened_index % Constant::BatchTraitsType::kBatchSize;
 
-                if(!mask_coll(ir, itheta)) {
-                    return;
-                }
 
                 const ComputeFloatType BoT = B_norm(ir, itheta) / T_s(ir, itheta, iphi, pSpecies_id);
 
