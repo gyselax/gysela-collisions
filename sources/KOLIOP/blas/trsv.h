@@ -274,22 +274,26 @@ namespace koliop {
 //                 using value_type = typename std::remove_reference_t<View6D>::value_type;
 
 //                 // Kokkos::resize(the_matrix_buffer,
-//                 //                the_matrix_buffer.extent(0),
+//                 //                32 * 1024,
+//                 //                256,
 //                 //                3,
-//                 //                the_matrix_buffer.extent(2),
-//                 //                the_matrix_buffer.extent(3),
-//                 //                the_matrix_buffer.extent(4),
+//                 //                3,
+//                 //                3,
 //                 //                the_matrix_buffer.extent(5));
 //                 // Kokkos::resize(the_original_x_buffer,
 //                 //                the_matrix_buffer.extent(0),
-//                 //                3,
+//                 //                the_matrix_buffer.extent(1),
 //                 //                the_matrix_buffer.extent(4),
 //                 //                the_matrix_buffer.extent(5));
 //                 // Kokkos::resize(the_computed_x_buffer,
 //                 //                the_matrix_buffer.extent(0),
-//                 //                3,
+//                 //                the_matrix_buffer.extent(1),
 //                 //                the_matrix_buffer.extent(4),
 //                 //                the_matrix_buffer.extent(5));
+
+//                 std::cout << " | Batch count: " << the_matrix_buffer.extent(0)
+//                           << " | Small block count: " << the_matrix_buffer.extent(1)
+//                           << " | Batch size: " << the_matrix_buffer.extent(5) << "\n";
 
 //                 // - Random [0, 1.0) the_matrix_buffer
 //                 // - Random [0, 1.0) the_original_x_buffer
