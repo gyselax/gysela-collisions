@@ -133,6 +133,8 @@ namespace koliop {
             // given using transposed values of the Najl. With i the row and j
             // the column:
             // A[i, j] = -N1(j, i) * ...
+
+            // TODO(Etienne M): stop using a uniform vparg.
             // NOTE: vparg_(ivpar) - vparg_(ivpar + 1) would overflow
             const auto a_vpar_delta = vparg_(1) - vparg_(0);
 
