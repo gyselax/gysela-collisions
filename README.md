@@ -53,7 +53,7 @@ Test project /lus/home/BCINES/dci/malaboeuf/repos/gysela-gpu-porting/koliop/buil
 Total Test time (real) =   0.63 sec
 ```
 
-Note that to run the test on Unix systems, one may need to run the following
+Note that to run the tests on Unix systems, one may need to run the following
 command :
 ```
 $ ulimit -s unlimited
