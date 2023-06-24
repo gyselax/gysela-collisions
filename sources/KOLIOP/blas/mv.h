@@ -144,7 +144,7 @@ namespace koliop {
                                        the_vector_x_batch_element(the_small_block_index, j);
                 }
 
-                if(the_small_block_index < (kBigBlockExtent - 1)) {
+                if(static_cast<OrdinalType>(the_small_block_index) < (kBigBlockExtent - 1)) {
                     // Every time, except for the last small block row.
                     for(OrdinalType j = 0; j < kSmallBlockExtent; ++j) {
                         the_dot_product += the_A_matrix_sampler(the_batch_index,
