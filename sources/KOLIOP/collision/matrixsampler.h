@@ -26,6 +26,14 @@ namespace koliop {
                           ComputeFloatType a_time_delta_coefficient);
 
             KOKKOS_INLINE_FUNCTION ComputeFloatType
+            operator()(OrdinalType the_batch_index,
+                       OrdinalType ivpar,
+                       OrdinalType the_diagonal,
+                       OrdinalType ipol,
+                       OrdinalType jpol,
+                       OrdinalType the_batch_element_index) const;
+
+            KOKKOS_INLINE_FUNCTION ComputeFloatType
             LowerDiagonal(OrdinalType the_batch_index,
                           OrdinalType ivpar,
                           OrdinalType ipol,
@@ -83,6 +91,39 @@ namespace koliop {
         template <typename View6D,
                   typename View1D>
         KOKKOS_INLINE_FUNCTION ComputeFloatType
+        MatrixSampler<View6D, View1D>::operator()(OrdinalType the_batch_index,
+                                                  OrdinalType ivpar,
+                                                  OrdinalType the_diagonal,
+                                                  OrdinalType ipol,
+                                                  OrdinalType jpol,
+                                                  OrdinalType the_batch_element_index) const {
+            if(the_diagonal == 0) {
+                return LowerDiagonal(the_batch_index,
+                                     ivpar,
+                                     ipol,
+                                     jpol,
+                                     the_batch_element_index);
+            } else if(the_diagonal == 1) {
+                return MiddleDiagonal(the_batch_index,
+                                      ivpar,
+                                      ipol,
+                                      jpol,
+                                      the_batch_element_index);
+            } else if(the_diagonal == 2) {
+                return UpperDiagonal(the_batch_index,
+                                     ivpar,
+                                     ipol,
+                                     jpol,
+                                     the_batch_element_index);
+            } else {
+                // GPU assert ?
+                return -1.0;
+            }
+        }
+
+        template <typename View6D,
+                  typename View1D>
+        KOKKOS_INLINE_FUNCTION ComputeFloatType
         MatrixSampler<View6D, View1D>::LowerDiagonal(OrdinalType the_batch_index,
                                                      OrdinalType ivpar,
                                                      OrdinalType ipol,
@@ -92,9 +133,13 @@ namespace koliop {
             // given using transposed values of the Najl. With i the row and j
             // the column:
             // A[i, j] = -N1(j, i) * ...
+
+            // TODO(Etienne M): stop using a uniform vparg.
             // NOTE: vparg_(ivpar) - vparg_(ivpar + 1) would overflow
-            return the_time_delta_coefficient_ * (the_Najl_(the_batch_index, ivpar, 2, jpol, ipol, the_batch_element_index) / ((vparg_(1) - vparg_(0)) * (vparg_(1) - vparg_(0))) -
-                                                  the_Najl_(the_batch_index, ivpar, 1, jpol, ipol, the_batch_element_index) / ((vparg_(1) - vparg_(0)) * 2.0));
+            const auto a_vpar_delta = vparg_(1) - vparg_(0);
+
+            return the_time_delta_coefficient_ * (the_Najl_(the_batch_index, ivpar, 2, jpol, ipol, the_batch_element_index) / (a_vpar_delta * a_vpar_delta) -
+                                                  the_Najl_(the_batch_index, ivpar, 1, jpol, ipol, the_batch_element_index) / (a_vpar_delta * 2.0));
         }
 
         template <typename View6D,
@@ -106,8 +151,10 @@ namespace koliop {
                                                       OrdinalType jpol,
                                                       OrdinalType the_batch_element_index) const {
             // NOTE: vparg_(ivpar) - vparg_(ivpar + 1) would overflow
+            const auto a_vpar_delta = vparg_(1) - vparg_(0);
+
             const ComputeFloatType the_value = the_time_delta_coefficient_ * (the_Najl_(the_batch_index, ivpar, 0, jpol, ipol, the_batch_element_index) -
-                                                                              (the_Najl_(the_batch_index, ivpar, 2, jpol, ipol, the_batch_element_index) * 2.0) / ((vparg_(1) - vparg_(0)) * (vparg_(1) - vparg_(0))));
+                                                                              (the_Najl_(the_batch_index, ivpar, 2, jpol, ipol, the_batch_element_index) * 2.0) / (a_vpar_delta * a_vpar_delta));
 
 
             // the_matrix = I - dt/4 * T
@@ -131,8 +178,10 @@ namespace koliop {
                                                      OrdinalType jpol,
                                                      OrdinalType the_batch_element_index) const {
             // NOTE: vparg_(ivpar) - vparg_(ivpar + 1) would overflow
-            return the_time_delta_coefficient_ * (the_Najl_(the_batch_index, ivpar, 2, jpol, ipol, the_batch_element_index) / ((vparg_(1) - vparg_(0)) * (vparg_(1) - vparg_(0))) +
-                                                  the_Najl_(the_batch_index, ivpar, 1, jpol, ipol, the_batch_element_index) / ((vparg_(1) - vparg_(0)) * 2.0));
+            const auto a_vpar_delta = vparg_(1) - vparg_(0);
+
+            return the_time_delta_coefficient_ * (the_Najl_(the_batch_index, ivpar, 2, jpol, ipol, the_batch_element_index) / (a_vpar_delta * a_vpar_delta) +
+                                                  the_Najl_(the_batch_index, ivpar, 1, jpol, ipol, the_batch_element_index) / (a_vpar_delta * 2.0));
         }
 
         template <typename View6D,

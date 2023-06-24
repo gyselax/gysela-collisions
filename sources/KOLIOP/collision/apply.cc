@@ -7,7 +7,6 @@
 
 namespace koliop {
     namespace collision {
-
         namespace {
             // NOTE: I use an unamed namespace because it is unknown to me if
             // adding static prior KOKKOS_INLINE_FUNCTION is legal.
@@ -19,18 +18,19 @@ namespace koliop {
                     case 0:
                         return 1.0;
                     case 1:
-                        return -x + 1.0;
+                        return 1.0 - x;
                     case 2:
-                        return (1.0 / 2.0) + (-4 + /* 1 * */ x) * x;
-                    case 3:
-                        // Horner -> dependency            : 1 + (-3 + (1.5 - 1/6 * x) * x) * x
-                        // but FMA friendly.
-                        // Naive  -> latency and dependency: (1.0 / 6.0) * (-(x * x * x) + 9.0 * x * x - 18.0 * x + 6.0);
-                        // Slow.
-                        // Factorized -> low latency       : ((-1.0 / 6.0) * (x - 0.41577455678347908331)) * ((x - 2.29428036027904171982) * (x - 6.28994508293747919686))
-                        return 1.0 + (-3.0 + (1.5 - (1.0 / 6.0) * x) * x) * x;
+                        return 1.0 + ((-2.0 + (1.0 / 2.0) * x) * x);
+                    // case 3:
+                    //     // Horner -> dependency            : 1 + (-3 + (1.5 - 1/6 * x) * x) * x
+                    //     // but FMA friendly.
+                    //     // Naive  -> latency and dependency: (1.0 / 6.0) * (-(x * x * x) + 9.0 * x * x - 18.0 * x + 6.0);
+                    //     // Slow.
+                    //     // Factorized -> low latency       : ((-1.0 / 6.0) * (x - 0.41577455678347908331)) * ((x - 2.29428036027904171982) * (x - 6.28994508293747919686))
+                    //     return 1.0 + (-3.0 + ((3.0 / 2.0) - (1.0 / 6.0) * x) * x) * x;
                     default:
-                        return -1.0;
+                        return -1.0; // TODO(Etienne M): Should we specify some
+                                     // garbage?
                 }
             }
 
@@ -114,6 +114,7 @@ namespace koliop {
 
                     for(OrdinalType ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
                         for(OrdinalType ipol = 0; ipol < Constant::kMaximumLaguerrePolynomialDegree; ++ipol) {
+                            the_rhs(the_batch_index, ivpar, ipol, the_batch_element_index) = 0.0;
                             for(OrdinalType imu = 0; imu < the_mu_extent; ++imu) {
                                 const ComputeFloatType muBoT     = mug(imu) * BoT;
                                 const ComputeFloatType coeff_tot = DoComputeLaguerrePol(ipol, muBoT) * BoT * coeff_intdmu(imu) * Kokkos::exp(-muBoT);
@@ -287,7 +288,12 @@ namespace koliop {
             const auto& pSpecies_id = an_operator.pSpecies_id_;
 
             const auto the_kernel = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi) {
+                if(!mask_coll(ir, itheta)) {
+                    return;
+                }
+
                 // TODO(Etienne M): INDEX not coalesced. Flatten more ?
+                // parallelize in vpar too.
                 // TODO(Etienne M): Expensive DoComputeLaguerrePol call.
 
                 // NOTE: kBlockExtentXXX are constant, the compiler can replace
@@ -303,9 +309,6 @@ namespace koliop {
                 const OrdinalType the_batch_index         = the_flattened_index / Constant::BatchTraitsType::kBatchSize;
                 const OrdinalType the_batch_element_index = the_flattened_index % Constant::BatchTraitsType::kBatchSize;
 
-                if(!mask_coll(ir, itheta)) {
-                    return;
-                }
 
                 const ComputeFloatType BoT = B_norm(ir, itheta) / T_s(ir, itheta, iphi, pSpecies_id);
 
@@ -398,6 +401,10 @@ namespace koliop {
                                                                                      "the_rhs"),
                                                                   static_cast<std::size_t>(Constant::kBatchCount), static_cast<std::size_t>(the_vpar_extent)};
 
+            // // NOTE: For debug purposes
+            // koliop::blas::detail::DoResidualTest(the_factorizer, the_solver, the_mv,
+            //                                      the_matrix,
+            //                                      the_alpha_coefficients, the_rhs);
 
             // Samples I - T*dt/4
             const MatrixSampler the_LHS_matrix_sampler{the_Najl,
@@ -411,8 +418,11 @@ namespace koliop {
 
             // TODO(Etienne M): On GPU, should we just scale the block size ?
             // TODO(Etienne M): We use mask to avoid some computation, but
-            // wouldn't it be netter to compute for everything and only in the
+            // wouldn't it be better to compute for everything and only in the
             // end, reconstruct f based on the mask ?
+            // TODO(Etienne M): On GPU we want big blocks and a single thread,
+            // unparallelized host loop is enough to saturate the GPU. Would
+            // this also work correctly on CPU ?
 
             for(OrdinalType the_block_first_phi = 0;
                 the_block_first_phi < the_phi_extent;
@@ -424,9 +434,10 @@ namespace koliop {
                         the_block_first_r < the_r_extent;
                         the_block_first_r += Constant::kBlockExtentR) {
 
+                        // TODO(Etienne M): If mask_coll depends on r and theta,
+                        // we could bring it up two loops.
                         DoPrepareCollisionMask(an_operator,
-                                               the_block_first_r,
-                                               the_block_first_theta,
+                                               the_block_first_r, the_block_first_theta,
                                                mask_coll);
 
                         // NOTE: Skipping would create imbalance and because we
@@ -439,28 +450,23 @@ namespace koliop {
 
                         {
                             DoComputeAlphaProjection(an_operator,
-                                                     the_block_first_r,
-                                                     the_block_first_theta,
-                                                     the_block_first_phi,
+                                                     the_block_first_r, the_block_first_theta, the_block_first_phi,
                                                      mask_coll, f5d_s, the_alpha_coefficients);
 
                             {
-                                the_najl_provider.Compute(the_block_first_r,
-                                                          the_block_first_theta,
-                                                          the_block_first_phi,
-                                                          n_s,
-                                                          T_s,
-                                                          nu_ab,
-                                                          the_Najl);
+                                the_najl_provider.Compute(the_block_first_r, the_block_first_theta, the_block_first_phi,
+                                                          n_s, T_s, nu_ab, the_Najl);
 
                                 // Fence for N0, N1, N2
 
                                 {
                                     DoPrepareMatrix(an_operator,
-                                                    the_LHS_matrix_sampler, the_matrix);
+                                                    the_LHS_matrix_sampler,
+                                                    the_matrix);
 
                                     // L*U = (I - T * dt/4)
-                                    the_factorizer.Factorize(the_matrix.data(), Constant::kFlattenedBlockExtent, the_vpar_extent);
+                                    the_factorizer.Factorize(the_matrix.data(),
+                                                             Constant::kFlattenedBlockExtent, the_vpar_extent);
                                 }
                                 {
                                     // the_rhs = (I + T * dt/4) * alpha(n)
@@ -468,7 +474,8 @@ namespace koliop {
                                                  the_RHS_matrix_sampler,
                                                  Constant::kFlattenedBlockExtent, the_vpar_extent,
                                                  the_alpha_coefficients.data(),
-                                                 // Discard what the_rhs could contain.
+                                                 // Discards whatever garbage
+                                                 // the_rhs could contain.
                                                  0.0,
                                                  the_rhs.data());
                                 }
@@ -477,15 +484,14 @@ namespace koliop {
 
                                 {
                                     // the_rhs = alpha~
-                                    the_solver.Solve(the_matrix.data(), Constant::kFlattenedBlockExtent, the_vpar_extent,
+                                    the_solver.Solve(the_matrix.data(),
+                                                     Constant::kFlattenedBlockExtent, the_vpar_extent,
                                                      the_rhs.data());
 
                                     // the_rhs = alpha~~
                                     DoComputeCvCdSource(an_operator,
                                                         dt,
-                                                        the_block_first_r,
-                                                        the_block_first_theta,
-                                                        the_block_first_phi,
+                                                        the_block_first_r, the_block_first_theta, the_block_first_phi,
                                                         the_Najl, the_rhs);
 
                                     std::swap(the_rhs, the_alpha_coefficients);
@@ -499,18 +505,18 @@ namespace koliop {
                                                  the_rhs.data());
 
                                     // the_rhs = alpha(n+1)
-                                    the_solver.Solve(the_matrix.data(), Constant::kFlattenedBlockExtent, the_vpar_extent,
+                                    the_solver.Solve(the_matrix.data(),
+                                                     Constant::kFlattenedBlockExtent, the_vpar_extent,
                                                      the_rhs.data());
                                 }
                             }
 
                             DoComputeReconstruction(an_operator,
-                                                    the_block_first_r,
-                                                    the_block_first_theta,
-                                                    the_block_first_phi,
+                                                    the_block_first_r, the_block_first_theta, the_block_first_phi,
                                                     mask_coll, f5d_s, the_rhs);
 
                             // TODO(Etienne M): Fence for DoComputeReconstruction.
+                            Kokkos::fence();
                         }
                     }
                 }

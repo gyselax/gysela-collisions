@@ -25,7 +25,7 @@ set(koliop_FLAGS_BASE   -Wall -Wextra -Wpedantic -Wcast-align -Wctor-dtor-privac
 
 set(koliop_FLAGS_DEBUG           -Og -fno-omit-frame-pointer -fno-optimize-sibling-calls)
 set(koliop_FLAGS_MINSIZEREL      -Os)
-set(koliop_FLAGS_RELEASE         -O3)
+set(koliop_FLAGS_RELEASE         -O3 -g)
 set(koliop_FLAGS_RELWITHDEBINFO  -O3 -fno-omit-frame-pointer -fno-optimize-sibling-calls)
 
 

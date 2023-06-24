@@ -70,7 +70,7 @@ namespace koliop {
                       typename Array1D>
             KOKKOS_INLINE_FUNCTION void
             DoComputeI(const View2D& comb_mat,
-                       OrdinalType   offset_k,
+                       OffsetType    offset,
                        ValueType     Xtr,
                        ValueType     sqrtXtr,
                        ValueType     sqrtXtr_inv,
@@ -88,14 +88,14 @@ namespace koliop {
                     Xtr_pows[ind_i] = -Xtr * Xtr_pows[ind_i - 1];
                 }
 
-                const ValueType the_exp_Xtr       = Kokkos::exp(Xtr);
-                const ValueType the_erfc_sqrt_Xtr = Kokkos::erfc(sqrtXtr);
+                const ValueType the_exp_Xtr                = Kokkos::exp(Xtr);
+                const ValueType the_sqrtXtr_inv_on_exp_Xtr = sqrtXtr_inv / the_exp_Xtr;
 
-                J_vec[0] = 2.0 * (the_exp_Xtr * sqrtXtr_inv - koliop::portability::MathematicalConstant<ValueType>::kSqrtPi * the_erfc_sqrt_Xtr);
-                J_vec[1] = koliop::portability::MathematicalConstant<ValueType>::kSqrtPi * the_erfc_sqrt_Xtr;
+                J_vec[1] = koliop::portability::MathematicalConstant<ValueType>::kSqrtPi * Kokkos::erfc(sqrtXtr);
+                J_vec[0] = 2.0 * (the_sqrtXtr_inv_on_exp_Xtr - J_vec[1]);
 
                 for(OrdinalType ind_k = 2; ind_k < the_J_vec_size; ++ind_k) {
-                    J_vec[ind_k] = (the_exp_Xtr * sqrtXtr_inv) * Kokkos::abs(Xtr_pows[ind_k - 1]);
+                    J_vec[ind_k] = the_sqrtXtr_inv_on_exp_Xtr * Kokkos::abs(Xtr_pows[ind_k - 1]);
                 }
 
                 for(OrdinalType ind_k = 2; ind_k < the_J_vec_size; ++ind_k) {
@@ -106,11 +106,15 @@ namespace koliop {
                 // I_mat(:) = 0.0;
 
                 for(OrdinalType ind_i = 0; ind_i < the_Xtr_pows_size; ++ind_i) {
-                    for(OrdinalType ind_k = 0; ind_k < ind_i; ++ind_k) {
-                        I_mat[ind_i] += comb_mat(ind_k, ind_i) *
-                                        J_vec[ind_k - offset_k + 1] *
-                                        Xtr_pows[ind_i - ind_k] *
-                                        the_exp_Xtr;
+                    for(OrdinalType ind_k = 0; ind_k <= ind_i; ++ind_k) {
+                        // NOTE: The numerical stability of this whole operation
+                        // is not good !
+                        // TODO(Etienne M): Analyze the numerical stability of
+                        // the Najl
+                        I_mat[ind_i] += (comb_mat(ind_k, ind_i) *
+                                         Xtr_pows[ind_i - ind_k]) *
+                                        (J_vec[ind_k + offset] *
+                                         the_exp_Xtr);
                     }
                 }
             }
@@ -159,7 +163,7 @@ namespace koliop {
 
                         ValueType I_mat[Constant::kIndexMax + 1 + 1]{};
 
-                        DoComputeI(comb_mat, 0, Xtr, sqrtXtr, sqrtXtr_inv, I_mat);
+                        DoComputeI(comb_mat, 1, Xtr, sqrtXtr, sqrtXtr_inv, I_mat);
 
                         for(OrdinalType ind_i = 0; ind_i <= Constant::kIndexMax; ++ind_i) {
                             L_mat[0][ind_i] += coeff_L * I_mat[ind_i];
@@ -173,7 +177,7 @@ namespace koliop {
                         const ValueType sqrtXtr_inv = 1.0 / sqrtXtr;
 
                         ValueType I_mat[Constant::kIndexMax + 1 + 1]{};
-                        DoComputeI(comb_mat, 1, Xtr, sqrtXtr, sqrtXtr_inv, I_mat);
+                        DoComputeI(comb_mat, 0, Xtr, sqrtXtr, sqrtXtr_inv, I_mat);
 
                         for(OrdinalType ind_i = 0; ind_i <= Constant::kIndexMax; ++ind_i) {
                             L_mat[2][ind_i] -= coeff_L * I_mat[ind_i];
@@ -196,8 +200,8 @@ namespace koliop {
                                L_mat[2][0];
 
                 for(OrdinalType ind_i = 1; ind_i <= Constant::kIndexMax; ++ind_i) {
-                    L_mat[3][ind_i] -= L_mat[2][ind_i - 1] * static_cast<ValueType>(ind_i) * vpar2_on_Ta * 0.5 +
-                                       L_mat[2][ind_i] * (vpar2_on_Ta * 0.5 - static_cast<ValueType>(ind_i - 1)) +
+                    L_mat[3][ind_i] += -L_mat[2][ind_i - 1] * static_cast<ValueType>(ind_i) * vpar2_on_Ta * 0.5 +
+                                       L_mat[2][ind_i] * (vpar2_on_Ta * 0.5 - static_cast<ValueType>(ind_i + 1)) +
                                        L_mat[2][ind_i + 1];
                 }
 
@@ -259,6 +263,7 @@ namespace koliop {
                 const OrdinalType the_batch_index         = the_flattened_index / Constant::BatchTraitsType::kBatchSize;
                 const OrdinalType the_batch_element_index = the_flattened_index % Constant::BatchTraitsType::kBatchSize;
 
+                // NOTE: The memset(0) of the local_Nn is done in Najl::Compute.
                 auto local_N0 = Kokkos::subview(the_Najl,
                                                 the_batch_index,
                                                 ivpar,
@@ -283,8 +288,6 @@ namespace koliop {
                                                 Kokkos::ALL(), // l
                                                 the_batch_element_index);
 
-                // TODO(Etienne M): memset(0) of local_N*
-
                 const auto local_n_s = Kokkos::subview(n_s,
                                                        ir,
                                                        itheta,
@@ -300,7 +303,7 @@ namespace koliop {
                 const ValueType vpar2_on_Ta = vparg(ivpar) * vparg(ivpar) / local_T_s(pSpecies_id);
 
                 // NOTE: Careful, L_mat is layout right
-                ValueType L_mat[5][Constant::kIndexMax + 1 + 1];
+                ValueType L_mat[5][Constant::kIndexMax + 1 + 1]{};
 
                 DoComputeL<ValueType>(the_species_extent,
                                       pSpecies_id,
@@ -325,8 +328,7 @@ namespace koliop {
                         }
                     }
 
-                    N_coeff -= L_mat[0][ind_i] * 2.0 -
-                               L_mat[2][ind_i + 1] * 2.0;
+                    N_coeff -= (L_mat[0][ind_i] + L_mat[2][ind_i + 1]) * 2.0;
 
                     for(OrdinalType l = 0; l < Constant::kMaximumLaguerrePolynomialDegree; ++l) {
                         for(OrdinalType j = 1; j < Constant::kMaximumLaguerrePolynomialDegree; ++j) {
@@ -430,6 +432,9 @@ namespace koliop {
             KOLIOP_ASSERT(the_Najl.size() != 0);
 
             // TODO(Etienne M): Other tests
+
+            // TODO(Etienne M): what is the perf of such memset:
+            Kokkos::deep_copy(/* TODO(Etienne M): execution space ,*/ the_Najl, 0.0);
 
             // TODO(Etienne M): It is not currently possible to do something
             // like:

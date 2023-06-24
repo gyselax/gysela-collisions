@@ -42,7 +42,7 @@ namespace koliop {
 
         protected:
             // using ConcurrencyPolicy = KokkosBatched::Mode::Serial;
-            using CachingPolicy = KokkosBatched::Algo::Level3::Unblocked;
+            using CachingPolicy = KokkosBatched::Algo::Level2::Unblocked;
 
             using TRSVLower = KokkosBatched::SerialTrsv<KokkosBatched::Uplo::Lower,
                                                         KokkosBatched::Trans::NoTranspose,
@@ -54,9 +54,8 @@ namespace koliop {
                                                         KokkosBatched::Diag::NonUnit,
                                                         CachingPolicy>;
 
-            using GEMV = KokkosBatched::SerialGemm<KokkosBatched::Trans::NoTranspose,
-                                                   KokkosBatched::Trans::NoTranspose,
-                                                   CachingPolicy>;
+            using GEMV = KokkosBlas::SerialGemv<KokkosBatched::Trans::NoTranspose,
+                                                CachingPolicy>;
 
         public:
             BatchedBlockTridiagonalByBlockTRSV(ExecutionSpaceType an_execution_space);
@@ -190,6 +189,7 @@ namespace koliop {
 
                         GEMV::invoke(-1.0, A_next, b, 1.0, b_next); // b_next = 1.0 * b_next + -1.0 * A_next * b
 
+                        // TODO(Etienne M): Do an assign_data for b or copy ? which is faster ?
                         b = b_next;
                     }
 
@@ -233,7 +233,7 @@ namespace koliop {
 
                     B.assign_data(&the_matrix_batch_element(0, 1, 0, 0));
 
-                    TRSVLower::invoke(1.0, B, b);
+                    TRSVUpper::invoke(1.0, B, b);
                 }
             };
 
@@ -251,5 +251,144 @@ namespace koliop {
 
     } // namespace blas
 } // namespace koliop
+
+// #include <Kokkos_Random.hpp>
+
+// #include "KOLIOP/utility/copy.h"
+
+// namespace koliop {
+//     namespace blas {
+//         namespace detail {
+//             template <typename Factorizer,
+//                       typename Solver,
+//                       typename MV,
+//                       typename View6D,
+//                       typename View4D>
+//             void DoResidualTest(Factorizer&& the_factorizer,
+//                                 Solver&&     the_solver,
+//                                 MV&&         the_mv,
+//                                 View6D&&     the_matrix_buffer,
+//                                 View4D&&     the_original_x_buffer,
+//                                 View4D&&     the_computed_x_buffer) {
+
+//                 using value_type = typename std::remove_reference_t<View6D>::value_type;
+
+//                 // Kokkos::resize(the_matrix_buffer,
+//                 //                32 * 1024,
+//                 //                256,
+//                 //                3,
+//                 //                3,
+//                 //                3,
+//                 //                the_matrix_buffer.extent(5));
+//                 // Kokkos::resize(the_original_x_buffer,
+//                 //                the_matrix_buffer.extent(0),
+//                 //                the_matrix_buffer.extent(1),
+//                 //                the_matrix_buffer.extent(4),
+//                 //                the_matrix_buffer.extent(5));
+//                 // Kokkos::resize(the_computed_x_buffer,
+//                 //                the_matrix_buffer.extent(0),
+//                 //                the_matrix_buffer.extent(1),
+//                 //                the_matrix_buffer.extent(4),
+//                 //                the_matrix_buffer.extent(5));
+
+//                 std::cout << " | Batch count: " << the_matrix_buffer.extent(0)
+//                           << " | Small block count: " << the_matrix_buffer.extent(1)
+//                           << " | Batch size: " << the_matrix_buffer.extent(5) << "\n";
+
+//                 // - Random [0, 1.0) the_matrix_buffer
+//                 // - Random [0, 1.0) the_original_x_buffer
+
+//                 Kokkos::deep_copy(the_original_x_buffer, 3.14159265358979323846);
+
+//                 const auto DoFillMatrix = [&]() {
+//                     const auto a_matrix_policy = Kokkos::MDRangePolicy<Kokkos::Rank<6,
+//                                                                                     Kokkos::Iterate::Left,
+//                                                                                     Kokkos::Iterate::Left>>{{0, 0, 0, 0, 0, 0},
+//                                                                                                             {the_matrix_buffer.extent(0),
+//                                                                                                              the_matrix_buffer.extent(1),
+//                                                                                                              the_matrix_buffer.extent(2),
+//                                                                                                              the_matrix_buffer.extent(3),
+//                                                                                                              the_matrix_buffer.extent(4),
+//                                                                                                              the_matrix_buffer.extent(5)}};
+
+//                     // Kokkos::parallel_for(
+//                     //     "DoResidualTest::RandomFilling",
+//                     //     a_matrix_policy,
+//                     //     KOKKOS_LAMBDA(auto a, auto b, auto c, auto d, auto e, auto f) {
+//                     //         if(d == e && c == 1) {
+//                     //             the_matrix_buffer(a, b, c, d, e, f) = 10.0;
+//                     //         } else {
+//                     //             the_matrix_buffer(a, b, c, d, e, f) = 2.0;
+//                     //         }
+//                     //     });
+
+//                     Kokkos::Random_XorShift64_Pool<> the_random_pool(0xDEADBEEF);
+//                     Kokkos::fill_random(the_matrix_buffer, the_random_pool, 0.0, 1.0);
+//                 };
+
+//                 DoFillMatrix();
+
+//                 // - the_matrix_buffer * the_original_x_buffer = the_computed_x_buffer
+
+//                 the_mv.Apply(1.0,
+//                              the_matrix_buffer,
+//                              the_matrix_buffer.extent(0) * the_matrix_buffer.extent(5), the_matrix_buffer.extent(1),
+//                              the_original_x_buffer.data(),
+//                              0.0,
+//                              the_computed_x_buffer.data());
+
+//                 koliop::utility::Copy::Deep(the_computed_x_buffer,
+//                                             the_original_x_buffer);
+
+//                 // - Solver the_matrix_buffer * y = the_computed_x_buffer, y put into the_computed_x_buffer
+
+//                 the_factorizer.Factorize(the_matrix_buffer.data(),
+//                                          the_matrix_buffer.extent(0) * the_matrix_buffer.extent(5), the_matrix_buffer.extent(1));
+
+//                 the_solver.Solve(the_matrix_buffer.data(),
+//                                  the_matrix_buffer.extent(0) * the_matrix_buffer.extent(5), the_matrix_buffer.extent(1),
+//                                  the_computed_x_buffer.data());
+
+//                 // - Compare the_computed_x_buffer with the_original_x_buffer
+
+//                 DoFillMatrix();
+
+//                 // b = b - Ax, b must equals zero.
+//                 the_mv.Apply(1.0,
+//                              the_matrix_buffer,
+//                              the_matrix_buffer.extent(0) * the_matrix_buffer.extent(5), the_matrix_buffer.extent(1),
+//                              the_computed_x_buffer.data(),
+//                              -1.0,
+//                              the_original_x_buffer.data());
+
+//                 const auto a_vector_policy = Kokkos::MDRangePolicy<Kokkos::Rank<3,
+//                                                                                 Kokkos::Iterate::Left,
+//                                                                                 Kokkos::Iterate::Left>>{{0, 0, 0},
+//                                                                                                         {the_matrix_buffer.extent(0),
+//                                                                                                          the_matrix_buffer.extent(1),
+//                                                                                                          the_matrix_buffer.extent(3)}};
+
+//                 value_type the_residual_sum;
+
+//                 Kokkos::parallel_reduce(
+//                     "DoResidualTest::ResidualComputation",
+//                     a_vector_policy,
+//                     KOKKOS_LAMBDA(const int& a, const int& b, const int& c,
+//                                   // NOTE: we need const int& here, that weird..
+//                                   value_type& the_sum) {
+//                         // NOTE: There is no guarantee that we have at least two
+//                         // value per SIMD Vector
+//                         the_sum += the_original_x_buffer(a, b, c, 1) *
+//                                    the_original_x_buffer(a, b, c, 1);
+//                     },
+//                     the_residual_sum);
+
+//                 std::cout << "L2 of b (residual):"
+//                           << Kokkos::sqrt(the_residual_sum)
+//                           << " (" << the_residual_sum << ")\n";
+//             }
+//         } // namespace detail
+//     }     // namespace blas
+// } // namespace koliop
 
 #endif
