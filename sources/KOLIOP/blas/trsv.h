@@ -54,6 +54,10 @@ namespace koliop {
                                                         KokkosBatched::Diag::NonUnit,
                                                         CachingPolicy>;
 
+            /// NOTE: Why
+            /// GEMM<NoTranspose, NoTranspose, Level3::Unblocked>::invoke is
+            /// allowed to take the same arguments than
+            /// GEMV<NoTranspose, Level2::Unblocked>::invoke ?
             using GEMV = KokkosBlas::SerialGemv<KokkosBatched::Trans::NoTranspose,
                                                 CachingPolicy>;
 
