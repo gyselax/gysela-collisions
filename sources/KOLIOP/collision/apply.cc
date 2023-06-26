@@ -109,7 +109,8 @@ namespace koliop {
                 const OrdinalType the_batch_index         = the_flattened_index / Constant::BatchTraitsType::kBatchSize;
                 const OrdinalType the_batch_element_index = the_flattened_index % Constant::BatchTraitsType::kBatchSize;
 
-                if(mask_coll(ir, itheta)) {
+                if(mask_coll(ir - the_block_first_r,
+                             itheta - the_block_first_theta)) {
                     const ComputeFloatType BoT = B_norm(ir, itheta) / T_s(ir, itheta, iphi, pSpecies_id);
 
                     for(OrdinalType ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
@@ -288,7 +289,9 @@ namespace koliop {
             const auto& pSpecies_id = an_operator.pSpecies_id_;
 
             const auto the_kernel = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi) {
-                if(!mask_coll(ir, itheta)) {
+
+                if(!mask_coll(ir - the_block_first_r,
+                              itheta - the_block_first_theta)) {
                     return;
                 }
 
@@ -308,7 +311,6 @@ namespace koliop {
 
                 const OrdinalType the_batch_index         = the_flattened_index / Constant::BatchTraitsType::kBatchSize;
                 const OrdinalType the_batch_element_index = the_flattened_index % Constant::BatchTraitsType::kBatchSize;
-
 
                 const ComputeFloatType BoT = B_norm(ir, itheta) / T_s(ir, itheta, iphi, pSpecies_id);
 
