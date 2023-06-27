@@ -39,9 +39,23 @@ namespace koliop {
             // have larger block, we have to check if kokkos supports
             // distributing on vector/teams.
             //
+
+#if defined(KOKKOS_ENABLE_HIP)
             static inline constexpr OrdinalType kBlockExtentR     = 32;
-            static inline constexpr OrdinalType kBlockExtentTheta = 16;
+            static inline constexpr OrdinalType kBlockExtentTheta = 32;
             static inline constexpr OrdinalType kBlockExtentPhi   = 2;
+
+                // static inline constexpr OrdinalType kBlockExtentR     = 32;
+                // static inline constexpr OrdinalType kBlockExtentTheta = 16;
+                // static inline constexpr OrdinalType kBlockExtentPhi   = 2;
+
+#elif defined(KOKKOS_ENABLE_OPENMP)
+            static inline constexpr OrdinalType kBlockExtentR     = 16;
+            static inline constexpr OrdinalType kBlockExtentTheta = 16;
+            static inline constexpr OrdinalType kBlockExtentPhi   = 1;
+#else
+    #error "Unsupported architecture."
+#endif
 
             static inline constexpr OffsetType kFlattenedBlockExtent = kBlockExtentR * kBlockExtentTheta * kBlockExtentPhi;
 

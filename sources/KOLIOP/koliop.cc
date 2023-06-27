@@ -34,7 +34,13 @@
 
         if(static_cast<bool>(with_verbose_initialization)) {
             Kokkos::print_configuration(std::cout, false);
+            std::cout << "Koliop:\n";
+            std::cout << "  koliop::collision::Constant::kBlockExtentR: " << koliop::collision::Constant::kBlockExtentR << "\n";
+            std::cout << "  koliop::collision::Constant::kBlockExtentTheta: " << koliop::collision::Constant::kBlockExtentTheta << "\n";
+            std::cout << "  koliop::collision::Constant::kBlockExtentPhi: " << koliop::collision::Constant::kBlockExtentPhi << "\n";
         }
+
+        std::cout << std::flush;
 
         return KOLIOP_STATUS_SUCCESS;
     });
