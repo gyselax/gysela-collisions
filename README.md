@@ -36,7 +36,7 @@ $ make
 Where `<machine_file>` being one of the supported machines. For instance:
 
 ```bash
-$ cmake .. -G Ninja -DCMAKE_TOOLCHAIN_FILE=../toolchains/acc.cce.adastra/toolchain.cmake
+$ cmake .. -G Ninja -DCMAKE_TOOLCHAIN_FILE=../toolchains/mi250.cce.adastra/toolchain.cmake
 ```
 
 ### Testing

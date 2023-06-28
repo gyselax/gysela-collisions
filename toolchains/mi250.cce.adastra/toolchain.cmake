@@ -17,20 +17,16 @@ set(Kokkos_ARCH_ZEN3 ON CACHE BOOL "Optimize for AMD Zen3 architecture (HOST).")
 
 # Koliop options:
 
-set(koliop_TOOLCHAIN_NAME "acc.cce.adastra")
+set(koliop_TOOLCHAIN_NAME "mi250.cce.adastra")
 
 # The rest is optional:
 
-set(koliop_FLAGS_BASE   -Wall -Wextra -Wpedantic -Wcast-align -Wctor-dtor-privacy -Wdouble-promotion -Wformat=2 -Winit-self -Wmissing-include-dirs -Woverloaded-virtual -Wredundant-decls -Wsign-promo -Wstrict-aliasing -Wdisabled-optimization -Wsuggest-override -Wswitch-default -Wtautological-compare -Wpacked -Wunreachable-code -Wcast-qual -Wold-style-cast -Wswitch-enum -Wundef) # -Wconversion
+set(koliop_FLAGS_BASE -Wall -Wextra -Wpedantic -Wcast-align -Wctor-dtor-privacy -Wdouble-promotion -Wformat=2 -Winit-self -Wmissing-include-dirs -Woverloaded-virtual -Wredundant-decls -Wsign-promo -Wstrict-aliasing -Wdisabled-optimization -Wsuggest-override -Wswitch-default -Wtautological-compare -Wpacked -Wunreachable-code -Wcast-qual -Wold-style-cast -Wswitch-enum -Wundef) # -Wconversion
 
-set(koliop_FLAGS_DEBUG           -Og -fno-omit-frame-pointer -fno-optimize-sibling-calls)
+set(koliop_FLAGS_DEBUG           -Og -g -ggdb -fno-omit-frame-pointer -fno-optimize-sibling-calls)
 set(koliop_FLAGS_MINSIZEREL      -Os)
-set(koliop_FLAGS_RELEASE         -O3)
-set(koliop_FLAGS_RELWITHDEBINFO  -O3 -fno-omit-frame-pointer -fno-optimize-sibling-calls)
-
-# TODO(Etienne M): The following flags may have a positive performance impact:
-# -mllvm -amdgpu-early-inline-all=true -mllvm -amdgpu-function-calls=false
-# See: https://github.com/ROCm-Developer-Tools/HIP/blob/develop/hip-lang-config.cmake.in
+set(koliop_FLAGS_RELEASE         -O3 -mllvm -amdgpu-early-inline-all=true -g)
+set(koliop_FLAGS_RELWITHDEBINFO  -O3 -mllvm -amdgpu-early-inline-all=true -g -fno-omit-frame-pointer -fno-optimize-sibling-calls)
 
 set(koliop_LINKER_FLAGS_DEBUG          ${koliop_FLAGS_DEBUG})
 set(koliop_LINKER_FLAGS_MINSIZEREL     ${koliop_FLAGS_MINSIZEREL})

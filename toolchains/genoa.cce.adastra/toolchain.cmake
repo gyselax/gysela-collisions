@@ -17,16 +17,16 @@ set(Kokkos_ARCH_ZEN3 ON CACHE BOOL "Optimize for AMD Zen3 architecture (HOST).")
 
 # Koliop options:
 
-set(koliop_TOOLCHAIN_NAME "cpu.cce.adastra")
+set(koliop_TOOLCHAIN_NAME "genoa.cce.adastra")
 
 # The rest is optional:
 
-set(koliop_FLAGS_BASE   -Wall -Wextra -Wpedantic -Wcast-align -Wctor-dtor-privacy -Wdouble-promotion -Wformat=2 -Winit-self -Wmissing-include-dirs -Woverloaded-virtual -Wredundant-decls -Wsign-promo -Wstrict-aliasing -Wdisabled-optimization -Wsuggest-override -Wswitch-default -Wtautological-compare -Wpacked -Wunreachable-code -Wcast-qual -Wold-style-cast -Wswitch-enum -Wundef) # -Wconversion
+set(koliop_FLAGS_BASE -Wall -Wextra -Wpedantic -Wcast-align -Wctor-dtor-privacy -Wdouble-promotion -Wformat=2 -Winit-self -Wmissing-include-dirs -Woverloaded-virtual -Wredundant-decls -Wsign-promo -Wstrict-aliasing -Wdisabled-optimization -Wsuggest-override -Wswitch-default -Wtautological-compare -Wpacked -Wunreachable-code -Wcast-qual -Wold-style-cast -Wswitch-enum -Wundef) # -Wconversion
 
-set(koliop_FLAGS_DEBUG           -Og -fno-omit-frame-pointer -fno-optimize-sibling-calls)
+set(koliop_FLAGS_DEBUG           -Og -g -ggdb -fno-omit-frame-pointer -fno-optimize-sibling-calls)
 set(koliop_FLAGS_MINSIZEREL      -Os)
 set(koliop_FLAGS_RELEASE         -O3 -g)
-set(koliop_FLAGS_RELWITHDEBINFO  -O3 -fno-omit-frame-pointer -fno-optimize-sibling-calls)
+set(koliop_FLAGS_RELWITHDEBINFO  -O3 -g -fno-omit-frame-pointer -fno-optimize-sibling-calls)
 
 
 
