@@ -85,6 +85,7 @@ namespace koliop {
         }
 
         void Operator::PrecomputeNu() {
+
             DoPrecomputeNu(*this, nu_ab_);
 
             // TODO(Etienne M): ASYNC, relax that constraint ?

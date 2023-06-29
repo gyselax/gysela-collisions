@@ -171,8 +171,8 @@ namespace koliop {
             , the_solver_{Kokkos::DefaultExecutionSpace{}}
             , the_mv_{Kokkos::DefaultExecutionSpace{}}
 
-            // Miscellaneous tooling
-            , the_compute_duration_accumulator_{} {
+        // Miscellaneous tooling
+        {
 
             // TODO(Etienne M): Should we fence after the copies ? We *may* need
             // that if we pass an execution space to the deep copy.
@@ -186,10 +186,6 @@ namespace koliop {
                             nustar0_r_,
                             q_r_,
                             mask_buffer_r_);
-        }
-
-        uint64_t Operator::GetComputationDuration() const {
-            return the_compute_duration_accumulator_.count() / 1'000;
         }
 
     } // namespace collision

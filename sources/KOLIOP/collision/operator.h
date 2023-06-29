@@ -7,7 +7,6 @@
 #include "KOLIOP/blas/trf.h"
 #include "KOLIOP/blas/trsv.h"
 #include "KOLIOP/collision/najl.h"
-#include "KOLIOP/utility/stopwatch.h"
 
 namespace koliop {
     namespace collision {
@@ -101,8 +100,6 @@ namespace koliop {
         class Operator {
         public:
         protected:
-            using StopwatchType = koliop::utility::Stopwatch<>;
-
         public:
             /// @brief
             /// @param pSpecies_id
@@ -187,12 +184,6 @@ namespace koliop {
             void ExtractRaw(uint32_t the_value_identifier,
                             void*    an_output_buffer) const;
 
-            /// Returns the duration as microseconds. This represent the time
-            /// spent in each DoXXX method, excluding the copies (CPU<->GPU)
-            /// present in the code, when running in GPU mode, as of 2023/07/28.
-            ///
-            uint64_t GetComputationDuration() const;
-
         public:
             // Could be protected but we would have to use friend functions.
             // protected:
@@ -259,7 +250,6 @@ namespace koliop {
 
         protected:
             // Miscellaneous tooling
-            mutable typename StopwatchType::duration the_compute_duration_accumulator_;
         };
 
     } // namespace collision

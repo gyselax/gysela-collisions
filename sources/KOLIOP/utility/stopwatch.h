@@ -127,8 +127,10 @@ namespace koliop {
         typename Stopwatch<Duration>::duration
         Stopwatch<Duration>::Measure(Callable&& a_callable) {
             Stopwatch a_stopwatch;
-            a_callable();
-            return a_stopwatch.Elapsed();
+            { a_callable(); }
+            const auto the_duration = a_stopwatch.Elapsed();
+            // std::cout << __PRETTY_FUNCTION__ << " took " << (the_duration.count() / 1'000) << "us\n";
+            return the_duration;
         }
 
     } // namespace utility

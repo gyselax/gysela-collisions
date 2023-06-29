@@ -536,9 +536,7 @@ namespace koliop {
                                                                                                             the_r_extent_, the_theta_extent_, the_phi_extent_,
                                                                                                             the_species_extent_);
 
-            the_compute_duration_accumulator_ += StopwatchType::Measure([&]() {
-                DoApply(*this, dt, a_device_visible_f5d_s);
-            });
+            DoApply(*this, dt, a_device_visible_f5d_s);
 
             koliop::utility::Copy::Shallow(a_device_visible_f5d_s,
                                            koliop::utility::View::UHL6<Flo64>{f5d_s,
