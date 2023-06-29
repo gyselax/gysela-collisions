@@ -252,9 +252,9 @@ namespace koliop {
 
                 // NOTE: kBlockExtentXXX are constant, the compiler can replace
                 // the % with faster instructions.
-                const OrdinalType the_block_local_index_r     = ir % Constant::kBlockExtentR;
-                const OrdinalType the_block_local_index_theta = itheta % Constant::kBlockExtentTheta;
-                const OrdinalType the_block_local_index_phi   = iphi % Constant::kBlockExtentPhi;
+                const OrdinalType the_block_local_index_r     = ir - the_block_first_r;
+                const OrdinalType the_block_local_index_theta = itheta - the_block_first_theta;
+                const OrdinalType the_block_local_index_phi   = iphi - the_block_first_phi;
 
                 const OffsetType the_flattened_index = Constant::kBlockExtentR * Constant::kBlockExtentTheta * the_block_local_index_phi +
                                                        Constant::kBlockExtentR * the_block_local_index_theta +

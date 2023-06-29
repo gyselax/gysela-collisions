@@ -98,9 +98,9 @@ namespace koliop {
 
                 // NOTE: kBlockExtentXXX are constant, the compiler can replace
                 // the % with faster instructions.
-                const OrdinalType the_block_local_index_r     = ir % Constant::kBlockExtentR;
-                const OrdinalType the_block_local_index_theta = itheta % Constant::kBlockExtentTheta;
-                const OrdinalType the_block_local_index_phi   = iphi % Constant::kBlockExtentPhi;
+                const OrdinalType the_block_local_index_r     = ir - the_block_first_r;
+                const OrdinalType the_block_local_index_theta = itheta - the_block_first_theta;
+                const OrdinalType the_block_local_index_phi   = iphi - the_block_first_phi;
 
                 const OffsetType the_flattened_index = Constant::kBlockExtentR * Constant::kBlockExtentTheta * the_block_local_index_phi +
                                                        Constant::kBlockExtentR * the_block_local_index_theta +
@@ -222,9 +222,9 @@ namespace koliop {
 
                 // NOTE: kBlockExtentXXX are constant, the compiler can replace
                 // the % with faster instructions.
-                const OrdinalType the_block_local_index_r     = ir % Constant::kBlockExtentR;
-                const OrdinalType the_block_local_index_theta = itheta % Constant::kBlockExtentTheta;
-                const OrdinalType the_block_local_index_phi   = iphi % Constant::kBlockExtentPhi;
+                const OrdinalType the_block_local_index_r     = ir - the_block_first_r;
+                const OrdinalType the_block_local_index_theta = itheta - the_block_first_theta;
+                const OrdinalType the_block_local_index_phi   = iphi - the_block_first_phi;
 
                 const OffsetType the_flattened_index = Constant::kBlockExtentR * Constant::kBlockExtentTheta * the_block_local_index_phi +
                                                        Constant::kBlockExtentR * the_block_local_index_theta +
@@ -301,9 +301,9 @@ namespace koliop {
 
                 // NOTE: kBlockExtentXXX are constant, the compiler can replace
                 // the % with faster instructions.
-                const OrdinalType the_block_local_index_r     = ir % Constant::kBlockExtentR;
-                const OrdinalType the_block_local_index_theta = itheta % Constant::kBlockExtentTheta;
-                const OrdinalType the_block_local_index_phi   = iphi % Constant::kBlockExtentPhi;
+                const OrdinalType the_block_local_index_r     = ir - the_block_first_r;
+                const OrdinalType the_block_local_index_theta = itheta - the_block_first_theta;
+                const OrdinalType the_block_local_index_phi   = iphi - the_block_first_phi;
 
                 const OffsetType the_flattened_index = Constant::kBlockExtentR * Constant::kBlockExtentTheta * the_block_local_index_phi +
                                                        Constant::kBlockExtentR * the_block_local_index_theta +
@@ -358,7 +358,7 @@ namespace koliop {
             const auto& the_theta_extent = an_operator.the_theta_extent_;
             const auto& the_phi_extent   = an_operator.the_phi_extent_;
 
-            const auto& vparg = an_operator.vparg_;
+            const auto& coeff_intdvpar = an_operator.coeff_intdvpar_;
 
             const auto& n_s   = an_operator.n_s_;
             const auto& T_s   = an_operator.T_s_;
@@ -410,12 +410,12 @@ namespace koliop {
 
             // Samples I - T*dt/4
             const MatrixSampler the_LHS_matrix_sampler{the_Najl,
-                                                       vparg,
+                                                       coeff_intdvpar,
                                                        -dt / 4.0};
 
             // Samples I + T*dt/4
             const MatrixSampler the_RHS_matrix_sampler{the_Najl,
-                                                       vparg,
+                                                       coeff_intdvpar,
                                                        dt / 4.0};
 
             // TODO(Etienne M): On GPU, should we just scale the block size ?
