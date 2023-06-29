@@ -166,8 +166,13 @@
             return KOLIOP_STATUS_INITIALIZATION_FAILURE;
         }
 
+        koliop::collision::Operator* the_operator = reinterpret_cast<koliop::collision::Operator*>(an_operator);
+
+        std::cout << "Koliop:";
+        std::cout << "  Computation duration: " << the_operator->GetComputationDuration() << " us\n";
+
         // Freeing a nullptr is *fine*.
-        delete reinterpret_cast<koliop::collision::Operator*>(an_operator);
+        delete the_operator;
 
         return KOLIOP_STATUS_SUCCESS;
     });

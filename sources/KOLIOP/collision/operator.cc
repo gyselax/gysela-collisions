@@ -163,13 +163,16 @@ namespace koliop {
             , q_par_on_nT_s_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "q_par_on_nT_s_"),
                              static_cast<std::size_t>(the_r_extent_), static_cast<std::size_t>(the_theta_extent_), static_cast<std::size_t>(the_phi_extent_), static_cast<std::size_t>(the_species_extent_)}
 
-            // Miscellaneous tooling
+            // Miscellaneous numerical tooling
 
             // TODO(Etienne M): Should we partition ?
             , the_najl_provider_{pSpecies_id_, the_vpar_extent_, the_species_extent_, collision_interspecies_, comb_mat, hat_As_, hat_Zs_, vparg_, Kokkos::DefaultExecutionSpace{}}
             , the_factorizer_{Kokkos::DefaultExecutionSpace{}}
             , the_solver_{Kokkos::DefaultExecutionSpace{}}
-            , the_mv_{Kokkos::DefaultExecutionSpace{}} {
+            , the_mv_{Kokkos::DefaultExecutionSpace{}}
+
+            // Miscellaneous tooling
+            , the_compute_duration_accumulator_{} {
 
             // TODO(Etienne M): Should we fence after the copies ? We *may* need
             // that if we pass an execution space to the deep copy.
@@ -183,6 +186,10 @@ namespace koliop {
                             nustar0_r_,
                             q_r_,
                             mask_buffer_r_);
+        }
+
+        uint64_t Operator::GetComputationDuration() const {
+            return the_compute_duration_accumulator_.count() / 1'000;
         }
 
     } // namespace collision

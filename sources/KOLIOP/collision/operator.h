@@ -7,6 +7,7 @@
 #include "KOLIOP/blas/trf.h"
 #include "KOLIOP/blas/trsv.h"
 #include "KOLIOP/collision/najl.h"
+#include "KOLIOP/utility/stopwatch.h"
 
 namespace koliop {
     namespace collision {
@@ -99,6 +100,10 @@ namespace koliop {
         ///
         class Operator {
         public:
+        protected:
+            using StopwatchType = koliop::utility::Stopwatch<>;
+
+        public:
             /// @brief
             /// @param pSpecies_id
             /// @param mu_id
@@ -182,6 +187,12 @@ namespace koliop {
             void ExtractRaw(uint32_t the_value_identifier,
                             void*    an_output_buffer) const;
 
+            /// Returns the duration as microseconds. This represent the time
+            /// spent in each DoXXX method, excluding the copies (CPU<->GPU)
+            /// present in the code, when running in GPU mode, as of 2023/07/28.
+            ///
+            uint64_t GetComputationDuration() const;
+
         public:
             // Could be protected but we would have to use friend functions.
             // protected:
@@ -232,7 +243,7 @@ namespace koliop {
             koliop::utility::View::MDD5<ComputeFloatType> nu_ab_;
             koliop::utility::View::MDD4<ComputeFloatType> q_par_on_nT_s_;
 
-            // Miscellaneous tooling
+            // Miscellaneous numerical tooling
 
             Najl the_najl_provider_;
 
@@ -245,6 +256,10 @@ namespace koliop {
             koliop::blas::BatchedMatrixSamplingBlockTridiagonalByBlockMV<Constant::BatchTraitsType,
                                                                          Constant::kMaximumLaguerrePolynomialDegree>
                 the_mv_;
+
+        protected:
+            // Miscellaneous tooling
+            mutable typename StopwatchType::duration the_compute_duration_accumulator_;
         };
 
     } // namespace collision

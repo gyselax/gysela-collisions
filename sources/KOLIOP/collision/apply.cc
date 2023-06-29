@@ -369,6 +369,8 @@ namespace koliop {
             const auto the_solver        = an_operator.the_solver_;
             const auto the_mv            = an_operator.the_mv_;
 
+            // NOTE: If you have an issue with these assertions, checkout the
+            // constant.h file and tune Constant::kBlockExtent[R|Theta|Phi].
             KOLIOP_ASSERT(the_r_extent % Constant::kBlockExtentR == 0);
             KOLIOP_ASSERT(the_theta_extent % Constant::kBlockExtentTheta == 0);
             KOLIOP_ASSERT(the_phi_extent % Constant::kBlockExtentPhi == 0);
@@ -534,7 +536,9 @@ namespace koliop {
                                                                                                             the_r_extent_, the_theta_extent_, the_phi_extent_,
                                                                                                             the_species_extent_);
 
-            DoApply(*this, dt, a_device_visible_f5d_s);
+            the_compute_duration_accumulator_ += StopwatchType::Measure([&]() {
+                DoApply(*this, dt, a_device_visible_f5d_s);
+            });
 
             koliop::utility::Copy::Shallow(a_device_visible_f5d_s,
                                            koliop::utility::View::UHL6<Flo64>{f5d_s,
