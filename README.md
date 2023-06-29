@@ -36,7 +36,7 @@ $ make
 Where `<machine_file>` being one of the supported machines. For instance:
 
 ```bash
-$ cmake .. -G Ninja -DCMAKE_TOOLCHAIN_FILE=../toolchains/acc.cce.adastra/toolchain.cmake
+$ cmake .. -G Ninja -DCMAKE_TOOLCHAIN_FILE=../toolchains/mi250.cce.adastra/toolchain.cmake
 ```
 
 ### Testing
@@ -83,14 +83,10 @@ NOTE:
     - Assuming we GPUs for computation, the input buffer are expected to be on the CPU too! `koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL6<Flo64>, koliop::utility::View::MDL6>` vs `koliop::utility::Copy::RawDataToView<koliop::utility::View::UDL6<Flo64>, koliop::utility::View::MDL6>`
 
 - Validation:
-    - Test in Gysela (progressively replace libcoll with koliop)
-    - Quick recheck of the kernel and their fortran equivalent
-    - Solver:
-        - LU factorization is serial, we could use some tricks do further parallelize. But the complexity and gain are yet to be measured.
-        - Residual tests for the solver
     - Test KOKKOS_BOUNDS_CHECK Kokkos_ENABLE_DEBUG_BOUNDS_CHECKS Kokkos_ENABLE_DEBUG
 
 - Tuning:
+    - many 'ir % Constant::kBlockExtentR' could be replaced with 'ir - the_block_first_r'
     - compute during species transfer ? Few par of the code rely on Nspecies, most only need pspecies_id.
     - Simplify computations
     - Inter exchange loops

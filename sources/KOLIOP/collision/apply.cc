@@ -98,9 +98,9 @@ namespace koliop {
 
                 // NOTE: kBlockExtentXXX are constant, the compiler can replace
                 // the % with faster instructions.
-                const OrdinalType the_block_local_index_r     = ir % Constant::kBlockExtentR;
-                const OrdinalType the_block_local_index_theta = itheta % Constant::kBlockExtentTheta;
-                const OrdinalType the_block_local_index_phi   = iphi % Constant::kBlockExtentPhi;
+                const OrdinalType the_block_local_index_r     = ir - the_block_first_r;
+                const OrdinalType the_block_local_index_theta = itheta - the_block_first_theta;
+                const OrdinalType the_block_local_index_phi   = iphi - the_block_first_phi;
 
                 const OffsetType the_flattened_index = Constant::kBlockExtentR * Constant::kBlockExtentTheta * the_block_local_index_phi +
                                                        Constant::kBlockExtentR * the_block_local_index_theta +
@@ -109,7 +109,8 @@ namespace koliop {
                 const OrdinalType the_batch_index         = the_flattened_index / Constant::BatchTraitsType::kBatchSize;
                 const OrdinalType the_batch_element_index = the_flattened_index % Constant::BatchTraitsType::kBatchSize;
 
-                if(mask_coll(ir, itheta)) {
+                if(mask_coll(ir - the_block_first_r,
+                             itheta - the_block_first_theta)) {
                     const ComputeFloatType BoT = B_norm(ir, itheta) / T_s(ir, itheta, iphi, pSpecies_id);
 
                     for(OrdinalType ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
@@ -221,9 +222,9 @@ namespace koliop {
 
                 // NOTE: kBlockExtentXXX are constant, the compiler can replace
                 // the % with faster instructions.
-                const OrdinalType the_block_local_index_r     = ir % Constant::kBlockExtentR;
-                const OrdinalType the_block_local_index_theta = itheta % Constant::kBlockExtentTheta;
-                const OrdinalType the_block_local_index_phi   = iphi % Constant::kBlockExtentPhi;
+                const OrdinalType the_block_local_index_r     = ir - the_block_first_r;
+                const OrdinalType the_block_local_index_theta = itheta - the_block_first_theta;
+                const OrdinalType the_block_local_index_phi   = iphi - the_block_first_phi;
 
                 const OffsetType the_flattened_index = Constant::kBlockExtentR * Constant::kBlockExtentTheta * the_block_local_index_phi +
                                                        Constant::kBlockExtentR * the_block_local_index_theta +
@@ -288,7 +289,9 @@ namespace koliop {
             const auto& pSpecies_id = an_operator.pSpecies_id_;
 
             const auto the_kernel = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi) {
-                if(!mask_coll(ir, itheta)) {
+
+                if(!mask_coll(ir - the_block_first_r,
+                              itheta - the_block_first_theta)) {
                     return;
                 }
 
@@ -298,9 +301,9 @@ namespace koliop {
 
                 // NOTE: kBlockExtentXXX are constant, the compiler can replace
                 // the % with faster instructions.
-                const OrdinalType the_block_local_index_r     = ir % Constant::kBlockExtentR;
-                const OrdinalType the_block_local_index_theta = itheta % Constant::kBlockExtentTheta;
-                const OrdinalType the_block_local_index_phi   = iphi % Constant::kBlockExtentPhi;
+                const OrdinalType the_block_local_index_r     = ir - the_block_first_r;
+                const OrdinalType the_block_local_index_theta = itheta - the_block_first_theta;
+                const OrdinalType the_block_local_index_phi   = iphi - the_block_first_phi;
 
                 const OffsetType the_flattened_index = Constant::kBlockExtentR * Constant::kBlockExtentTheta * the_block_local_index_phi +
                                                        Constant::kBlockExtentR * the_block_local_index_theta +
@@ -308,7 +311,6 @@ namespace koliop {
 
                 const OrdinalType the_batch_index         = the_flattened_index / Constant::BatchTraitsType::kBatchSize;
                 const OrdinalType the_batch_element_index = the_flattened_index % Constant::BatchTraitsType::kBatchSize;
-
 
                 const ComputeFloatType BoT = B_norm(ir, itheta) / T_s(ir, itheta, iphi, pSpecies_id);
 
@@ -356,7 +358,7 @@ namespace koliop {
             const auto& the_theta_extent = an_operator.the_theta_extent_;
             const auto& the_phi_extent   = an_operator.the_phi_extent_;
 
-            const auto& vparg = an_operator.vparg_;
+            const auto& coeff_intdvpar = an_operator.coeff_intdvpar_;
 
             const auto& n_s   = an_operator.n_s_;
             const auto& T_s   = an_operator.T_s_;
@@ -408,12 +410,12 @@ namespace koliop {
 
             // Samples I - T*dt/4
             const MatrixSampler the_LHS_matrix_sampler{the_Najl,
-                                                       vparg,
+                                                       coeff_intdvpar,
                                                        -dt / 4.0};
 
             // Samples I + T*dt/4
             const MatrixSampler the_RHS_matrix_sampler{the_Najl,
-                                                       vparg,
+                                                       coeff_intdvpar,
                                                        dt / 4.0};
 
             // TODO(Etienne M): On GPU, should we just scale the block size ?

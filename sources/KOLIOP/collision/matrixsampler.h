@@ -68,7 +68,7 @@ namespace koliop {
             // TODO(Etienne M): having a copy may not be ideal. Maybe we should
             // pass everything the the sampling function.
             View6D           the_Najl_;
-            View1D           vparg_;
+            View1D           vpar_delta_;
             ComputeFloatType the_time_delta_coefficient_;
         };
 
@@ -80,10 +80,10 @@ namespace koliop {
         template <typename View6D,
                   typename View1D>
         MatrixSampler<View6D, View1D>::MatrixSampler(const View6D&    the_Najl,
-                                                     const View1D&    vparg,
+                                                     const View1D&    vpar_delta,
                                                      ComputeFloatType a_time_delta_coefficient)
             : the_Najl_{the_Najl}
-            , vparg_{vparg}
+            , vpar_delta_{vpar_delta}
             , the_time_delta_coefficient_{a_time_delta_coefficient} {
             // EMPTY
         }
@@ -135,8 +135,7 @@ namespace koliop {
             // A[i, j] = -N1(j, i) * ...
 
             // TODO(Etienne M): stop using a uniform vparg.
-            // NOTE: vparg_(ivpar) - vparg_(ivpar + 1) would overflow
-            const auto a_vpar_delta = vparg_(1) - vparg_(0);
+            const auto a_vpar_delta = vpar_delta_(ivpar);
 
             return the_time_delta_coefficient_ * (the_Najl_(the_batch_index, ivpar, 2, jpol, ipol, the_batch_element_index) / (a_vpar_delta * a_vpar_delta) -
                                                   the_Najl_(the_batch_index, ivpar, 1, jpol, ipol, the_batch_element_index) / (a_vpar_delta * 2.0));
@@ -150,8 +149,7 @@ namespace koliop {
                                                       OrdinalType ipol,
                                                       OrdinalType jpol,
                                                       OrdinalType the_batch_element_index) const {
-            // NOTE: vparg_(ivpar) - vparg_(ivpar + 1) would overflow
-            const auto a_vpar_delta = vparg_(1) - vparg_(0);
+            const auto a_vpar_delta = vpar_delta_(ivpar);
 
             const ComputeFloatType the_value = the_time_delta_coefficient_ * (the_Najl_(the_batch_index, ivpar, 0, jpol, ipol, the_batch_element_index) -
                                                                               (the_Najl_(the_batch_index, ivpar, 2, jpol, ipol, the_batch_element_index) * 2.0) / (a_vpar_delta * a_vpar_delta));
@@ -177,8 +175,7 @@ namespace koliop {
                                                      OrdinalType ipol,
                                                      OrdinalType jpol,
                                                      OrdinalType the_batch_element_index) const {
-            // NOTE: vparg_(ivpar) - vparg_(ivpar + 1) would overflow
-            const auto a_vpar_delta = vparg_(1) - vparg_(0);
+            const auto a_vpar_delta = vpar_delta_(ivpar);
 
             return the_time_delta_coefficient_ * (the_Najl_(the_batch_index, ivpar, 2, jpol, ipol, the_batch_element_index) / (a_vpar_delta * a_vpar_delta) +
                                                   the_Najl_(the_batch_index, ivpar, 1, jpol, ipol, the_batch_element_index) / (a_vpar_delta * 2.0));

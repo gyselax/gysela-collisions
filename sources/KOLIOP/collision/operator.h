@@ -99,6 +99,35 @@ namespace koliop {
         ///
         class Operator {
         public:
+            /// @brief
+            /// @param pSpecies_id
+            /// @param mu_id
+            /// @param the_mu_extent
+            /// @param the_vpar_extent
+            /// @param the_r_extent
+            /// @param the_theta_extent
+            /// @param the_phi_extent
+            /// @param the_species_extent
+            /// @param R0
+            /// @param collision_interspecies
+            /// @param SOL
+            /// @param LIM
+            /// @param ir_SOL_separatrix We do not need to shift it by -istart
+            /// because we do not parallelize on ir across ranks.
+            /// @param comb_mat
+            /// @param hat_As
+            /// @param hat_Zs
+            /// @param mug
+            /// @param vparg
+            /// @param coeff_intdmu
+            /// @param coeff_intdvpar
+            /// @param rg
+            /// @param nustar0_r
+            /// @param q_r
+            /// @param mask_buffer_r
+            /// @param mask_LIM
+            /// @param B_norm
+            /// @param Bstar_s
             Operator(uint64_t     pSpecies_id,
                      uint64_t     mu_id,
                      uint64_t     the_mu_extent,
