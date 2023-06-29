@@ -144,7 +144,7 @@ namespace koliop {
                 // L_mat(:,:) = 0.0;
 
                 for(OrdinalType ispeciesB = 0; ispeciesB < the_species_extent; ++ispeciesB) {
-                    if(!(collision_interspecies || pSpecies_id == ispeciesB)) {
+                    if(!(collision_interspecies || (pSpecies_id == ispeciesB))) {
                         continue;
                     }
 
@@ -157,7 +157,7 @@ namespace koliop {
                     const ValueType vTb_on_vta_2 = (hat_Aa * local_T_s(ispeciesB)) / (hat_Ab * local_T_s(pSpecies_id));
 
                     {
-                        const ValueType Xtr         = vpar2_on_Ta * 0.5 + (9.0 * koliop::portability::MathematicalConstant<ValueType>::kPi / 16.0) * vTb_on_vta_2;
+                        const ValueType Xtr         = vpar2_on_Ta * 0.5 + vTb_on_vta_2 * (9.0 * koliop::portability::MathematicalConstant<ValueType>::kPi / 16.0);
                         const ValueType sqrtXtr     = Kokkos::sqrt(Xtr);
                         const ValueType sqrtXtr_inv = 1.0 / sqrtXtr;
 
@@ -172,11 +172,12 @@ namespace koliop {
                         L_mat[1][0] -= coeff_L * sqrtXtr_inv;
                     }
                     {
-                        const ValueType Xtr         = vpar2_on_Ta * 0.5 + 2.1 * vTb_on_vta_2;
+                        const ValueType Xtr         = vpar2_on_Ta * 0.5 + vTb_on_vta_2 * 2.1;
                         const ValueType sqrtXtr     = Kokkos::sqrt(Xtr);
                         const ValueType sqrtXtr_inv = 1.0 / sqrtXtr;
 
                         ValueType I_mat[Constant::kIndexMax + 1 + 1]{};
+
                         DoComputeI(comb_mat, 0, Xtr, sqrtXtr, sqrtXtr_inv, I_mat);
 
                         for(OrdinalType ind_i = 0; ind_i <= Constant::kIndexMax; ++ind_i) {
