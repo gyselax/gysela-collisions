@@ -193,6 +193,22 @@ namespace koliop {
 
 
 ////////////////////////////////////////
+/// KOLIOP_ASSERT_ENABLED
+///
+/// If not defined, disable assertion, else, enable them.
+///
+/// Example usage:
+///
+///     #if defined(KOLIOP_ASSERT_ENABLED)
+///         KOLIOP_ASSERT(x > 10);
+///     #else
+///         something else;
+///     #endif
+///
+////////////////////////////////////////
+
+
+////////////////////////////////////////
 /// KOLIOP_FENCE_ON_OPERATOR_EXIT
 ///
 /// TODO(Etienne M): Put that in the CMake config
