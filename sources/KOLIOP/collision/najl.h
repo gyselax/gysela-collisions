@@ -46,10 +46,10 @@ namespace koliop {
                  const Flo64*                                         comb_mat,
                  koliop::utility::View::MDD1<const ComputeFloatType>& hat_As,
                  koliop::utility::View::MDD1<const ComputeFloatType>& hat_Zs,
-                 koliop::utility::View::MDD1<const ComputeFloatType>& vparg,
-                 ExecutionSpaceType                                   an_execution_space);
+                 koliop::utility::View::MDD1<const ComputeFloatType>& vparg);
 
-            void Compute(OrdinalType                                          the_block_first_r,
+            void Compute(ExecutionSpaceType                                   an_execution_space,
+                         OrdinalType                                          the_block_first_r,
                          OrdinalType                                          the_block_first_theta,
                          OrdinalType                                          the_block_first_phi,
                          const koliop::utility::View::MDD4<ComputeFloatType>& n_s,
@@ -76,10 +76,6 @@ namespace koliop {
             // Constant, internally computed values
 
             koliop::utility::View::MDD3<ComputeFloatType> C_jl_; // TODO(Etienne M): constant extent.
-
-            // Miscellaneous tooling
-
-            ExecutionSpaceType the_execution_space_;
         };
 
     } // namespace collision

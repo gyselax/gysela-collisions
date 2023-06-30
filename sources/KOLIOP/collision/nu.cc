@@ -88,8 +88,9 @@ namespace koliop {
 
             DoPrecomputeNu(*this, nu_ab_);
 
-            // TODO(Etienne M): ASYNC, relax that constraint ?
+#if defined(KOLIOP_FENCE_ON_OPERATOR_EXIT)
             Kokkos::fence();
+#endif
         }
 
     } // namespace collision

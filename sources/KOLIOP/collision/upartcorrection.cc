@@ -158,8 +158,9 @@ namespace koliop {
                                                                               static_cast<std::size_t>(the_r_extent_), static_cast<std::size_t>(the_theta_extent_), static_cast<std::size_t>(the_phi_extent_),
                                                                               static_cast<std::size_t>(the_species_extent_)});
 
-            // TODO(Etienne M): ASYNC, relax that constraint ?
+#if defined(KOLIOP_FENCE_ON_OPERATOR_EXIT)
             Kokkos::fence();
+#endif
         }
 
     } // namespace collision

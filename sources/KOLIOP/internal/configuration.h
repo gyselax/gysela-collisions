@@ -192,6 +192,32 @@ namespace koliop {
 #endif
 
 
+////////////////////////////////////////
+/// KOLIOP_FENCE_ON_OPERATOR_EXIT
+///
+/// TODO(Etienne M): Put that in the CMake config
+/// Forces the operator to kokkos::fence after each Operator::XXX method call.
+///
+////////////////////////////////////////
+
+
+////////////////////////////////////////
+/// KOLIOP_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE
+///
+/// TODO(Etienne M): Put that in the CMake config
+/// Suppose that the memory input to the operator through pointers resides on a
+/// memory space *compatible* with the Kokkos device memory space.
+///
+/// Kokkos compiled for: | CPU        | CPU+GPU
+/// Input are on:    CPU | UDL->UDL   | UHL->MDL
+///                  GPU | No support | UDL->UDL
+/// If the space is the same, we can elide copies. If not, deep copies are made.
+/// Note that if Kokkos is compiled for CPU without GPU support, the host is
+/// also the device.
+///
+////////////////////////////////////////
+
+
 ////////////////////////////////////////////////////////////////////////////////
 /// Types
 ////////////////////////////////////////////////////////////////////////////////

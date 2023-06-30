@@ -216,18 +216,20 @@ namespace koliop {
 
         } // namespace
 
-        template <typename View6D,
+        template <typename ExecutionSpace,
+                  typename View6D,
                   typename View5D,
                   typename View4D>
         static inline void
-        DoComputeNajl(const Najl&   the_najl_provider,
-                      OrdinalType   the_block_first_r,
-                      OrdinalType   the_block_first_theta,
-                      OrdinalType   the_block_first_phi,
-                      const View4D& n_s,
-                      const View4D& T_s,
-                      const View5D& nu_ab,
-                      View6D&&      the_Najl) {
+        DoComputeNajl(const Najl&    the_najl_provider,
+                      ExecutionSpace an_execution_space,
+                      OrdinalType    the_block_first_r,
+                      OrdinalType    the_block_first_theta,
+                      OrdinalType    the_block_first_phi,
+                      const View4D&  n_s,
+                      const View4D&  T_s,
+                      const View5D&  nu_ab,
+                      View6D&&       the_Najl) {
 
             // NOTE: We use ValueType due to an hypothetical future Kokkos
             // release that would enable Kokkos::exp() on KokkosBatched::Vector.
@@ -246,8 +248,6 @@ namespace koliop {
 
             const auto& pSpecies_id            = the_najl_provider.pSpecies_id_;
             const auto& collision_interspecies = the_najl_provider.collision_interspecies_;
-
-            const auto& the_execution_space = the_najl_provider.the_execution_space_;
 
             const auto the_kernel = KOKKOS_LAMBDA(auto ivpar, auto ir, auto itheta, auto iphi) {
 
@@ -376,7 +376,7 @@ namespace koliop {
 
             const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<4,
                                                                      Kokkos::Iterate::Left,
-                                                                     Kokkos::Iterate::Left>>{the_execution_space,
+                                                                     Kokkos::Iterate::Left>>{an_execution_space,
                                                                                              {0,
                                                                                               the_block_first_r,
                                                                                               the_block_first_theta,
@@ -397,8 +397,7 @@ namespace koliop {
                    const Flo64*                                         comb_mat,
                    koliop::utility::View::MDD1<const ComputeFloatType>& hat_As,
                    koliop::utility::View::MDD1<const ComputeFloatType>& hat_Zs,
-                   koliop::utility::View::MDD1<const ComputeFloatType>& vparg,
-                   ExecutionSpaceType                                   an_execution_space)
+                   koliop::utility::View::MDD1<const ComputeFloatType>& vparg)
             : pSpecies_id_{pSpecies_id}
             , the_vpar_extent_{the_vpar_extent}
             , the_species_extent_{the_species_extent}
@@ -413,16 +412,15 @@ namespace koliop {
             , C_jl_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "C_jl_"),
                     static_cast<std::size_t>(2 * Constant::kMaximumLaguerrePolynomialDegree - 1),
                     static_cast<std::size_t>(Constant::kMaximumLaguerrePolynomialDegree),
-                    static_cast<std::size_t>(Constant::kMaximumLaguerrePolynomialDegree)}
-
-            , the_execution_space_{an_execution_space} {
+                    static_cast<std::size_t>(Constant::kMaximumLaguerrePolynomialDegree)} {
 
             // TODO(Etienne M): Observe how the C_j_ and C_jl_ values are
             // constant. they could be compile time computed or hardcoded.
             DoPrepareCjl(C_jl_);
         }
 
-        void Najl::Compute(OrdinalType                                          the_block_first_r,
+        void Najl::Compute(ExecutionSpaceType                                   an_execution_space,
+                           OrdinalType                                          the_block_first_r,
                            OrdinalType                                          the_block_first_theta,
                            OrdinalType                                          the_block_first_phi,
                            const koliop::utility::View::MDD4<ComputeFloatType>& n_s,
@@ -450,6 +448,7 @@ namespace koliop {
                                                               static_cast<std::size_t>(the_vpar_extent_)};
 
             DoComputeNajl(*this,
+                          an_execution_space,
                           the_block_first_r,
                           the_block_first_theta,
                           the_block_first_phi,

@@ -162,8 +162,6 @@ namespace koliop {
                                                    CachingPolicy>;
 
         public:
-            BatchedBlockTridiagonalByBlockTRF(ExecutionSpaceType an_execution_space);
-
             /// TRF
             /// @param the_A_matrix Must respect the format described in the
             /// BatchedBlockTridiagonalByBlockTRF notes.
@@ -172,12 +170,12 @@ namespace koliop {
             /// BatchTraitsType::kBatchSize.
             /// @param the_M_matrix_extent The number extent of the block
             /// diagonal problem.
-            void Factorize(ValueType*  the_A_matrix,
-                           OrdinalType the_A_matrix_extent,
-                           OrdinalType the_M_matrix_extent) const;
+            void Factorize(ExecutionSpaceType an_execution_space,
+                           ValueType*         the_A_matrix,
+                           OrdinalType        the_A_matrix_extent,
+                           OrdinalType        the_M_matrix_extent) const;
 
         protected:
-            ExecutionSpaceType the_execution_space_;
         };
 
 
@@ -187,18 +185,11 @@ namespace koliop {
 
         template <typename BatchTraits,
                   OrdinalType kSmallBlockExtent>
-        BatchedBlockTridiagonalByBlockTRF<BatchTraits,
-                                          kSmallBlockExtent>::BatchedBlockTridiagonalByBlockTRF(ExecutionSpaceType an_execution_space)
-            : the_execution_space_{an_execution_space} {
-            // EMPTY
-        }
-
-        template <typename BatchTraits,
-                  OrdinalType kSmallBlockExtent>
         void BatchedBlockTridiagonalByBlockTRF<BatchTraits,
-                                               kSmallBlockExtent>::Factorize(ValueType*  the_A_matrix,
-                                                                             OrdinalType the_A_matrix_extent,
-                                                                             OrdinalType the_M_matrix_extent) const {
+                                               kSmallBlockExtent>::Factorize(ExecutionSpaceType an_execution_space,
+                                                                             ValueType*         the_A_matrix,
+                                                                             OrdinalType        the_A_matrix_extent,
+                                                                             OrdinalType        the_M_matrix_extent) const {
 
             KOLIOP_ASSERT(the_A_matrix != nullptr);
             // the_A_matrix_extent must be divisible by
@@ -275,7 +266,7 @@ namespace koliop {
                                                         Kokkos::Rank<2,
                                                                      // TODO(Etienne M): Tune blocking.
                                                                      Kokkos::Iterate::Left,
-                                                                     Kokkos::Iterate::Left>>{the_execution_space_,
+                                                                     Kokkos::Iterate::Left>>{an_execution_space,
                                                                                              {0, 0},
                                                                                              {BatchTraitsType::kVectorPerBatch, kBatchCount}};
 

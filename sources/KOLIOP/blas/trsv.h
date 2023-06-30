@@ -62,18 +62,16 @@ namespace koliop {
                                                 CachingPolicy>;
 
         public:
-            BatchedBlockTridiagonalByBlockTRSV(ExecutionSpaceType an_execution_space);
-
             /// TRSV, solve Ax = b where A is a LU factorization output
             /// by BatchedBlockTridiagonalByBlockTRF::Factorize().
             /// @param the_rhs In place resolution. the_rhs is overwritten.
-            void Solve(const ValueType* the_A_matrix,
-                       OrdinalType      the_A_matrix_extent,
-                       OrdinalType      the_M_matrix_extent,
-                       ValueType*       the_rhs) const;
+            void Solve(ExecutionSpaceType an_execution_space,
+                       const ValueType*   the_A_matrix,
+                       OrdinalType        the_A_matrix_extent,
+                       OrdinalType        the_M_matrix_extent,
+                       ValueType*         the_rhs) const;
 
         protected:
-            ExecutionSpaceType the_execution_space_;
         };
 
 
@@ -83,19 +81,12 @@ namespace koliop {
 
         template <typename BatchTraits,
                   OrdinalType kSmallBlockExtent>
-        BatchedBlockTridiagonalByBlockTRSV<BatchTraits,
-                                           kSmallBlockExtent>::BatchedBlockTridiagonalByBlockTRSV(ExecutionSpaceType an_execution_space)
-            : the_execution_space_{an_execution_space} {
-            // EMPTY
-        }
-
-        template <typename BatchTraits,
-                  OrdinalType kSmallBlockExtent>
         void BatchedBlockTridiagonalByBlockTRSV<BatchTraits,
-                                                kSmallBlockExtent>::Solve(const ValueType* the_A_matrix,
-                                                                          OrdinalType      the_A_matrix_extent,
-                                                                          OrdinalType      the_M_matrix_extent,
-                                                                          ValueType*       the_rhs) const {
+                                                kSmallBlockExtent>::Solve(ExecutionSpaceType an_execution_space,
+                                                                          const ValueType*   the_A_matrix,
+                                                                          OrdinalType        the_A_matrix_extent,
+                                                                          OrdinalType        the_M_matrix_extent,
+                                                                          ValueType*         the_rhs) const {
 
             KOLIOP_ASSERT(the_A_matrix != nullptr);
             KOLIOP_ASSERT(the_rhs != nullptr);
@@ -245,7 +236,7 @@ namespace koliop {
                                                         Kokkos::Rank<2,
                                                                      // TODO(Etienne M): Tune blocking.
                                                                      Kokkos::Iterate::Left,
-                                                                     Kokkos::Iterate::Left>>{the_execution_space_,
+                                                                     Kokkos::Iterate::Left>>{an_execution_space,
                                                                                              {0, 0},
                                                                                              {BatchTraitsType::kVectorPerBatch, kBatchCount}};
 

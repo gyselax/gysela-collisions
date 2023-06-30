@@ -20,9 +20,6 @@ namespace koliop {
                         const View1D&   q_r,
                         const View1D&   mask_buffer_r) {
 
-            // TODO(Etienne M): I observe some slight numerical discrepancy
-            // (1e-14 ~ ) when comparing the result of Gysela and koliop.
-
             const auto a_host_visible_hat_As        = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{}, Kokkos::WithoutInitializing), hat_As);
             const auto a_host_visible_hat_Zs        = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{}, Kokkos::WithoutInitializing), hat_Zs);
             const auto a_host_visible_rg            = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{}, Kokkos::WithoutInitializing), rg);
@@ -165,18 +162,17 @@ namespace koliop {
 
             // Miscellaneous numerical tooling
 
-            // TODO(Etienne M): Should we partition ?
-            , the_najl_provider_{pSpecies_id_, the_vpar_extent_, the_species_extent_, collision_interspecies_, comb_mat, hat_As_, hat_Zs_, vparg_, Kokkos::DefaultExecutionSpace{}}
-            , the_factorizer_{Kokkos::DefaultExecutionSpace{}}
-            , the_solver_{Kokkos::DefaultExecutionSpace{}}
-            , the_mv_{Kokkos::DefaultExecutionSpace{}}
+            , the_najl_provider_{pSpecies_id_, the_vpar_extent_, the_species_extent_, collision_interspecies_, comb_mat, hat_As_, hat_Zs_, vparg_}
+            , the_factorizer_{}
+            , the_solver_{}
+            , the_mv_{}
 
         // Miscellaneous tooling
         {
 
-            // TODO(Etienne M): Should we fence after the copies ? We *may* need
-            // that if we pass an execution space to the deep copy.
-            // Kokkos::fence();
+            // Somewhat redundant as we do not give an ExecutionSpace to the
+            // arg_prop used in the copies done above.
+            Kokkos::fence();
 
             DoPrepareNuStar(*this,
                             nustar_coeff_,
@@ -186,6 +182,14 @@ namespace koliop {
                             nustar0_r_,
                             q_r_,
                             mask_buffer_r_);
+
+            // Somewhat useless as DoPrepareNuStar runs on the host.
+            Kokkos::fence();
+
+            for(auto&& a_stream : the_stream_pool_) {
+                // TODO(Etienne M): Partition the space
+                a_stream = Kokkos::DefaultExecutionSpace{};
+            }
         }
 
     } // namespace collision

@@ -17,9 +17,9 @@ endif()
 ### Global options. Dependency specific options are defined in the dependencies.
 ################################################################################
 
-# NOTE: majuscule due to the definition in buildspecificities.h
-option(KOLIOP_ASSERT_ENABLED "Enable assertions. This enable/disable KOLIOP_ASSERT() but not C's assert()." ON)
-
+option(koliop_ASSERT_ENABLED "Enable assertions. This enable/disable KOLIOP_ASSERT() but not C's assert()." ON)
+option(koliop_FENCE_ON_OPERATOR_EXIT "Fences before returning from an operator method." OFF)
+option(koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE "Should koliop assumes the input data can be directly processed or intermediate copies are required." ON)
 
 ################################################################################
 ### Dependencies
@@ -92,6 +92,18 @@ set(koliop_INCLUDE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 configure_file("${koliop_INCLUDE_DIRECTORY}/KOLIOP/internal/buildspecificities.h.in"
                "${koliop_INCLUDE_DIRECTORY}/KOLIOP/internal/buildspecificities.h")
+
+if(koliop_ASSERT_ENABLED)
+    target_compile_definitions(koliop PRIVATE KOLIOP_ASSERT_ENABLED)
+endif()
+
+if(koliop_FENCE_ON_OPERATOR_EXIT)
+    target_compile_definitions(koliop PRIVATE KOLIOP_FENCE_ON_OPERATOR_EXIT)
+endif()
+
+if(koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE)
+    target_compile_definitions(koliop PRIVATE KOLIOP_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE)
+endif()
 
 # NOTE: GLOBing file is not considered good practice. One could instead specify
 # the full, verbose list of headers and sources.

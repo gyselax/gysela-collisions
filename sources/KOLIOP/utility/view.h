@@ -34,6 +34,21 @@ namespace koliop {
             using UHL6 = UHL<T******>;
 
             template <typename Extent>
+            using UDL = Kokkos::View<Extent, Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace::memory_space, Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
+            template <typename T>
+            using UDL1 = UDL<T*>;
+            template <typename T>
+            using UDL2 = UDL<T**>;
+            template <typename T>
+            using UDL3 = UDL<T***>;
+            template <typename T>
+            using UDL4 = UDL<T****>;
+            template <typename T>
+            using UDL5 = UDL<T*****>;
+            template <typename T>
+            using UDL6 = UDL<T******>;
+
+            template <typename Extent>
             using MDL = Kokkos::View<Extent, Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace::memory_space>;
             template <typename T>
             using MDL1 = MDL<T*>;
@@ -77,6 +92,48 @@ namespace koliop {
             using MHL5 = MHL<T*****>;
             template <typename T>
             using MHL6 = MHL<T******>;
+
+#if defined(KOLIOP_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE)
+            // TODO(Etienne M): Make sure the copies are elided (that is, it
+            // validates)
+            template <typename Extent>
+            using ExternalInput = UDL<Extent>;
+            template <typename Extent>
+            using InternalInput = UDL<Extent>;
+#else
+            // The inputs MUST come from the host memory.
+
+            template <typename Extent>
+            using ExternalInput = UHL<Extent>;
+            template <typename Extent>
+            using InternalInput = MDL<Extent>;
+#endif
+
+            template <typename T>
+            using ExternalInput1 = ExternalInput<T*>;
+            template <typename T>
+            using ExternalInput2 = ExternalInput<T**>;
+            template <typename T>
+            using ExternalInput3 = ExternalInput<T***>;
+            template <typename T>
+            using ExternalInput4 = ExternalInput<T****>;
+            template <typename T>
+            using ExternalInput5 = ExternalInput<T*****>;
+            template <typename T>
+            using ExternalInput6 = ExternalInput<T******>;
+
+            template <typename T>
+            using InternalInput1 = InternalInput<T*>;
+            template <typename T>
+            using InternalInput2 = InternalInput<T**>;
+            template <typename T>
+            using InternalInput3 = InternalInput<T***>;
+            template <typename T>
+            using InternalInput4 = InternalInput<T****>;
+            template <typename T>
+            using InternalInput5 = InternalInput<T*****>;
+            template <typename T>
+            using InternalInput6 = InternalInput<T******>;
         };
 
     } // namespace utility

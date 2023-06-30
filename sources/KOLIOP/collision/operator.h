@@ -248,8 +248,9 @@ namespace koliop {
                                                                          Constant::kMaximumLaguerrePolynomialDegree>
                 the_mv_;
 
-        protected:
             // Miscellaneous tooling
+
+            Constant::DeviceExecutionSpaceType the_stream_pool_[4];
         };
 
     } // namespace collision

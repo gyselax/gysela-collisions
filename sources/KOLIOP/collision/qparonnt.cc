@@ -94,8 +94,9 @@ namespace koliop {
 
             DoComputeQparOnNT(*this, a_device_visible_f5d_s, q_par_on_nT_s_);
 
-            // TODO(Etienne M): ASYNC, relax that constraint ?
+#if defined(KOLIOP_FENCE_ON_OPERATOR_EXIT)
             Kokkos::fence();
+#endif
         }
 
     } // namespace collision
