@@ -127,20 +127,20 @@ namespace koliop {
             , SOL_{SOL}
             , LIM_{LIM}
             , ir_SOL_separatrix_{static_cast<OrdinalType>(ir_SOL_separatrix)}
-            , hat_As_{koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL1<const Flo64>, koliop::utility::View::MDD1>(hat_As, "hat_As_", the_species_extent_)} // NOTE: in practice, this hat_Xs contains 3 values. The size being hardcoded in global::Nspecies_max = 2
-            , hat_Zs_{koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL1<const Flo64>, koliop::utility::View::MDD1>(hat_Zs, "hat_Zs_", the_species_extent_)} // NOTE: in practice, this hat_Xs contains 3 values. The size being hardcoded in global::Nspecies_max = 2
-            , mug_{koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL1<const Flo64>, koliop::utility::View::MDD1>(mug, "mug_", the_mu_extent_)}
-            , vparg_{koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL1<const Flo64>, koliop::utility::View::MDD1>(vparg, "vparg_", the_vpar_extent_)}
-            , coeff_intdmu_{koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL1<const Flo64>, koliop::utility::View::MDD1>(coeff_intdmu, "coeff_intdmu_", the_mu_extent_)}
-            , coeff_intdvpar_{koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL1<const Flo64>, koliop::utility::View::MDD1>(coeff_intdvpar, "coeff_intdvpar_", the_vpar_extent_)}
-            , rg_{koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL1<const Flo64>, koliop::utility::View::MDD1>(rg, "rg_", the_r_extent_)}
-            , nustar0_r_{koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL1<const Flo64>, koliop::utility::View::MDD1>(nustar0_r, "nustar0_r_", the_r_extent_)}
-            , q_r_{koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL1<const Flo64>, koliop::utility::View::MDD1>(q_r, "q_r_", the_r_extent_)}
-            , mask_buffer_r_{koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL1<const Flo64>, koliop::utility::View::MDD1>(mask_buffer_r, "mask_buffer_r_", the_r_extent_)}
-            , mask_LIM_{LIM_ ? koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL2<const Flo64>, koliop::utility::View::MDD2>(mask_LIM, "mask_LIM_", the_r_extent, the_theta_extent) :
-                               koliop::utility::View::MDD2<Flo64>{}}
-            , B_norm_{koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL2<const Flo64>, koliop::utility::View::MDD2>(B_norm, "B_norm_", the_r_extent_, the_theta_extent_ + 1 /* Weird +1 */)}
-            , Bstar_s_{koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL4<const Flo64>, koliop::utility::View::MDD4>(Bstar_s, "Bstar_s_", the_vpar_extent_, the_r_extent_, the_theta_extent_, the_species_extent_)}
+            , hat_As_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputD1>(hat_As, "hat_As_", the_species_extent_)} // NOTE: in practice, this hat_Xs contains 3 values. The size being hardcoded in global::Nspecies_max = 2
+            , hat_Zs_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputD1>(hat_Zs, "hat_Zs_", the_species_extent_)} // NOTE: in practice, this hat_Xs contains 3 values. The size being hardcoded in global::Nspecies_max = 2
+            , mug_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputD1>(mug, "mug_", the_mu_extent_)}
+            , vparg_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputD1>(vparg, "vparg_", the_vpar_extent_)}
+            , coeff_intdmu_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputD1>(coeff_intdmu, "coeff_intdmu_", the_mu_extent_)}
+            , coeff_intdvpar_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputD1>(coeff_intdvpar, "coeff_intdvpar_", the_vpar_extent_)}
+            , rg_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputD1>(rg, "rg_", the_r_extent_)}
+            , nustar0_r_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputD1>(nustar0_r, "nustar0_r_", the_r_extent_)}
+            , q_r_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputD1>(q_r, "q_r_", the_r_extent_)}
+            , mask_buffer_r_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputD1>(mask_buffer_r, "mask_buffer_r_", the_r_extent_)}
+            , mask_LIM_{LIM_ ? koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL2<const Flo64>, koliop::utility::View::InternalInputD2>(mask_LIM, "mask_LIM_", the_r_extent, the_theta_extent) :
+                               koliop::utility::View::InternalInputD2<Flo64>{}}
+            , B_norm_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL2<const Flo64>, koliop::utility::View::InternalInputD2>(B_norm, "B_norm_", the_r_extent_, the_theta_extent_ + 1 /* Weird +1 */)}
+            , Bstar_s_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL4<const Flo64>, koliop::utility::View::InternalInputD4>(Bstar_s, "Bstar_s_", the_vpar_extent_, the_r_extent_, the_theta_extent_, the_species_extent_)}
 
             // Constant, internally computed values
 

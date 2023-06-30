@@ -44,8 +44,8 @@ namespace koliop {
             template <typename SourceView,
                       typename DestinationView>
             static auto
-            Shallow(SourceView&&      a_source_view,
-                    DestinationView&& a_destination_view);
+            Shallow(SourceView      a_source_view,
+                    DestinationView a_destination_view);
 
             /// The storage for the a_destination_view should already exist and the extents
             /// must match.
@@ -53,8 +53,8 @@ namespace koliop {
             template <typename SourceView,
                       typename DestinationView>
             static auto
-            Deep(SourceView&&      a_source_view,
-                 DestinationView&& a_destination_view);
+            Deep(SourceView      a_source_view,
+                 DestinationView a_destination_view);
 
             /// May or may not allocate new memory to represent the_raw_data. As
             /// such it is required that the_raw_data's lifetime may be as long
@@ -68,6 +68,14 @@ namespace koliop {
             RawDataToView(typename UnmanagedView::value_type* the_raw_data,
                           const char*                         the_view_label,
                           Indicies... the_indicies);
+
+            template <typename SourceView,
+                      typename UnmanagedView,
+                      typename... Indicies>
+            static typename SourceView::value_type*
+            ViewToRawData(SourceView                          a_source_view,
+                          typename UnmanagedView::value_type* the_raw_data,
+                          Indicies... the_indicies);
         };
 
 
@@ -77,8 +85,8 @@ namespace koliop {
 
         template <typename SourceView,
                   typename DestinationView>
-        auto Copy::Shallow(SourceView&&      a_source_view,
-                           DestinationView&& a_destination_view) {
+        auto Copy::Shallow(SourceView      a_source_view,
+                           DestinationView a_destination_view) {
             if constexpr(std::is_same_v<typename std::remove_reference_t<SourceView>::memory_space,
                                         typename std::remove_reference_t<DestinationView>::memory_space> &&
                          std::is_same_v<typename std::remove_reference_t<SourceView>::array_layout,
@@ -93,8 +101,8 @@ namespace koliop {
 
         template <typename SourceView,
                   typename DestinationView>
-        auto Copy::Deep(SourceView&&      a_source_view,
-                        DestinationView&& a_destination_view) {
+        auto Copy::Deep(SourceView      a_source_view,
+                        DestinationView a_destination_view) {
             if constexpr(std::is_same_v<typename std::remove_reference_t<SourceView>::memory_space,
                                         typename std::remove_reference_t<DestinationView>::memory_space> ||
                          std::is_same_v<typename std::remove_reference_t<SourceView>::array_layout,
@@ -154,6 +162,8 @@ namespace koliop {
                                         typename std::remove_reference_t<DestinationView>::array_layout> &&
                          std::is_same_v<typename std::remove_reference_t<UnmanagedView>::memory_space,
                                         typename std::remove_reference_t<DestinationView>::memory_space>) {
+                // We can not return an unmanaged DestinationView as it may not
+                // be const.
                 return UnmanagedView{the_raw_data,
                                      static_cast<std::size_t>(the_indicies)...};
             } else {
@@ -162,6 +172,29 @@ namespace koliop {
                             DestinationView{Kokkos::view_alloc(Kokkos::WithoutInitializing,
                                                                std::string{the_view_label}),
                                             static_cast<std::size_t>(the_indicies)...});
+            }
+        }
+
+        template <typename SourceView,
+                  typename UnmanagedView,
+                  typename... Indicies>
+        typename SourceView::value_type*
+        Copy::ViewToRawData(SourceView                          a_source_view,
+                            typename UnmanagedView::value_type* the_raw_data,
+                            Indicies... the_indicies) {
+            if(std::is_same_v<typename std::remove_reference_t<SourceView>::array_layout,
+                              typename std::remove_reference_t<UnmanagedView>::array_layout> &&
+               std::is_same_v<typename std::remove_reference_t<SourceView>::memory_space,
+                              typename std::remove_reference_t<UnmanagedView>::memory_space> &&
+               // NOTE: I do not think the test above are necessary, at least
+               // for our use case.
+               (a_source_view.data() == the_raw_data)) {
+                return the_raw_data;
+            } else {
+                return Deep(a_source_view,
+                            UnmanagedView{the_raw_data,
+                                          static_cast<std::size_t>(the_indicies)...})
+                    .data();
             }
         }
 

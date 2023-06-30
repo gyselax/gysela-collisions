@@ -208,19 +208,19 @@ namespace koliop {
             // TODO(Etienne M): we store Flo64 as ComputeFloatType. If
             // ComputeFloatType is Flo32 we need a conversion.
 
-            koliop::utility::View::MDD1<const ComputeFloatType> hat_As_;
-            koliop::utility::View::MDD1<const ComputeFloatType> hat_Zs_;
-            koliop::utility::View::MDD1<const ComputeFloatType> mug_;
-            koliop::utility::View::MDD1<const ComputeFloatType> vparg_;
-            koliop::utility::View::MDD1<const ComputeFloatType> coeff_intdmu_;
-            koliop::utility::View::MDD1<const ComputeFloatType> coeff_intdvpar_;
-            koliop::utility::View::MDD1<const ComputeFloatType> rg_;
-            koliop::utility::View::MDD1<const ComputeFloatType> nustar0_r_;
-            koliop::utility::View::MDD1<const ComputeFloatType> q_r_;
-            koliop::utility::View::MDD1<const ComputeFloatType> mask_buffer_r_;
-            koliop::utility::View::MDD2<const ComputeFloatType> mask_LIM_;
-            koliop::utility::View::MDD2<const ComputeFloatType> B_norm_;
-            koliop::utility::View::MDD4<const ComputeFloatType> Bstar_s_;
+            koliop::utility::View::InternalInputD1<const ComputeFloatType> hat_As_;
+            koliop::utility::View::InternalInputD1<const ComputeFloatType> hat_Zs_;
+            koliop::utility::View::InternalInputD1<const ComputeFloatType> mug_;
+            koliop::utility::View::InternalInputD1<const ComputeFloatType> vparg_;
+            koliop::utility::View::InternalInputD1<const ComputeFloatType> coeff_intdmu_;
+            koliop::utility::View::InternalInputD1<const ComputeFloatType> coeff_intdvpar_;
+            koliop::utility::View::InternalInputD1<const ComputeFloatType> rg_;
+            koliop::utility::View::InternalInputD1<const ComputeFloatType> nustar0_r_;
+            koliop::utility::View::InternalInputD1<const ComputeFloatType> q_r_;
+            koliop::utility::View::InternalInputD1<const ComputeFloatType> mask_buffer_r_;
+            koliop::utility::View::InternalInputD2<const ComputeFloatType> mask_LIM_;
+            koliop::utility::View::InternalInputD2<const ComputeFloatType> B_norm_;
+            koliop::utility::View::InternalInputD4<const ComputeFloatType> Bstar_s_;
 
             // Constant, internally computed values
 
