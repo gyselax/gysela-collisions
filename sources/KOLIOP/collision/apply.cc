@@ -369,6 +369,10 @@ namespace koliop {
             const auto the_solver        = an_operator.the_solver_;
             const auto the_mv            = an_operator.the_mv_;
 
+            const auto the_stream_pool = an_operator.the_stream_pool_;
+
+            // NOTE: If you have an issue with these assertions, checkout the
+            // constant.h file and tune Constant::kBlockExtent[R|Theta|Phi].
             KOLIOP_ASSERT(the_r_extent % Constant::kBlockExtentR == 0);
             KOLIOP_ASSERT(the_theta_extent % Constant::kBlockExtentTheta == 0);
             KOLIOP_ASSERT(the_phi_extent % Constant::kBlockExtentPhi == 0);
@@ -456,7 +460,8 @@ namespace koliop {
                                                      mask_coll, f5d_s, the_alpha_coefficients);
 
                             {
-                                the_najl_provider.Compute(the_block_first_r, the_block_first_theta, the_block_first_phi,
+                                the_najl_provider.Compute(the_stream_pool[0], // TODO(Etienne M): stream tuning
+                                                          the_block_first_r, the_block_first_theta, the_block_first_phi,
                                                           n_s, T_s, nu_ab, the_Najl);
 
                                 // Fence for N0, N1, N2
@@ -467,12 +472,14 @@ namespace koliop {
                                                     the_matrix);
 
                                     // L*U = (I - T * dt/4)
-                                    the_factorizer.Factorize(the_matrix.data(),
+                                    the_factorizer.Factorize(the_stream_pool[0], // TODO(Etienne M): stream tuning
+                                                             the_matrix.data(),
                                                              Constant::kFlattenedBlockExtent, the_vpar_extent);
                                 }
                                 {
                                     // the_rhs = (I + T * dt/4) * alpha(n)
-                                    the_mv.Apply(1.0,
+                                    the_mv.Apply(the_stream_pool[0], //TODO(Etienne M): stream tuning
+                                                 1.0,
                                                  the_RHS_matrix_sampler,
                                                  Constant::kFlattenedBlockExtent, the_vpar_extent,
                                                  the_alpha_coefficients.data(),
@@ -486,7 +493,8 @@ namespace koliop {
 
                                 {
                                     // the_rhs = alpha~
-                                    the_solver.Solve(the_matrix.data(),
+                                    the_solver.Solve(the_stream_pool[0], // TODO(Etienne M): stream tuning
+                                                     the_matrix.data(),
                                                      Constant::kFlattenedBlockExtent, the_vpar_extent,
                                                      the_rhs.data());
 
@@ -496,10 +504,13 @@ namespace koliop {
                                                         the_block_first_r, the_block_first_theta, the_block_first_phi,
                                                         the_Najl, the_rhs);
 
+                                    // NOTE: This swap is safe because the
+                                    // kernels capture by copy
                                     std::swap(the_rhs, the_alpha_coefficients);
 
                                     // the_rhs = (I + T * dt/4) * alpha~~
-                                    the_mv.Apply(1.0,
+                                    the_mv.Apply(the_stream_pool[0], // TODO(Etienne M): stream tuning
+                                                 1.0,
                                                  the_RHS_matrix_sampler,
                                                  Constant::kFlattenedBlockExtent, the_vpar_extent,
                                                  the_alpha_coefficients.data(),
@@ -507,7 +518,8 @@ namespace koliop {
                                                  the_rhs.data());
 
                                     // the_rhs = alpha(n+1)
-                                    the_solver.Solve(the_matrix.data(),
+                                    the_solver.Solve(the_stream_pool[0], // TODO(Etienne M): stream tuning
+                                                     the_matrix.data(),
                                                      Constant::kFlattenedBlockExtent, the_vpar_extent,
                                                      the_rhs.data());
                                 }
@@ -528,22 +540,24 @@ namespace koliop {
         void Operator::Apply(ComputeFloatType dt,
                              Flo64*           f5d_s) const {
 
-            auto a_device_visible_f5d_s = koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL6<Flo64>,
-                                                                               koliop::utility::View::MDL6>(f5d_s, "f5d_s",
-                                                                                                            the_mu_extent_, the_vpar_extent_,
-                                                                                                            the_r_extent_, the_theta_extent_, the_phi_extent_,
-                                                                                                            the_species_extent_);
+            auto a_device_visible_f5d_s = koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL6<Flo64>,
+                                                                               koliop::utility::View::InternalInputL6>(f5d_s, "f5d_s",
+                                                                                                                       the_mu_extent_, the_vpar_extent_,
+                                                                                                                       the_r_extent_, the_theta_extent_, the_phi_extent_,
+                                                                                                                       the_species_extent_);
 
             DoApply(*this, dt, a_device_visible_f5d_s);
 
-            koliop::utility::Copy::Shallow(a_device_visible_f5d_s,
-                                           koliop::utility::View::UHL6<Flo64>{f5d_s,
-                                                                              static_cast<std::size_t>(the_mu_extent_), static_cast<std::size_t>(the_vpar_extent_),
-                                                                              static_cast<std::size_t>(the_r_extent_), static_cast<std::size_t>(the_theta_extent_), static_cast<std::size_t>(the_phi_extent_),
-                                                                              static_cast<std::size_t>(the_species_extent_)});
+            koliop::utility::Copy::ViewToRawData<koliop::utility::View::InternalInputL6<Flo64>,
+                                                 koliop::utility::View::ExternalInputL6<Flo64>>(a_device_visible_f5d_s,
+                                                                                                f5d_s,
+                                                                                                the_mu_extent_, the_vpar_extent_,
+                                                                                                the_r_extent_, the_theta_extent_, the_phi_extent_,
+                                                                                                the_species_extent_);
 
-            // TODO(Etienne M): ASYNC, relax that constraint ?
+#if defined(KOLIOP_FENCE_ON_OPERATOR_EXIT)
             Kokkos::fence();
+#endif
         }
 
     } // namespace collision

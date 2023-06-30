@@ -40,10 +40,15 @@ namespace koliop {
             // distributing on vector/teams.
             //
 
+            // NOTE: The amount of memory used during the collision operator is
+            // at most approximately:
+            // 8*(Nspace*Nvpar*Nmu + 2*3*3*3*Nspace*Nvpar + 1*3*Nspace*Nvpar)
+            // fd5                   Matrix                 RHS
+
 #if defined(KOKKOS_ENABLE_HIP)
-            static inline constexpr OrdinalType kBlockExtentR     = 32;
+            static inline constexpr OrdinalType kBlockExtentR     = 128;
             static inline constexpr OrdinalType kBlockExtentTheta = 32;
-            static inline constexpr OrdinalType kBlockExtentPhi   = 2;
+            static inline constexpr OrdinalType kBlockExtentPhi   = 4;
 
                 // static inline constexpr OrdinalType kBlockExtentR     = 32;
                 // static inline constexpr OrdinalType kBlockExtentTheta = 16;

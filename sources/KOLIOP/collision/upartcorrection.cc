@@ -34,14 +34,14 @@ namespace koliop {
             const auto& nu_ab          = an_operator.nu_ab_;
             const auto& q_par_on_nT_s  = an_operator.q_par_on_nT_s_;
 
-            const auto&            pSpecies_id            = an_operator.pSpecies_id_;
-            const auto&            collision_interspecies = an_operator.collision_interspecies_;
+            const auto& pSpecies_id            = an_operator.pSpecies_id_;
+            const auto& collision_interspecies = an_operator.collision_interspecies_;
 
             const auto the_kernel = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi) {
                 // TODO(Etienne M): INDEX not coalesced. Flatten more ?
 
-                const ComputeFloatType Bij            = B_norm(ir, itheta);
-                const ComputeFloatType na             = n_s(ir, itheta, iphi, pSpecies_id);
+                const ComputeFloatType Bij = B_norm(ir, itheta);
+                const ComputeFloatType na  = n_s(ir, itheta, iphi, pSpecies_id);
 
                 ComputeFloatType impulsion_coll = 0.0;
 
@@ -144,22 +144,24 @@ namespace koliop {
         void Operator::ComputeUparTCorrection(ComputeFloatType dt,
                                               Flo64*           f5d_s) const {
 
-            auto a_device_visible_f5d_s = koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL6<Flo64>,
-                                                                               koliop::utility::View::MDL6>(f5d_s, "f5d_s",
-                                                                                                            the_mu_extent_, the_vpar_extent_,
-                                                                                                            the_r_extent_, the_theta_extent_, the_phi_extent_,
-                                                                                                            the_species_extent_);
+            auto a_device_visible_f5d_s = koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL6<Flo64>,
+                                                                               koliop::utility::View::InternalInputL6>(f5d_s, "f5d_s",
+                                                                                                                       the_mu_extent_, the_vpar_extent_,
+                                                                                                                       the_r_extent_, the_theta_extent_, the_phi_extent_,
+                                                                                                                       the_species_extent_);
 
             DoComputeUparTCorrection(*this, dt, a_device_visible_f5d_s, U_par_s_);
 
-            koliop::utility::Copy::Shallow(a_device_visible_f5d_s,
-                                           koliop::utility::View::UHL6<Flo64>{f5d_s,
-                                                                              static_cast<std::size_t>(the_mu_extent_), static_cast<std::size_t>(the_vpar_extent_),
-                                                                              static_cast<std::size_t>(the_r_extent_), static_cast<std::size_t>(the_theta_extent_), static_cast<std::size_t>(the_phi_extent_),
-                                                                              static_cast<std::size_t>(the_species_extent_)});
+            koliop::utility::Copy::ViewToRawData<koliop::utility::View::InternalInputL6<Flo64>,
+                                                 koliop::utility::View::ExternalInputL6<Flo64>>(a_device_visible_f5d_s,
+                                                                                                f5d_s,
+                                                                                                the_mu_extent_, the_vpar_extent_,
+                                                                                                the_r_extent_, the_theta_extent_, the_phi_extent_,
+                                                                                                the_species_extent_);
 
-            // TODO(Etienne M): ASYNC, relax that constraint ?
+#if defined(KOLIOP_FENCE_ON_OPERATOR_EXIT)
             Kokkos::fence();
+#endif
         }
 
     } // namespace collision

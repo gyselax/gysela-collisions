@@ -86,16 +86,17 @@ namespace koliop {
 
         void Operator::ComputeQparOnNT(const Flo64* f5d_s) {
 
-            auto a_device_visible_f5d_s = koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL6<const Flo64>,
-                                                                               koliop::utility::View::MDL6>(f5d_s, "f5d_s",
-                                                                                                            the_mu_extent_, the_vpar_extent_,
-                                                                                                            the_r_extent_, the_theta_extent_, the_phi_extent_,
-                                                                                                            the_species_extent_);
+            auto a_device_visible_f5d_s = koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL6<const Flo64>,
+                                                                               koliop::utility::View::InternalInputL6>(f5d_s, "f5d_s",
+                                                                                                                       the_mu_extent_, the_vpar_extent_,
+                                                                                                                       the_r_extent_, the_theta_extent_, the_phi_extent_,
+                                                                                                                       the_species_extent_);
 
             DoComputeQparOnNT(*this, a_device_visible_f5d_s, q_par_on_nT_s_);
 
-            // TODO(Etienne M): ASYNC, relax that constraint ?
+#if defined(KOLIOP_FENCE_ON_OPERATOR_EXIT)
             Kokkos::fence();
+#endif
         }
 
     } // namespace collision

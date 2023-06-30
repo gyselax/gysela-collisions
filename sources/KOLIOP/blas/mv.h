@@ -35,8 +35,6 @@ namespace koliop {
                                                                                 kSmallBlockExtent>;
 
         public:
-            BatchedMatrixSamplingBlockTridiagonalByBlockMV(ExecutionSpaceType an_execution_space);
-
             /// Computes the_y_vector = the_alpha_scalar * the_A_matrix(...) * the_x_vector +
             /// the_beta_scalar * the_y_vector.
             ///
@@ -44,16 +42,16 @@ namespace koliop {
             /// operator() we can not rely on the ThreadVectorType.
             ///
             template <typename MatrixSampler>
-            void Apply(ValueType        the_alpha_scalar,
-                       MatrixSampler&&  the_A_matrix_sampler,
-                       OrdinalType      the_A_matrix_extent,
-                       OrdinalType      the_M_matrix_extent,
-                       const ValueType* the_x_vector,
-                       ValueType        the_beta_scalar,
-                       ValueType*       the_y_vector) const;
+            void Apply(ExecutionSpaceType an_execution_space,
+                       ValueType          the_alpha_scalar,
+                       MatrixSampler&&    the_A_matrix_sampler,
+                       OrdinalType        the_A_matrix_extent,
+                       OrdinalType        the_M_matrix_extent,
+                       const ValueType*   the_x_vector,
+                       ValueType          the_beta_scalar,
+                       ValueType*         the_y_vector) const;
 
         protected:
-            ExecutionSpaceType the_execution_space_;
         };
 
 
@@ -63,22 +61,15 @@ namespace koliop {
 
         template <typename BatchTraits,
                   OrdinalType kSmallBlockExtent>
-        BatchedMatrixSamplingBlockTridiagonalByBlockMV<BatchTraits,
-                                                       kSmallBlockExtent>::BatchedMatrixSamplingBlockTridiagonalByBlockMV(ExecutionSpaceType an_execution_space)
-            : the_execution_space_{an_execution_space} {
-            // EMPTY
-        }
-
-        template <typename BatchTraits,
-                  OrdinalType kSmallBlockExtent>
         template <typename MatrixSampler>
-        void BatchedMatrixSamplingBlockTridiagonalByBlockMV<BatchTraits, kSmallBlockExtent>::Apply(ValueType        the_alpha_scalar,
-                                                                                                   MatrixSampler&&  the_A_matrix_sampler,
-                                                                                                   OrdinalType      the_A_matrix_extent,
-                                                                                                   OrdinalType      the_M_matrix_extent,
-                                                                                                   const ValueType* the_x_vector,
-                                                                                                   ValueType        the_beta_scalar,
-                                                                                                   ValueType*       the_y_vector) const {
+        void BatchedMatrixSamplingBlockTridiagonalByBlockMV<BatchTraits, kSmallBlockExtent>::Apply(ExecutionSpaceType an_execution_space,
+                                                                                                   ValueType          the_alpha_scalar,
+                                                                                                   MatrixSampler&&    the_A_matrix_sampler,
+                                                                                                   OrdinalType        the_A_matrix_extent,
+                                                                                                   OrdinalType        the_M_matrix_extent,
+                                                                                                   const ValueType*   the_x_vector,
+                                                                                                   ValueType          the_beta_scalar,
+                                                                                                   ValueType*         the_y_vector) const {
 
             KOLIOP_ASSERT(the_x_vector != nullptr);
             KOLIOP_ASSERT(the_y_vector != nullptr);
@@ -171,7 +162,7 @@ namespace koliop {
                                                         Kokkos::Rank<4,
                                                                      // TODO(Etienne M): Tune blocking.
                                                                      Kokkos::Iterate::Left,
-                                                                     Kokkos::Iterate::Left>>{the_execution_space_,
+                                                                     Kokkos::Iterate::Left>>{an_execution_space,
                                                                                              {0, 0, 0, 0},
                                                                                              {BatchTraitsType::kBatchSize,
                                                                                               kSmallBlockExtent, kBigBlockExtent,

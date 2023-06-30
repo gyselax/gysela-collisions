@@ -144,7 +144,7 @@ namespace koliop {
                 // L_mat(:,:) = 0.0;
 
                 for(OrdinalType ispeciesB = 0; ispeciesB < the_species_extent; ++ispeciesB) {
-                    if(!(collision_interspecies || pSpecies_id == ispeciesB)) {
+                    if(!(collision_interspecies || (pSpecies_id == ispeciesB))) {
                         continue;
                     }
 
@@ -157,7 +157,7 @@ namespace koliop {
                     const ValueType vTb_on_vta_2 = (hat_Aa * local_T_s(ispeciesB)) / (hat_Ab * local_T_s(pSpecies_id));
 
                     {
-                        const ValueType Xtr         = vpar2_on_Ta * 0.5 + (9.0 * koliop::portability::MathematicalConstant<ValueType>::kPi / 16.0) * vTb_on_vta_2;
+                        const ValueType Xtr         = vpar2_on_Ta * 0.5 + vTb_on_vta_2 * (9.0 * koliop::portability::MathematicalConstant<ValueType>::kPi / 16.0);
                         const ValueType sqrtXtr     = Kokkos::sqrt(Xtr);
                         const ValueType sqrtXtr_inv = 1.0 / sqrtXtr;
 
@@ -172,11 +172,12 @@ namespace koliop {
                         L_mat[1][0] -= coeff_L * sqrtXtr_inv;
                     }
                     {
-                        const ValueType Xtr         = vpar2_on_Ta * 0.5 + 2.1 * vTb_on_vta_2;
+                        const ValueType Xtr         = vpar2_on_Ta * 0.5 + vTb_on_vta_2 * 2.1;
                         const ValueType sqrtXtr     = Kokkos::sqrt(Xtr);
                         const ValueType sqrtXtr_inv = 1.0 / sqrtXtr;
 
                         ValueType I_mat[Constant::kIndexMax + 1 + 1]{};
+
                         DoComputeI(comb_mat, 0, Xtr, sqrtXtr, sqrtXtr_inv, I_mat);
 
                         for(OrdinalType ind_i = 0; ind_i <= Constant::kIndexMax; ++ind_i) {
@@ -215,18 +216,20 @@ namespace koliop {
 
         } // namespace
 
-        template <typename View6D,
+        template <typename ExecutionSpace,
+                  typename View6D,
                   typename View5D,
                   typename View4D>
         static inline void
-        DoComputeNajl(const Najl&   the_najl_provider,
-                      OrdinalType   the_block_first_r,
-                      OrdinalType   the_block_first_theta,
-                      OrdinalType   the_block_first_phi,
-                      const View4D& n_s,
-                      const View4D& T_s,
-                      const View5D& nu_ab,
-                      View6D&&      the_Najl) {
+        DoComputeNajl(const Najl&    the_najl_provider,
+                      ExecutionSpace an_execution_space,
+                      OrdinalType    the_block_first_r,
+                      OrdinalType    the_block_first_theta,
+                      OrdinalType    the_block_first_phi,
+                      const View4D&  n_s,
+                      const View4D&  T_s,
+                      const View5D&  nu_ab,
+                      View6D&&       the_Najl) {
 
             // NOTE: We use ValueType due to an hypothetical future Kokkos
             // release that would enable Kokkos::exp() on KokkosBatched::Vector.
@@ -245,8 +248,6 @@ namespace koliop {
 
             const auto& pSpecies_id            = the_najl_provider.pSpecies_id_;
             const auto& collision_interspecies = the_najl_provider.collision_interspecies_;
-
-            const auto& the_execution_space = the_najl_provider.the_execution_space_;
 
             const auto the_kernel = KOKKOS_LAMBDA(auto ivpar, auto ir, auto itheta, auto iphi) {
 
@@ -375,7 +376,7 @@ namespace koliop {
 
             const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<4,
                                                                      Kokkos::Iterate::Left,
-                                                                     Kokkos::Iterate::Left>>{the_execution_space,
+                                                                     Kokkos::Iterate::Left>>{an_execution_space,
                                                                                              {0,
                                                                                               the_block_first_r,
                                                                                               the_block_first_theta,
@@ -389,22 +390,20 @@ namespace koliop {
                                  a_policy, the_kernel);
         }
 
-        Najl::Najl(OrdinalType                                          pSpecies_id,
-                   OrdinalType                                          the_vpar_extent,
-                   OrdinalType                                          the_species_extent,
-                   bool                                                 collision_interspecies,
-                   const Flo64*                                         comb_mat,
-                   koliop::utility::View::MDD1<const ComputeFloatType>& hat_As,
-                   koliop::utility::View::MDD1<const ComputeFloatType>& hat_Zs,
-                   koliop::utility::View::MDD1<const ComputeFloatType>& vparg,
-                   ExecutionSpaceType                                   an_execution_space)
+        Najl::Najl(OrdinalType                                                     pSpecies_id,
+                   OrdinalType                                                     the_vpar_extent,
+                   OrdinalType                                                     the_species_extent,
+                   bool                                                            collision_interspecies,
+                   const Flo64*                                                    comb_mat,
+                   koliop::utility::View::InternalInputD1<const ComputeFloatType>& hat_As,
+                   koliop::utility::View::InternalInputD1<const ComputeFloatType>& hat_Zs,
+                   koliop::utility::View::InternalInputD1<const ComputeFloatType>& vparg)
             : pSpecies_id_{pSpecies_id}
             , the_vpar_extent_{the_vpar_extent}
             , the_species_extent_{the_species_extent}
             , collision_interspecies_{collision_interspecies}
 
-            , comb_mat_{koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL2<const Flo64>,
-                                                             koliop::utility::View::MDD2>(comb_mat, "comb_mat_", 2 * Constant::kMaximumLaguerrePolynomialDegree, 2 * Constant::kMaximumLaguerrePolynomialDegree)}
+            , comb_mat_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL2<const Flo64>, koliop::utility::View::InternalInputD2>(comb_mat, "comb_mat_", 2 * Constant::kMaximumLaguerrePolynomialDegree, 2 * Constant::kMaximumLaguerrePolynomialDegree)}
             , hat_As_{hat_As}
             , hat_Zs_{hat_Zs}
             , vparg_{vparg}
@@ -412,16 +411,15 @@ namespace koliop {
             , C_jl_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "C_jl_"),
                     static_cast<std::size_t>(2 * Constant::kMaximumLaguerrePolynomialDegree - 1),
                     static_cast<std::size_t>(Constant::kMaximumLaguerrePolynomialDegree),
-                    static_cast<std::size_t>(Constant::kMaximumLaguerrePolynomialDegree)}
-
-            , the_execution_space_{an_execution_space} {
+                    static_cast<std::size_t>(Constant::kMaximumLaguerrePolynomialDegree)} {
 
             // TODO(Etienne M): Observe how the C_j_ and C_jl_ values are
             // constant. they could be compile time computed or hardcoded.
             DoPrepareCjl(C_jl_);
         }
 
-        void Najl::Compute(OrdinalType                                          the_block_first_r,
+        void Najl::Compute(ExecutionSpaceType                                   an_execution_space,
+                           OrdinalType                                          the_block_first_r,
                            OrdinalType                                          the_block_first_theta,
                            OrdinalType                                          the_block_first_phi,
                            const koliop::utility::View::MDD4<ComputeFloatType>& n_s,
@@ -449,6 +447,7 @@ namespace koliop {
                                                               static_cast<std::size_t>(the_vpar_extent_)};
 
             DoComputeNajl(*this,
+                          an_execution_space,
                           the_block_first_r,
                           the_block_first_theta,
                           the_block_first_phi,

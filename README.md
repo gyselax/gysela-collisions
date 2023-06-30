@@ -77,6 +77,7 @@ NOTE:
 
 ## TODOs
 
+- Fix the fact that we can't pass pointer to the fortran interface. Pointers need to be supported as they are a byproduct of using OpenMP's omp_get_mapped_ptr or use_device_ptr. We could ask the user to pass a fortran array and ourselves, call omp_get_mapped_ptr if Gysela is build with GPU mode.
 - Cleanup redundant names, long namespaces, View naming
 - Document the C interface:
     - Assuming we CPUs for computation, the input buffer are expected to be on the CPU.

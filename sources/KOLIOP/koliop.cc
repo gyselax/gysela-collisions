@@ -20,6 +20,25 @@
             return KOLIOP_STATUS_INITIALIZATION_FAILURE;
         }
 
+        if(static_cast<bool>(with_verbose_initialization)) {
+            std::cout << "Koliop: v" << KOLIOP_VERSION << "\n";
+            std::cout << "  KOLIOP_TOOLCHAIN_NAME: " << KOLIOP_TOOLCHAIN_NAME << "\n";
+#if defined(KOLIOP_FENCE_ON_OPERATOR_EXIT)
+            std::cout << "  KOLIOP_FENCE_ON_OPERATOR_EXIT: true\n";
+#else
+            std::cout << "  KOLIOP_FENCE_ON_OPERATOR_EXIT: false\n";
+#endif
+
+#if defined(KOLIOP_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE)
+            std::cout << "  KOLIOP_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE: true\n";
+#else
+            std::cout << "  KOLIOP_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE: false\n";
+#endif
+            std::cout << "  koliop::collision::Constant::kBlockExtentR: " << koliop::collision::Constant::kBlockExtentR << "\n";
+            std::cout << "  koliop::collision::Constant::kBlockExtentTheta: " << koliop::collision::Constant::kBlockExtentTheta << "\n";
+            std::cout << "  koliop::collision::Constant::kBlockExtentPhi: " << koliop::collision::Constant::kBlockExtentPhi << "\n";
+        }
+
         Kokkos::initialize(Kokkos::InitializationSettings()
                                .set_num_threads(static_cast<int>(a_host_thread_count))
                                .set_device_id(static_cast<int>(a_device_index))
@@ -34,10 +53,6 @@
 
         if(static_cast<bool>(with_verbose_initialization)) {
             Kokkos::print_configuration(std::cout, false);
-            std::cout << "Koliop:\n";
-            std::cout << "  koliop::collision::Constant::kBlockExtentR: " << koliop::collision::Constant::kBlockExtentR << "\n";
-            std::cout << "  koliop::collision::Constant::kBlockExtentTheta: " << koliop::collision::Constant::kBlockExtentTheta << "\n";
-            std::cout << "  koliop::collision::Constant::kBlockExtentPhi: " << koliop::collision::Constant::kBlockExtentPhi << "\n";
         }
 
         std::cout << std::flush;

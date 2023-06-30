@@ -20,9 +20,6 @@ namespace koliop {
                         const View1D&   q_r,
                         const View1D&   mask_buffer_r) {
 
-            // TODO(Etienne M): I observe some slight numerical discrepancy
-            // (1e-14 ~ ) when comparing the result of Gysela and koliop.
-
             const auto a_host_visible_hat_As        = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{}, Kokkos::WithoutInitializing), hat_As);
             const auto a_host_visible_hat_Zs        = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{}, Kokkos::WithoutInitializing), hat_Zs);
             const auto a_host_visible_rg            = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{}, Kokkos::WithoutInitializing), rg);
@@ -130,20 +127,20 @@ namespace koliop {
             , SOL_{SOL}
             , LIM_{LIM}
             , ir_SOL_separatrix_{static_cast<OrdinalType>(ir_SOL_separatrix)}
-            , hat_As_{koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL1<const Flo64>, koliop::utility::View::MDD1>(hat_As, "hat_As_", the_species_extent_)} // NOTE: in practice, this hat_Xs contains 3 values. The size being hardcoded in global::Nspecies_max = 2
-            , hat_Zs_{koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL1<const Flo64>, koliop::utility::View::MDD1>(hat_Zs, "hat_Zs_", the_species_extent_)} // NOTE: in practice, this hat_Xs contains 3 values. The size being hardcoded in global::Nspecies_max = 2
-            , mug_{koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL1<const Flo64>, koliop::utility::View::MDD1>(mug, "mug_", the_mu_extent_)}
-            , vparg_{koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL1<const Flo64>, koliop::utility::View::MDD1>(vparg, "vparg_", the_vpar_extent_)}
-            , coeff_intdmu_{koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL1<const Flo64>, koliop::utility::View::MDD1>(coeff_intdmu, "coeff_intdmu_", the_mu_extent_)}
-            , coeff_intdvpar_{koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL1<const Flo64>, koliop::utility::View::MDD1>(coeff_intdvpar, "coeff_intdvpar_", the_vpar_extent_)}
-            , rg_{koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL1<const Flo64>, koliop::utility::View::MDD1>(rg, "rg_", the_r_extent_)}
-            , nustar0_r_{koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL1<const Flo64>, koliop::utility::View::MDD1>(nustar0_r, "nustar0_r_", the_r_extent_)}
-            , q_r_{koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL1<const Flo64>, koliop::utility::View::MDD1>(q_r, "q_r_", the_r_extent_)}
-            , mask_buffer_r_{koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL1<const Flo64>, koliop::utility::View::MDD1>(mask_buffer_r, "mask_buffer_r_", the_r_extent_)}
-            , mask_LIM_{LIM_ ? koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL2<const Flo64>, koliop::utility::View::MDD2>(mask_LIM, "mask_LIM_", the_r_extent, the_theta_extent) :
-                               koliop::utility::View::MDD2<Flo64>{}}
-            , B_norm_{koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL2<const Flo64>, koliop::utility::View::MDD2>(B_norm, "B_norm_", the_r_extent_, the_theta_extent_ + 1 /* Weird +1 */)}
-            , Bstar_s_{koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL4<const Flo64>, koliop::utility::View::MDD4>(Bstar_s, "Bstar_s_", the_vpar_extent_, the_r_extent_, the_theta_extent_, the_species_extent_)}
+            , hat_As_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputD1>(hat_As, "hat_As_", the_species_extent_)} // NOTE: in practice, this hat_Xs contains 3 values. The size being hardcoded in global::Nspecies_max = 2
+            , hat_Zs_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputD1>(hat_Zs, "hat_Zs_", the_species_extent_)} // NOTE: in practice, this hat_Xs contains 3 values. The size being hardcoded in global::Nspecies_max = 2
+            , mug_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputD1>(mug, "mug_", the_mu_extent_)}
+            , vparg_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputD1>(vparg, "vparg_", the_vpar_extent_)}
+            , coeff_intdmu_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputD1>(coeff_intdmu, "coeff_intdmu_", the_mu_extent_)}
+            , coeff_intdvpar_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputD1>(coeff_intdvpar, "coeff_intdvpar_", the_vpar_extent_)}
+            , rg_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputD1>(rg, "rg_", the_r_extent_)}
+            , nustar0_r_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputD1>(nustar0_r, "nustar0_r_", the_r_extent_)}
+            , q_r_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputD1>(q_r, "q_r_", the_r_extent_)}
+            , mask_buffer_r_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputD1>(mask_buffer_r, "mask_buffer_r_", the_r_extent_)}
+            , mask_LIM_{LIM_ ? koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL2<const Flo64>, koliop::utility::View::InternalInputD2>(mask_LIM, "mask_LIM_", the_r_extent, the_theta_extent) :
+                               koliop::utility::View::InternalInputD2<Flo64>{}}
+            , B_norm_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL2<const Flo64>, koliop::utility::View::InternalInputD2>(B_norm, "B_norm_", the_r_extent_, the_theta_extent_ + 1 /* Weird +1 */)}
+            , Bstar_s_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL4<const Flo64>, koliop::utility::View::InternalInputD4>(Bstar_s, "Bstar_s_", the_vpar_extent_, the_r_extent_, the_theta_extent_, the_species_extent_)}
 
             // Constant, internally computed values
 
@@ -163,17 +160,19 @@ namespace koliop {
             , q_par_on_nT_s_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "q_par_on_nT_s_"),
                              static_cast<std::size_t>(the_r_extent_), static_cast<std::size_t>(the_theta_extent_), static_cast<std::size_t>(the_phi_extent_), static_cast<std::size_t>(the_species_extent_)}
 
-            // Miscellaneous tooling
+            // Miscellaneous numerical tooling
 
-            // TODO(Etienne M): Should we partition ?
-            , the_najl_provider_{pSpecies_id_, the_vpar_extent_, the_species_extent_, collision_interspecies_, comb_mat, hat_As_, hat_Zs_, vparg_, Kokkos::DefaultExecutionSpace{}}
-            , the_factorizer_{Kokkos::DefaultExecutionSpace{}}
-            , the_solver_{Kokkos::DefaultExecutionSpace{}}
-            , the_mv_{Kokkos::DefaultExecutionSpace{}} {
+            , the_najl_provider_{pSpecies_id_, the_vpar_extent_, the_species_extent_, collision_interspecies_, comb_mat, hat_As_, hat_Zs_, vparg_}
+            , the_factorizer_{}
+            , the_solver_{}
+            , the_mv_{}
 
-            // TODO(Etienne M): Should we fence after the copies ? We *may* need
-            // that if we pass an execution space to the deep copy.
-            // Kokkos::fence();
+        // Miscellaneous tooling
+        {
+
+            // Somewhat redundant as we do not give an ExecutionSpace to the
+            // arg_prop used in the copies done above.
+            Kokkos::fence();
 
             DoPrepareNuStar(*this,
                             nustar_coeff_,
@@ -183,6 +182,14 @@ namespace koliop {
                             nustar0_r_,
                             q_r_,
                             mask_buffer_r_);
+
+            // Somewhat useless as DoPrepareNuStar runs on the host.
+            Kokkos::fence();
+
+            for(auto&& a_stream : the_stream_pool_) {
+                // TODO(Etienne M): Partition the space
+                a_stream = Kokkos::DefaultExecutionSpace{};
+            }
         }
 
     } // namespace collision
