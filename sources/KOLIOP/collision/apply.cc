@@ -364,12 +364,12 @@ namespace koliop {
             const auto& T_s   = an_operator.T_s_;
             const auto& nu_ab = an_operator.nu_ab_;
 
-            const auto the_najl_provider = an_operator.the_najl_provider_;
-            const auto the_factorizer    = an_operator.the_factorizer_;
-            const auto the_solver        = an_operator.the_solver_;
-            const auto the_mv            = an_operator.the_mv_;
+            const auto& the_najl_provider = an_operator.the_najl_provider_;
+            const auto& the_factorizer    = an_operator.the_factorizer_;
+            const auto& the_solver        = an_operator.the_solver_;
+            const auto& the_mv            = an_operator.the_mv_;
 
-            const auto the_stream_pool = an_operator.the_stream_pool_;
+            const auto& the_stream_pool = an_operator.the_stream_pool_;
 
             // NOTE: If you have an issue with these assertions, checkout the
             // constant.h file and tune Constant::kBlockExtent[R|Theta|Phi].

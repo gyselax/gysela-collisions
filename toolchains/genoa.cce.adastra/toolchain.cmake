@@ -31,10 +31,6 @@ set(koliop_FLAGS_MINSIZEREL      -Os)
 set(koliop_FLAGS_RELEASE         -O3 -g)
 set(koliop_FLAGS_RELWITHDEBINFO  -O3 -g -fno-omit-frame-pointer -fno-optimize-sibling-calls)
 
-
-
-
-
 set(koliop_LINKER_FLAGS_DEBUG          ${koliop_FLAGS_DEBUG})
 set(koliop_LINKER_FLAGS_MINSIZEREL     ${koliop_FLAGS_MINSIZEREL})
 set(koliop_LINKER_FLAGS_RELEASE        ${koliop_FLAGS_RELEASE})
