@@ -261,8 +261,8 @@ namespace koliop {
                                                        Constant::kBlockExtentR * the_block_local_index_theta +
                                                        the_block_local_index_r;
 
-                const OrdinalType the_batch_index         = the_flattened_index / Constant::BatchTraitsType::kBatchSize;
-                const OrdinalType the_batch_element_index = the_flattened_index % Constant::BatchTraitsType::kBatchSize;
+                const OrdinalType the_batch_element_index = (the_flattened_index) % Constant::BatchTraitsType::kBatchSize;
+                const OrdinalType the_batch_index         = (the_flattened_index / (Constant::BatchTraitsType::kBatchSize)) /* % Constant::kBatchCount */;
 
                 // NOTE: The memset(0) of the local_Nn is done in Najl::Compute.
                 auto local_N0 = Kokkos::subview(the_Najl,
