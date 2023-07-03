@@ -54,8 +54,8 @@ namespace koliop {
                 Kokkos::Sum<ComputeFloatType> the_na_reducer{na};
                 Kokkos::Sum<ComputeFloatType> the_vpara_reducer{vpara};
 
-                the_na_reducer.init(na);
-                the_vpara_reducer.init(vpara);
+                the_na_reducer.init(the_na_reducer.reference());
+                the_vpara_reducer.init(the_vpara_reducer.reference());
 
                 Kokkos::parallel_for(
                     an_intra_team_policy,
@@ -92,7 +92,7 @@ namespace koliop {
 
                 Kokkos::Sum<ComputeFloatType> the_Ta_reducer{Ta};
 
-                the_Ta_reducer.init(Ta);
+                the_Ta_reducer.init(the_Ta_reducer.reference());
 
                 Kokkos::parallel_for(
                     an_intra_team_policy,
