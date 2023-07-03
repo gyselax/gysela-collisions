@@ -408,7 +408,8 @@ namespace koliop {
                                                                   static_cast<std::size_t>(Constant::kBatchCount), static_cast<std::size_t>(the_vpar_extent)};
 
             // // NOTE: For debug purposes
-            // koliop::blas::detail::DoResidualTest(the_factorizer, the_solver, the_mv,
+            // koliop::blas::detail::DoResidualTest(the_stream_pool[0],
+            //                                      the_factorizer, the_solver, the_mv,
             //                                      the_matrix,
             //                                      the_alpha_coefficients, the_rhs);
 

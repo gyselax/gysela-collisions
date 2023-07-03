@@ -256,17 +256,19 @@ namespace koliop {
 // namespace koliop {
 //     namespace blas {
 //         namespace detail {
-//             template <typename Factorizer,
+//             template <typename ExecutionSpaceType,
+//                       typename Factorizer,
 //                       typename Solver,
 //                       typename MV,
 //                       typename View6D,
 //                       typename View4D>
-//             void DoResidualTest(Factorizer&& the_factorizer,
-//                                 Solver&&     the_solver,
-//                                 MV&&         the_mv,
-//                                 View6D&&     the_matrix_buffer,
-//                                 View4D&&     the_original_x_buffer,
-//                                 View4D&&     the_computed_x_buffer) {
+//             void DoResidualTest(ExecutionSpaceType an_execution_space,
+//                                 Factorizer&&       the_factorizer,
+//                                 Solver&&           the_solver,
+//                                 MV&&               the_mv,
+//                                 View6D&&           the_matrix_buffer,
+//                                 View4D&&           the_original_x_buffer,
+//                                 View4D&&           the_computed_x_buffer) {
 
 //                 using value_type = typename std::remove_reference_t<View6D>::value_type;
 
@@ -327,7 +329,8 @@ namespace koliop {
 
 //                 // - the_matrix_buffer * the_original_x_buffer = the_computed_x_buffer
 
-//                 the_mv.Apply(1.0,
+//                 the_mv.Apply(an_execution_space,
+//                              1.0,
 //                              the_matrix_buffer,
 //                              the_matrix_buffer.extent(0) * the_matrix_buffer.extent(5), the_matrix_buffer.extent(1),
 //                              the_original_x_buffer.data(),
@@ -339,10 +342,12 @@ namespace koliop {
 
 //                 // - Solver the_matrix_buffer * y = the_computed_x_buffer, y put into the_computed_x_buffer
 
-//                 the_factorizer.Factorize(the_matrix_buffer.data(),
+//                 the_factorizer.Factorize(an_execution_space,
+//                                          the_matrix_buffer.data(),
 //                                          the_matrix_buffer.extent(0) * the_matrix_buffer.extent(5), the_matrix_buffer.extent(1));
 
-//                 the_solver.Solve(the_matrix_buffer.data(),
+//                 the_solver.Solve(an_execution_space,
+//                                  the_matrix_buffer.data(),
 //                                  the_matrix_buffer.extent(0) * the_matrix_buffer.extent(5), the_matrix_buffer.extent(1),
 //                                  the_computed_x_buffer.data());
 
@@ -351,7 +356,8 @@ namespace koliop {
 //                 DoFillMatrix();
 
 //                 // b = b - Ax, b must equals zero.
-//                 the_mv.Apply(1.0,
+//                 the_mv.Apply(an_execution_space,
+//                              1.0,
 //                              the_matrix_buffer,
 //                              the_matrix_buffer.extent(0) * the_matrix_buffer.extent(5), the_matrix_buffer.extent(1),
 //                              the_computed_x_buffer.data(),
