@@ -81,7 +81,7 @@ namespace koliop {
         template <typename Duration>
         typename Stopwatch<Duration>::duration
         Stopwatch<Duration>::Elapsed() const {
-            // The cast is a noop if std::chrono::steady_clock::duration "is same" duration. For other duration, I dunno.
+            // The cast is a no-op if std::chrono::steady_clock::duration "is same" duration. For other duration, I dunno.
             return std::chrono::duration_cast<duration>(std::chrono::steady_clock::now() - the_last_point_in_time_);
         }
 
@@ -103,7 +103,7 @@ namespace koliop {
 
             the_last_point_in_time_ = std::chrono::steady_clock::now();
 
-            // The cast is a noop if std::chrono::steady_clock::duration "is same" duration. For other duration, I dunno.
+            // The cast is a no-op if std::chrono::steady_clock::duration "is same" duration. For other duration, I dunno.
             return std::chrono::duration_cast<duration>(the_last_point_in_time_ - the_previous_point_in_time_);
         }
 

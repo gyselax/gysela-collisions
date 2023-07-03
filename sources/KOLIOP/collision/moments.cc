@@ -30,60 +30,116 @@ namespace koliop {
             const auto& B_norm         = an_operator.B_norm_;
             const auto& Bstar_s        = an_operator.Bstar_s_;
 
-            const auto the_kernel = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi, auto ispecies) {
-                // TODO(Etienne M): INDEX not coalesced. Flatten more ?
+            const auto the_kernel = KOKKOS_LAMBDA(const auto& a_team_handle) {
 
-                ComputeFloatType na    = 0.0;
-                ComputeFloatType vpara = 0.0;
+                const OrdinalType the_team_index = a_team_handle.league_rank();
 
-                for(OrdinalType ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
-                    for(OrdinalType imu = 0; imu < the_mu_extent; ++imu) {
+                const OrdinalType ir       = (the_team_index) % the_r_extent;
+                const OrdinalType itheta   = (the_team_index / (the_r_extent)) % the_theta_extent;
+                const OrdinalType iphi     = (the_team_index / (the_r_extent * the_r_extent)) % the_phi_extent;
+                const OrdinalType ispecies = (the_team_index / (the_r_extent * the_r_extent * the_phi_extent)) /* % the_species_extent */;
+
+                // TODO(Etienne M): Make sure the accesses are coalesced.
+                // TODO(Etienne M); Iterate:Left or right ?
+
+                const auto an_intra_team_policy = Kokkos::TeamThreadMDRange<Kokkos::Rank<2
+                                                                                         /* , Kokkos::Iterate::Left, Kokkos::Iterate::Left */>,
+                                                                            std::remove_reference_t<decltype(a_team_handle)>>(a_team_handle,
+                                                                                                                              the_mu_extent,
+                                                                                                                              the_vpar_extent);
+
+                ComputeFloatType na;
+                ComputeFloatType vpara;
+
+                Kokkos::Sum<ComputeFloatType> the_na_reducer{na};
+                Kokkos::Sum<ComputeFloatType> the_vpara_reducer{vpara};
+
+                the_na_reducer.init(na);
+                the_vpara_reducer.init(vpara);
+
+                Kokkos::parallel_for(
+                    an_intra_team_policy,
+                    [&](auto imu, auto ivpar) {
                         const ComputeFloatType f5d_s_value = Kokkos::max(1.0E-40,
                                                                          f5d_s(imu, ivpar, ir, itheta, iphi, ispecies));
 
-                        // TODO(Etienne M): LOAD Hoist the invariant load.
                         const ComputeFloatType ftmp = (Bstar_s(ivpar, ir, itheta, ispecies) * coeff_intdvpar(ivpar)) *
                                                       (coeff_intdmu(imu) * f5d_s_value);
-                        na += ftmp;
-                        vpara += vparg(ivpar) * ftmp;
+
+                        the_na_reducer.join(the_na_reducer.reference(),
+                                            ftmp);
+                        the_vpara_reducer.join(the_vpara_reducer.reference(),
+                                               vparg(ivpar) * ftmp);
 
                         f5d_s(imu, ivpar, ir, itheta, iphi, ispecies) = f5d_s_value;
-                    }
-                }
+                    });
 
-                vpara = vpara / na;
+                // TODO(Etienne M): Should we barrier/fence ?
+                // a_team_handle.team_barrier();
 
-                ComputeFloatType Ta = 0.0;
+                a_team_handle.team_reduce(the_na_reducer);
+                a_team_handle.team_reduce(the_vpara_reducer);
 
-                for(OrdinalType ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
-                    for(OrdinalType imu = 0; imu < the_mu_extent; ++imu) {
+                // TODO(Etienne M): Should we barrier/fence ?
+                // a_team_handle.team_barrier();
+
+                // NOTE: This should be a no-op.
+                na = the_na_reducer.reference();
+
+                vpara = the_vpara_reducer.reference() / na;
+
+                ComputeFloatType Ta;
+
+                Kokkos::Sum<ComputeFloatType> the_Ta_reducer{Ta};
+
+                the_Ta_reducer.init(Ta);
+
+                Kokkos::parallel_for(
+                    an_intra_team_policy,
+                    [&](auto imu, auto ivpar) {
                         // TODO(Etienne M): Avoid this recomputation ? On
                         // Gysela fortran, a temporary buffer is used but
                         // that would hardly fit on a GPU.
                         // TODO(Etienne M): LOAD Hoist the invariant load.
                         const ComputeFloatType ftmp = (Bstar_s(ivpar, ir, itheta, ispecies) * coeff_intdvpar(ivpar)) *
                                                       (coeff_intdmu(imu) * f5d_s(imu, ivpar, ir, itheta, iphi, ispecies));
-                        Ta += ((vparg(ivpar) - vpara) * (vparg(ivpar) - vpara) +
-                               2.0 * mug(imu) * B_norm(ir, itheta)) *
-                              ftmp;
-                    }
-                }
 
-                Ta = Ta / (3.0 * na);
-                na = koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * na;
+                        the_Ta_reducer.join(the_Ta_reducer.reference(),
+                                            ((vparg(ivpar) - vpara) * (vparg(ivpar) - vpara) +
+                                             2.0 * mug(imu) * B_norm(ir, itheta)) *
+                                                ftmp);
+                    });
 
-                n_s(ir, itheta, iphi, ispecies)     = na;
-                U_par_s(ir, itheta, iphi, ispecies) = vpara;
-                T_s(ir, itheta, iphi, ispecies)     = Ta;
+                // TODO(Etienne M): Should we barrier/fence ?
+                // a_team_handle.team_barrier();
+
+                a_team_handle.team_reduce(the_Ta_reducer);
+
+                // TODO(Etienne M): Should we barrier/fence ?
+                // a_team_handle.team_barrier();
+
+                Kokkos::single(
+                    Kokkos::PerTeam(a_team_handle),
+                    [&]() {
+                        // NOTE: This should be a no-op.
+                        Ta = the_Ta_reducer.reference();
+
+                        Ta = Ta / (3.0 * na);
+                        na = koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * na;
+
+                        n_s(ir, itheta, iphi, ispecies)     = na;
+                        U_par_s(ir, itheta, iphi, ispecies) = vpara;
+                        T_s(ir, itheta, iphi, ispecies)     = Ta;
+                    });
             };
 
-            const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<4,
-                                                                     Kokkos::Iterate::Left,
-                                                                     Kokkos::Iterate::Left>>{{0, 0, 0, 0},
-                                                                                             {the_r_extent,
-                                                                                              the_theta_extent,
-                                                                                              the_phi_extent,
-                                                                                              the_species_extent}};
+            const auto the_team_count = the_r_extent * the_theta_extent * the_phi_extent * the_species_extent;
+
+            // Due to the inherent Cuda/HIP thread block limit.
+            KOLIOP_ASSERT(the_team_count <= std::numeric_limits<int>::max());
+
+            const auto a_policy = Kokkos::TeamPolicy<Constant::DeviceExecutionSpaceType>{static_cast<int>(the_team_count),
+                                                                                         Kokkos::AUTO};
 
             Kokkos::parallel_for("DoComputeMoments",
                                  a_policy, the_kernel);

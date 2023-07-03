@@ -113,19 +113,19 @@ namespace koliop {
                 ScratchMemory the_thread_scratch_memory{a_team_handle.thread_scratch(0),
                                                         the_scratch_memory_bytes_per_thread};
 
-                const auto an_intra_policy = Kokkos::TeamThreadRange(a_team_handle,
-                                                                     the_r_extent);
+                const auto an_intra_team_policy = Kokkos::TeamThreadRange(a_team_handle,
+                                                                          the_r_extent);
 
-                Kokkos::parallel_for(an_intra_policy,
+                Kokkos::parallel_for(an_intra_team_policy,
                                      // Reference to the_kernel's member variable copy.
                                      [&](auto ir) {
                                          the_kernel_core(ir, itheta, iphi, the_thread_scratch_memory);
                                      });
             };
 
-            const uint64_t the_team_count = the_theta_extent * the_phi_extent;
+            const auto the_team_count = the_theta_extent * the_phi_extent;
 
-            // Due to the inherent cuda/HIP thread block limit.
+            // Due to the inherent Cuda/HIP thread block limit.
             KOLIOP_ASSERT(the_team_count <= std::numeric_limits<int>::max());
 
             auto a_policy = Kokkos::TeamPolicy<Constant::DeviceExecutionSpaceType>{static_cast<int>(the_team_count),
