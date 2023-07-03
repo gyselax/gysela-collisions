@@ -390,14 +390,14 @@ namespace koliop {
                                  a_policy, the_kernel);
         }
 
-        Najl::Najl(OrdinalType                                                     pSpecies_id,
-                   OrdinalType                                                     the_vpar_extent,
-                   OrdinalType                                                     the_species_extent,
-                   bool                                                            collision_interspecies,
-                   const Flo64*                                                    comb_mat,
-                   koliop::utility::View::InternalInputD1<const ComputeFloatType>& hat_As,
-                   koliop::utility::View::InternalInputD1<const ComputeFloatType>& hat_Zs,
-                   koliop::utility::View::InternalInputD1<const ComputeFloatType>& vparg)
+        Najl::Najl(OrdinalType                                          pSpecies_id,
+                   OrdinalType                                          the_vpar_extent,
+                   OrdinalType                                          the_species_extent,
+                   bool                                                 collision_interspecies,
+                   const Flo64*                                         comb_mat,
+                   koliop::utility::View::InternalInputD1<const Flo64>& hat_As,
+                   koliop::utility::View::InternalInputD1<const Flo64>& hat_Zs,
+                   koliop::utility::View::InternalInputD1<const Flo64>& vparg)
             : pSpecies_id_{pSpecies_id}
             , the_vpar_extent_{the_vpar_extent}
             , the_species_extent_{the_species_extent}

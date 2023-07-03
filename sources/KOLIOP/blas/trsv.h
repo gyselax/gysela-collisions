@@ -177,12 +177,13 @@ namespace koliop {
 
                         B.assign_data(&the_matrix_batch_element(the_small_block_index, 1, 0, 0));
 
-                        TRSVLower::invoke(1.0, B, b); // Solve: B_lower * y = b, y is put into b
+                        TRSVLower::invoke(static_cast<value_type>(1.0), B, b); // Solve: B_lower * y = b, y is put into b
 
                         A_next.assign_data(&the_matrix_batch_element(the_small_block_index + 1, 0, 0, 0));
                         b_next.assign_data(&the_vector_batch_element(the_small_block_index + 1, 0));
 
-                        GEMV::invoke(-1.0, A_next, b, 1.0, b_next); // b_next = 1.0 * b_next + -1.0 * A_next * b
+                        GEMV::invoke(static_cast<value_type>(-1.0), A_next, b,
+                                     static_cast<value_type>(1.0), b_next); // b_next = 1.0 * b_next + -1.0 * A_next * b
 
                         // TODO(Etienne M): Do an assign_data for b or copy ? which is faster ?
                         b = b_next;
@@ -190,7 +191,7 @@ namespace koliop {
 
                     B.assign_data(&the_matrix_batch_element(kBigBlockExtent - 1, 1, 0, 0));
 
-                    TRSVLower::invoke(1.0, B, b);
+                    TRSVLower::invoke(static_cast<value_type>(1.0), B, b);
                 }
 
                 // Backward substitution
@@ -216,19 +217,20 @@ namespace koliop {
 
                         B.assign_data(&the_matrix_batch_element(the_small_block_index, 1, 0, 0));
 
-                        TRSVUpper::invoke(1.0, B, b); // Solve: B_upper * x = b, x is put into b
+                        TRSVUpper::invoke(static_cast<value_type>(1.0), B, b); // Solve: B_upper * x = b, x is put into b
 
                         C_next.assign_data(&the_matrix_batch_element(the_small_block_index - 1, 2, 0, 0));
                         b_next.assign_data(&the_vector_batch_element(the_small_block_index - 1, 0));
 
-                        GEMV::invoke(-1.0, C_next, b, 1.0, b_next); // b_next = 1.0 * b_next + -1.0 * C_next * b
+                        GEMV::invoke(static_cast<value_type>(-1.0), C_next, b,
+                                     static_cast<value_type>(1.0), b_next); // b_next = 1.0 * b_next + -1.0 * C_next * b
 
                         b = b_next;
                     }
 
                     B.assign_data(&the_matrix_batch_element(0, 1, 0, 0));
 
-                    TRSVUpper::invoke(1.0, B, b);
+                    TRSVUpper::invoke(static_cast<value_type>(1.0), B, b);
                 }
             };
 

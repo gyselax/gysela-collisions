@@ -253,10 +253,11 @@ namespace koliop {
                     A_next.assign_data(&the_batch_element(the_small_block_index + 1, 0, 0, 0));
                     B_next.assign_data(&the_batch_element(the_small_block_index + 1, 1, 0, 0));
 
-                    LU::invoke(B);                              // B = L + U - I
-                    TRSMLower::invoke(1.0, B, C);               // Solve: B_lower * X = C, X is put into C
-                    TRSMUpper::invoke(1.0, B, A_next);          // Solve: B_upper * X = A_next, X is put into A_next
-                    GEMM::invoke(-1.0, A_next, C, 1.0, B_next); // B_next = 1.0 * B_next + -1.0 * A_next * C
+                    LU::invoke(B);                                              // B = L + U - I
+                    TRSMLower::invoke(static_cast<value_type>(1.0), B, C);      // Solve: B_lower * X = C, X is put into C
+                    TRSMUpper::invoke(static_cast<value_type>(1.0), B, A_next); // Solve: B_upper * X = A_next, X is put into A_next
+                    GEMM::invoke(static_cast<value_type>(-1.0), A_next, C,      // B_next = 1.0 * B_next + -1.0 * A_next * C
+                                 static_cast<value_type>(1.0), B_next);
                 }
 
                 LU::invoke(B_next);
