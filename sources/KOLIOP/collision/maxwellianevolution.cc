@@ -113,10 +113,10 @@ namespace koliop {
                 ScratchMemory the_thread_scratch_memory{a_team_handle.thread_scratch(0),
                                                         the_scratch_memory_bytes_per_thread};
 
-                const auto a_policy = Kokkos::TeamThreadRange(a_team_handle,
-                                                              the_r_extent);
+                const auto an_intra_policy = Kokkos::TeamThreadRange(a_team_handle,
+                                                                     the_r_extent);
 
-                Kokkos::parallel_for(a_policy,
+                Kokkos::parallel_for(an_intra_policy,
                                      // Reference to the_kernel's member variable copy.
                                      [&](auto ir) {
                                          the_kernel_core(ir, itheta, iphi, the_thread_scratch_memory);
