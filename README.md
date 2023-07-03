@@ -94,6 +94,7 @@ NOTE:
     - Tune for GPU (coalesced reads)
     - Reduce register usage. Each time you use a view, you consume a LOT of register (dimension/stride storage ?).. much more than a simple pointer.
     - Performance depending on the choice of OrdinalType/ComputeFloatType (32bits / 64bits)
+        - Note that the fact that we do not have pivoting for the LU factorization *could* reduce the precision more when treating Flo32 matrices.
 
 - auto should not be used in computations (Flo64 or an other alias)
 - Make sure the C interface does not leak (exception et al.)

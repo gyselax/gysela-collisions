@@ -321,6 +321,8 @@ namespace koliop {
 //                     //         }
 //                     //     });
 
+//                     // NOTE that when factorizing Flo32 matrices, we may have
+//                     // NANs because no pivoting is done.
 //                     Kokkos::Random_XorShift64_Pool<> the_random_pool(0xDEADBEEF);
 //                     Kokkos::fill_random(the_matrix_buffer, the_random_pool, 0.0, 1.0);
 //                 };
@@ -364,25 +366,28 @@ namespace koliop {
 //                              -1.0,
 //                              the_original_x_buffer.data());
 
-//                 const auto a_vector_policy = Kokkos::MDRangePolicy<Kokkos::Rank<3,
-//                                                                                 Kokkos::Iterate::Left,
-//                                                                                 Kokkos::Iterate::Left>>{{0, 0, 0},
-//                                                                                                         {the_matrix_buffer.extent(0),
-//                                                                                                          the_matrix_buffer.extent(1),
-//                                                                                                          the_matrix_buffer.extent(3)}};
+//                 const auto a_vector_policy = Kokkos::MDRangePolicy<Kokkos::Rank<4>>{{0, 0, 0, 0},
+//                                                                                     {the_matrix_buffer.extent(0),
+//                                                                                      the_matrix_buffer.extent(1),
+//                                                                                      the_matrix_buffer.extent(3),
+//                                                                                      the_matrix_buffer.extent(5)}};
 
 //                 value_type the_residual_sum;
 
 //                 Kokkos::parallel_reduce(
 //                     "DoResidualTest::ResidualComputation",
 //                     a_vector_policy,
-//                     KOKKOS_LAMBDA(const int& a, const int& b, const int& c,
+//                     KOKKOS_LAMBDA(const int& a, const int& b, const int& c, const int& d,
 //                                   // NOTE: we need const int& here, that weird..
 //                                   value_type& the_sum) {
 //                         // NOTE: There is no guarantee that we have at least two
 //                         // value per SIMD Vector
-//                         the_sum += the_original_x_buffer(a, b, c, 1) *
-//                                    the_original_x_buffer(a, b, c, 1);
+//                         if(std::isnan(the_original_x_buffer(a, b, c, d))) {
+//                             std::cout << a << " " << b << " " << c << " " << d << "\n";
+//                         }
+
+//                         the_sum += the_original_x_buffer(a, b, c, d) *
+//                                    the_original_x_buffer(a, b, c, d);
 //                     },
 //                     the_residual_sum);
 
