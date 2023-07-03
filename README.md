@@ -87,7 +87,6 @@ NOTE:
     - Test KOKKOS_BOUNDS_CHECK Kokkos_ENABLE_DEBUG_BOUNDS_CHECKS Kokkos_ENABLE_DEBUG
 
 - Tuning:
-    - many 'ir % Constant::kBlockExtentR' could be replaced with 'ir - the_block_first_r'
     - compute during species transfer ? Few par of the code rely on Nspecies, most only need pspecies_id.
     - Simplify computations
     - Inter exchange loops

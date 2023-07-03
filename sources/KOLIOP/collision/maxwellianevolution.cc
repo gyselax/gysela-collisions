@@ -106,8 +106,8 @@ namespace koliop {
 
                 const auto the_team_index = a_team_handle.league_rank();
 
-                const auto iphi   = the_team_index / the_theta_extent;
-                const auto itheta = the_team_index % the_theta_extent;
+                const auto itheta = (the_team_index) % the_theta_extent;
+                const auto iphi   = (the_team_index / (the_theta_extent)) /* % the_phi_extent */;
 
                 // TODO(Etienne M): Should we use a_team_handle.team_barrier()?
                 ScratchMemory the_thread_scratch_memory{a_team_handle.thread_scratch(0),
@@ -128,8 +128,8 @@ namespace koliop {
             // Due to the inherent cuda/HIP thread block limit.
             KOLIOP_ASSERT(the_team_count <= std::numeric_limits<int>::max());
 
-            auto a_policy = Kokkos::TeamPolicy<Constant::DeviceExecutionSpaceType>(the_team_count,
-                                                                                   Kokkos::AUTO);
+            auto a_policy = Kokkos::TeamPolicy<Constant::DeviceExecutionSpaceType>{static_cast<int>(the_team_count),
+                                                                                   Kokkos::AUTO};
 
             a_policy.set_scratch_size(0,
                                       Kokkos::PerThread(ScratchMemory::shmem_size(the_scratch_memory_bytes_per_thread)));

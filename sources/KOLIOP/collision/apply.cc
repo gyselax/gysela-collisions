@@ -109,8 +109,8 @@ namespace koliop {
                                                        Constant::kBlockExtentR * the_block_local_index_theta +
                                                        the_block_local_index_r;
 
-                const OrdinalType the_batch_index         = the_flattened_index / Constant::BatchTraitsType::kBatchSize;
-                const OrdinalType the_batch_element_index = the_flattened_index % Constant::BatchTraitsType::kBatchSize;
+                const OrdinalType the_batch_element_index = (the_flattened_index) % Constant::BatchTraitsType::kBatchSize;
+                const OrdinalType the_batch_index         = (the_flattened_index / (Constant::BatchTraitsType::kBatchSize)) /* % Constant::kBatchCount */;
 
                 if(mask_coll(ir - the_block_first_r,
                              itheta - the_block_first_theta)) {
@@ -233,8 +233,8 @@ namespace koliop {
                                                        Constant::kBlockExtentR * the_block_local_index_theta +
                                                        the_block_local_index_r;
 
-                const OrdinalType the_batch_index         = the_flattened_index / Constant::BatchTraitsType::kBatchSize;
-                const OrdinalType the_batch_element_index = the_flattened_index % Constant::BatchTraitsType::kBatchSize;
+                const OrdinalType the_batch_element_index = (the_flattened_index) % Constant::BatchTraitsType::kBatchSize;
+                const OrdinalType the_batch_index         = (the_flattened_index / (Constant::BatchTraitsType::kBatchSize)) /* % Constant::kBatchCount */;
 
                 const ComputeFloatType vpar_tmp       = vparg(ivpar);
                 const ComputeFloatType Ta             = T_s(ir, itheta, iphi, pSpecies_id);
@@ -312,8 +312,8 @@ namespace koliop {
                                                        Constant::kBlockExtentR * the_block_local_index_theta +
                                                        the_block_local_index_r;
 
-                const OrdinalType the_batch_index         = the_flattened_index / Constant::BatchTraitsType::kBatchSize;
-                const OrdinalType the_batch_element_index = the_flattened_index % Constant::BatchTraitsType::kBatchSize;
+                const OrdinalType the_batch_element_index = (the_flattened_index) % Constant::BatchTraitsType::kBatchSize;
+                const OrdinalType the_batch_index         = (the_flattened_index / (Constant::BatchTraitsType::kBatchSize)) /* % Constant::kBatchCount */;
 
                 const ComputeFloatType BoT = B_norm(ir, itheta) / T_s(ir, itheta, iphi, pSpecies_id);
 
