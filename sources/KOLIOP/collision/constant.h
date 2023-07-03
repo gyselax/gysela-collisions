@@ -20,6 +20,7 @@ namespace koliop {
             // TODO(Etienne M): better name
             static inline constexpr OrdinalType kIndexMax = 2 * (kMaximumLaguerrePolynomialDegree - 1);
 
+            using HostExecutionSpaceType   = Kokkos::DefaultHostExecutionSpace;
             using DeviceExecutionSpaceType = Kokkos::DefaultExecutionSpace;
 
             using BatchTraitsType = koliop::blas::BatchTraits<ComputeFloatType,

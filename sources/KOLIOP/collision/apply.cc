@@ -1,5 +1,8 @@
 // SPDX-License-Identifier: MIT
 
+#include "KOLIOP/blas/mv.h"
+#include "KOLIOP/blas/trf.h"
+#include "KOLIOP/blas/trsv.h"
 #include "KOLIOP/collision/matrixsampler.h"
 #include "KOLIOP/collision/operator.h"
 #include "KOLIOP/portability/cmath.h"
@@ -365,9 +368,6 @@ namespace koliop {
             const auto& nu_ab = an_operator.nu_ab_;
 
             const auto& the_najl_provider = an_operator.the_najl_provider_;
-            const auto& the_factorizer    = an_operator.the_factorizer_;
-            const auto& the_solver        = an_operator.the_solver_;
-            const auto& the_mv            = an_operator.the_mv_;
 
             const auto& the_stream_pool = an_operator.the_stream_pool_;
 
@@ -406,6 +406,16 @@ namespace koliop {
             typename Constant::VectorKindType::ScalarType the_rhs{Kokkos::view_alloc(Kokkos::WithoutInitializing,
                                                                                      "the_rhs"),
                                                                   static_cast<std::size_t>(Constant::kBatchCount), static_cast<std::size_t>(the_vpar_extent)};
+
+            koliop::blas::BatchedBlockTridiagonalByBlockTRF<Constant::BatchTraitsType,
+                                                            Constant::kMaximumLaguerrePolynomialDegree>
+                the_factorizer;
+            koliop::blas::BatchedBlockTridiagonalByBlockTRSV<Constant::BatchTraitsType,
+                                                             Constant::kMaximumLaguerrePolynomialDegree>
+                the_solver;
+            koliop::blas::BatchedMatrixSamplingBlockTridiagonalByBlockMV<Constant::BatchTraitsType,
+                                                                         Constant::kMaximumLaguerrePolynomialDegree>
+                the_mv;
 
             // // NOTE: For debug purposes
             // koliop::blas::detail::DoResidualTest(the_stream_pool[0],

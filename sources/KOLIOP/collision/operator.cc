@@ -163,9 +163,6 @@ namespace koliop {
             // Miscellaneous numerical tooling
 
             , the_najl_provider_{pSpecies_id_, the_vpar_extent_, the_species_extent_, collision_interspecies_, comb_mat, hat_As_, hat_Zs_, vparg_}
-            , the_factorizer_{}
-            , the_solver_{}
-            , the_mv_{}
 
         // Miscellaneous tooling
         {
@@ -188,7 +185,7 @@ namespace koliop {
 
             for(auto&& a_stream : the_stream_pool_) {
                 // TODO(Etienne M): Partition the space
-                a_stream = Kokkos::DefaultExecutionSpace{};
+                a_stream = Constant::DeviceExecutionSpaceType{};
             }
         }
 
