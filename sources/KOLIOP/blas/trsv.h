@@ -30,7 +30,7 @@ namespace koliop {
         public:
             using BatchTraitsType = BatchTraits;
 
-            using ValueType = typename BatchTraitsType::ValueType;
+            using value_type = typename BatchTraitsType::value_type;
 
             using ExecutionSpaceType = typename BatchTraitsType::ExecutionSpaceType;
 
@@ -66,10 +66,10 @@ namespace koliop {
             /// by BatchedBlockTridiagonalByBlockTRF::Factorize().
             /// @param the_rhs In place resolution. the_rhs is overwritten.
             void Solve(ExecutionSpaceType an_execution_space,
-                       const ValueType*   the_A_matrix,
+                       const value_type*  the_A_matrix,
                        OrdinalType        the_A_matrix_extent,
                        OrdinalType        the_M_matrix_extent,
-                       ValueType*         the_rhs) const;
+                       value_type*        the_rhs) const;
 
         protected:
         };
@@ -83,10 +83,10 @@ namespace koliop {
                   OrdinalType kSmallBlockExtent>
         void BatchedBlockTridiagonalByBlockTRSV<BatchTraits,
                                                 kSmallBlockExtent>::Solve(ExecutionSpaceType an_execution_space,
-                                                                          const ValueType*   the_A_matrix,
+                                                                          const value_type*  the_A_matrix,
                                                                           OrdinalType        the_A_matrix_extent,
                                                                           OrdinalType        the_M_matrix_extent,
-                                                                          ValueType*         the_rhs) const {
+                                                                          value_type*        the_rhs) const {
 
             KOLIOP_ASSERT(the_A_matrix != nullptr);
             KOLIOP_ASSERT(the_rhs != nullptr);

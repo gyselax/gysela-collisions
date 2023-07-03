@@ -415,12 +415,12 @@ namespace koliop {
             // Samples I - T*dt/4
             const MatrixSampler the_LHS_matrix_sampler{the_Najl,
                                                        coeff_intdvpar,
-                                                       -dt / 4.0};
+                                                       static_cast<ComputeFloatType>(-dt / 4.0)};
 
             // Samples I + T*dt/4
             const MatrixSampler the_RHS_matrix_sampler{the_Najl,
                                                        coeff_intdvpar,
-                                                       dt / 4.0};
+                                                       static_cast<ComputeFloatType>(dt / 4.0)};
 
             // TODO(Etienne M): On GPU, should we just scale the block size ?
             // TODO(Etienne M): We use mask to avoid some computation, but

@@ -18,7 +18,7 @@ namespace koliop {
                   typename ExecutionSpace>
         struct BatchTraits {
         public:
-            using ValueType          = Value;
+            using value_type         = Value;
             using ExecutionSpaceType = ExecutionSpace;
 
             /// We wish to saturate the hardware.
@@ -31,14 +31,14 @@ namespace koliop {
             /// kBatchSize represents the vector length from the hardware POV.
             /// The vector length from the thread POV may differ due to intra
             /// lane SIMD such as double2.
-            static inline constexpr OrdinalType kBatchSize = KokkosBatched::DefaultVectorLength<ValueType,
+            static inline constexpr OrdinalType kBatchSize = KokkosBatched::DefaultVectorLength<value_type,
                                                                                                 typename ExecutionSpaceType::memory_space>::value;
 
             /// We define the vector type from the thread POV.
             /// - On CPU it is similar to the vector type from the hardware POV
             /// say, a ymm register.
             /// - On GPU it shall represent an inter lane SIMD such as double4.
-            static inline constexpr OrdinalType kVectorSize = KokkosBatched::DefaultInternalVectorLength<ValueType,
+            static inline constexpr OrdinalType kVectorSize = KokkosBatched::DefaultInternalVectorLength<value_type,
                                                                                                          typename ExecutionSpaceType::memory_space>::value;
 
             /// On AMD GPUs,    its 16 / 4 (double4) = 4
@@ -46,7 +46,7 @@ namespace koliop {
             ///    AVX512,      its  8 / 1 (double)  = 8
             static inline constexpr OrdinalType kVectorPerBatch = kBatchSize / kVectorSize;
 
-            using ThreadVectorType = KokkosBatched::Vector<KokkosBatched::SIMD<ValueType>,
+            using ThreadVectorType = KokkosBatched::Vector<KokkosBatched::SIMD<value_type>,
                                                            kVectorSize>;
 
         public:
