@@ -207,19 +207,19 @@ namespace koliop {
             // conversions from Flo64 to whatever ComputeFloatType is (say
             // Flo32).
 
-            koliop::utility::View::InternalInputD1<const Flo64> hat_As_;
-            koliop::utility::View::InternalInputD1<const Flo64> hat_Zs_;
-            koliop::utility::View::InternalInputD1<const Flo64> mug_;
-            koliop::utility::View::InternalInputD1<const Flo64> vparg_;
-            koliop::utility::View::InternalInputD1<const Flo64> coeff_intdmu_;
-            koliop::utility::View::InternalInputD1<const Flo64> coeff_intdvpar_;
-            koliop::utility::View::InternalInputD1<const Flo64> rg_;
-            koliop::utility::View::InternalInputD1<const Flo64> nustar0_r_;
-            koliop::utility::View::InternalInputD1<const Flo64> q_r_;
-            koliop::utility::View::InternalInputD1<const Flo64> mask_buffer_r_;
-            koliop::utility::View::InternalInputD2<const Flo64> mask_LIM_;
-            koliop::utility::View::InternalInputD2<const Flo64> B_norm_;
-            koliop::utility::View::InternalInputD4<const Flo64> Bstar_s_;
+            koliop::utility::View::InternalInputL1<const Flo64> hat_As_;
+            koliop::utility::View::InternalInputL1<const Flo64> hat_Zs_;
+            koliop::utility::View::InternalInputL1<const Flo64> mug_;
+            koliop::utility::View::InternalInputL1<const Flo64> vparg_;
+            koliop::utility::View::InternalInputL1<const Flo64> coeff_intdmu_;
+            koliop::utility::View::InternalInputL1<const Flo64> coeff_intdvpar_;
+            koliop::utility::View::InternalInputL1<const Flo64> rg_;
+            koliop::utility::View::InternalInputL1<const Flo64> nustar0_r_;
+            koliop::utility::View::InternalInputL1<const Flo64> q_r_;
+            koliop::utility::View::InternalInputL1<const Flo64> mask_buffer_r_;
+            koliop::utility::View::InternalInputL2<const Flo64> mask_LIM_;
+            koliop::utility::View::InternalInputL2<const Flo64> B_norm_;
+            koliop::utility::View::InternalInputL4<const Flo64> Bstar_s_;
 
             // Constant, internally computed values
 

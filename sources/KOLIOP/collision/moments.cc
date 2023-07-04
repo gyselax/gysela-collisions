@@ -42,8 +42,7 @@ namespace koliop {
                 // TODO(Etienne M): Make sure the accesses are coalesced.
                 // TODO(Etienne M); Iterate:Left or right ?
 
-                const auto an_intra_team_policy = Kokkos::TeamThreadMDRange<Kokkos::Rank<2
-                                                                                         /* , Kokkos::Iterate::Left, Kokkos::Iterate::Left */>,
+                const auto an_intra_team_policy = Kokkos::TeamThreadMDRange<Kokkos::Rank<2, Kokkos::Iterate::Left, Kokkos::Iterate::Left>,
                                                                             std::remove_reference_t<decltype(a_team_handle)>>(a_team_handle,
                                                                                                                               the_mu_extent,
                                                                                                                               the_vpar_extent);
