@@ -38,7 +38,7 @@ namespace koliop {
             const ComputeFloatType R0_inverse  = 1.0 / R0;
             const ComputeFloatType half_dt     = dt / 2.0;
 
-            const auto the_kernel = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi) {
+            const auto the_kernel = KOKKOS_LAMBDA(auto imu, auto ivpar, auto ir, auto itheta, auto iphi) {
                 // TODO(Etienne M): Assuming materialization, we could flatten
                 // the loop even more, up to Nmu_.
                 // TODO(Etienne M): We could inter exchange some loops ?
@@ -78,27 +78,25 @@ namespace koliop {
                     const ComputeFloatType coeff2 = vTa / vTb;
                     const ComputeFloatType coeff4 = (3.0 / 5.0) * Rat * q_parb_on_nbTb / (1.0 + (Ta * hat_Ab) / (Tb * hat_Aa));
 
-                    for(OrdinalType imu = 0; imu < the_mu_extent; ++imu) {
-                        for(OrdinalType ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
-                            const ComputeFloatType coeff5         = vparg(ivpar) / Ta;
-                            const ComputeFloatType xa             = Kokkos::sqrt(coeff1 * (2.0 * mug(imu) * Bij + vparg(ivpar) * vparg(ivpar)));
-                            const ComputeFloatType xb             = xa * coeff2;
-                            const ComputeFloatType FM0a           = coeff3 * Kokkos::exp(-xa * xa);
-                            const ComputeFloatType Theta_func_tmp = xb > 1E-15 ?
-                                                                        koliop::portability::GyselaConstant<ComputeFloatType>::kConst_theta * ((Kokkos::erf(xb) - xb * (koliop::portability::GyselaConstant<ComputeFloatType>::kCst_phiprime * Kokkos::exp(-xb * xb))) / (2.0 * xb * xb)) / xb :
-                                                                        1.0;
-                            const ComputeFloatType nu_sab         = (AD * hat_Za * hat_Za * hat_Zb * hat_Zb * nb) * inv_hat_Aa * (inv_hat_Aa + inv_hat_Ab) * Theta_func_tmp / (vTb * vTb * vTb);
+                    const ComputeFloatType coeff5         = vparg(ivpar) / Ta;
+                    const ComputeFloatType xa             = Kokkos::sqrt(coeff1 * (2.0 * mug(imu) * Bij + vparg(ivpar) * vparg(ivpar)));
+                    const ComputeFloatType xb             = xa * coeff2;
+                    const ComputeFloatType FM0a           = coeff3 * Kokkos::exp(-xa * xa);
+                    const ComputeFloatType Theta_func_tmp = xb > 1E-15 ?
+                                                                koliop::portability::GyselaConstant<ComputeFloatType>::kConst_theta * ((Kokkos::erf(xb) - xb * (koliop::portability::GyselaConstant<ComputeFloatType>::kCst_phiprime * Kokkos::exp(-xb * xb))) / (2.0 * xb * xb)) / xb :
+                                                                1.0;
+                    const ComputeFloatType nu_sab         = (AD * hat_Za * hat_Za * hat_Zb * hat_Zb * nb) * inv_hat_Aa * (inv_hat_Aa + inv_hat_Ab) * Theta_func_tmp / (vTb * vTb * vTb);
 
-                            f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id) += half_dt * FM0a * nu_sab * coeff5 * (Rat * Vparb - Vpara + q_par_on_nT * (1.0 - 2.0 * xa * xa * 0.2) - coeff4);
-                        }
-                    }
+                    f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id) += half_dt * FM0a * nu_sab * coeff5 * (Rat * Vparb - Vpara + q_par_on_nT * (1.0 - 2.0 * xa * xa * 0.2) - coeff4);
                 }
             };
 
-            const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<3,
+            const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<5,
                                                                      Kokkos::Iterate::Left,
-                                                                     Kokkos::Iterate::Left>>{{0, 0, 0},
-                                                                                             {the_r_extent,
+                                                                     Kokkos::Iterate::Left>>{{0, 0, 0, 0, 0},
+                                                                                             {the_mu_extent,
+                                                                                              the_vpar_extent,
+                                                                                              the_r_extent,
                                                                                               the_theta_extent,
                                                                                               the_phi_extent}};
 

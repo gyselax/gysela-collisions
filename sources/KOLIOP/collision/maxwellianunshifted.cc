@@ -27,10 +27,12 @@ namespace koliop {
 
             const auto& pSpecies_id = an_operator.pSpecies_id_;
 
-            const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<3,
+            const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<5,
                                                                      Kokkos::Iterate::Left,
-                                                                     Kokkos::Iterate::Left>>{{0, 0, 0},
-                                                                                             {the_r_extent,
+                                                                     Kokkos::Iterate::Left>>{{0, 0, 0, 0, 0},
+                                                                                             {the_mu_extent,
+                                                                                              the_vpar_extent,
+                                                                                              the_r_extent,
                                                                                               the_theta_extent,
                                                                                               the_phi_extent}};
 
@@ -41,23 +43,18 @@ namespace koliop {
 
             switch(choice) {
                 case 3: {
-                    const auto the_kernel_choice_3 = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi) {
-                        // TODO(Etienne M): INDEX not coalesced. Flatten more ?
+                    const auto the_kernel_choice_3 = KOKKOS_LAMBDA(auto imu, auto ivpar, auto ir, auto itheta, auto iphi) {
                         const ComputeFloatType Bij    = B_norm(ir, itheta);
                         const ComputeFloatType na     = n_s(ir, itheta, iphi, pSpecies_id);
                         const ComputeFloatType Ta     = T_s(ir, itheta, iphi, pSpecies_id);
                         const ComputeFloatType BijoTa = Bij / Ta;
                         const ComputeFloatType f2oTa  = 0.5 / Ta;
-                        const ComputeFloatType coeff  = na / (koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta * Kokkos::sqrt(koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta));
+                        const ComputeFloatType v2oTa  = mug(imu) * BijoTa + vparg(ivpar) * vparg(ivpar) * f2oTa;
 
-                        for(OrdinalType ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
-                            for(OrdinalType imu = 0; imu < the_mu_extent; ++imu) {
-                                const ComputeFloatType v2oTa = mug(imu) * BijoTa + vparg(ivpar) * vparg(ivpar) * f2oTa;
+                        const ComputeFloatType coeff = na / (koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta * Kokkos::sqrt(koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta));
 
-                                f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id) = Kokkos::max(0.0,
-                                                                                               coeff * Kokkos::exp(-v2oTa) * f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id));
-                            }
-                        }
+                        f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id) = Kokkos::max(0.0,
+                                                                                       coeff * Kokkos::exp(-v2oTa) * f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id));
                     };
 
                     Kokkos::parallel_for("DoComputeMaxwellianUnshiftedLoc3",
@@ -65,23 +62,19 @@ namespace koliop {
                     break;
                 }
                 case 4: {
-                    const auto the_kernel_choice_4 = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi) {
-                        // TODO(Etienne M): INDEX not coalesced. Flatten more ?
+                    const auto the_kernel_choice_4 = KOKKOS_LAMBDA(auto imu, auto ivpar, auto ir, auto itheta, auto iphi) {
                         const ComputeFloatType Bij    = B_norm(ir, itheta);
                         const ComputeFloatType na     = n_s(ir, itheta, iphi, pSpecies_id);
                         const ComputeFloatType Ta     = T_s(ir, itheta, iphi, pSpecies_id);
                         const ComputeFloatType BijoTa = Bij / Ta;
                         const ComputeFloatType f2oTa  = 0.5 / Ta;
-                        const ComputeFloatType coeff  = (koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta * Kokkos::sqrt(koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta)) / na;
-                        for(OrdinalType ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
-                            for(OrdinalType imu = 0; imu < the_mu_extent; ++imu) {
-                                const ComputeFloatType v2oTa = mug(imu) * BijoTa + vparg(ivpar) * vparg(ivpar) * f2oTa;
+                        const ComputeFloatType v2oTa  = mug(imu) * BijoTa + vparg(ivpar) * vparg(ivpar) * f2oTa;
 
-                                f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id) = Kokkos::max(0.001,
-                                                                                               Kokkos::min(1000.0,
-                                                                                                           coeff * Kokkos::exp(v2oTa) * f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id)));
-                            }
-                        }
+                        const ComputeFloatType coeff = (koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta * Kokkos::sqrt(koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta)) / na;
+
+                        f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id) = Kokkos::max(0.001,
+                                                                                       Kokkos::min(1000.0,
+                                                                                                   coeff * Kokkos::exp(v2oTa) * f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id)));
                     };
 
                     Kokkos::parallel_for("DoComputeMaxwellianUnshiftedLoc4",

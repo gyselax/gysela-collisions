@@ -52,36 +52,49 @@ namespace koliop {
 
             const auto& ir_SOL_separatrix = an_operator.ir_SOL_separatrix_;
 
-            const auto the_kernel = KOKKOS_LAMBDA(auto itheta, auto iphi, auto ispeciesA, auto ispeciesB) {
-                // TODO(Etienne M): INDEX not coalesced. Flatten more ?
+            const OrdinalType the_local_r_extent = Kokkos::min(the_r_extent, ir_SOL_separatrix + 1);
 
-                const OrdinalType the_local_r_extent = Kokkos::min(the_r_extent, ir_SOL_separatrix + 1);
-
-                for(OrdinalType ir = 0; ir < the_local_r_extent; ++ir) {
+            {
+                const auto the_kernel = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi, auto ispeciesA, auto ispeciesB) {
                     nu_ab(ir, itheta, iphi, ispeciesA, ispeciesB) = DoComputeFrequencyNuab(nustar_coeff(ispeciesA, ispeciesB, ir),
                                                                                            hat_As(ispeciesA), hat_As(ispeciesB),
                                                                                            T_s(ir, itheta, iphi, ispeciesA),
                                                                                            n_s(ir, itheta, iphi, ispeciesB),
                                                                                            T_s(ir, itheta, iphi, ispeciesB));
-                }
+                };
 
-                for(OrdinalType ir = the_local_r_extent; ir < the_r_extent; ++ir) {
+                const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<5,
+                                                                         Kokkos::Iterate::Left,
+                                                                         Kokkos::Iterate::Left>>{{0, 0, 0, 0, 0},
+                                                                                                 {the_local_r_extent,
+                                                                                                  the_theta_extent,
+                                                                                                  the_phi_extent,
+                                                                                                  the_species_extent,
+                                                                                                  the_species_extent}};
+
+                Kokkos::parallel_for("DoPrecomputeNu0",
+                                     a_policy, the_kernel);
+            }
+
+            {
+                const auto the_kernel = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi, auto ispeciesA, auto ispeciesB) {
                     // Propagate the value at nu_ab(ir_SOL_separatrix_, itheta, iphi, ispeciesA, ispeciesB) or
                     // nu_ab(the_local_r_extent - 1, itheta, iphi, ispeciesA, ispeciesB)
                     nu_ab(ir, itheta, iphi, ispeciesA, ispeciesB) = nu_ab(ir_SOL_separatrix, itheta, iphi, ispeciesA, ispeciesB);
-                }
-            };
+                };
 
-            const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<4,
-                                                                     Kokkos::Iterate::Left,
-                                                                     Kokkos::Iterate::Left>>{{0, 0, 0, 0},
-                                                                                             {the_theta_extent,
-                                                                                              the_phi_extent,
-                                                                                              the_species_extent,
-                                                                                              the_species_extent}};
+                const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<5,
+                                                                         Kokkos::Iterate::Left,
+                                                                         Kokkos::Iterate::Left>>{{the_local_r_extent, 0, 0, 0, 0},
+                                                                                                 {the_r_extent,
+                                                                                                  the_theta_extent,
+                                                                                                  the_phi_extent,
+                                                                                                  the_species_extent,
+                                                                                                  the_species_extent}};
 
-            Kokkos::parallel_for("DoPrecomputeNu",
-                                 a_policy, the_kernel);
+                Kokkos::parallel_for("DoPrecomputeNu1",
+                                     a_policy, the_kernel);
+            }
         }
 
         void Operator::PrecomputeNu() {
