@@ -321,7 +321,7 @@ namespace koliop {
 //                     //         }
 //                     //     });
 
-//                     // NOTE that when factorizing Flo32 matrices, we may have
+//                     // NOTE: that when factorizing Flo32 matrices, we may have
 //                     // NANs because no pivoting is done.
 //                     Kokkos::Random_XorShift64_Pool<> the_random_pool(0xDEADBEEF);
 //                     Kokkos::fill_random(the_matrix_buffer, the_random_pool, 0.0, 1.0);
