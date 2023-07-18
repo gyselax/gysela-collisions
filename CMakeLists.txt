@@ -19,7 +19,7 @@ endif()
 
 option(koliop_ASSERT_ENABLED "Enable assertions. This enable/disable KOLIOP_ASSERT() but not C's assert()." ON)
 option(koliop_FENCE_ON_OPERATOR_EXIT "Fences before returning from an operator method." OFF)
-option(koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE "Should koliop assumes the input data can be directly processed or intermediate copies are required." ON)
+option(koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE "Should koliop assumes the input data can be read or else, intermediate copies are required." ON)
 
 ################################################################################
 ### Dependencies

@@ -39,14 +39,14 @@ namespace koliop {
             using MatrixKindType = Constant::MatrixKindType;
 
         public:
-            Najl(OrdinalType                                                     pSpecies_id,
-                 OrdinalType                                                     the_vpar_extent,
-                 OrdinalType                                                     the_species_extent,
-                 bool                                                            collision_interspecies,
-                 const Flo64*                                                    comb_mat,
-                 koliop::utility::View::InternalInputD1<const ComputeFloatType>& hat_As,
-                 koliop::utility::View::InternalInputD1<const ComputeFloatType>& hat_Zs,
-                 koliop::utility::View::InternalInputD1<const ComputeFloatType>& vparg);
+            Najl(OrdinalType                                          pSpecies_id,
+                 OrdinalType                                          the_vpar_extent,
+                 OrdinalType                                          the_species_extent,
+                 bool                                                 collision_interspecies,
+                 const Flo64*                                         comb_mat,
+                 koliop::utility::View::InternalInputL1<const Flo64>& hat_As,
+                 koliop::utility::View::InternalInputL1<const Flo64>& hat_Zs,
+                 koliop::utility::View::InternalInputL1<const Flo64>& vparg);
 
             void Compute(ExecutionSpaceType                                   an_execution_space,
                          OrdinalType                                          the_block_first_r,
@@ -68,10 +68,10 @@ namespace koliop {
             OrdinalType the_species_extent_;
             bool        collision_interspecies_;
 
-            koliop::utility::View::InternalInputD2<const ComputeFloatType> comb_mat_; // TODO(Etienne M): constant extent.
-            koliop::utility::View::InternalInputD1<const ComputeFloatType> hat_As_;
-            koliop::utility::View::InternalInputD1<const ComputeFloatType> hat_Zs_;
-            koliop::utility::View::InternalInputD1<const ComputeFloatType> vparg_;
+            koliop::utility::View::InternalInputL2<const Flo64> comb_mat_; // TODO(Etienne M): constant extent.
+            koliop::utility::View::InternalInputL1<const Flo64> hat_As_;
+            koliop::utility::View::InternalInputL1<const Flo64> hat_Zs_;
+            koliop::utility::View::InternalInputL1<const Flo64> vparg_;
 
             // Constant, internally computed values
 

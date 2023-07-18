@@ -32,9 +32,6 @@ namespace koliop {
 
         } // namespace
 
-        /// TODO(Etienne M): We precompute the species' Nu but in some cases, it
-        /// may be cheaper to just rematerialize it.
-        ///
         template <typename View5D>
         static inline void
         DoPrecomputeNu(const Operator& an_operator,
@@ -52,36 +49,100 @@ namespace koliop {
 
             const auto& ir_SOL_separatrix = an_operator.ir_SOL_separatrix_;
 
-            const auto the_kernel = KOKKOS_LAMBDA(auto itheta, auto iphi, auto ispeciesA, auto ispeciesB) {
-                // TODO(Etienne M): INDEX not coalesced. Flatten more ?
+            const OrdinalType the_local_r_extent = Kokkos::min(the_r_extent, ir_SOL_separatrix + 1);
 
-                const OrdinalType the_local_r_extent = Kokkos::min(the_r_extent, ir_SOL_separatrix + 1);
+            {
+                // TODO(Etienne M): Make sure the accesses are coalesced on GPU
+                // and sequential on CPU.
 
-                for(OrdinalType ir = 0; ir < the_local_r_extent; ++ir) {
+                const auto the_kernel = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi, auto ispeciesA, auto ispeciesB) {
                     nu_ab(ir, itheta, iphi, ispeciesA, ispeciesB) = DoComputeFrequencyNuab(nustar_coeff(ispeciesA, ispeciesB, ir),
                                                                                            hat_As(ispeciesA), hat_As(ispeciesB),
                                                                                            T_s(ir, itheta, iphi, ispeciesA),
                                                                                            n_s(ir, itheta, iphi, ispeciesB),
                                                                                            T_s(ir, itheta, iphi, ispeciesB));
-                }
+                };
 
-                for(OrdinalType ir = the_local_r_extent; ir < the_r_extent; ++ir) {
+                const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<5,
+                                                                         Kokkos::Iterate::Default,
+                                                                         Kokkos::Iterate::Default>>{{0, 0, 0, 0, 0},
+                                                                                                    {the_local_r_extent,
+                                                                                                     the_theta_extent,
+                                                                                                     the_phi_extent,
+                                                                                                     the_species_extent,
+                                                                                                     the_species_extent}};
+
+                Kokkos::parallel_for("DoPrecomputeNu0",
+                                     a_policy, the_kernel);
+            }
+
+            {
+                // NOTE: We must ensure that the DoPrecomputeNu0 kernel ended
+                // before DoPrecomputeNu1. Here, they are executed on the same
+                // execution space so this condition is always respected.
+                const auto the_kernel = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi, auto ispeciesA, auto ispeciesB) {
                     // Propagate the value at nu_ab(ir_SOL_separatrix_, itheta, iphi, ispeciesA, ispeciesB) or
                     // nu_ab(the_local_r_extent - 1, itheta, iphi, ispeciesA, ispeciesB)
                     nu_ab(ir, itheta, iphi, ispeciesA, ispeciesB) = nu_ab(ir_SOL_separatrix, itheta, iphi, ispeciesA, ispeciesB);
-                }
-            };
+                };
 
-            const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<4,
-                                                                     Kokkos::Iterate::Left,
-                                                                     Kokkos::Iterate::Left>>{{0, 0, 0, 0},
-                                                                                             {the_theta_extent,
-                                                                                              the_phi_extent,
-                                                                                              the_species_extent,
-                                                                                              the_species_extent}};
+                const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<5,
+                                                                         Kokkos::Iterate::Default,
+                                                                         Kokkos::Iterate::Default>>{{the_local_r_extent, 0, 0, 0, 0},
+                                                                                                    {the_r_extent,
+                                                                                                     the_theta_extent,
+                                                                                                     the_phi_extent,
+                                                                                                     the_species_extent,
+                                                                                                     the_species_extent}};
 
-            Kokkos::parallel_for("DoPrecomputeNu",
-                                 a_policy, the_kernel);
+                Kokkos::parallel_for("DoPrecomputeNu1",
+                                     a_policy, the_kernel);
+            }
+
+            // TODO(Etienne M): check if using a single kernel is faster:
+
+            // const auto the_kernel = KOKKOS_LAMBDA(const auto& a_team_handle) {
+
+            //     const OrdinalType the_team_index = a_team_handle.league_rank();
+
+            //     const OrdinalType itheta    = (the_team_index) % the_theta_extent;
+            //     const OrdinalType iphi      = (the_team_index / (the_theta_extent)) % the_phi_extent;
+            //     const OrdinalType ispeciesA = (the_team_index / (the_theta_extent * the_phi_extent)) % the_species_extent;
+            //     const OrdinalType ispeciesB = (the_team_index / (the_theta_extent * the_phi_extent * the_species_extent)) /* % the_species_extent */;
+
+            //     Kokkos::parallel_for(Kokkos::TeamThreadRange(a_team_handle,
+            //                                                  0, the_local_r_extent),
+            //                          [&](auto ir) {
+            //                              nu_ab(ir, itheta, iphi, ispeciesA, ispeciesB) = DoComputeFrequencyNuab(nustar_coeff(ispeciesA, ispeciesB, ir),
+            //                                                                                                     hat_As(ispeciesA), hat_As(ispeciesB),
+            //                                                                                                     T_s(ir, itheta, iphi, ispeciesA),
+            //                                                                                                     n_s(ir, itheta, iphi, ispeciesB),
+            //                                                                                                     T_s(ir, itheta, iphi, ispeciesB));
+            //                          });
+
+            //     // NOTE: We must ensure that the DoPrecomputeNu0 kernel ended
+            //     // before DoPrecomputeNu1. Here, they are executed on the same
+            //     // execution space so this condition is always respected.
+
+            //     // TODO(Etienne M): Should we barrier/fence ?
+            //     // a_team_handle.team_barrier();
+
+            //     Kokkos::parallel_for(Kokkos::TeamThreadRange(a_team_handle,
+            //                                                  the_local_r_extent, the_r_extent),
+            //                          [&](auto ir) {
+            //                              // Propagate the value at nu_ab(ir_SOL_separatrix, itheta, iphi, ispeciesA, ispeciesB) or
+            //                              // nu_ab(the_local_r_extent - 1, itheta, iphi, ispeciesA, ispeciesB)
+            //                              nu_ab(ir, itheta, iphi, ispeciesA, ispeciesB) = nu_ab(ir_SOL_separatrix, itheta, iphi, ispeciesA, ispeciesB);
+            //                          });
+            // };
+
+            // const auto the_team_count = the_theta_extent * the_phi_extent * the_species_extent * the_species_extent;
+
+            // // Due to the inherent Cuda/HIP thread block limit.
+            // KOLIOP_ASSERT(the_team_count <= std::numeric_limits<int>::max());
+
+            // const auto a_policy = Kokkos::TeamPolicy<Constant::DeviceExecutionSpaceType>{static_cast<int>(the_team_count),
+            //                                                                              Kokkos::AUTO};
         }
 
         void Operator::PrecomputeNu() {

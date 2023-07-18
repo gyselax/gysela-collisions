@@ -261,8 +261,8 @@ namespace koliop {
                                                        Constant::kBlockExtentR * the_block_local_index_theta +
                                                        the_block_local_index_r;
 
-                const OrdinalType the_batch_index         = the_flattened_index / Constant::BatchTraitsType::kBatchSize;
-                const OrdinalType the_batch_element_index = the_flattened_index % Constant::BatchTraitsType::kBatchSize;
+                const OrdinalType the_batch_element_index = (the_flattened_index) % Constant::BatchTraitsType::kBatchSize;
+                const OrdinalType the_batch_index         = (the_flattened_index / (Constant::BatchTraitsType::kBatchSize)) /* % Constant::kBatchCount */;
 
                 // NOTE: The memset(0) of the local_Nn is done in Najl::Compute.
                 auto local_N0 = Kokkos::subview(the_Najl,
@@ -390,20 +390,20 @@ namespace koliop {
                                  a_policy, the_kernel);
         }
 
-        Najl::Najl(OrdinalType                                                     pSpecies_id,
-                   OrdinalType                                                     the_vpar_extent,
-                   OrdinalType                                                     the_species_extent,
-                   bool                                                            collision_interspecies,
-                   const Flo64*                                                    comb_mat,
-                   koliop::utility::View::InternalInputD1<const ComputeFloatType>& hat_As,
-                   koliop::utility::View::InternalInputD1<const ComputeFloatType>& hat_Zs,
-                   koliop::utility::View::InternalInputD1<const ComputeFloatType>& vparg)
+        Najl::Najl(OrdinalType                                          pSpecies_id,
+                   OrdinalType                                          the_vpar_extent,
+                   OrdinalType                                          the_species_extent,
+                   bool                                                 collision_interspecies,
+                   const Flo64*                                         comb_mat,
+                   koliop::utility::View::InternalInputL1<const Flo64>& hat_As,
+                   koliop::utility::View::InternalInputL1<const Flo64>& hat_Zs,
+                   koliop::utility::View::InternalInputL1<const Flo64>& vparg)
             : pSpecies_id_{pSpecies_id}
             , the_vpar_extent_{the_vpar_extent}
             , the_species_extent_{the_species_extent}
             , collision_interspecies_{collision_interspecies}
 
-            , comb_mat_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL2<const Flo64>, koliop::utility::View::InternalInputD2>(comb_mat, "comb_mat_", 2 * Constant::kMaximumLaguerrePolynomialDegree, 2 * Constant::kMaximumLaguerrePolynomialDegree)}
+            , comb_mat_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL2<const Flo64>, koliop::utility::View::InternalInputL2>(comb_mat, "comb_mat_", 2 * Constant::kMaximumLaguerrePolynomialDegree, 2 * Constant::kMaximumLaguerrePolynomialDegree)}
             , hat_As_{hat_As}
             , hat_Zs_{hat_Zs}
             , vparg_{vparg}

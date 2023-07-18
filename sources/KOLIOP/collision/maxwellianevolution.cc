@@ -37,7 +37,7 @@ namespace koliop {
             // by hand.
 
             // NOTE: We use scratch memory to avoid overwriting the T_s.
-            using ScratchMemory = Kokkos::View<ComputeFloatType*, Kokkos::DefaultExecutionSpace::scratch_memory_space>;
+            using ScratchMemory = Kokkos::View<ComputeFloatType*, Constant::DeviceExecutionSpaceType::scratch_memory_space>;
 
             const uint64_t the_scratch_memory_bytes_per_thread = the_species_extent * sizeof(ComputeFloatType);
 
@@ -106,30 +106,30 @@ namespace koliop {
 
                 const auto the_team_index = a_team_handle.league_rank();
 
-                const auto iphi   = the_team_index / the_theta_extent;
-                const auto itheta = the_team_index % the_theta_extent;
+                const auto itheta = (the_team_index) % the_theta_extent;
+                const auto iphi   = (the_team_index / (the_theta_extent)) /* % the_phi_extent */;
 
                 // TODO(Etienne M): Should we use a_team_handle.team_barrier()?
                 ScratchMemory the_thread_scratch_memory{a_team_handle.thread_scratch(0),
                                                         the_scratch_memory_bytes_per_thread};
 
-                const auto a_policy = Kokkos::TeamThreadRange(a_team_handle,
-                                                              the_r_extent);
+                const auto an_intra_team_policy = Kokkos::TeamThreadRange(a_team_handle,
+                                                                          the_r_extent);
 
-                Kokkos::parallel_for(a_policy,
+                Kokkos::parallel_for(an_intra_team_policy,
                                      // Reference to the_kernel's member variable copy.
                                      [&](auto ir) {
                                          the_kernel_core(ir, itheta, iphi, the_thread_scratch_memory);
                                      });
             };
 
-            const uint64_t the_team_count = the_theta_extent * the_phi_extent;
+            const auto the_team_count = the_theta_extent * the_phi_extent;
 
-            // Due to the inherent cuda/HIP threadblock limit.
+            // Due to the inherent Cuda/HIP thread block limit.
             KOLIOP_ASSERT(the_team_count <= std::numeric_limits<int>::max());
 
-            auto a_policy = Kokkos::TeamPolicy<Kokkos::DefaultExecutionSpace>(the_team_count,
-                                                                              Kokkos::AUTO);
+            auto a_policy = Kokkos::TeamPolicy<Constant::DeviceExecutionSpaceType>{static_cast<int>(the_team_count),
+                                                                                   Kokkos::AUTO};
 
             a_policy.set_scratch_size(0,
                                       Kokkos::PerThread(ScratchMemory::shmem_size(the_scratch_memory_bytes_per_thread)));

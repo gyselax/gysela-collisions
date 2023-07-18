@@ -22,12 +22,12 @@ namespace koliop {
                 public:
                     using BatchTraitsType = BatchTraits;
 
-                    using ValueType = typename BatchTraitsType::ValueType;
+                    using value_type = typename BatchTraitsType::value_type;
 
                     using ExecutionSpaceType = typename BatchTraitsType::ExecutionSpaceType;
 
                 public:
-                    using ScalarType = Kokkos::View<ValueType** [kSmallBlockExtent][BatchTraitsType::kBatchSize],
+                    using ScalarType = Kokkos::View<value_type** [kSmallBlockExtent][BatchTraitsType::kBatchSize],
                                                     Kokkos::LayoutRight,
                                                     ExecutionSpaceType>;
 
@@ -35,7 +35,7 @@ namespace koliop {
                                                     Kokkos::LayoutRight,
                                                     ExecutionSpaceType>;
 
-                    using ConstScalarType = Kokkos::View<const ValueType** [kSmallBlockExtent][BatchTraitsType::kBatchSize],
+                    using ConstScalarType = Kokkos::View<const value_type** [kSmallBlockExtent][BatchTraitsType::kBatchSize],
                                                          Kokkos::LayoutRight,
                                                          ExecutionSpaceType>;
 
@@ -58,7 +58,7 @@ namespace koliop {
                 public:
                     using BatchTraitsType = BatchTraits;
 
-                    using ValueType = typename BatchTraitsType::ValueType;
+                    using value_type = typename BatchTraitsType::value_type;
 
                     using ExecutionSpaceType = typename BatchTraitsType::ExecutionSpaceType;
 
@@ -67,7 +67,7 @@ namespace koliop {
                     /// this is fixed to 3.
                     static inline constexpr OrdinalType kDiagonalCount = 3;
 
-                    using ScalarType = Kokkos::View<ValueType** [kDiagonalCount][kSmallBlockExtent][kSmallBlockExtent][BatchTraitsType::kBatchSize],
+                    using ScalarType = Kokkos::View<value_type** [kDiagonalCount][kSmallBlockExtent][kSmallBlockExtent][BatchTraitsType::kBatchSize],
                                                     Kokkos::LayoutRight,
                                                     ExecutionSpaceType>;
 
@@ -78,7 +78,7 @@ namespace koliop {
                                                     Kokkos::LayoutRight,
                                                     ExecutionSpaceType>;
 
-                    using ConstScalarType = Kokkos::View<const ValueType** [kDiagonalCount][kSmallBlockExtent][kSmallBlockExtent][BatchTraitsType::kBatchSize],
+                    using ConstScalarType = Kokkos::View<const value_type** [kDiagonalCount][kSmallBlockExtent][kSmallBlockExtent][BatchTraitsType::kBatchSize],
                                                          Kokkos::LayoutRight,
                                                          ExecutionSpaceType>;
 

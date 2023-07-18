@@ -30,7 +30,7 @@ namespace koliop {
         public:
             using BatchTraitsType = BatchTraits;
 
-            using ValueType = typename BatchTraitsType::ValueType;
+            using value_type = typename BatchTraitsType::value_type;
 
             using ExecutionSpaceType = typename BatchTraitsType::ExecutionSpaceType;
 
@@ -66,10 +66,10 @@ namespace koliop {
             /// by BatchedBlockTridiagonalByBlockTRF::Factorize().
             /// @param the_rhs In place resolution. the_rhs is overwritten.
             void Solve(ExecutionSpaceType an_execution_space,
-                       const ValueType*   the_A_matrix,
+                       const value_type*  the_A_matrix,
                        OrdinalType        the_A_matrix_extent,
                        OrdinalType        the_M_matrix_extent,
-                       ValueType*         the_rhs) const;
+                       value_type*        the_rhs) const;
 
         protected:
         };
@@ -83,10 +83,10 @@ namespace koliop {
                   OrdinalType kSmallBlockExtent>
         void BatchedBlockTridiagonalByBlockTRSV<BatchTraits,
                                                 kSmallBlockExtent>::Solve(ExecutionSpaceType an_execution_space,
-                                                                          const ValueType*   the_A_matrix,
+                                                                          const value_type*  the_A_matrix,
                                                                           OrdinalType        the_A_matrix_extent,
                                                                           OrdinalType        the_M_matrix_extent,
-                                                                          ValueType*         the_rhs) const {
+                                                                          value_type*        the_rhs) const {
 
             KOLIOP_ASSERT(the_A_matrix != nullptr);
             KOLIOP_ASSERT(the_rhs != nullptr);
@@ -177,12 +177,13 @@ namespace koliop {
 
                         B.assign_data(&the_matrix_batch_element(the_small_block_index, 1, 0, 0));
 
-                        TRSVLower::invoke(1.0, B, b); // Solve: B_lower * y = b, y is put into b
+                        TRSVLower::invoke(static_cast<value_type>(1.0), B, b); // Solve: B_lower * y = b, y is put into b
 
                         A_next.assign_data(&the_matrix_batch_element(the_small_block_index + 1, 0, 0, 0));
                         b_next.assign_data(&the_vector_batch_element(the_small_block_index + 1, 0));
 
-                        GEMV::invoke(-1.0, A_next, b, 1.0, b_next); // b_next = 1.0 * b_next + -1.0 * A_next * b
+                        GEMV::invoke(static_cast<value_type>(-1.0), A_next, b,
+                                     static_cast<value_type>(1.0), b_next); // b_next = 1.0 * b_next + -1.0 * A_next * b
 
                         // TODO(Etienne M): Do an assign_data for b or copy ? which is faster ?
                         b = b_next;
@@ -190,7 +191,7 @@ namespace koliop {
 
                     B.assign_data(&the_matrix_batch_element(kBigBlockExtent - 1, 1, 0, 0));
 
-                    TRSVLower::invoke(1.0, B, b);
+                    TRSVLower::invoke(static_cast<value_type>(1.0), B, b);
                 }
 
                 // Backward substitution
@@ -216,19 +217,20 @@ namespace koliop {
 
                         B.assign_data(&the_matrix_batch_element(the_small_block_index, 1, 0, 0));
 
-                        TRSVUpper::invoke(1.0, B, b); // Solve: B_upper * x = b, x is put into b
+                        TRSVUpper::invoke(static_cast<value_type>(1.0), B, b); // Solve: B_upper * x = b, x is put into b
 
                         C_next.assign_data(&the_matrix_batch_element(the_small_block_index - 1, 2, 0, 0));
                         b_next.assign_data(&the_vector_batch_element(the_small_block_index - 1, 0));
 
-                        GEMV::invoke(-1.0, C_next, b, 1.0, b_next); // b_next = 1.0 * b_next + -1.0 * C_next * b
+                        GEMV::invoke(static_cast<value_type>(-1.0), C_next, b,
+                                     static_cast<value_type>(1.0), b_next); // b_next = 1.0 * b_next + -1.0 * C_next * b
 
                         b = b_next;
                     }
 
                     B.assign_data(&the_matrix_batch_element(0, 1, 0, 0));
 
-                    TRSVUpper::invoke(1.0, B, b);
+                    TRSVUpper::invoke(static_cast<value_type>(1.0), B, b);
                 }
             };
 
@@ -254,17 +256,19 @@ namespace koliop {
 // namespace koliop {
 //     namespace blas {
 //         namespace detail {
-//             template <typename Factorizer,
+//             template <typename ExecutionSpaceType,
+//                       typename Factorizer,
 //                       typename Solver,
 //                       typename MV,
 //                       typename View6D,
 //                       typename View4D>
-//             void DoResidualTest(Factorizer&& the_factorizer,
-//                                 Solver&&     the_solver,
-//                                 MV&&         the_mv,
-//                                 View6D&&     the_matrix_buffer,
-//                                 View4D&&     the_original_x_buffer,
-//                                 View4D&&     the_computed_x_buffer) {
+//             void DoResidualTest(ExecutionSpaceType an_execution_space,
+//                                 Factorizer&&       the_factorizer,
+//                                 Solver&&           the_solver,
+//                                 MV&&               the_mv,
+//                                 View6D&&           the_matrix_buffer,
+//                                 View4D&&           the_original_x_buffer,
+//                                 View4D&&           the_computed_x_buffer) {
 
 //                 using value_type = typename std::remove_reference_t<View6D>::value_type;
 
@@ -317,6 +321,8 @@ namespace koliop {
 //                     //         }
 //                     //     });
 
+//                     // NOTE: that when factorizing Flo32 matrices, we may have
+//                     // NANs because no pivoting is done.
 //                     Kokkos::Random_XorShift64_Pool<> the_random_pool(0xDEADBEEF);
 //                     Kokkos::fill_random(the_matrix_buffer, the_random_pool, 0.0, 1.0);
 //                 };
@@ -325,7 +331,8 @@ namespace koliop {
 
 //                 // - the_matrix_buffer * the_original_x_buffer = the_computed_x_buffer
 
-//                 the_mv.Apply(1.0,
+//                 the_mv.Apply(an_execution_space,
+//                              1.0,
 //                              the_matrix_buffer,
 //                              the_matrix_buffer.extent(0) * the_matrix_buffer.extent(5), the_matrix_buffer.extent(1),
 //                              the_original_x_buffer.data(),
@@ -337,10 +344,12 @@ namespace koliop {
 
 //                 // - Solver the_matrix_buffer * y = the_computed_x_buffer, y put into the_computed_x_buffer
 
-//                 the_factorizer.Factorize(the_matrix_buffer.data(),
+//                 the_factorizer.Factorize(an_execution_space,
+//                                          the_matrix_buffer.data(),
 //                                          the_matrix_buffer.extent(0) * the_matrix_buffer.extent(5), the_matrix_buffer.extent(1));
 
-//                 the_solver.Solve(the_matrix_buffer.data(),
+//                 the_solver.Solve(an_execution_space,
+//                                  the_matrix_buffer.data(),
 //                                  the_matrix_buffer.extent(0) * the_matrix_buffer.extent(5), the_matrix_buffer.extent(1),
 //                                  the_computed_x_buffer.data());
 
@@ -349,32 +358,36 @@ namespace koliop {
 //                 DoFillMatrix();
 
 //                 // b = b - Ax, b must equals zero.
-//                 the_mv.Apply(1.0,
+//                 the_mv.Apply(an_execution_space,
+//                              1.0,
 //                              the_matrix_buffer,
 //                              the_matrix_buffer.extent(0) * the_matrix_buffer.extent(5), the_matrix_buffer.extent(1),
 //                              the_computed_x_buffer.data(),
 //                              -1.0,
 //                              the_original_x_buffer.data());
 
-//                 const auto a_vector_policy = Kokkos::MDRangePolicy<Kokkos::Rank<3,
-//                                                                                 Kokkos::Iterate::Left,
-//                                                                                 Kokkos::Iterate::Left>>{{0, 0, 0},
-//                                                                                                         {the_matrix_buffer.extent(0),
-//                                                                                                          the_matrix_buffer.extent(1),
-//                                                                                                          the_matrix_buffer.extent(3)}};
+//                 const auto a_vector_policy = Kokkos::MDRangePolicy<Kokkos::Rank<4>>{{0, 0, 0, 0},
+//                                                                                     {the_matrix_buffer.extent(0),
+//                                                                                      the_matrix_buffer.extent(1),
+//                                                                                      the_matrix_buffer.extent(3),
+//                                                                                      the_matrix_buffer.extent(5)}};
 
 //                 value_type the_residual_sum;
 
 //                 Kokkos::parallel_reduce(
 //                     "DoResidualTest::ResidualComputation",
 //                     a_vector_policy,
-//                     KOKKOS_LAMBDA(const int& a, const int& b, const int& c,
+//                     KOKKOS_LAMBDA(const int& a, const int& b, const int& c, const int& d,
 //                                   // NOTE: we need const int& here, that weird..
 //                                   value_type& the_sum) {
 //                         // NOTE: There is no guarantee that we have at least two
 //                         // value per SIMD Vector
-//                         the_sum += the_original_x_buffer(a, b, c, 1) *
-//                                    the_original_x_buffer(a, b, c, 1);
+//                         if(std::isnan(the_original_x_buffer(a, b, c, d))) {
+//                             std::cout << a << " " << b << " " << c << " " << d << "\n";
+//                         }
+
+//                         the_sum += the_original_x_buffer(a, b, c, d) *
+//                                    the_original_x_buffer(a, b, c, d);
 //                     },
 //                     the_residual_sum);
 

@@ -1,5 +1,8 @@
 // SPDX-License-Identifier: MIT
 
+#include "KOLIOP/blas/mv.h"
+#include "KOLIOP/blas/trf.h"
+#include "KOLIOP/blas/trsv.h"
 #include "KOLIOP/collision/matrixsampler.h"
 #include "KOLIOP/collision/operator.h"
 #include "KOLIOP/portability/cmath.h"
@@ -106,8 +109,8 @@ namespace koliop {
                                                        Constant::kBlockExtentR * the_block_local_index_theta +
                                                        the_block_local_index_r;
 
-                const OrdinalType the_batch_index         = the_flattened_index / Constant::BatchTraitsType::kBatchSize;
-                const OrdinalType the_batch_element_index = the_flattened_index % Constant::BatchTraitsType::kBatchSize;
+                const OrdinalType the_batch_element_index = (the_flattened_index) % Constant::BatchTraitsType::kBatchSize;
+                const OrdinalType the_batch_index         = (the_flattened_index / (Constant::BatchTraitsType::kBatchSize)) /* % Constant::kBatchCount */;
 
                 if(mask_coll(ir - the_block_first_r,
                              itheta - the_block_first_theta)) {
@@ -230,8 +233,8 @@ namespace koliop {
                                                        Constant::kBlockExtentR * the_block_local_index_theta +
                                                        the_block_local_index_r;
 
-                const OrdinalType the_batch_index         = the_flattened_index / Constant::BatchTraitsType::kBatchSize;
-                const OrdinalType the_batch_element_index = the_flattened_index % Constant::BatchTraitsType::kBatchSize;
+                const OrdinalType the_batch_element_index = (the_flattened_index) % Constant::BatchTraitsType::kBatchSize;
+                const OrdinalType the_batch_index         = (the_flattened_index / (Constant::BatchTraitsType::kBatchSize)) /* % Constant::kBatchCount */;
 
                 const ComputeFloatType vpar_tmp       = vparg(ivpar);
                 const ComputeFloatType Ta             = T_s(ir, itheta, iphi, pSpecies_id);
@@ -309,8 +312,8 @@ namespace koliop {
                                                        Constant::kBlockExtentR * the_block_local_index_theta +
                                                        the_block_local_index_r;
 
-                const OrdinalType the_batch_index         = the_flattened_index / Constant::BatchTraitsType::kBatchSize;
-                const OrdinalType the_batch_element_index = the_flattened_index % Constant::BatchTraitsType::kBatchSize;
+                const OrdinalType the_batch_element_index = (the_flattened_index) % Constant::BatchTraitsType::kBatchSize;
+                const OrdinalType the_batch_index         = (the_flattened_index / (Constant::BatchTraitsType::kBatchSize)) /* % Constant::kBatchCount */;
 
                 const ComputeFloatType BoT = B_norm(ir, itheta) / T_s(ir, itheta, iphi, pSpecies_id);
 
@@ -364,12 +367,9 @@ namespace koliop {
             const auto& T_s   = an_operator.T_s_;
             const auto& nu_ab = an_operator.nu_ab_;
 
-            const auto the_najl_provider = an_operator.the_najl_provider_;
-            const auto the_factorizer    = an_operator.the_factorizer_;
-            const auto the_solver        = an_operator.the_solver_;
-            const auto the_mv            = an_operator.the_mv_;
+            const auto& the_najl_provider = an_operator.the_najl_provider_;
 
-            const auto the_stream_pool = an_operator.the_stream_pool_;
+            const auto& the_stream_pool = an_operator.the_stream_pool_;
 
             // NOTE: If you have an issue with these assertions, checkout the
             // constant.h file and tune Constant::kBlockExtent[R|Theta|Phi].
@@ -407,20 +407,31 @@ namespace koliop {
                                                                                      "the_rhs"),
                                                                   static_cast<std::size_t>(Constant::kBatchCount), static_cast<std::size_t>(the_vpar_extent)};
 
+            koliop::blas::BatchedBlockTridiagonalByBlockTRF<Constant::BatchTraitsType,
+                                                            Constant::kMaximumLaguerrePolynomialDegree>
+                the_factorizer;
+            koliop::blas::BatchedBlockTridiagonalByBlockTRSV<Constant::BatchTraitsType,
+                                                             Constant::kMaximumLaguerrePolynomialDegree>
+                the_solver;
+            koliop::blas::BatchedMatrixSamplingBlockTridiagonalByBlockMV<Constant::BatchTraitsType,
+                                                                         Constant::kMaximumLaguerrePolynomialDegree>
+                the_mv;
+
             // // NOTE: For debug purposes
-            // koliop::blas::detail::DoResidualTest(the_factorizer, the_solver, the_mv,
+            // koliop::blas::detail::DoResidualTest(the_stream_pool[0],
+            //                                      the_factorizer, the_solver, the_mv,
             //                                      the_matrix,
             //                                      the_alpha_coefficients, the_rhs);
 
             // Samples I - T*dt/4
             const MatrixSampler the_LHS_matrix_sampler{the_Najl,
                                                        coeff_intdvpar,
-                                                       -dt / 4.0};
+                                                       static_cast<ComputeFloatType>(-dt / 4.0)};
 
             // Samples I + T*dt/4
             const MatrixSampler the_RHS_matrix_sampler{the_Najl,
                                                        coeff_intdvpar,
-                                                       dt / 4.0};
+                                                       static_cast<ComputeFloatType>(dt / 4.0)};
 
             // TODO(Etienne M): On GPU, should we just scale the block size ?
             // TODO(Etienne M): We use mask to avoid some computation, but
