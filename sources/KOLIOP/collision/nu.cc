@@ -123,9 +123,7 @@ namespace koliop {
             //     // NOTE: We must ensure that the DoPrecomputeNu0 kernel ended
             //     // before DoPrecomputeNu1. Here, they are executed on the same
             //     // execution space so this condition is always respected.
-
-            //     // TODO(Etienne M): Should we barrier/fence ?
-            //     // a_team_handle.team_barrier();
+            //     a_team_handle.team_barrier();
 
             //     Kokkos::parallel_for(Kokkos::TeamThreadRange(a_team_handle,
             //                                                  the_local_r_extent, the_r_extent),

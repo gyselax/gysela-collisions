@@ -55,6 +55,10 @@ namespace koliop {
                 the_na_reducer.init(the_na_reducer.reference());
                 the_vpara_reducer.init(the_vpara_reducer.reference());
 
+                // TODO(Etienne M): Is parallel_for + TeamThreadMDRange +
+                // explicit the_na_reducer followed by team_reduce, a valid
+                // semantic.
+
                 Kokkos::parallel_for(
                     an_intra_team_policy,
                     [&](auto imu, auto ivpar) {
@@ -72,14 +76,8 @@ namespace koliop {
                         f5d_s(imu, ivpar, ir, itheta, iphi, ispecies) = f5d_s_value;
                     });
 
-                // TODO(Etienne M): Should we barrier/fence ?
-                // a_team_handle.team_barrier();
-
                 a_team_handle.team_reduce(the_na_reducer);
                 a_team_handle.team_reduce(the_vpara_reducer);
-
-                // TODO(Etienne M): Should we barrier/fence ?
-                // a_team_handle.team_barrier();
 
                 // NOTE: This should be a no-op.
                 na = the_na_reducer.reference();
@@ -108,13 +106,7 @@ namespace koliop {
                                                 ftmp);
                     });
 
-                // TODO(Etienne M): Should we barrier/fence ?
-                // a_team_handle.team_barrier();
-
                 a_team_handle.team_reduce(the_Ta_reducer);
-
-                // TODO(Etienne M): Should we barrier/fence ?
-                // a_team_handle.team_barrier();
 
                 Kokkos::single(
                     Kokkos::PerTeam(a_team_handle),

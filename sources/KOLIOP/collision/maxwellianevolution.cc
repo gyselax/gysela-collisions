@@ -42,88 +42,84 @@ namespace koliop {
             const uint64_t the_scratch_memory_bytes_per_thread = the_species_extent * sizeof(ComputeFloatType);
 
             const auto the_kernel = KOKKOS_LAMBDA(const auto& a_team_handle) {
-                // Reference to the_kernel's member variable copy.
-                const auto the_kernel_core = [&](auto ir, auto itheta, auto iphi, auto& Ta_tmp) {
-                    // NOTE: Iterating on species leads to large strides in
-                    // memory access. This is mitigated on GPU but painful on
-                    // CPU. This behavior done to avoid copying the whole Ts_.
-                    // TODO(Etienne M): INDEX not coalesced. Flatten more ?
 
-                    for(OrdinalType ispeciesA = 0; ispeciesA < the_species_extent; ++ispeciesA) {
-                        const ComputeFloatType hat_Aa = hat_As(ispeciesA);
-                        const ComputeFloatType Vpara  = U_par_s(ir, itheta, iphi, ispeciesA);
-                        const ComputeFloatType Ta     = T_s(ir, itheta, iphi, ispeciesA);
+                const OrdinalType the_team_index = a_team_handle.league_rank();
 
-                        ComputeFloatType Ta_new = Ta;
+                const OrdinalType ir     = (the_team_index) % the_r_extent;
+                const OrdinalType itheta = (the_team_index / (the_r_extent)) % the_theta_extent;
+                const OrdinalType iphi   = (the_team_index / (the_r_extent * the_theta_extent)) /* % the_phi_extent */;
 
-                        // TODO(Etienne M): Split into two loops to avoid the if ?
+                // TODO(Etienne M): Should we use a_team_handle.team_barrier() ?
+                ScratchMemory Ta_tmp{a_team_handle.thread_scratch(0),
+                                     the_scratch_memory_bytes_per_thread};
 
-                        for(OrdinalType ispeciesB = 0; ispeciesB < the_species_extent; ++ispeciesB) {
-                            if(ispeciesA == ispeciesB) {
-                                continue;
-                            }
+                // NOTE: Iterating on species leads to large strides in
+                // memory access.
 
-                            const ComputeFloatType hat_Ab = hat_As(ispeciesB);
-                            const ComputeFloatType Vparb  = U_par_s(ir, itheta, iphi, ispeciesB);
-                            const ComputeFloatType Tb     = T_s(ir, itheta, iphi, ispeciesB);
+                for(OrdinalType ispeciesA = 0; ispeciesA < the_species_extent; ++ispeciesA) {
+                    const ComputeFloatType hat_Aa = hat_As(ispeciesA);
+                    const ComputeFloatType Vpara  = U_par_s(ir, itheta, iphi, ispeciesA);
+                    const ComputeFloatType Ta     = T_s(ir, itheta, iphi, ispeciesA);
 
-                            const ComputeFloatType nu = nu_ab(ir, itheta, iphi, ispeciesA, ispeciesB);
+                    ComputeFloatType Ta_new = Ta;
 
-                            Ta_new += half_dt * nu * (2.0 * hat_Aa * (Tb - Ta) / (hat_Aa + hat_Ab) + (2.0 / 3.0) * Vpara * (Vpara - Kokkos::sqrt(hat_Aa / hat_Ab) * Vparb));
+                    // TODO(Etienne M): Split into two loops to avoid the if ?
+
+                    for(OrdinalType ispeciesB = 0; ispeciesB < the_species_extent; ++ispeciesB) {
+                        if(ispeciesA == ispeciesB) {
+                            continue;
                         }
 
-                        // We can not overwrite the T_s until all the new_T_s
-                        // are computed.
-                        Ta_tmp(ispeciesA) = Ta_new;
+                        const ComputeFloatType hat_Ab = hat_As(ispeciesB);
+                        const ComputeFloatType Vparb  = U_par_s(ir, itheta, iphi, ispeciesB);
+                        const ComputeFloatType Tb     = T_s(ir, itheta, iphi, ispeciesB);
 
-                        const ComputeFloatType na = n_s(ir, itheta, iphi, ispeciesA);
+                        const ComputeFloatType nu = nu_ab(ir, itheta, iphi, ispeciesA, ispeciesB);
 
-                        const ComputeFloatType coeff_old = na / (koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta *
-                                                                 Kokkos::sqrt(koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta));
-                        const ComputeFloatType coeff_new = na / (koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta_new *
-                                                                 Kokkos::sqrt(koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta_new));
+                        Ta_new += half_dt * nu * (2.0 * hat_Aa * (Tb - Ta) / (hat_Aa + hat_Ab) + (2.0 / 3.0) * Vpara * (Vpara - Kokkos::sqrt(hat_Aa / hat_Ab) * Vparb));
+                    }
 
-                        const ComputeFloatType Bij = B_norm(ir, itheta);
+                    // We can not overwrite the T_s until all the new
+                    // T_s are computed.
+                    Ta_tmp(ispeciesA) = Ta_new;
 
-                        const ComputeFloatType bot_old = Bij / Ta;
-                        const ComputeFloatType bot_new = Bij / Ta_new;
+                    const ComputeFloatType na = n_s(ir, itheta, iphi, ispeciesA);
 
-                        for(OrdinalType ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
+                    const ComputeFloatType coeff_old = na / (koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta *
+                                                             Kokkos::sqrt(koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta));
+                    const ComputeFloatType coeff_new = na / (koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta_new *
+                                                             Kokkos::sqrt(koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta_new));
+
+                    const ComputeFloatType Bij = B_norm(ir, itheta);
+
+                    const ComputeFloatType bot_old = Bij / Ta;
+                    const ComputeFloatType bot_new = Bij / Ta_new;
+
+                    Kokkos::parallel_for(
+                        Kokkos::TeamThreadMDRange<Kokkos::Rank<2, Kokkos::Iterate::Default, Kokkos::Iterate::Default>,
+                                                  std::remove_reference_t<decltype(a_team_handle)>>(a_team_handle,
+                                                                                                    the_mu_extent, the_vpar_extent),
+                        [&](auto imu, auto ivpar) {
                             const ComputeFloatType vp2_old = (vparg(ivpar) - Vpara) * (vparg(ivpar) - Vpara) / (2.0 * Ta);
                             const ComputeFloatType vp2_new = (vparg(ivpar) - Vpara) * (vparg(ivpar) - Vpara) / (2.0 * Ta_new);
 
-                            for(OrdinalType imu = 0; imu < the_mu_extent; ++imu) {
-                                f5d_s(imu, ivpar, ir, itheta, iphi, ispeciesA) += coeff_new * Kokkos::exp(-bot_new * mug(imu) - vp2_new) -
-                                                                                  coeff_old * Kokkos::exp(-bot_old * mug(imu) - vp2_old);
-                            }
+                            f5d_s(imu, ivpar, ir, itheta, iphi, ispeciesA) += coeff_new * Kokkos::exp(-bot_new * mug(imu) - vp2_new) -
+                                                                              coeff_old * Kokkos::exp(-bot_old * mug(imu) - vp2_old);
+                        });
+                }
+
+                a_team_handle.team_barrier();
+
+                Kokkos::single(
+                    Kokkos::PerTeam(a_team_handle),
+                    [&]() {
+                        for(OrdinalType ispeciesA = 0; ispeciesA < the_species_extent; ++ispeciesA) {
+                            T_s(ir, itheta, iphi, ispeciesA) = Ta_tmp(ispeciesA);
                         }
-                    }
-
-                    for(OrdinalType ispeciesA = 0; ispeciesA < the_species_extent; ++ispeciesA) {
-                        T_s(ir, itheta, iphi, ispeciesA) = Ta_tmp(ispeciesA);
-                    }
-                };
-
-                const auto the_team_index = a_team_handle.league_rank();
-
-                const auto itheta = (the_team_index) % the_theta_extent;
-                const auto iphi   = (the_team_index / (the_theta_extent)) /* % the_phi_extent */;
-
-                // TODO(Etienne M): Should we use a_team_handle.team_barrier()?
-                ScratchMemory the_thread_scratch_memory{a_team_handle.thread_scratch(0),
-                                                        the_scratch_memory_bytes_per_thread};
-
-                const auto an_intra_team_policy = Kokkos::TeamThreadRange(a_team_handle,
-                                                                          the_r_extent);
-
-                Kokkos::parallel_for(an_intra_team_policy,
-                                     // Reference to the_kernel's member variable copy.
-                                     [&](auto ir) {
-                                         the_kernel_core(ir, itheta, iphi, the_thread_scratch_memory);
-                                     });
+                    });
             };
 
-            const auto the_team_count = the_theta_extent * the_phi_extent;
+            const auto the_team_count = the_r_extent * the_theta_extent * the_phi_extent;
 
             // Due to the inherent Cuda/HIP thread block limit.
             KOLIOP_ASSERT(the_team_count <= std::numeric_limits<int>::max());
