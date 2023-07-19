@@ -31,6 +31,9 @@ namespace koliop {
             const auto& U_par_s        = an_operator.U_par_s_;
             const auto& T_s            = an_operator.T_s_;
 
+            // TODO(Etienne M): Make sure the accesses are coalesced on GPU
+            // and sequential on CPU.
+
             const auto the_kernel = KOKKOS_LAMBDA(const auto& a_team_handle) {
 
                 const OrdinalType the_team_index = a_team_handle.league_rank();
@@ -95,8 +98,13 @@ namespace koliop {
             // Due to the inherent Cuda/HIP thread block limit.
             KOLIOP_ASSERT(the_team_count <= std::numeric_limits<int>::max());
 
+            // TODO(Etienne M): TEAM hardcoded size, check for auto tuning
+            // opportunities.
             const auto a_policy = Kokkos::TeamPolicy<Constant::DeviceExecutionSpaceType>{static_cast<int>(the_team_count),
-                                                                                         Kokkos::AUTO};
+                                                                                         // 128, 256 works fine too, at
+                                                                                         // ~10-20 % slower speed on
+                                                                                         // MI250X
+                                                                                         64};
 
             Kokkos::parallel_for("DoComputeQparOnNT",
                                  a_policy, the_kernel);

@@ -32,14 +32,13 @@ namespace koliop {
 
             const ComputeFloatType half_dt = dt / 2.0;
 
-            // TODO(Etienne M): I wish we had MDRange with scratch memory.
-            // Instead of having to use a TeamPolicy and computing MDRange index
-            // by hand.
-
             // NOTE: We use scratch memory to avoid overwriting the T_s.
             using ScratchMemory = Kokkos::View<ComputeFloatType*, Constant::DeviceExecutionSpaceType::scratch_memory_space>;
 
             const uint64_t the_scratch_memory_bytes_per_thread = the_species_extent * sizeof(ComputeFloatType);
+
+            // TODO(Etienne M): Make sure the accesses are coalesced on GPU
+            // and sequential on CPU.
 
             const auto the_kernel = KOKKOS_LAMBDA(const auto& a_team_handle) {
 
@@ -124,8 +123,10 @@ namespace koliop {
             // Due to the inherent Cuda/HIP thread block limit.
             KOLIOP_ASSERT(the_team_count <= std::numeric_limits<int>::max());
 
+            // TODO(Etienne M): TEAM hardcoded size, check for auto tuning
+            // opportunities.
             auto a_policy = Kokkos::TeamPolicy<Constant::DeviceExecutionSpaceType>{static_cast<int>(the_team_count),
-                                                                                   Kokkos::AUTO};
+                                                                                   64};
 
             a_policy.set_scratch_size(0,
                                       Kokkos::PerThread(ScratchMemory::shmem_size(the_scratch_memory_bytes_per_thread)));
