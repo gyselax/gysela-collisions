@@ -26,10 +26,10 @@ set(koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE OFF)
 
 set(koliop_FLAGS_BASE -Wall -Wextra -Wpedantic -Wcast-align -Wctor-dtor-privacy -Wdouble-promotion -Wformat=2 -Winit-self -Woverloaded-virtual -Wredundant-decls -Wsign-promo -Wstrict-aliasing -Wdisabled-optimization -Wsuggest-override -Wswitch-default -Wtautological-compare -Wpacked -Wunreachable-code -Wcast-qual -Wold-style-cast -Wswitch-enum -Wundef) # -Wconversion -Wmissing-include-dirs
 
-set(koliop_FLAGS_DEBUG           -Og -g -ggdb -fno-omit-frame-pointer -fno-optimize-sibling-calls)
+set(koliop_FLAGS_DEBUG           -g -Og -ggdb -fno-omit-frame-pointer -fno-optimize-sibling-calls)
 set(koliop_FLAGS_MINSIZEREL      -Os)
-set(koliop_FLAGS_RELEASE         -O3 -mllvm -amdgpu-early-inline-all=true -g)
-set(koliop_FLAGS_RELWITHDEBINFO  -O3 -mllvm -amdgpu-early-inline-all=true -g -fno-omit-frame-pointer -fno-optimize-sibling-calls)
+set(koliop_FLAGS_RELEASE         -g -O3 -mllvm -amdgpu-early-inline-all=true)
+set(koliop_FLAGS_RELWITHDEBINFO  -g -O3 -mllvm -amdgpu-early-inline-all=true -fno-omit-frame-pointer -fno-optimize-sibling-calls)
 
 set(koliop_LINKER_FLAGS_DEBUG          ${koliop_FLAGS_DEBUG})
 set(koliop_LINKER_FLAGS_MINSIZEREL     ${koliop_FLAGS_MINSIZEREL})

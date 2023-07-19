@@ -31,12 +31,14 @@ namespace koliop {
             const auto& U_par_s        = an_operator.U_par_s_;
             const auto& T_s            = an_operator.T_s_;
 
-            const auto the_kernel = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi, auto ispecies) {
-                // TODO(Etienne M): Should we flatten even more the loops ?
-                // Potentially computing/loading redundant values (Bij, na etc.)
-                // but extracting more parallelisms. The thing is that ivpar and
-                // imu tends to be larger than ir, itheta or iphi.
-                // TODO(Etienne M): INDEX not coalesced. Flatten more ?
+            const auto the_kernel = KOKKOS_LAMBDA(const auto& a_team_handle) {
+
+                const OrdinalType the_team_index = a_team_handle.league_rank();
+
+                const OrdinalType ir       = (the_team_index) % the_r_extent;
+                const OrdinalType itheta   = (the_team_index / (the_r_extent)) % the_theta_extent;
+                const OrdinalType iphi     = (the_team_index / (the_r_extent * the_theta_extent)) % the_phi_extent;
+                const OrdinalType ispecies = (the_team_index / (the_r_extent * the_theta_extent * the_phi_extent)) /* % the_species_extent */;
 
                 const ComputeFloatType Bij   = B_norm(ir, itheta);
                 const ComputeFloatType na    = n_s(ir, itheta, iphi, ispecies);
@@ -45,40 +47,56 @@ namespace koliop {
                 // TODO(Etienne M): SIMPLIFY as std::pow(koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta, -3 / 2);
                 const ComputeFloatType coeff = 1.0 / (koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta * Kokkos::sqrt(koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta));
 
-                ComputeFloatType q_par_on_nT_s_reduction = 0.0;
+                ComputeFloatType q_par_on_nT_s_reduction;
 
-                for(OrdinalType ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
-                    const ComputeFloatType jac = koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi *
-                                                 Bstar_s(ivpar, ir, itheta, ispecies);
+                Kokkos::Sum<ComputeFloatType> the_q_par_on_nT_s_reducer{q_par_on_nT_s_reduction};
 
-                    const ComputeFloatType vparg_minus_vpara         = vparg(ivpar) - Vpara;
-                    const ComputeFloatType vparg_minus_vpara_squared = vparg_minus_vpara * vparg_minus_vpara;
-                    const ComputeFloatType vp2                       = vparg_minus_vpara_squared / (2.0 * Ta);
+                the_q_par_on_nT_s_reducer.init(the_q_par_on_nT_s_reducer.reference());
 
-                    for(OrdinalType imu = 0; imu < the_mu_extent; ++imu) {
+                // TODO(Etienne M): Is parallel_for + TeamThreadMDRange +
+                // explicit the_q_par_on_nT_s_reducer followed by team_reduce, a
+                // valid semantic.
+
+                Kokkos::parallel_for(
+                    Kokkos::TeamThreadMDRange<Kokkos::Rank<2, Kokkos::Iterate::Default, Kokkos::Iterate::Default>,
+                                              std::remove_reference_t<decltype(a_team_handle)>>(a_team_handle,
+                                                                                                the_mu_extent, the_vpar_extent),
+                    [&](auto imu, auto ivpar) {
+                        const ComputeFloatType jac = koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi *
+                                                     Bstar_s(ivpar, ir, itheta, ispecies);
+
+                        const ComputeFloatType vparg_minus_vpara         = vparg(ivpar) - Vpara;
+                        const ComputeFloatType vparg_minus_vpara_squared = vparg_minus_vpara * vparg_minus_vpara;
+                        const ComputeFloatType vp2                       = vparg_minus_vpara_squared / (2.0 * Ta);
+
                         const ComputeFloatType u_tmp   = mug(imu) * Bij / Ta;
                         const ComputeFloatType FMa_tmp = na * Kokkos::exp(-u_tmp - vp2) * coeff;
                         const ComputeFloatType v2      = 2.0 * mug(imu) * Bij + vparg_minus_vpara_squared;
-                        q_par_on_nT_s_reduction += 0.5 *
-                                                   jac *
-                                                   coeff_intdmu(imu) *
-                                                   coeff_intdvpar(ivpar) *
-                                                   vparg_minus_vpara *
-                                                   v2 *
-                                                   (f5d_s(imu, ivpar, ir, itheta, iphi, ispecies) - FMa_tmp);
-                    }
-                }
 
-                q_par_on_nT_s(ir, itheta, iphi, ispecies) = q_par_on_nT_s_reduction / (na * Ta);
+                        the_q_par_on_nT_s_reducer.join(the_q_par_on_nT_s_reducer.reference(),
+                                                       0.5 * jac * coeff_intdmu(imu) * coeff_intdvpar(ivpar) * vparg_minus_vpara * v2 *
+                                                           (f5d_s(imu, ivpar, ir, itheta, iphi, ispecies) - FMa_tmp));
+                    });
+
+                a_team_handle.team_reduce(the_q_par_on_nT_s_reducer);
+
+                Kokkos::single(
+                    Kokkos::PerTeam(a_team_handle),
+                    [&]() {
+                        // NOTE: This should be a no-op.
+                        q_par_on_nT_s_reduction = the_q_par_on_nT_s_reducer.reference();
+
+                        q_par_on_nT_s(ir, itheta, iphi, ispecies) = q_par_on_nT_s_reduction / (na * Ta);
+                    });
             };
 
-            const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<4,
-                                                                     Kokkos::Iterate::Left,
-                                                                     Kokkos::Iterate::Left>>{{0, 0, 0, 0},
-                                                                                             {the_r_extent,
-                                                                                              the_theta_extent,
-                                                                                              the_phi_extent,
-                                                                                              the_species_extent}};
+            const auto the_team_count = the_r_extent * the_theta_extent * the_phi_extent * the_species_extent;
+
+            // Due to the inherent Cuda/HIP thread block limit.
+            KOLIOP_ASSERT(the_team_count <= std::numeric_limits<int>::max());
+
+            const auto a_policy = Kokkos::TeamPolicy<Constant::DeviceExecutionSpaceType>{static_cast<int>(the_team_count),
+                                                                                         Kokkos::AUTO};
 
             Kokkos::parallel_for("DoComputeQparOnNT",
                                  a_policy, the_kernel);
