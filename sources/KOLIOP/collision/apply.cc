@@ -95,9 +95,15 @@ namespace koliop {
 
             const auto& pSpecies_id = an_operator.pSpecies_id_;
 
+            // TODO(Etienne M): Make sure the accesses are coalesced on GPU
+            // and sequential on CPU.
+            // Using an MDRange policy and taking into account the
+            // the_batch_element_index, should lead to very decent accesses.
+            // TODO(Etienne M): Maybe we could get better performance by
+            // replacing the MDRange policy with a TeamPolicy and our own
+            // indices computation.
+
             const auto the_kernel = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi) {
-                // TODO(Etienne M): INDEX not coalesced. Flatten more ?
-                // TODO(Etienne M): Expensive DoComputeLaguerrePol call.
 
                 // NOTE: kBlockExtentXXX are constant, the compiler can replace
                 // the modulo with faster instructions.
@@ -120,7 +126,14 @@ namespace koliop {
                         for(OrdinalType ipol = 0; ipol < Constant::kMaximumLaguerrePolynomialDegree; ++ipol) {
                             the_rhs(the_batch_index, ivpar, ipol, the_batch_element_index) = 0.0;
                             for(OrdinalType imu = 0; imu < the_mu_extent; ++imu) {
-                                const ComputeFloatType muBoT     = mug(imu) * BoT;
+                                const ComputeFloatType muBoT = mug(imu) * BoT;
+
+                                // TODO(Etienne M): Expensive
+                                // DoComputeLaguerrePol call.
+                                // NOTE: This is can be mitigated with
+                                // unrolling. Also, on GPUs, we should not get
+                                // mich thread divergence except if mask_coll
+                                // has a *wild* pattern.
                                 const ComputeFloatType coeff_tot = DoComputeLaguerrePol(ipol, muBoT) * BoT * coeff_intdmu(imu) * Kokkos::exp(-muBoT);
 
                                 the_rhs(the_batch_index, ivpar, ipol, the_batch_element_index) += coeff_tot *
