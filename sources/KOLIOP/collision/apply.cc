@@ -100,7 +100,7 @@ namespace koliop {
                 // TODO(Etienne M): Expensive DoComputeLaguerrePol call.
 
                 // NOTE: kBlockExtentXXX are constant, the compiler can replace
-                // the % with faster instructions.
+                // the modulo with faster instructions.
                 const OrdinalType the_block_local_index_r     = ir - the_block_first_r;
                 const OrdinalType the_block_local_index_theta = itheta - the_block_first_theta;
                 const OrdinalType the_block_local_index_phi   = iphi - the_block_first_phi;
@@ -224,7 +224,7 @@ namespace koliop {
             const auto the_kernel = KOKKOS_LAMBDA(auto ipol, auto ivpar, auto ir, auto itheta, auto iphi) {
 
                 // NOTE: kBlockExtentXXX are constant, the compiler can replace
-                // the % with faster instructions.
+                // the modulo with faster instructions.
                 const OrdinalType the_block_local_index_r     = ir - the_block_first_r;
                 const OrdinalType the_block_local_index_theta = itheta - the_block_first_theta;
                 const OrdinalType the_block_local_index_phi   = iphi - the_block_first_phi;
