@@ -226,11 +226,6 @@ namespace koliop {
                                                                                                    the_theta_extent,
                                                                                                    the_phi_extent}};
 
-                // TODO(Etienne M): We could use a single kernel but know that
-                // flattening means recomputation, and thus, due to the slight
-                // discrepancies in the two kernels below, we would need many
-                // branches. Should we keep 2 flattened kernels ?
-
                 switch(choice) {
                     case 3: {
                         const auto the_kernel_choice_3 = KOKKOS_LAMBDA(auto imu, auto ivpar, auto ir, auto itheta, auto iphi) {
