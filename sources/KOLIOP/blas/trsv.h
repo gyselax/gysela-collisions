@@ -272,6 +272,10 @@ namespace koliop {
 
 //                 using value_type = typename std::remove_reference_t<View6D>::value_type;
 
+//                 std::cout << " | Batch count: " << the_matrix_buffer.extent(0)
+//                           << " | Small block count: " << the_matrix_buffer.extent(1)
+//                           << " | Batch size: " << the_matrix_buffer.extent(5) << "\n";
+
 //                 // Kokkos::resize(the_matrix_buffer,
 //                 //                32 * 1024,
 //                 //                256,
@@ -382,8 +386,8 @@ namespace koliop {
 //                                   value_type& the_sum) {
 //                         // NOTE: There is no guarantee that we have at least two
 //                         // value per SIMD Vector
-//                         if(std::isnan(the_original_x_buffer(a, b, c, d))) {
-//                             std::cout << a << " " << b << " " << c << " " << d << "\n";
+//                         if(Kokkos::isnan(the_original_x_buffer(a, b, c, d))) {
+//                             printf("%d %d %d %d\n", a, b, c, d);
 //                         }
 
 //                         the_sum += the_original_x_buffer(a, b, c, d) *

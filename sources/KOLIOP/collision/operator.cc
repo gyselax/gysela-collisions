@@ -183,10 +183,10 @@ namespace koliop {
             // Somewhat useless as DoPrepareNuStar runs on the host.
             Kokkos::fence();
 
-            for(auto&& a_stream : the_stream_pool_) {
-                // TODO(Etienne M): Partition the space
-                a_stream = Constant::DeviceExecutionSpaceType{};
-            }
+            the_stream_pool_[0] = Constant::DeviceExecutionSpaceType{};
+            the_stream_pool_[1] = Constant::DeviceExecutionSpaceType{};
+            the_stream_pool_[2] = Constant::DeviceExecutionSpaceType{};
+            the_stream_pool_[3] = Constant::DeviceExecutionSpaceType{};
         }
 
     } // namespace collision

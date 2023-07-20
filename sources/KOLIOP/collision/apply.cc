@@ -567,6 +567,12 @@ namespace koliop {
                     }
                 }
             }
+
+            // TODO(Etienne M): When views deallocated, there is a fence. Move
+            // that allocations to the operator object ! Note that the matrix
+            // sample also deallocate View.
+            // NOTE: does the fence occurs when the storage is freed, or when to
+            // View object's destructor is called ?
         }
 
         void Operator::Apply(ComputeFloatType dt,
