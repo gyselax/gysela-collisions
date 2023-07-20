@@ -32,8 +32,10 @@ namespace koliop {
             // Due to the inherent Cuda/HIP thread block limit.
             KOLIOP_ASSERT(the_team_count <= std::numeric_limits<int>::max());
 
+            // TODO(Etienne M): TEAM hardcoded size, check for auto tuning
+            // opportunities.
             const auto a_policy = Kokkos::TeamPolicy<Constant::DeviceExecutionSpaceType>{static_cast<int>(the_team_count),
-                                                                                         Kokkos::AUTO};
+                                                                                         320};
 
             // TODO(Etienne M): Make sure the accesses are coalesced on GPU
             // and sequential on CPU.
