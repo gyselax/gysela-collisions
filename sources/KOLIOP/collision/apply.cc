@@ -61,11 +61,11 @@ namespace koliop {
             };
 
             const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<2,
-                                                                     Kokkos::Iterate::Left,
-                                                                     Kokkos::Iterate::Left>>{{the_block_first_r,
-                                                                                              the_block_first_theta},
-                                                                                             {the_block_first_r + Constant::kBlockExtentR,
-                                                                                              the_block_first_theta + Constant::kBlockExtentTheta}};
+                                                                     Kokkos::Iterate::Default,
+                                                                     Kokkos::Iterate::Default>>{{the_block_first_r,
+                                                                                                 the_block_first_theta},
+                                                                                                {the_block_first_r + Constant::kBlockExtentR,
+                                                                                                 the_block_first_theta + Constant::kBlockExtentTheta}};
 
             Kokkos::parallel_for("DoPrepareCollisionMask",
                                  a_policy, the_kernel);
@@ -151,13 +151,13 @@ namespace koliop {
             };
 
             const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<3,
-                                                                     Kokkos::Iterate::Left,
-                                                                     Kokkos::Iterate::Left>>{{the_block_first_r,
-                                                                                              the_block_first_theta,
-                                                                                              the_block_first_phi},
-                                                                                             {the_block_first_r + Constant::kBlockExtentR,
-                                                                                              the_block_first_theta + Constant::kBlockExtentTheta,
-                                                                                              the_block_first_phi + Constant::kBlockExtentPhi}};
+                                                                     Kokkos::Iterate::Default,
+                                                                     Kokkos::Iterate::Default>>{{the_block_first_r,
+                                                                                                 the_block_first_theta,
+                                                                                                 the_block_first_phi},
+                                                                                                {the_block_first_r + Constant::kBlockExtentR,
+                                                                                                 the_block_first_theta + Constant::kBlockExtentTheta,
+                                                                                                 the_block_first_phi + Constant::kBlockExtentPhi}};
 
             Kokkos::parallel_for("DoComputeAlphaProjection",
                                  a_policy, the_kernel);
@@ -202,13 +202,13 @@ namespace koliop {
             // diagonal blocks.
 
             const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<5,
-                                                                     Kokkos::Iterate::Left,
-                                                                     Kokkos::Iterate::Left>>{{0, 0, 0, 0, 0},
-                                                                                             {Constant::BatchTraitsType::kBatchSize,
-                                                                                              Constant::kMaximumLaguerrePolynomialDegree,
-                                                                                              Constant::kMaximumLaguerrePolynomialDegree,
-                                                                                              the_vpar_extent,
-                                                                                              Constant::kBatchCount}};
+                                                                     Kokkos::Iterate::Default,
+                                                                     Kokkos::Iterate::Default>>{{0, 0, 0, 0, 0},
+                                                                                                {Constant::BatchTraitsType::kBatchSize,
+                                                                                                 Constant::kMaximumLaguerrePolynomialDegree,
+                                                                                                 Constant::kMaximumLaguerrePolynomialDegree,
+                                                                                                 the_vpar_extent,
+                                                                                                 Constant::kBatchCount}};
 
             Kokkos::parallel_for("DoPrepareMatrix",
                                  a_policy, the_kernel);
@@ -261,23 +261,23 @@ namespace koliop {
                 // N(k, l, j) how it is used when building the matrix T.
 
                 the_rhs(the_batch_index, ivpar, ipol, the_batch_element_index) -= dt / (5.0 * Ta) *
-                                                                                  ((5.0 * U_para - 3.0 * q_para_on_naTa) * (vpar_tmp * the_Najl(the_batch_index, ivpar, 0, 0, ipol, the_batch_element_index) + the_Najl(the_batch_index, ivpar, 1, 0, ipol, the_batch_element_index)) +
-                                                                                   q_para_on_naTa * vpar_tmp * vpar_tmp / Ta * (vpar_tmp * the_Najl(the_batch_index, ivpar, 0, 0, ipol, the_batch_element_index) + 3.0 * the_Najl(the_batch_index, ivpar, 1, 0, ipol, the_batch_element_index)) +
-                                                                                   2.0 * q_para_on_naTa * (3.0 * vpar_tmp / Ta * the_Najl(the_batch_index, ivpar, 2, 0, ipol, the_batch_element_index) - vpar_tmp * the_Najl(the_batch_index, ivpar, 0, 1, ipol, the_batch_element_index) - the_Najl(the_batch_index, ivpar, 1, 1, ipol, the_batch_element_index)));
+                                                                                  ((5.0 * U_para - 3.0 * q_para_on_naTa) * (vpar_tmp * the_Najl(the_batch_index, ivpar, 0, ipol, 0, the_batch_element_index) + the_Najl(the_batch_index, ivpar, 1, ipol, 0, the_batch_element_index)) +
+                                                                                   q_para_on_naTa * vpar_tmp * vpar_tmp / Ta * (vpar_tmp * the_Najl(the_batch_index, ivpar, 0, ipol, 0, the_batch_element_index) + 3.0 * the_Najl(the_batch_index, ivpar, 1, ipol, 0, the_batch_element_index)) +
+                                                                                   2.0 * q_para_on_naTa * (3.0 * vpar_tmp / Ta * the_Najl(the_batch_index, ivpar, 2, ipol, 0, the_batch_element_index) - vpar_tmp * the_Najl(the_batch_index, ivpar, 0, ipol, 1, the_batch_element_index) - the_Najl(the_batch_index, ivpar, 1, ipol, 1, the_batch_element_index)));
             };
 
             const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<5,
-                                                                     Kokkos::Iterate::Left,
-                                                                     Kokkos::Iterate::Left>>{{0,
-                                                                                              0,
-                                                                                              the_block_first_r,
-                                                                                              the_block_first_theta,
-                                                                                              the_block_first_phi},
-                                                                                             {Constant::kMaximumLaguerrePolynomialDegree,
-                                                                                              the_vpar_extent,
-                                                                                              the_block_first_r + Constant::kBlockExtentR,
-                                                                                              the_block_first_theta + Constant::kBlockExtentTheta,
-                                                                                              the_block_first_phi + Constant::kBlockExtentPhi}};
+                                                                     Kokkos::Iterate::Default,
+                                                                     Kokkos::Iterate::Default>>{{0,
+                                                                                                 0,
+                                                                                                 the_block_first_r,
+                                                                                                 the_block_first_theta,
+                                                                                                 the_block_first_phi},
+                                                                                                {Constant::kMaximumLaguerrePolynomialDegree,
+                                                                                                 the_vpar_extent,
+                                                                                                 the_block_first_r + Constant::kBlockExtentR,
+                                                                                                 the_block_first_theta + Constant::kBlockExtentTheta,
+                                                                                                 the_block_first_phi + Constant::kBlockExtentPhi}};
 
             Kokkos::parallel_for("DoComputeCvCdSource",
                                  a_policy, the_kernel);

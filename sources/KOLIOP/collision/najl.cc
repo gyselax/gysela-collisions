@@ -111,6 +111,9 @@ namespace koliop {
                         // is not good !
                         // TODO(Etienne M): Analyze the numerical stability of
                         // the Najl
+                        // A few order of magnitude in relative error seem to
+                        // come from this part! Where small and very large
+                        // (1e-300 vs 1e300) values cohabit.
                         I_mat[ind_i] += (comb_mat(ind_k, ind_i) *
                                          Xtr_pows[ind_i - ind_k]) *
                                         (J_vec[ind_k + offset] *
@@ -324,7 +327,7 @@ namespace koliop {
                     if(ind_i != Constant::kIndexMax) {
                         for(OrdinalType l = 0; l < Constant::kMaximumLaguerrePolynomialDegree; ++l) {
                             for(OrdinalType j = 1; j < Constant::kMaximumLaguerrePolynomialDegree; ++j) {
-                                local_N0(j, l) -= static_cast<ValueType>(j) * N_coeff * C_jl(ind_i, j - 1, l);
+                                local_N0(l, j) -= static_cast<ValueType>(j) * N_coeff * C_jl(ind_i, j - 1, l);
                             }
                         }
                     }
@@ -333,7 +336,7 @@ namespace koliop {
 
                     for(OrdinalType l = 0; l < Constant::kMaximumLaguerrePolynomialDegree; ++l) {
                         for(OrdinalType j = 1; j < Constant::kMaximumLaguerrePolynomialDegree; ++j) {
-                            local_N0(j, l) += static_cast<ValueType>(j) * N_coeff * C_jl(ind_i, j, l);
+                            local_N0(l, j) += static_cast<ValueType>(j) * N_coeff * C_jl(ind_i, j, l);
                         }
                     }
 
@@ -345,9 +348,9 @@ namespace koliop {
 
                     if(ind_i != Constant::kIndexMax) {
                         for(OrdinalType l = 0; l < Constant::kMaximumLaguerrePolynomialDegree; ++l) {
-                            local_N1(0, l) += vparg(ivpar) * C_jl(ind_i, 0, l) * N_coeff;
+                            local_N1(l, 0) += vparg(ivpar) * C_jl(ind_i, 0, l) * N_coeff;
                             for(OrdinalType j = 1; j < Constant::kMaximumLaguerrePolynomialDegree; ++j) {
-                                local_N1(j, l) += vparg(ivpar) * (C_jl(ind_i, j, l) * N_coeff +
+                                local_N1(l, j) += vparg(ivpar) * (C_jl(ind_i, j, l) * N_coeff +
                                                                   2.0 * static_cast<ValueType>(j) * L_mat[2][ind_i] * (C_jl(ind_i, j, l) - C_jl(ind_i, j - 1, l)));
                             }
                         }
@@ -355,7 +358,7 @@ namespace koliop {
                     } else {
                         for(OrdinalType l = 0; l < Constant::kMaximumLaguerrePolynomialDegree; ++l) {
                             for(OrdinalType j = 0; j < Constant::kMaximumLaguerrePolynomialDegree; ++j) {
-                                local_N1(j, l) += vparg(ivpar) *
+                                local_N1(l, j) += vparg(ivpar) *
                                                   C_jl(Constant::kIndexMax, j, l) *
                                                   (N_coeff +
                                                    2.0 * static_cast<ValueType>(j) * L_mat[2][Constant::kIndexMax]);
@@ -368,23 +371,23 @@ namespace koliop {
 
                     for(OrdinalType l = 0; l < Constant::kMaximumLaguerrePolynomialDegree; ++l) {
                         for(OrdinalType j = 0; j < Constant::kMaximumLaguerrePolynomialDegree; ++j) {
-                            local_N2(j, l) += C_jl(ind_i, j, l) * N_coeff;
+                            local_N2(l, j) += C_jl(ind_i, j, l) * N_coeff;
                         }
                     }
                 }
             };
 
             const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<4,
-                                                                     Kokkos::Iterate::Left,
-                                                                     Kokkos::Iterate::Left>>{an_execution_space,
-                                                                                             {0,
-                                                                                              the_block_first_r,
-                                                                                              the_block_first_theta,
-                                                                                              the_block_first_phi},
-                                                                                             {the_vpar_extent,
-                                                                                              the_block_first_r + Constant::kBlockExtentR,
-                                                                                              the_block_first_theta + Constant::kBlockExtentTheta,
-                                                                                              the_block_first_phi + Constant::kBlockExtentPhi}};
+                                                                     Kokkos::Iterate::Default,
+                                                                     Kokkos::Iterate::Default>>{an_execution_space,
+                                                                                                {0,
+                                                                                                 the_block_first_r,
+                                                                                                 the_block_first_theta,
+                                                                                                 the_block_first_phi},
+                                                                                                {the_vpar_extent,
+                                                                                                 the_block_first_r + Constant::kBlockExtentR,
+                                                                                                 the_block_first_theta + Constant::kBlockExtentTheta,
+                                                                                                 the_block_first_phi + Constant::kBlockExtentPhi}};
 
             Kokkos::parallel_for("DoComputeNajl",
                                  a_policy, the_kernel);
@@ -429,14 +432,14 @@ namespace koliop {
 
             KOLIOP_ASSERT(the_Najl.size() != 0);
 
-            // TODO(Etienne M): Other tests
-
-            // TODO(Etienne M): what is the perf of such memset:
+            // TODO(Etienne M): what is the perf of such memset. We need may
+            // need to use an ExecutionSpace.
             Kokkos::deep_copy(/* TODO(Etienne M): execution space ,*/ the_Najl, 0.0);
 
             // TODO(Etienne M): It is not currently possible to do something
             // like:
-            // Kokkos::exp(T{}) where T is a KokkosBatched::Vector !
+            // Kokkos::exp(T{}) where T is a KokkosBatched::Vector
+            // For this reason, we work on the scalar version of the view.
 
             // typename MatrixKindType::VectorType the_Najl_view{reinterpret_cast<typename Constant::BatchTraitsType::ThreadVectorType*>(the_Najl.data()),
             //                                                   static_cast<std::size_t>(Constant::kBatchCount),
