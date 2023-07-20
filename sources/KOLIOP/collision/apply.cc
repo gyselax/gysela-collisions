@@ -291,55 +291,63 @@ namespace koliop {
 
             const auto& pSpecies_id = an_operator.pSpecies_id_;
 
-            const auto the_kernel = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi) {
+            // TODO(Etienne M): Make sure the accesses are coalesced on GPU
+            // and sequential on CPU.
 
-                if(!mask_coll(ir - the_block_first_r,
-                              itheta - the_block_first_theta)) {
+            const auto the_kernel = KOKKOS_LAMBDA(const auto& a_team_handle) {
+
+                const OrdinalType the_team_index = a_team_handle.league_rank();
+
+                // NOTE: kBlockExtentXXX are constant, the compiler can replace
+                // the modulo with faster instructions.
+                const OrdinalType the_block_local_index_ir     = (the_team_index) % Constant::kBlockExtentR;
+                const OrdinalType the_block_local_index_itheta = (the_team_index / (Constant::kBlockExtentR)) % Constant::kBlockExtentTheta;
+                const OrdinalType the_block_local_index_iphi   = (the_team_index / (Constant::kBlockExtentR * Constant::kBlockExtentTheta)) /* % Constant::kBlockExtentPhi */;
+
+                if(!mask_coll(the_block_local_index_ir,
+                              the_block_local_index_itheta)) {
                     return;
                 }
 
-                // TODO(Etienne M): INDEX not coalesced. Flatten more ?
-                // parallelize in vpar too.
-                // TODO(Etienne M): Expensive DoComputeLaguerrePol call.
-
-                // NOTE: kBlockExtentXXX are constant, the compiler can replace
-                // the % with faster instructions.
-                const OrdinalType the_block_local_index_r     = ir - the_block_first_r;
-                const OrdinalType the_block_local_index_theta = itheta - the_block_first_theta;
-                const OrdinalType the_block_local_index_phi   = iphi - the_block_first_phi;
-
-                const OffsetType the_flattened_index = Constant::kBlockExtentR * Constant::kBlockExtentTheta * the_block_local_index_phi +
-                                                       Constant::kBlockExtentR * the_block_local_index_theta +
-                                                       the_block_local_index_r;
+                const OffsetType the_flattened_index = the_team_index;
 
                 const OrdinalType the_batch_element_index = (the_flattened_index) % Constant::BatchTraitsType::kBatchSize;
                 const OrdinalType the_batch_index         = (the_flattened_index / (Constant::BatchTraitsType::kBatchSize)) /* % Constant::kBatchCount */;
 
+                const OrdinalType ir     = the_block_first_r + the_block_local_index_ir;
+                const OrdinalType itheta = the_block_first_theta + the_block_local_index_itheta;
+                const OrdinalType iphi   = the_block_first_phi + the_block_local_index_iphi;
+
                 const ComputeFloatType BoT = B_norm(ir, itheta) / T_s(ir, itheta, iphi, pSpecies_id);
 
-                for(OrdinalType ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
-                    for(OrdinalType imu = 0; imu < the_mu_extent; ++imu) {
+                Kokkos::parallel_for(
+                    Kokkos::TeamThreadMDRange<Kokkos::Rank<2, Kokkos::Iterate::Default, Kokkos::Iterate::Default>,
+                                              std::remove_reference_t<decltype(a_team_handle)>>(a_team_handle,
+                                                                                                the_mu_extent, the_vpar_extent),
+                    [&](auto imu, auto ivpar) {
                         const ComputeFloatType muBoT       = mug(imu) * BoT;
                         ComputeFloatType       f5d_s_value = 0.0;
 
                         for(OrdinalType ipol = 0; ipol < Constant::kMaximumLaguerrePolynomialDegree; ++ipol) {
+                            // TODO(Etienne M): Expensive DoComputeLaguerrePol call.
                             f5d_s_value += the_rhs(the_batch_index, ivpar, ipol, the_batch_element_index) *
                                            DoComputeLaguerrePol(ipol, muBoT);
                         }
 
                         f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id) = f5d_s_value;
-                    }
-                }
+                    });
             };
 
-            const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<3,
-                                                                     Kokkos::Iterate::Left,
-                                                                     Kokkos::Iterate::Left>>{{the_block_first_r,
-                                                                                              the_block_first_theta,
-                                                                                              the_block_first_phi},
-                                                                                             {the_block_first_r + Constant::kBlockExtentR,
-                                                                                              the_block_first_theta + Constant::kBlockExtentTheta,
-                                                                                              the_block_first_phi + Constant::kBlockExtentPhi}};
+            const auto the_team_count = Constant::kBlockExtentR * Constant::kBlockExtentTheta * Constant::kBlockExtentPhi;
+
+            // Due to the inherent Cuda/HIP thread block limit.
+            KOLIOP_ASSERT(the_team_count <= std::numeric_limits<int>::max());
+
+            // TODO(Etienne M): TEAM hardcoded size, check for auto tuning
+            // opportunities.
+            const auto a_policy = Kokkos::TeamPolicy<Constant::DeviceExecutionSpaceType>{static_cast<int>(the_team_count),
+                                                                                         384};
+
 
             Kokkos::parallel_for("DoComputeReconstruction",
                                  a_policy, the_kernel);
@@ -489,7 +497,7 @@ namespace koliop {
                                 }
                                 {
                                     // the_rhs = (I + T * dt/4) * alpha(n)
-                                    the_mv.Apply(the_stream_pool[0], //TODO(Etienne M): stream tuning
+                                    the_mv.Apply(the_stream_pool[0], // TODO(Etienne M): stream tuning
                                                  1.0,
                                                  the_RHS_matrix_sampler,
                                                  Constant::kFlattenedBlockExtent, the_vpar_extent,
