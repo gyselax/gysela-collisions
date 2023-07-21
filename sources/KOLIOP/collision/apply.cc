@@ -37,15 +37,17 @@ namespace koliop {
             // TODO(Etienne M): investigate the issue with full fence during
             // view deallocation.
 
+            using CvCdDriver = decltype(an_operator.the_cvcd_drivers_)::value_type;
+
             for(OrdinalType the_block_first_phi = 0;
                 the_block_first_phi < the_phi_extent;
-                the_block_first_phi += Constant::kBlockExtentPhi) {
+                the_block_first_phi += CvCdDriver::kBlockExtentPhi) {
                 for(OrdinalType the_block_first_theta = 0;
                     the_block_first_theta < the_theta_extent;
-                    the_block_first_theta += Constant::kBlockExtentTheta) {
+                    the_block_first_theta += CvCdDriver::kBlockExtentTheta) {
                     for(OrdinalType the_block_first_r = 0;
                         the_block_first_r < the_r_extent;
-                        the_block_first_r += Constant::kBlockExtentR) {
+                        the_block_first_r += CvCdDriver::kBlockExtentR) {
                         the_cvcd_drivers[0].Apply(an_operator,
                                                   the_execution_space_pool[0],
                                                   the_block_first_r,

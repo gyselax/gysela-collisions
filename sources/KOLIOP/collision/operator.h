@@ -5,7 +5,7 @@
 
 #include <vector>
 
-#include "KOLIOP/collision/cvcd.h"
+#include "KOLIOP/collision/cvcddriver.h"
 
 namespace koliop {
     namespace collision {
@@ -243,10 +243,10 @@ namespace koliop {
             // Use some kind of time erasure technic and only expose the
             // *affordance* of cvcd (that is, Appl())
 
-            std::vector<CvCd<Constant::kBlockExtentR,
-                             Constant::kBlockExtentTheta,
-                             Constant::kBlockExtentPhi,
-                             Constant::BatchTraitsType>>
+            std::vector<CvCdDriver<Constant::kBlockExtentR,
+                                   Constant::kBlockExtentTheta,
+                                   Constant::kBlockExtentPhi,
+                                   Constant::BatchTraitsType>>
                 the_cvcd_drivers_;
 
             // Miscellaneous tooling

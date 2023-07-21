@@ -264,12 +264,12 @@ namespace koliop {
                     const OrdinalType the_block_local_index_theta = itheta - the_block_first_theta;
                     const OrdinalType the_block_local_index_phi   = iphi - the_block_first_phi;
 
-                    const OffsetType the_flattened_index = Najl::CvCdType::kBlockExtentR * Najl::CvCdType::kBlockExtentTheta * the_block_local_index_phi +
-                                                           Najl::CvCdType::kBlockExtentR * the_block_local_index_theta +
+                    const OffsetType the_flattened_index = Najl::CvCdDriverType::kBlockExtentR * Najl::CvCdDriverType::kBlockExtentTheta * the_block_local_index_phi +
+                                                           Najl::CvCdDriverType::kBlockExtentR * the_block_local_index_theta +
                                                            the_block_local_index_r;
 
-                    const OrdinalType the_batch_element_index = (the_flattened_index) % Najl::CvCdType::BatchTraitsType::kBatchSize;
-                    const OrdinalType the_batch_index         = (the_flattened_index / (Najl::CvCdType::BatchTraitsType::kBatchSize)) /* % Najl::CvCdType::kBatchCount */;
+                    const OrdinalType the_batch_element_index = (the_flattened_index) % Najl::CvCdDriverType::BatchTraitsType::kBatchSize;
+                    const OrdinalType the_batch_index         = (the_flattened_index / (Najl::CvCdDriverType::BatchTraitsType::kBatchSize)) /* % Najl::CvCdDriverType::kBatchCount */;
 
                     // NOTE: The memset(0) of the local_Nn is done in Najl::Compute.
                     auto local_N0 = Kokkos::subview(the_Najl,
@@ -389,9 +389,9 @@ namespace koliop {
                                                                                                      the_block_first_theta,
                                                                                                      the_block_first_phi},
                                                                                                     {the_vpar_extent,
-                                                                                                     the_block_first_r + Najl::CvCdType::kBlockExtentR,
-                                                                                                     the_block_first_theta + Najl::CvCdType::kBlockExtentTheta,
-                                                                                                     the_block_first_phi + Najl::CvCdType::kBlockExtentPhi}};
+                                                                                                     the_block_first_r + Najl::CvCdDriverType::kBlockExtentR,
+                                                                                                     the_block_first_theta + Najl::CvCdDriverType::kBlockExtentTheta,
+                                                                                                     the_block_first_phi + Najl::CvCdDriverType::kBlockExtentPhi}};
 
                 Kokkos::parallel_for("DoComputeNajl",
                                      a_policy, the_kernel);
@@ -419,15 +419,15 @@ namespace koliop {
         /// ScalarMatrixType{}(5, 4, 1, 2, 1, 0) is the same thing but for N1.
         /// ScalarMatrixType{}(5, 4, 0, 2, 1, 0) is the same thing but for N0.
         ///
-        template <typename CvCd>
+        template <typename CvCdDriver>
         class Najl {
         public:
-            using CvCdType = CvCd;
+            using CvCdDriverType = CvCdDriver;
 
             /// The Najl coefficients are stored in a data structure similar to
             /// how the one used for the matrix in Operator::Apply().
             ///
-            using MatrixKindType = typename CvCdType::MatrixKindType;
+            using MatrixKindType = typename CvCdDriverType::MatrixKindType;
 
         public:
             Najl(OrdinalType                                          pSpecies_id,
@@ -472,18 +472,18 @@ namespace koliop {
 
 
         ////////////////////////////////////////////////////////////////////////
-        // CvCd definition
+        // CvCdDriver definition
         ////////////////////////////////////////////////////////////////////////
 
-        template <typename CvCd>
-        Najl<CvCd>::Najl(OrdinalType                                          pSpecies_id,
-                         OrdinalType                                          the_vpar_extent,
-                         OrdinalType                                          the_species_extent,
-                         bool                                                 collision_interspecies,
-                         const Flo64*                                         comb_mat,
-                         koliop::utility::View::InternalInputL1<const Flo64>& hat_As,
-                         koliop::utility::View::InternalInputL1<const Flo64>& hat_Zs,
-                         koliop::utility::View::InternalInputL1<const Flo64>& vparg)
+        template <typename CvCdDriver>
+        Najl<CvCdDriver>::Najl(OrdinalType                                          pSpecies_id,
+                               OrdinalType                                          the_vpar_extent,
+                               OrdinalType                                          the_species_extent,
+                               bool                                                 collision_interspecies,
+                               const Flo64*                                         comb_mat,
+                               koliop::utility::View::InternalInputL1<const Flo64>& hat_As,
+                               koliop::utility::View::InternalInputL1<const Flo64>& hat_Zs,
+                               koliop::utility::View::InternalInputL1<const Flo64>& vparg)
             : pSpecies_id_{pSpecies_id}
             , the_vpar_extent_{the_vpar_extent}
             , the_species_extent_{the_species_extent}
@@ -504,16 +504,16 @@ namespace koliop {
             detail::DoPrepareCjl(C_jl_);
         }
 
-        template <typename CvCd>
+        template <typename CvCdDriver>
         template <typename ExecutionSpace>
-        void Najl<CvCd>::Compute(ExecutionSpace                                   an_execution_space,
-                                 OrdinalType                                          the_block_first_r,
-                                 OrdinalType                                          the_block_first_theta,
-                                 OrdinalType                                          the_block_first_phi,
-                                 const koliop::utility::View::MDD4<ComputeFloatType>& n_s,
-                                 const koliop::utility::View::MDD4<ComputeFloatType>& T_s,
-                                 const koliop::utility::View::MDD5<ComputeFloatType>& nu_ab,
-                                 typename MatrixKindType::ScalarType&                 the_Najl) const {
+        void Najl<CvCdDriver>::Compute(ExecutionSpace                                       an_execution_space,
+                                       OrdinalType                                          the_block_first_r,
+                                       OrdinalType                                          the_block_first_theta,
+                                       OrdinalType                                          the_block_first_phi,
+                                       const koliop::utility::View::MDD4<ComputeFloatType>& n_s,
+                                       const koliop::utility::View::MDD4<ComputeFloatType>& T_s,
+                                       const koliop::utility::View::MDD5<ComputeFloatType>& nu_ab,
+                                       typename MatrixKindType::ScalarType&                 the_Najl) const {
 
             KOLIOP_ASSERT(the_Najl.size() != 0);
 
@@ -526,12 +526,12 @@ namespace koliop {
             // Kokkos::exp(T{}) where T is a KokkosBatched::Vector
             // For this reason, we work on the scalar version of the view.
 
-            // typename MatrixKindType::VectorType the_Najl_view{reinterpret_cast<typename CvCdType::BatchTraitsType::ThreadVectorType*>(the_Najl.data()),
-            //                                                   static_cast<std::size_t>(CvCdType::kBatchCount),
+            // typename MatrixKindType::VectorType the_Najl_view{reinterpret_cast<typename CvCdDriverType::BatchTraitsType::ThreadVectorType*>(the_Najl.data()),
+            //                                                   static_cast<std::size_t>(CvCdDriverType::kBatchCount),
             //                                                   static_cast<std::size_t>(the_vpar_extent_)};
 
             typename MatrixKindType::ScalarType the_Najl_view{the_Najl.data(),
-                                                              static_cast<std::size_t>(CvCdType::kBatchCount),
+                                                              static_cast<std::size_t>(CvCdDriverType::kBatchCount),
                                                               static_cast<std::size_t>(the_vpar_extent_)};
 
             detail::DoComputeNajl(*this,
