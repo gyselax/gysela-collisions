@@ -239,7 +239,7 @@ namespace koliop {
 
             // Miscellaneous tooling
 
-            Constant::DeviceExecutionSpaceType the_stream_pool_[4];
+            Constant::DeviceExecutionSpaceType the_stream_pool_[3];
         };
 
     } // namespace collision

@@ -183,10 +183,14 @@ namespace koliop {
             // Somewhat useless as DoPrepareNuStar runs on the host.
             Kokkos::fence();
 
+            // The default execution space. Can rely on all the hardware
+            // resources.
             the_stream_pool_[0] = Constant::DeviceExecutionSpaceType{};
-            the_stream_pool_[1] = Constant::DeviceExecutionSpaceType{};
-            the_stream_pool_[2] = Constant::DeviceExecutionSpaceType{};
-            the_stream_pool_[3] = Constant::DeviceExecutionSpaceType{};
+
+            // NOTE: We do not want to *potentially* split the resource pool.
+            // Thus the repeated call to partition_space.
+            the_stream_pool_[1] = Kokkos::Experimental::partition_space(the_stream_pool_[0], 1)[0];
+            the_stream_pool_[2] = Kokkos::Experimental::partition_space(the_stream_pool_[0], 1)[0];
         }
 
     } // namespace collision

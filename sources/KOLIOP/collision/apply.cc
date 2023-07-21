@@ -319,6 +319,9 @@ namespace koliop {
 
                 if(!mask_coll(the_block_local_index_ir,
                               the_block_local_index_itheta)) {
+                    // NOTE: this return does not break the rest of the function
+                    // as all the thread of the team will execute the same
+                    // branch.
                     return;
                 }
 
@@ -401,14 +404,8 @@ namespace koliop {
             // TODO(Etienne M): Many opportunities to use constant extent say:
             // ComputeFloatType *[Constant::kFlattenedBlockExtent].
 
-            // TODO(Etienne M): couldn't we remove mask_coll. Do redundant
-            // computation at the benefit of leaner algorithms ?
             koliop::utility::View::MDD2<bool> mask_coll{Kokkos::view_alloc(Kokkos::WithoutInitializing, "mask_coll"),
                                                         Constant::kBlockExtentR, Constant::kBlockExtentTheta};
-
-            // TODO(Etienne M): Storing the Najl cost as much as the matrix ! We
-            // should try to compute them on the fly so we can have larger block
-            // size.
 
             // TODO(Etienne M): Many opportunities to use constant extent say:
             // ComputeFloatType *[Constant::kFlattenedBlockExtent].
