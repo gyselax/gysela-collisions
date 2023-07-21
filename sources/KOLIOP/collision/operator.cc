@@ -160,16 +160,9 @@ namespace koliop {
             , q_par_on_nT_s_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "q_par_on_nT_s_"),
                              static_cast<std::size_t>(the_r_extent_), static_cast<std::size_t>(the_theta_extent_), static_cast<std::size_t>(the_phi_extent_), static_cast<std::size_t>(the_species_extent_)}
 
-            // Miscellaneous numerical tooling
-
-            , the_najl_provider_{pSpecies_id_, the_vpar_extent_, the_species_extent_, collision_interspecies_, comb_mat, hat_As_, hat_Zs_, vparg_}
-
+        // Miscellaneous numerical tooling
         // Miscellaneous tooling
         {
-
-            // Somewhat redundant as we do not give an ExecutionSpace to the
-            // arg_prop used in the copies done above.
-            Kokkos::fence();
 
             DoPrepareNuStar(*this,
                             nustar_coeff_,
@@ -180,17 +173,26 @@ namespace koliop {
                             q_r_,
                             mask_buffer_r_);
 
-            // Somewhat useless as DoPrepareNuStar runs on the host.
-            Kokkos::fence();
+            // TODO(Etienne M): For now, we have only one CvCd driver. We could
+            // add more and to some stream parallelism.
+            the_cvcd_drivers_.emplace_back(pSpecies_id_,
+                                           the_vpar_extent_,
+                                           the_species_extent_,
+                                           collision_interspecies_,
+                                           comb_mat,
+                                           hat_As_,
+                                           hat_Zs_,
+                                           vparg_,
+                                           coeff_intdvpar_);
 
             // The default execution space. Can rely on all the hardware
             // resources.
-            the_stream_pool_[0] = Constant::DeviceExecutionSpaceType{};
+            the_execution_space_pool_[0] = Constant::DeviceExecutionSpaceType{};
 
             // NOTE: We do not want to *potentially* split the resource pool.
             // Thus the repeated call to partition_space.
-            the_stream_pool_[1] = Kokkos::Experimental::partition_space(the_stream_pool_[0], 1)[0];
-            the_stream_pool_[2] = Kokkos::Experimental::partition_space(the_stream_pool_[0], 1)[0];
+            the_execution_space_pool_[1] = Kokkos::Experimental::partition_space(the_execution_space_pool_[0], 1)[0];
+            the_execution_space_pool_[2] = Kokkos::Experimental::partition_space(the_execution_space_pool_[0], 1)[0];
         }
 
     } // namespace collision

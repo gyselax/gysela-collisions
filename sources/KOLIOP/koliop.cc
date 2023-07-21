@@ -311,7 +311,7 @@
             return KOLIOP_STATUS_INVALID_VALUE;
         }
 
-        reinterpret_cast<const koliop::collision::Operator*>(an_operator)->Apply(static_cast<koliop::ComputeFloatType>(dt), f5d_s);
+        reinterpret_cast<koliop::collision::Operator*>(an_operator)->Apply(static_cast<koliop::ComputeFloatType>(dt), f5d_s);
 
         return KOLIOP_STATUS_SUCCESS;
     });

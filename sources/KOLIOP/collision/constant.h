@@ -62,18 +62,6 @@ namespace koliop {
 #else
     #error "Unsupported architecture."
 #endif
-
-            static inline constexpr OffsetType kFlattenedBlockExtent = kBlockExtentR * kBlockExtentTheta * kBlockExtentPhi;
-
-            static inline constexpr OffsetType kBatchCount = BatchTraitsType::BatchCount(kFlattenedBlockExtent);
-            static_assert(kBatchCount * BatchTraitsType::kBatchSize == kFlattenedBlockExtent, "");
-
-        public:
-            using VectorKindType = koliop::blas::kind::vector::BatchedBlockByBlock<BatchTraitsType,
-                                                                                   kMaximumLaguerrePolynomialDegree>;
-
-            using MatrixKindType = koliop::blas::kind::matrix::BatchedBlockTridiagonalByBlock<BatchTraitsType,
-                                                                                              kMaximumLaguerrePolynomialDegree>;
         };
 
     } // namespace collision

@@ -3,7 +3,9 @@
 #ifndef KOLIOP_COLLISION_OPERATOR_H
 #define KOLIOP_COLLISION_OPERATOR_H
 
-#include "KOLIOP/collision/najl.h"
+#include <vector>
+
+#include "KOLIOP/collision/cvcd.h"
 
 namespace koliop {
     namespace collision {
@@ -171,7 +173,7 @@ namespace koliop {
                                                uint32_t choice) const;
 
             void Apply(ComputeFloatType dt,
-                       Flo64*           f5d_s) const;
+                       Flo64*           f5d_s);
 
             void ComputeDensityCorrection(Flo64* f5d_s) const;
 
@@ -235,11 +237,21 @@ namespace koliop {
 
             // Miscellaneous numerical tooling
 
-            Najl the_najl_provider_;
+            // TODO(Etienne M): Much pain in brought upon us when a single
+            // character is modified in cvcd or najl as for the whole project,
+            // we must suffer a recompilation.
+            // Use some kind of time erasure technic and only expose the
+            // *affordance* of cvcd (that is, Appl())
+
+            std::vector<CvCd<Constant::kBlockExtentR,
+                             Constant::kBlockExtentTheta,
+                             Constant::kBlockExtentPhi,
+                             Constant::BatchTraitsType>>
+                the_cvcd_drivers_;
 
             // Miscellaneous tooling
 
-            Constant::DeviceExecutionSpaceType the_stream_pool_[3];
+            Constant::DeviceExecutionSpaceType the_execution_space_pool_[3];
         };
 
     } // namespace collision
