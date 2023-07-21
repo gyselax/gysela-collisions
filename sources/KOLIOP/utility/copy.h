@@ -44,8 +44,8 @@ namespace koliop {
             template <typename SourceView,
                       typename DestinationView>
             static auto
-            Shallow(SourceView      a_source_view,
-                    DestinationView a_destination_view);
+            Shallow(SourceView&&      a_source_view,
+                    DestinationView&& a_destination_view);
 
             /// The storage for the a_destination_view should already exist and the extents
             /// must match.
@@ -53,8 +53,8 @@ namespace koliop {
             template <typename SourceView,
                       typename DestinationView>
             static auto
-            Deep(SourceView      a_source_view,
-                 DestinationView a_destination_view);
+            Deep(SourceView&&      a_source_view,
+                 DestinationView&& a_destination_view);
 
             /// May or may not allocate new memory to represent the_raw_data. As
             /// such it is required that the_raw_data's lifetime may be as long
@@ -85,8 +85,8 @@ namespace koliop {
 
         template <typename SourceView,
                   typename DestinationView>
-        auto Copy::Shallow(SourceView      a_source_view,
-                           DestinationView a_destination_view) {
+        auto Copy::Shallow(SourceView&&      a_source_view,
+                           DestinationView&& a_destination_view) {
             if constexpr(std::is_same_v<typename std::remove_reference_t<SourceView>::memory_space,
                                         typename std::remove_reference_t<DestinationView>::memory_space> &&
                          std::is_same_v<typename std::remove_reference_t<SourceView>::array_layout,
@@ -101,8 +101,8 @@ namespace koliop {
 
         template <typename SourceView,
                   typename DestinationView>
-        auto Copy::Deep(SourceView      a_source_view,
-                        DestinationView a_destination_view) {
+        auto Copy::Deep(SourceView&&      a_source_view,
+                        DestinationView&& a_destination_view) {
             if constexpr(std::is_same_v<typename std::remove_reference_t<SourceView>::memory_space,
                                         typename std::remove_reference_t<DestinationView>::memory_space> ||
                          std::is_same_v<typename std::remove_reference_t<SourceView>::array_layout,
