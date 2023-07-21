@@ -442,11 +442,12 @@ namespace koliop {
 
             Najl<CvCdDriver> the_najl_provider_;
 
-            // TODO(Etienne M): Many opportunities to use constant extent say:
-            // kFlattenedBlockExtent
+            koliop::utility::View::MDD<bool[kBlockExtentR][kBlockExtentTheta]> mask_coll_;
 
-            koliop::utility::View::MDD2<bool> mask_coll_;
-
+            // NOTE: We know of an additional constant extent, the batch count
+            // but we cannot exploit it due to kokkos enforcing that constant
+            // extent must be placed after dynamic extent. vpar is non constant
+            // and is placed after the batch count.
             typename MatrixKindType::ScalarType the_Najl_;
             typename MatrixKindType::ScalarType the_matrix_;
             typename VectorKindType::ScalarType the_alpha_coefficients_;
@@ -486,8 +487,7 @@ namespace koliop {
                                  collision_interspecies,
                                  comb_mat,
                                  hat_As, hat_Zs, vparg}
-            , mask_coll_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "mask_coll"),
-                         kBlockExtentR, kBlockExtentTheta}
+            , mask_coll_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "mask_coll")}
             , the_Najl_{Kokkos::view_alloc(Kokkos::WithoutInitializing,
                                            "the_Najl"),
                         static_cast<std::size_t>(kBatchCount), static_cast<std::size_t>(the_vpar_extent)}
@@ -548,7 +548,7 @@ namespace koliop {
             the_RHS_matrix_sampler_.DeltaTime() = static_cast<ComputeFloatType>(dt / 4.0);
 
             // TODO(Etienne M): If mask_coll depends on r and theta,
-            // we could bring it up two loops.
+            // we could bring it up two loops into Apply.
             detail::DoPrepareCollisionMask<CvCdDriver>(an_operator,
                                                        the_block_first_r, the_block_first_theta,
                                                        mask_coll_);

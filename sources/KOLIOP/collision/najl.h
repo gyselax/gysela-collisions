@@ -460,14 +460,19 @@ namespace koliop {
             OrdinalType the_species_extent_;
             bool        collision_interspecies_;
 
-            koliop::utility::View::InternalInputL2<const Flo64> comb_mat_; // TODO(Etienne M): constant extent.
+            koliop::utility::View::InternalInputL<Flo64[2 * Constant::kMaximumLaguerrePolynomialDegree]
+                                                       [2 * Constant::kMaximumLaguerrePolynomialDegree]>
+                                                                comb_mat_;
             koliop::utility::View::InternalInputL1<const Flo64> hat_As_;
             koliop::utility::View::InternalInputL1<const Flo64> hat_Zs_;
             koliop::utility::View::InternalInputL1<const Flo64> vparg_;
 
             // Constant, internally computed values
 
-            koliop::utility::View::MDD3<ComputeFloatType> C_jl_; // TODO(Etienne M): constant extent.
+            koliop::utility::View::MDD<ComputeFloatType[2 * Constant::kMaximumLaguerrePolynomialDegree - 1]
+                                                       [Constant::kMaximumLaguerrePolynomialDegree]
+                                                       [Constant::kMaximumLaguerrePolynomialDegree]>
+                C_jl_;
         };
 
 
@@ -489,18 +494,19 @@ namespace koliop {
             , the_species_extent_{the_species_extent}
             , collision_interspecies_{collision_interspecies}
 
-            , comb_mat_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL2<const Flo64>, koliop::utility::View::InternalInputL2>(comb_mat, "comb_mat_", 2 * Constant::kMaximumLaguerrePolynomialDegree, 2 * Constant::kMaximumLaguerrePolynomialDegree)}
+            , comb_mat_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "comb_mat_")}
             , hat_As_{hat_As}
             , hat_Zs_{hat_Zs}
             , vparg_{vparg}
 
-            , C_jl_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "C_jl_"),
-                    static_cast<std::size_t>(2 * Constant::kMaximumLaguerrePolynomialDegree - 1),
-                    static_cast<std::size_t>(Constant::kMaximumLaguerrePolynomialDegree),
-                    static_cast<std::size_t>(Constant::kMaximumLaguerrePolynomialDegree)} {
+            , C_jl_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "C_jl_")} {
+
+            koliop::utility::Copy::Shallow(koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL2<const Flo64>,
+                                                                                koliop::utility::View::InternalInputL2>(comb_mat, "comb_mat_", 2 * Constant::kMaximumLaguerrePolynomialDegree, 2 * Constant::kMaximumLaguerrePolynomialDegree),
+                                           comb_mat_);
 
             // TODO(Etienne M): Observe how the C_j_ and C_jl_ values are
-            // constant. they could be compile time computed or hardcoded.
+            // constant. They could be compile time computed or hardcoded.
             detail::DoPrepareCjl(C_jl_);
         }
 
