@@ -22,28 +22,20 @@ namespace koliop {
 
             const auto& the_execution_space_pool = an_operator.the_execution_space_pool_;
 
-            // TODO(Etienne M): On GPU, should we just scale the block size ?
-            // TODO(Etienne M): We use mask to avoid some computation, but
-            // wouldn't it be better to compute for everything and only in the
-            // end, reconstruct f based on the mask ?
-            // TODO(Etienne M): On GPU we want big blocks and a single thread,
-            // unparallelized host loop is enough to saturate the GPU. Would
-            // this also work correctly on CPU ?
+            // TODO(Etienne M): Check what can be const in cvcd adn make it
+            // const notably the view extent.
 
+            // TODO(Etienne M): Make the Cvcd opaque to the operator, reducing
+            // the dependencies and recompilation duration.
 
-            CvCd<Constant::kBlockExtentR,
-                 Constant::kBlockExtentTheta,
-                 Constant::kBlockExtentPhi,
-                 Constant::BatchTraitsType>
-                the_cvcd_operator{an_operator.pSpecies_id_,
-                                  an_operator.the_vpar_extent_,
-                                  an_operator.the_species_extent_,
-                                  an_operator.collision_interspecies_,
-                                  an_operator.comb_mat_,
-                                  an_operator.hat_As_,
-                                  an_operator.hat_Zs_,
-                                  an_operator.vparg_,
-                                  an_operator.coeff_intdvpar_};
+            // TODO(Etienne M): Blocking idea: On GPU and CPU we assume a large
+            // block size and fill in the gaps using smaller block size.
+            // We simply need to instantiate a smaller cvcd driver and
+            // distribute the leftover work on these once the big block cvcd
+            // driver handled most of the work.
+
+            // TODO(Etienne M): investigate the issue with full fence during
+            // view deallocation.
 
             for(OrdinalType the_block_first_phi = 0;
                 the_block_first_phi < the_phi_extent;

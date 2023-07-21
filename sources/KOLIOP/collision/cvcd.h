@@ -429,7 +429,7 @@ namespace koliop {
             template <typename Operator, // Templatized to avoid dependency loops
                       typename ExecutionSpace,
                       typename View6D>
-            void Apply(Operator&        an_operator,
+            void Apply(const Operator&  an_operator,
                        ExecutionSpace   an_execution_space,
                        OrdinalType      the_block_first_r,
                        OrdinalType      the_block_first_theta,
@@ -522,7 +522,7 @@ namespace koliop {
         void CvCd<the_block_extent_r,
                   the_block_extent_theta,
                   the_block_extent_phi,
-                  BatchTraits>::Apply(Operator&        an_operator,
+                  BatchTraits>::Apply(const Operator&  an_operator,
                                       ExecutionSpace   an_execution_space,
                                       OrdinalType      the_block_first_r,
                                       OrdinalType      the_block_first_theta,
