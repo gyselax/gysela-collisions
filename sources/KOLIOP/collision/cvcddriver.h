@@ -266,10 +266,6 @@ namespace koliop {
 
                     // TODO(Etienne M): Can we simplify that ?
 
-                    // TODO(Etienne M): The Najl's matrix indexing is transposed.
-                    // Careful with N(k, j, l) which is how it is stored and
-                    // N(k, l, j) how it is used when building the matrix T.
-
                     the_rhs(the_batch_index, ivpar, ipol, the_batch_element_index) -= dt / (5.0 * Ta) *
                                                                                       ((5.0 * U_para - 3.0 * q_para_on_naTa) * (vpar_tmp * the_Najl(the_batch_index, ivpar, 0, ipol, 0, the_batch_element_index) + the_Najl(the_batch_index, ivpar, 1, ipol, 0, the_batch_element_index)) +
                                                                                        q_para_on_naTa * vpar_tmp * vpar_tmp / Ta * (vpar_tmp * the_Najl(the_batch_index, ivpar, 0, ipol, 0, the_batch_element_index) + 3.0 * the_Najl(the_batch_index, ivpar, 1, ipol, 0, the_batch_element_index)) +
@@ -542,6 +538,10 @@ namespace koliop {
             KOLIOP_ASSERT(the_r_extent % kBlockExtentR == 0);
             KOLIOP_ASSERT(the_theta_extent % kBlockExtentTheta == 0);
             KOLIOP_ASSERT(the_phi_extent % kBlockExtentPhi == 0);
+
+            KOLIOP_ASSERT((the_block_first_r + kBlockExtentR) <= the_r_extent);
+            KOLIOP_ASSERT((the_block_first_theta + kBlockExtentTheta) <= the_theta_extent);
+            KOLIOP_ASSERT((the_block_first_phi + kBlockExtentPhi) <= the_phi_extent);
 
             // In the future, the time step could vary.
             the_LHS_matrix_sampler_.DeltaTime() = static_cast<ComputeFloatType>(-dt / 4.0);
