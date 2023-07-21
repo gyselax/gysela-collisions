@@ -26,6 +26,12 @@ namespace koliop {
             using BatchTraitsType = koliop::blas::BatchTraits<ComputeFloatType,
                                                               DeviceExecutionSpaceType>;
 
+            // Aka, HIP/Cuda stream count.
+            // TODO(Etienne M): Should we have more stream ? For ce CvCd
+            // blocking on GPU, this is correlated to the ability to fill the
+            // machine with kernels (notion of occupancy).
+            static inline constexpr OrdinalType kDisjointExecutionSpaceCount = 4;
+
             // TODO(Etienne M): Note we should probably not use constant for the
             // blocking. Indeed, on CPU we benefit from a small block and on GPU
             // we would rather to everything at once if possible. This leads us

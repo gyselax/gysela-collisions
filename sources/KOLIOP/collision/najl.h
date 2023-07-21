@@ -525,7 +525,7 @@ namespace koliop {
 
             // TODO(Etienne M): what is the perf of such memset. We need may
             // need to use an ExecutionSpace.
-            Kokkos::deep_copy(/* TODO(Etienne M): execution space ,*/ the_Najl, 0.0);
+            Kokkos::deep_copy(an_execution_space, the_Najl, 0.0);
 
             // TODO(Etienne M): It is not currently possible to do something
             // like:

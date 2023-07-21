@@ -173,26 +173,31 @@ namespace koliop {
                             q_r_,
                             mask_buffer_r_);
 
-            // TODO(Etienne M): For now, we have only one CvCd driver. We could
-            // add more and to some stream parallelism.
-            the_cvcd_drivers_.emplace_back(pSpecies_id_,
-                                           the_vpar_extent_,
-                                           the_species_extent_,
-                                           collision_interspecies_,
-                                           comb_mat,
-                                           hat_As_,
-                                           hat_Zs_,
-                                           vparg_,
-                                           coeff_intdvpar_);
+            for(OrdinalType i = 0; i < Constant::kDisjointExecutionSpaceCount; ++i) {
+                the_cvcd_drivers_.emplace_back(pSpecies_id_,
+                                               the_vpar_extent_,
+                                               the_species_extent_,
+                                               collision_interspecies_,
+                                               comb_mat,
+                                               hat_As_,
+                                               hat_Zs_,
+                                               vparg_,
+                                               coeff_intdvpar_);
+            }
 
-            // The default execution space. Can rely on all the hardware
-            // resources.
+            // The default execution space.
+            // Do we benefit from speicfying that the first value of
+            // the_execution_space_pool_ is always the default execution space ?
+            // This could help solving bugs.
             the_execution_space_pool_[0] = Constant::DeviceExecutionSpaceType{};
 
-            // NOTE: We do not want to *potentially* split the resource pool.
-            // Thus the repeated call to partition_space.
-            the_execution_space_pool_[1] = Kokkos::Experimental::partition_space(the_execution_space_pool_[0], 1)[0];
-            the_execution_space_pool_[2] = Kokkos::Experimental::partition_space(the_execution_space_pool_[0], 1)[0];
+            for(OrdinalType i = 1; i < Constant::kDisjointExecutionSpaceCount; ++i) {
+                // NOTE: We do not want to *potentially* split the resource
+                // pool. Thus the repeated call to partition_space which creates
+                // execution space with all the same amount of hardware
+                // resources.
+                the_execution_space_pool_[1] = Kokkos::Experimental::partition_space(the_execution_space_pool_[0], 1)[0];
+            }
         }
 
     } // namespace collision
