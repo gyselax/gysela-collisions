@@ -39,6 +39,8 @@ namespace koliop {
 
             using CvCdDriver = decltype(an_operator.the_cvcd_drivers_)::value_type;
 
+            uint64_t the_cvcd_operation_index = 0;
+
             for(OrdinalType the_block_first_phi = 0;
                 the_block_first_phi < the_phi_extent;
                 the_block_first_phi += CvCdDriver::kBlockExtentPhi) {
@@ -48,22 +50,23 @@ namespace koliop {
                     for(OrdinalType the_block_first_r = 0;
                         the_block_first_r < the_r_extent;
                         the_block_first_r += CvCdDriver::kBlockExtentR) {
-                        the_cvcd_drivers[0].Apply(an_operator,
-                                                  the_execution_space_pool[0],
-                                                  the_block_first_r,
-                                                  the_block_first_theta,
-                                                  the_block_first_phi,
-                                                  dt,
-                                                  f5d_s);
+                        const uint64_t the_driver_index          = the_cvcd_operation_index % the_cvcd_drivers.size();
+                        const uint64_t the_execution_space_index = 0; // the_cvcd_operation_index % (sizeof(the_execution_space_pool) / sizeof(the_execution_space_pool[0]));
+
+                        the_cvcd_drivers[the_driver_index].Apply(an_operator,
+                                                                 the_execution_space_pool[the_execution_space_index],
+                                                                 the_block_first_r,
+                                                                 the_block_first_theta,
+                                                                 the_block_first_phi,
+                                                                 dt,
+                                                                 f5d_s);
+
+                        ++the_cvcd_operation_index;
                     }
                 }
             }
 
-            // TODO(Etienne M): When views deallocated, there is a fence. Move
-            // that allocations to the operator object ! Note that the matrix
-            // sample also deallocate View.
-            // NOTE: does the fence occurs when the storage is freed, or when to
-            // View object's destructor is called ?
+            the_execution_space_pool[0].fence();
         }
 
         void Operator::Apply(ComputeFloatType dt,
