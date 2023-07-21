@@ -15,6 +15,10 @@ namespace koliop {
         /// TODO(Etienne M):
         /// Add execution space aware version of the functions below ?
         ///
+        /// NOTE: the fact that this facility does not exist already in Kokkos
+        /// should be enough to call it a defect (and place it in the
+        /// appropriate koliop header).
+        ///
         struct Copy {
         public:
             /// May still do a deep copy if memory spaces or layouts are not
@@ -87,6 +91,11 @@ namespace koliop {
                   typename DestinationView>
         auto Copy::Shallow(SourceView&&      a_source_view,
                            DestinationView&& a_destination_view) {
+
+            // TODO(Etienne M): Should we use
+            // Kokkos::is_always_assignable_v<DestinationView, SourceView> ?
+            // It would lead to silent errors where the user thinks a shallow
+            // copy is done when if fact a deep copy is realized.
             if constexpr(std::is_same_v<typename std::remove_reference_t<SourceView>::memory_space,
                                         typename std::remove_reference_t<DestinationView>::memory_space> &&
                          std::is_same_v<typename std::remove_reference_t<SourceView>::array_layout,
@@ -182,6 +191,11 @@ namespace koliop {
         Copy::ViewToRawData(SourceView                          a_source_view,
                             typename UnmanagedView::value_type* the_raw_data,
                             Indicies... the_indicies) {
+
+            // TODO(Etienne M): Should we use
+            // Kokkos::is_always_assignable_v<DestinationView, SourceView> ?
+            // It would lead to silent errors where the user thinks a shallow
+            // copy is done when if fact a deep copy is realized.
             if(std::is_same_v<typename std::remove_reference_t<SourceView>::array_layout,
                               typename std::remove_reference_t<UnmanagedView>::array_layout> &&
                std::is_same_v<typename std::remove_reference_t<SourceView>::memory_space,
