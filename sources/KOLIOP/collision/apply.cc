@@ -22,24 +22,22 @@ namespace koliop {
 
             const auto& the_execution_space_pool = an_operator.the_execution_space_pool_;
 
-            // TODO(Etienne M): Check what can be const in cvcd adn make it
-            // const notably the view extent.
-
             // TODO(Etienne M): Make the Cvcd opaque to the operator, reducing
             // the dependencies and recompilation duration.
 
-            // TODO(Etienne M): Blocking idea: On GPU and CPU we assume a large
-            // block size and fill in the gaps using smaller block size.
-            // We simply need to instantiate a smaller cvcd driver and
-            // distribute the leftover work on these once the big block cvcd
-            // driver handled most of the work.
+            // TODO(Etienne M): Blocking idea, use a recursive approach where we
+            // try to fit the biggest block size to process the domain, and if
+            // not possible we fallback to a smaller size. Then, we process the
+            // potential remaining grid point recursively. Supposing we do not
+            // template CvCd on the block size anymore, we could reuse them for
+            // smaller blocs.
 
             // TODO(Etienne M): investigate the issue with full fence during
             // view deallocation.
 
             using CvCdDriver = decltype(an_operator.the_cvcd_drivers_)::value_type;
 
-            KOLIOP_ASSERT(the_cvcd_drivers.size() <= Constant::kDisjointExecutionSpaceCount);
+            KOLIOP_ASSERT(the_cvcd_drivers.size() == Constant::kDisjointExecutionSpaceCount);
 
             uint64_t the_cvcd_operation_index = 0;
 
@@ -52,7 +50,7 @@ namespace koliop {
                     for(OrdinalType the_block_first_r = 0;
                         the_block_first_r < the_r_extent;
                         the_block_first_r += CvCdDriver::kBlockExtentR) {
-                        const uint64_t the_driver_index = the_cvcd_operation_index % the_cvcd_drivers.size();
+                        const uint64_t the_driver_index = the_cvcd_operation_index % Constant::kDisjointExecutionSpaceCount;
 
                         // NOTE: We make sure that the execution space index and
                         // the driver index match so that no execution space
@@ -73,7 +71,15 @@ namespace koliop {
                 }
             }
 
-            the_execution_space_pool[0].fence();
+            // TODO(Etienne M): Do we full fence or wait for all the streams ?
+            // Fence is a lot cheaper it seems. Though if Gysela executes other
+            // GPU kernel while koliop works, this could slow things done.
+
+            Kokkos::fence();
+
+            // for(const auto& an_execution_space : the_execution_space_pool) {
+            //     an_execution_space.fence();
+            // }
         }
 
         void Operator::Apply(ComputeFloatType dt,

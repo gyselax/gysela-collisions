@@ -251,7 +251,7 @@ namespace koliop {
 
             // Miscellaneous tooling
 
-            Constant::DeviceExecutionSpaceType the_execution_space_pool_[Constant::kDisjointExecutionSpaceCount];
+            std::vector<Constant::DeviceExecutionSpaceType> the_execution_space_pool_;
         };
 
     } // namespace collision

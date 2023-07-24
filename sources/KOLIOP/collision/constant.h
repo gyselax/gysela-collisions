@@ -27,9 +27,9 @@ namespace koliop {
                                                               DeviceExecutionSpaceType>;
 
             // Aka, HIP/Cuda stream count.
-            // TODO(Etienne M): Should we have more stream ? For ce CvCd
-            // blocking on GPU, this is correlated to the ability to fill the
-            // machine with kernels (notion of occupancy).
+            // TODO(Etienne M): Depending on the hardware, GPU/CPU, and between
+            // GPUs, this value could be increased or reduced. Using future
+            // GPUs, we could benefit from a higher value.
             static inline constexpr OrdinalType kDisjointExecutionSpaceCount = 4;
 
             // TODO(Etienne M): Note we should probably not use constant for the
@@ -45,7 +45,6 @@ namespace koliop {
             // TODO(Etienne M): Tune that size or rework batching. If we can not
             // have larger block, we have to check if kokkos supports
             // distributing on vector/teams.
-            //
 
             // NOTE: The amount of memory used during the collision operator is
             // at most approximately:

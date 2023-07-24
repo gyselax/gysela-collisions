@@ -160,9 +160,10 @@ namespace koliop {
             , q_par_on_nT_s_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "q_par_on_nT_s_"),
                              static_cast<std::size_t>(the_r_extent_), static_cast<std::size_t>(the_theta_extent_), static_cast<std::size_t>(the_phi_extent_), static_cast<std::size_t>(the_species_extent_)}
 
-        // Miscellaneous numerical tooling
-        // Miscellaneous tooling
-        {
+            // Miscellaneous numerical tooling
+            , the_cvcd_drivers_{}
+            // Miscellaneous tooling
+            , the_execution_space_pool_{} {
 
             DoPrepareNuStar(*this,
                             nustar_coeff_,
@@ -174,6 +175,8 @@ namespace koliop {
                             mask_buffer_r_);
 
             for(OrdinalType i = 0; i < Constant::kDisjointExecutionSpaceCount; ++i) {
+                // We cant do copies as the Views have a shared pointer
+                // semantic. Here we want disjoint states.
                 the_cvcd_drivers_.emplace_back(pSpecies_id_,
                                                the_vpar_extent_,
                                                the_species_extent_,
@@ -185,18 +188,23 @@ namespace koliop {
                                                coeff_intdvpar_);
             }
 
+#if defined(KOKKOS_ENABLE_HIP)
+            static_assert(Constant::kDisjointExecutionSpaceCount >= 2, "");
+
             // The default execution space.
-            // Do we benefit from speicfying that the first value of
+            // Do we benefit from specifying that the first value of
             // the_execution_space_pool_ is always the default execution space ?
             // This could help solving bugs.
-            the_execution_space_pool_[0] = Constant::DeviceExecutionSpaceType{};
+            the_execution_space_pool_.emplace_back(nullptr, true);
+            the_execution_space_pool_.emplace_back();
+#endif
 
-            for(OrdinalType i = 1; i < Constant::kDisjointExecutionSpaceCount; ++i) {
+            while(the_execution_space_pool_.size() != Constant::kDisjointExecutionSpaceCount) {
                 // NOTE: We do not want to *potentially* split the resource
                 // pool. Thus the repeated call to partition_space which creates
                 // execution space with all the same amount of hardware
                 // resources.
-                the_execution_space_pool_[1] = Kokkos::Experimental::partition_space(the_execution_space_pool_[0], 1)[0];
+                the_execution_space_pool_.emplace_back(Kokkos::Experimental::partition_space(the_execution_space_pool_[0], 1)[0]);
             }
         }
 
