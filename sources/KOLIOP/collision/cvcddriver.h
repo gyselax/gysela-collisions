@@ -43,9 +43,11 @@ namespace koliop {
 
             template <typename CvCdDriver,
                       typename Operator,
+                      typename ExecutionSpace,
                       typename View2D>
             static inline void
             DoPrepareCollisionMask(const Operator& an_operator,
+                                   ExecutionSpace  an_execution_space,
                                    OrdinalType     the_block_first_r,
                                    OrdinalType     the_block_first_theta,
                                    View2D&&        mask_coll) {
@@ -66,7 +68,8 @@ namespace koliop {
 
                 const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<2,
                                                                          Kokkos::Iterate::Default,
-                                                                         Kokkos::Iterate::Default>>{{the_block_first_r,
+                                                                         Kokkos::Iterate::Default>>{an_execution_space,
+                                                                                                    {the_block_first_r,
                                                                                                      the_block_first_theta},
                                                                                                     {the_block_first_r + CvCdDriver::kBlockExtentR,
                                                                                                      the_block_first_theta + CvCdDriver::kBlockExtentTheta}};
@@ -79,11 +82,13 @@ namespace koliop {
             ///
             template <typename CvCdDriver,
                       typename Operator,
+                      typename ExecutionSpace,
                       typename View6D,
                       typename View4D,
                       typename View2D>
             static inline void
             DoComputeAlphaProjection(const Operator& an_operator,
+                                     ExecutionSpace  an_execution_space,
                                      OrdinalType     the_block_first_r,
                                      OrdinalType     the_block_first_theta,
                                      OrdinalType     the_block_first_phi,
@@ -158,7 +163,8 @@ namespace koliop {
 
                 const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<3,
                                                                          Kokkos::Iterate::Default,
-                                                                         Kokkos::Iterate::Default>>{{the_block_first_r,
+                                                                         Kokkos::Iterate::Default>>{an_execution_space,
+                                                                                                    {the_block_first_r,
                                                                                                      the_block_first_theta,
                                                                                                      the_block_first_phi},
                                                                                                     {the_block_first_r + CvCdDriver::kBlockExtentR,
@@ -171,11 +177,13 @@ namespace koliop {
 
             template <typename CvCdDriver,
                       typename Operator,
+                      typename ExecutionSpace,
                       typename View6D0,
                       typename View6D1,
                       typename View1D>
             static inline void
             DoPrepareMatrix(const Operator&                       an_operator,
+                            ExecutionSpace                        an_execution_space,
                             const MatrixSampler<View6D0, View1D>& the_matrix_sampler,
                             View6D1&&                             the_output_matrix) {
 
@@ -211,7 +219,8 @@ namespace koliop {
 
                 const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<5,
                                                                          Kokkos::Iterate::Default,
-                                                                         Kokkos::Iterate::Default>>{{0, 0, 0, 0, 0},
+                                                                         Kokkos::Iterate::Default>>{an_execution_space,
+                                                                                                    {0, 0, 0, 0, 0},
                                                                                                     {CvCdDriver::BatchTraitsType::kBatchSize,
                                                                                                      Constant::kMaximumLaguerrePolynomialDegree,
                                                                                                      Constant::kMaximumLaguerrePolynomialDegree,
@@ -224,10 +233,12 @@ namespace koliop {
 
             template <typename CvCdDriver,
                       typename Operator,
+                      typename ExecutionSpace,
                       typename View6D,
                       typename View4D>
             static inline void
             DoComputeCvCdSource(const Operator&  an_operator,
+                                ExecutionSpace   an_execution_space,
                                 ComputeFloatType dt,
                                 OrdinalType      the_block_first_r,
                                 OrdinalType      the_block_first_theta,
@@ -274,7 +285,8 @@ namespace koliop {
 
                 const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<5,
                                                                          Kokkos::Iterate::Default,
-                                                                         Kokkos::Iterate::Default>>{{0,
+                                                                         Kokkos::Iterate::Default>>{an_execution_space,
+                                                                                                    {0,
                                                                                                      0,
                                                                                                      the_block_first_r,
                                                                                                      the_block_first_theta,
@@ -291,11 +303,13 @@ namespace koliop {
 
             template <typename CvCdDriver,
                       typename Operator,
+                      typename ExecutionSpace,
                       typename View6D,
                       typename View4D,
                       typename View2D>
             static inline void
             DoComputeReconstruction(const Operator& an_operator,
+                                    ExecutionSpace  an_execution_space,
                                     OrdinalType     the_block_first_r,
                                     OrdinalType     the_block_first_theta,
                                     OrdinalType     the_block_first_phi,
@@ -369,8 +383,9 @@ namespace koliop {
 
                 // TODO(Etienne M): TEAM hardcoded size, check for auto tuning
                 // opportunities.
-                const auto a_policy = Kokkos::TeamPolicy<Constant::DeviceExecutionSpaceType>{static_cast<int>(the_team_count),
-                                                                                             384};
+                const auto a_policy = Kokkos::TeamPolicy<ExecutionSpace>{an_execution_space,
+                                                                         static_cast<int>(the_team_count),
+                                                                         384};
 
 
                 Kokkos::parallel_for("DoComputeReconstruction",
@@ -550,6 +565,7 @@ namespace koliop {
             // TODO(Etienne M): If mask_coll depends on r and theta,
             // we could bring it up two loops into Apply.
             detail::DoPrepareCollisionMask<CvCdDriver>(an_operator,
+                                                       an_execution_space,
                                                        the_block_first_r, the_block_first_theta,
                                                        mask_coll_);
 
@@ -563,7 +579,9 @@ namespace koliop {
 
             {
                 detail::DoComputeAlphaProjection<CvCdDriver>(an_operator,
-                                                             the_block_first_r, the_block_first_theta, the_block_first_phi,
+                                                             an_execution_space,
+                                                             the_block_first_r,
+                                                             the_block_first_theta, the_block_first_phi,
                                                              mask_coll_, f5d_s, the_alpha_coefficients_);
                 {
                     the_najl_provider_.Compute(an_execution_space,
@@ -574,6 +592,7 @@ namespace koliop {
 
                     {
                         detail::DoPrepareMatrix<CvCdDriver>(an_operator,
+                                                            an_execution_space,
                                                             the_LHS_matrix_sampler_,
                                                             the_matrix_);
 
@@ -606,6 +625,7 @@ namespace koliop {
 
                         // the_rhs = alpha~~
                         detail::DoComputeCvCdSource<CvCdDriver>(an_operator,
+                                                                an_execution_space,
                                                                 dt,
                                                                 the_block_first_r, the_block_first_theta, the_block_first_phi,
                                                                 the_Najl_, the_rhs_);
@@ -632,7 +652,9 @@ namespace koliop {
                 }
 
                 detail::DoComputeReconstruction<CvCdDriver>(an_operator,
-                                                            the_block_first_r, the_block_first_theta, the_block_first_phi,
+                                                            an_execution_space,
+                                                            the_block_first_r,
+                                                            the_block_first_theta, the_block_first_phi,
                                                             mask_coll_, f5d_s, the_rhs_);
             }
         }
