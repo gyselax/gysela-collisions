@@ -3,6 +3,7 @@
 #include "KOLIOP/collision/operator.h"
 #include "KOLIOP/portability/cmath.h"
 #include "KOLIOP/utility/copy.h"
+#include "KOLIOP/utility/select.h"
 
 namespace koliop {
     namespace collision {
@@ -113,8 +114,7 @@ namespace koliop {
             // TODO(Etienne M): TEAM hardcoded size, check for auto tuning
             // opportunities.
             const auto a_policy = Kokkos::TeamPolicy<Constant::DeviceExecutionSpaceType>{static_cast<int>(the_team_count),
-                                                                                         // 64
-                                                                                         64};
+                                                                                         koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, 64)};
 
             Kokkos::parallel_for("DoComputeCpar",
                                  a_policy, the_kernel);

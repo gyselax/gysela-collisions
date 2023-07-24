@@ -8,6 +8,7 @@
 #include "KOLIOP/blas/trsv.h"
 #include "KOLIOP/collision/matrixsampler.h"
 #include "KOLIOP/collision/najl.h"
+#include "KOLIOP/utility/select.h"
 
 namespace koliop {
     namespace collision {
@@ -383,10 +384,9 @@ namespace koliop {
 
                 // TODO(Etienne M): TEAM hardcoded size, check for auto tuning
                 // opportunities.
-                const auto a_policy = Kokkos::TeamPolicy<ExecutionSpace>{an_execution_space,
-                                                                         static_cast<int>(the_team_count),
-                                                                         384};
-
+                const auto a_policy = Kokkos::TeamPolicy<Constant::DeviceExecutionSpaceType>{an_execution_space,
+                                                                                             static_cast<int>(the_team_count),
+                                                                                             koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, 384)};
 
                 Kokkos::parallel_for("DoComputeReconstruction",
                                      a_policy, the_kernel);

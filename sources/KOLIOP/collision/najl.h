@@ -460,8 +460,8 @@ namespace koliop {
             OrdinalType the_species_extent_;
             bool        collision_interspecies_;
 
-            koliop::utility::View::InternalInputL<Flo64[2 * Constant::kMaximumLaguerrePolynomialDegree]
-                                                       [2 * Constant::kMaximumLaguerrePolynomialDegree]>
+            koliop::utility::View::InternalInputL<const Flo64[2 * Constant::kMaximumLaguerrePolynomialDegree]
+                                                             [2 * Constant::kMaximumLaguerrePolynomialDegree]>
                                                                 comb_mat_;
             koliop::utility::View::InternalInputL1<const Flo64> hat_As_;
             koliop::utility::View::InternalInputL1<const Flo64> hat_Zs_;
@@ -494,7 +494,14 @@ namespace koliop {
             , the_species_extent_{the_species_extent}
             , collision_interspecies_{collision_interspecies}
 
-            , comb_mat_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "comb_mat_")}
+            // TODO(Etienne M): We use constant extent for comb_mat_. If
+            // InternalInputL2 us and UDL then we could default construct the
+            // view. But if it is and MDL, the view will allocate unless we pass
+            // Kokkos::WithoutInitializing. If we pass
+            // Kokkos::WithoutInitializing to a UDL it does not compile. This is
+            // a broken feature preventing at least in this way,
+            // meta-programming.
+            , comb_mat_{/* Kokkos::view_alloc(Kokkos::WithoutInitializing, "comb_mat_") */}
             , hat_As_{hat_As}
             , hat_Zs_{hat_Zs}
             , vparg_{vparg}
