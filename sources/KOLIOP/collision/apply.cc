@@ -39,7 +39,7 @@ namespace koliop {
 
             KOLIOP_ASSERT(the_cvcd_drivers.size() == Constant::kDisjointExecutionSpaceCount);
 
-            uint64_t the_cvcd_operation_index = 0;
+            OrdinalType the_cvcd_operation_index = 0;
 
             for(OrdinalType the_block_first_phi = 0;
                 the_block_first_phi < the_phi_extent;
@@ -50,13 +50,13 @@ namespace koliop {
                     for(OrdinalType the_block_first_r = 0;
                         the_block_first_r < the_r_extent;
                         the_block_first_r += CvCdDriver::kBlockExtentR) {
-                        const uint64_t the_driver_index = the_cvcd_operation_index % Constant::kDisjointExecutionSpaceCount;
+                        const OrdinalType the_driver_index = the_cvcd_operation_index % Constant::kDisjointExecutionSpaceCount;
 
                         // NOTE: We make sure that the execution space index and
                         // the driver index match so that no execution space
                         // (aka. stream) can start using a driver before a
                         // potential, previous execution space ended using it.
-                        const uint64_t the_execution_space_index = the_driver_index;
+                        const OrdinalType the_execution_space_index = the_driver_index;
 
                         the_cvcd_drivers[the_driver_index].Apply(an_operator,
                                                                  the_execution_space_pool[the_execution_space_index],
