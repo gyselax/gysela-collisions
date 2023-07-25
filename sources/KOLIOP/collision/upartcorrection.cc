@@ -38,6 +38,8 @@ namespace koliop {
             const auto& pSpecies_id            = an_operator.pSpecies_id_;
             const auto& collision_interspecies = an_operator.collision_interspecies_;
 
+            const auto& the_execution_space_pool = an_operator.the_execution_space_pool_;
+
             // TODO(Etienne M): Make sure the accesses are coalesced on GPU
             // and sequential on CPU.
 
@@ -181,8 +183,10 @@ namespace koliop {
 
             // TODO(Etienne M): TEAM hardcoded size, check for auto tuning
             // opportunities.
-            const auto a_policy = Kokkos::TeamPolicy<Constant::DeviceExecutionSpaceType>{static_cast<int>(the_team_count),
-                                                                                         koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, 192)};
+            const auto a_policy = Kokkos::TeamPolicy<Constant::DeviceExecutionSpaceType>{
+                the_execution_space_pool[0],
+                static_cast<int>(the_team_count),
+                koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, 192)};
 
             Kokkos::parallel_for("DoComputeUparTCorrection",
                                  a_policy, the_kernel);

@@ -28,6 +28,8 @@ namespace koliop {
 
             const auto& pSpecies_id = an_operator.pSpecies_id_;
 
+            const auto& the_execution_space_pool = an_operator.the_execution_space_pool_;
+
             const auto the_team_count = the_r_extent * the_theta_extent * the_phi_extent;
 
             // Due to the inherent Cuda/HIP thread block limit.
@@ -35,8 +37,10 @@ namespace koliop {
 
             // TODO(Etienne M): TEAM hardcoded size, check for auto tuning
             // opportunities.
-            const auto a_policy = Kokkos::TeamPolicy<Constant::DeviceExecutionSpaceType>{static_cast<int>(the_team_count),
-                                                                                         koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, 320)};
+            const auto a_policy = Kokkos::TeamPolicy<Constant::DeviceExecutionSpaceType>{
+                the_execution_space_pool[0],
+                static_cast<int>(the_team_count),
+                koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, 320)};
 
             // TODO(Etienne M): Make sure the accesses are coalesced on GPU
             // and sequential on CPU.

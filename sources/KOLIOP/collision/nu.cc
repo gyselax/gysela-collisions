@@ -50,6 +50,8 @@ namespace koliop {
 
             const auto& ir_SOL_separatrix = an_operator.ir_SOL_separatrix_;
 
+            const auto& the_execution_space_pool = an_operator.the_execution_space_pool_;
+
             const OrdinalType the_local_r_extent = Kokkos::min(the_r_extent, ir_SOL_separatrix + 1);
 
             const auto the_kernel = KOKKOS_LAMBDA(const auto& a_team_handle) {
@@ -92,8 +94,10 @@ namespace koliop {
 
             // TODO(Etienne M): TEAM hardcoded size, check for auto tuning
             // opportunities.
-            const auto a_policy = Kokkos::TeamPolicy<Constant::DeviceExecutionSpaceType>{static_cast<int>(the_team_count),
-                                                                                         koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, 64)};
+            const auto a_policy = Kokkos::TeamPolicy<Constant::DeviceExecutionSpaceType>{
+                the_execution_space_pool[0],
+                static_cast<int>(the_team_count),
+                koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, 64)};
 
             Kokkos::parallel_for("DoPrecomputeNu",
                                  a_policy, the_kernel);

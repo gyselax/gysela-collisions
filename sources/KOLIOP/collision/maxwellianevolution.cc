@@ -31,6 +31,8 @@ namespace koliop {
             const auto& U_par_s = an_operator.U_par_s_;
             const auto& nu_ab   = an_operator.nu_ab_;
 
+            const auto& the_execution_space_pool = an_operator.the_execution_space_pool_;
+
             const ComputeFloatType half_dt = dt / 2.0;
 
             // NOTE: We use scratch memory to avoid overwriting the T_s.
@@ -126,8 +128,10 @@ namespace koliop {
 
             // TODO(Etienne M): TEAM hardcoded size, check for auto tuning
             // opportunities.
-            auto a_policy = Kokkos::TeamPolicy<Constant::DeviceExecutionSpaceType>{static_cast<int>(the_team_count),
-                                                                                   koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, 64)};
+            auto a_policy = Kokkos::TeamPolicy<Constant::DeviceExecutionSpaceType>{
+                the_execution_space_pool[0],
+                static_cast<int>(the_team_count),
+                koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, 64)};
 
             a_policy.set_scratch_size(0,
                                       Kokkos::PerThread(ScratchMemory::shmem_size(the_scratch_memory_bytes_per_thread)));

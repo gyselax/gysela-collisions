@@ -39,6 +39,8 @@ namespace koliop {
             const ComputeFloatType R0_inverse  = 1.0 / R0;
             const ComputeFloatType half_dt     = dt / 2.0;
 
+            const auto& the_execution_space_pool = an_operator.the_execution_space_pool_;
+
             // TODO(Etienne M): Make sure the accesses are coalesced on GPU
             // and sequential on CPU.
 
@@ -113,8 +115,10 @@ namespace koliop {
 
             // TODO(Etienne M): TEAM hardcoded size, check for auto tuning
             // opportunities.
-            const auto a_policy = Kokkos::TeamPolicy<Constant::DeviceExecutionSpaceType>{static_cast<int>(the_team_count),
-                                                                                         koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, 64)};
+            const auto a_policy = Kokkos::TeamPolicy<Constant::DeviceExecutionSpaceType>{
+                the_execution_space_pool[0],
+                static_cast<int>(the_team_count),
+                koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, 64)};
 
             Kokkos::parallel_for("DoComputeCpar",
                                  a_policy, the_kernel);
