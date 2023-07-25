@@ -23,6 +23,21 @@ MODULE koliop
    PUBLIC :: KOLIOP_EXTRACTION_IDENTIFIER_nu_ab
    PUBLIC :: KOLIOP_EXTRACTION_IDENTIFIER_q_par_on_nT_s
 
+   PUBLIC :: koliop_Initialize_fp
+   PUBLIC :: koliop_Deinitialize_fp
+   PUBLIC :: koliop_Create_fp
+   PUBLIC :: koliop_Release_fp
+   PUBLIC :: koliop_ComputeMoments_fp
+   PUBLIC :: koliop_PrecomputeNu_fp
+   PUBLIC :: koliop_ComputeMaxwellianEvolution_fp
+   PUBLIC :: koliop_ComputeQparOnNT_fp
+   PUBLIC :: koliop_ComputeCpar_fp
+   PUBLIC :: koliop_ComputeMaxwellianUnshiftedLoc_fp
+   PUBLIC :: koliop_Apply_fp
+   PUBLIC :: koliop_ComputeDensityCorrection_fp
+   PUBLIC :: koliop_ComputeUparTCorrection_fp
+   PUBLIC :: koliop_ExtractRaw_fp
+
    PUBLIC :: koliop_Initialize_f
    PUBLIC :: koliop_Deinitialize_f
    PUBLIC :: koliop_Create_f
@@ -394,49 +409,15 @@ MODULE koliop
 
 CONTAINS
 
-   SUBROUTINE koliop_Initialize_f( &
-      a_host_thread_count, &
-      a_device_index, &
-      with_verbose_initialization, &
-      an_error_code)
-
-      IMPLICIT NONE
-
-      INTEGER, INTENT(IN) :: a_host_thread_count
-      INTEGER, INTENT(IN) :: a_device_index
-      LOGICAL, INTENT(IN) :: with_verbose_initialization
-      INTEGER(koliop_Status), INTENT(OUT) :: an_error_code
-
-      INTEGER(C_INT8_T) :: with_verbose_initialization_cast
-
-      IF (with_verbose_initialization) THEN
-         with_verbose_initialization_cast = 1
-      ELSE
-         with_verbose_initialization_cast = 0
-      END IF
-
-      an_error_code = koliop_Initialize_c( &
-         INT(a_host_thread_count, C_SIZE_T), &
-         INT(a_device_index, C_SIZE_T), &
-         with_verbose_initialization_cast)
-   END SUBROUTINE
-
-   SUBROUTINE koliop_Deinitialize_f( &
-      an_error_code)
-
-      IMPLICIT NONE
-
-      INTEGER(koliop_Status), INTENT(OUT) :: an_error_code
-
-      an_error_code = koliop_Deinitialize_c()
-   END SUBROUTINE
-
    ! NOTE: Assuming use do some part of the Gysela computation using OpenMP on
    ! GPU, you should use omp_get_mapped_ptr, use_device_ptr etc. to pass data to
    ! Koliop. These OpenMP calls and directives return C_PTR thus the interface
    ! accepts C_PTR and not DIMENSION(*) which is a same for type safety.. Yay
    ! Fortran.
-   SUBROUTINE koliop_Create_f(&
+   ! For this reason we offer two version of the interface. Routines suffixed
+   ! with "_f" take plain DIMENTION(*) array as input and convert them to C_PTR.
+   ! "_fp" suffixed routines take C_PTR as input (for use with OpenMP).
+   SUBROUTINE koliop_Create_fp(&
       an_operator_handle, &
       Npolmax, &
       index_max, &
@@ -572,6 +553,315 @@ CONTAINS
          Bstar_s)
    END SUBROUTINE
 
+   SUBROUTINE koliop_ComputeMoments_fp( &
+      an_operator_handle, &
+      f5d_s, &
+      an_error_code)
+
+      IMPLICIT NONE
+
+      TYPE(C_PTR), INTENT(IN) :: an_operator_handle
+      ! REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(INOUT) :: f5d_s
+      TYPE(C_PTR), INTENT(IN) :: f5d_s
+      INTEGER(koliop_Status), INTENT(OUT) :: an_error_code
+
+      an_error_code = koliop_ComputeMoments_c( &
+         an_operator_handle, &
+         f5d_s)
+   END SUBROUTINE
+
+   SUBROUTINE koliop_ComputeMaxwellianEvolution_fp( &
+      an_operator_handle, &
+      dt, &
+      f5d_s, &
+      an_error_code)
+
+      IMPLICIT NONE
+
+      TYPE(C_PTR), INTENT(IN) :: an_operator_handle
+      REAL(C_DOUBLE), INTENT(IN) :: dt
+      ! REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(INOUT) :: f5d_s
+      TYPE(C_PTR), INTENT(IN) :: f5d_s
+      INTEGER(koliop_Status), INTENT(OUT) :: an_error_code
+
+      an_error_code = koliop_ComputeMaxwellianEvolution_c( &
+         an_operator_handle, &
+         dt, &
+         f5d_s)
+   END SUBROUTINE
+
+   SUBROUTINE koliop_ComputeQparOnNT_fp( &
+      an_operator_handle, &
+      f5d_s, &
+      an_error_code)
+
+      IMPLICIT NONE
+
+      TYPE(C_PTR), INTENT(IN) :: an_operator_handle
+      ! REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(IN) :: f5d_s
+      TYPE(C_PTR), INTENT(IN) :: f5d_s
+      INTEGER(koliop_Status), INTENT(OUT) :: an_error_code
+
+      an_error_code = koliop_ComputeQparOnNT_c( &
+         an_operator_handle, &
+         f5d_s)
+   END SUBROUTINE
+
+   SUBROUTINE koliop_ComputeCpar_fp( &
+      an_operator_handle, &
+      dt, &
+      f5d_s, &
+      an_error_code)
+
+      IMPLICIT NONE
+
+      TYPE(C_PTR), INTENT(IN) :: an_operator_handle
+      REAL(C_DOUBLE), INTENT(IN) :: dt
+      ! REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(INOUT) :: f5d_s
+      TYPE(C_PTR), INTENT(IN) :: f5d_s
+      INTEGER(koliop_Status), INTENT(OUT) :: an_error_code
+
+      an_error_code = koliop_ComputeCpar_c( &
+         an_operator_handle, &
+         dt, &
+         f5d_s)
+   END SUBROUTINE
+
+   SUBROUTINE koliop_ComputeMaxwellianUnshiftedLoc_fp( &
+      an_operator_handle, &
+      f5d_s, &
+      choice, &
+      an_error_code)
+
+      IMPLICIT NONE
+
+      TYPE(C_PTR), INTENT(IN) :: an_operator_handle
+      ! REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(INOUT) :: f5d_s
+      TYPE(C_PTR), INTENT(IN) :: f5d_s
+      INTEGER, INTENT(IN) :: choice
+      INTEGER(koliop_Status), INTENT(OUT) :: an_error_code
+
+      an_error_code = koliop_ComputeMaxwellianUnshiftedLoc_c( &
+         an_operator_handle, &
+         f5d_s, &
+         INT(choice, C_INT32_T))
+   END SUBROUTINE
+
+   SUBROUTINE koliop_Apply_fp( &
+      an_operator_handle, &
+      dt, &
+      f5d_s, &
+      an_error_code)
+
+      IMPLICIT NONE
+
+      TYPE(C_PTR), INTENT(IN) :: an_operator_handle
+      REAL(C_DOUBLE), INTENT(IN) :: dt
+      ! REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(INOUT) :: f5d_s
+      TYPE(C_PTR), INTENT(IN) :: f5d_s
+      INTEGER(koliop_Status), INTENT(OUT) :: an_error_code
+
+      an_error_code = koliop_Apply_c( &
+         an_operator_handle, &
+         dt, &
+         f5d_s)
+   END SUBROUTINE
+
+   SUBROUTINE koliop_ComputeDensityCorrection_fp( &
+      an_operator_handle, &
+      f5d_s, &
+      an_error_code)
+
+      IMPLICIT NONE
+
+      TYPE(C_PTR), INTENT(IN) :: an_operator_handle
+      ! REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(INOUT) :: f5d_s
+      TYPE(C_PTR), INTENT(IN) :: f5d_s
+      INTEGER(koliop_Status), INTENT(OUT) :: an_error_code
+
+      an_error_code = koliop_ComputeDensityCorrection_c( &
+         an_operator_handle, &
+         f5d_s)
+   END SUBROUTINE
+
+   SUBROUTINE koliop_ComputeUparTCorrection_fp( &
+      an_operator_handle, &
+      dt, &
+      f5d_s, &
+      an_error_code)
+
+      IMPLICIT NONE
+
+      TYPE(C_PTR), INTENT(IN) :: an_operator_handle
+      REAL(C_DOUBLE), INTENT(IN) :: dt
+      ! REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(INOUT) :: f5d_s
+      TYPE(C_PTR), INTENT(IN) :: f5d_s
+      INTEGER(koliop_Status), INTENT(OUT) :: an_error_code
+
+      an_error_code = koliop_ComputeUparTCorrection_c( &
+         an_operator_handle, &
+         dt, &
+         f5d_s)
+   END SUBROUTINE
+
+   SUBROUTINE koliop_ExtractRaw_fp( &
+      an_operator_handle, &
+      the_value_identifier, &
+      an_output_buffer, &
+      an_error_code)
+
+      IMPLICIT NONE
+
+      TYPE(C_PTR), INTENT(IN) :: an_operator_handle
+      INTEGER, INTENT(IN) :: the_value_identifier
+      ! REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(INOUT) :: an_output_buffer
+      TYPE(C_PTR), INTENT(IN) :: an_output_buffer
+      INTEGER(koliop_Status), INTENT(OUT) :: an_error_code
+
+      an_error_code = koliop_ExtractRaw_c( &
+         an_operator_handle, &
+         INT(the_value_identifier, C_INT32_T), &
+         an_output_buffer)
+   END SUBROUTINE
+
+   SUBROUTINE koliop_Initialize_f( &
+      a_host_thread_count, &
+      a_device_index, &
+      with_verbose_initialization, &
+      an_error_code)
+
+      IMPLICIT NONE
+
+      INTEGER, INTENT(IN) :: a_host_thread_count
+      INTEGER, INTENT(IN) :: a_device_index
+      LOGICAL, INTENT(IN) :: with_verbose_initialization
+      INTEGER(koliop_Status), INTENT(OUT) :: an_error_code
+
+      INTEGER(C_INT8_T) :: with_verbose_initialization_cast
+
+      IF (with_verbose_initialization) THEN
+         with_verbose_initialization_cast = 1
+      ELSE
+         with_verbose_initialization_cast = 0
+      END IF
+
+      an_error_code = koliop_Initialize_c( &
+         INT(a_host_thread_count, C_SIZE_T), &
+         INT(a_device_index, C_SIZE_T), &
+         with_verbose_initialization_cast)
+   END SUBROUTINE
+
+   SUBROUTINE koliop_Deinitialize_f( &
+      an_error_code)
+
+      IMPLICIT NONE
+
+      INTEGER(koliop_Status), INTENT(OUT) :: an_error_code
+
+      an_error_code = koliop_Deinitialize_c()
+   END SUBROUTINE
+
+   SUBROUTINE koliop_Create_f(&
+      an_operator_handle, &
+      Npolmax, &
+      index_max, &
+      pSpecies_id, &
+      mu_id, &
+      the_mu_extent, &
+      the_vpar_extent, &
+      the_r_extent, &
+      the_theta_extent, &
+      the_phi_extent, &
+      the_species_extent, &
+      R0, &
+      collision_interspecies, &
+      SOL, &
+      LIM, &
+      ir_SOL_separatrix, &
+      comb_mat, &
+      hat_As, &
+      hat_Zs, &
+      mug, &
+      vparg, &
+      coeff_intdmu, &
+      coeff_intdvpar, &
+      rg, &
+      nustar0_r, &
+      q_r, &
+      mask_buffer_r, &
+      mask_LIM, &
+      B_norm, &
+      Bstar_s, &
+      an_error_code)
+
+      IMPLICIT NONE
+
+      TYPE(C_PTR), INTENT(INOUT) :: an_operator_handle
+      INTEGER, INTENT(IN) :: Npolmax
+      INTEGER, INTENT(IN) :: index_max
+      INTEGER, INTENT(IN) :: pSpecies_id
+      INTEGER, INTENT(IN) :: mu_id
+      INTEGER, INTENT(IN) :: the_mu_extent
+      INTEGER, INTENT(IN) :: the_vpar_extent
+      INTEGER, INTENT(IN) :: the_r_extent
+      INTEGER, INTENT(IN) :: the_theta_extent
+      INTEGER, INTENT(IN) :: the_phi_extent
+      INTEGER, INTENT(IN) :: the_species_extent
+      REAL(C_DOUBLE), INTENT(IN) :: R0
+      LOGICAL, INTENT(IN) :: collision_interspecies
+      LOGICAL, INTENT(IN) :: SOL
+      LOGICAL, INTENT(IN) :: LIM
+      INTEGER, INTENT(IN) :: ir_SOL_separatrix
+      REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(IN) :: comb_mat
+      REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(IN) :: hat_As
+      REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(IN) :: hat_Zs
+      REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(IN) :: mug
+      REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(IN) :: vparg
+      REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(IN) :: coeff_intdmu
+      REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(IN) :: coeff_intdvpar
+      REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(IN) :: rg
+      REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(IN) :: nustar0_r
+      REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(IN) :: q_r
+      REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(IN) :: mask_buffer_r
+      REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(IN) :: mask_LIM
+      REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(IN) :: B_norm
+      REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(IN) :: Bstar_s
+      INTEGER(koliop_Status), INTENT(OUT) :: an_error_code
+
+      call koliop_Create_fp( &
+         an_operator_handle, &
+         Npolmax, &
+         index_max, &
+         pSpecies_id, &
+         mu_id, &
+         the_mu_extent, &
+         the_vpar_extent, &
+         the_r_extent, &
+         the_theta_extent, &
+         the_phi_extent, &
+         the_species_extent, &
+         R0, &
+         collision_interspecies, &
+         SOL, &
+         LIM, &
+         ir_SOL_separatrix, &
+         C_LOC(comb_mat), &
+         C_LOC(hat_As), &
+         C_LOC(hat_Zs), &
+         C_LOC(mug), &
+         C_LOC(vparg), &
+         C_LOC(coeff_intdmu), &
+         C_LOC(coeff_intdvpar), &
+         C_LOC(rg), &
+         C_LOC(nustar0_r), &
+         C_LOC(q_r), &
+         C_LOC(mask_buffer_r), &
+         C_LOC(mask_LIM), &
+         C_LOC(B_norm), &
+         C_LOC(Bstar_s), &
+         an_error_code)
+   END SUBROUTINE
+
    SUBROUTINE koliop_Release_f( &
       an_operator_handle, &
       an_error_code)
@@ -592,13 +882,13 @@ CONTAINS
       IMPLICIT NONE
 
       TYPE(C_PTR), INTENT(IN) :: an_operator_handle
-      ! REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(INOUT) :: f5d_s
-      TYPE(C_PTR), INTENT(IN) :: f5d_s
+      REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(INOUT) :: f5d_s
       INTEGER(koliop_Status), INTENT(OUT) :: an_error_code
 
-      an_error_code = koliop_ComputeMoments_c( &
+      call koliop_ComputeMoments_fp( &
          an_operator_handle, &
-         f5d_s)
+         C_LOC(f5d_s), &
+         an_error_code)
    END SUBROUTINE
 
    SUBROUTINE koliop_PrecomputeNu_f( &
@@ -624,14 +914,14 @@ CONTAINS
 
       TYPE(C_PTR), INTENT(IN) :: an_operator_handle
       REAL(C_DOUBLE), INTENT(IN) :: dt
-      ! REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(INOUT) :: f5d_s
-      TYPE(C_PTR), INTENT(IN) :: f5d_s
+      REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(INOUT) :: f5d_s
       INTEGER(koliop_Status), INTENT(OUT) :: an_error_code
 
-      an_error_code = koliop_ComputeMaxwellianEvolution_c( &
+      call koliop_ComputeMaxwellianEvolution_fp( &
          an_operator_handle, &
          dt, &
-         f5d_s)
+         C_LOC(f5d_s), &
+         an_error_code)
    END SUBROUTINE
 
    SUBROUTINE koliop_ComputeQparOnNT_f( &
@@ -642,13 +932,13 @@ CONTAINS
       IMPLICIT NONE
 
       TYPE(C_PTR), INTENT(IN) :: an_operator_handle
-      ! REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(IN) :: f5d_s
-      TYPE(C_PTR), INTENT(IN) :: f5d_s
+      REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(IN) :: f5d_s
       INTEGER(koliop_Status), INTENT(OUT) :: an_error_code
 
-      an_error_code = koliop_ComputeQparOnNT_c( &
+      call koliop_ComputeQparOnNT_fp( &
          an_operator_handle, &
-         f5d_s)
+         C_LOC(f5d_s), &
+         an_error_code)
    END SUBROUTINE
 
    SUBROUTINE koliop_ComputeCpar_f( &
@@ -661,14 +951,14 @@ CONTAINS
 
       TYPE(C_PTR), INTENT(IN) :: an_operator_handle
       REAL(C_DOUBLE), INTENT(IN) :: dt
-      ! REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(INOUT) :: f5d_s
-      TYPE(C_PTR), INTENT(IN) :: f5d_s
+      REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(INOUT) :: f5d_s
       INTEGER(koliop_Status), INTENT(OUT) :: an_error_code
 
-      an_error_code = koliop_ComputeCpar_c( &
+      call koliop_ComputeCpar_fp( &
          an_operator_handle, &
          dt, &
-         f5d_s)
+         C_LOC(f5d_s), &
+         an_error_code)
    END SUBROUTINE
 
    SUBROUTINE koliop_ComputeMaxwellianUnshiftedLoc_f( &
@@ -680,15 +970,15 @@ CONTAINS
       IMPLICIT NONE
 
       TYPE(C_PTR), INTENT(IN) :: an_operator_handle
-      ! REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(INOUT) :: f5d_s
-      TYPE(C_PTR), INTENT(IN) :: f5d_s
+      REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(INOUT) :: f5d_s
       INTEGER, INTENT(IN) :: choice
       INTEGER(koliop_Status), INTENT(OUT) :: an_error_code
 
-      an_error_code = koliop_ComputeMaxwellianUnshiftedLoc_c( &
+      call koliop_ComputeMaxwellianUnshiftedLoc_fp( &
          an_operator_handle, &
-         f5d_s, &
-         INT(choice, C_INT32_T))
+         C_LOC(f5d_s), &
+         choice, &
+         an_error_code)
    END SUBROUTINE
 
    SUBROUTINE koliop_Apply_f( &
@@ -701,14 +991,14 @@ CONTAINS
 
       TYPE(C_PTR), INTENT(IN) :: an_operator_handle
       REAL(C_DOUBLE), INTENT(IN) :: dt
-      ! REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(INOUT) :: f5d_s
-      TYPE(C_PTR), INTENT(IN) :: f5d_s
+      REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(INOUT) :: f5d_s
       INTEGER(koliop_Status), INTENT(OUT) :: an_error_code
 
-      an_error_code = koliop_Apply_c( &
+      call koliop_Apply_fp( &
          an_operator_handle, &
          dt, &
-         f5d_s)
+         C_LOC(f5d_s), &
+         an_error_code)
    END SUBROUTINE
 
    SUBROUTINE koliop_ComputeDensityCorrection_f( &
@@ -719,13 +1009,13 @@ CONTAINS
       IMPLICIT NONE
 
       TYPE(C_PTR), INTENT(IN) :: an_operator_handle
-      ! REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(INOUT) :: f5d_s
-      TYPE(C_PTR), INTENT(IN) :: f5d_s
+      REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(INOUT) :: f5d_s
       INTEGER(koliop_Status), INTENT(OUT) :: an_error_code
 
-      an_error_code = koliop_ComputeDensityCorrection_c( &
+      call koliop_ComputeDensityCorrection_fp( &
          an_operator_handle, &
-         f5d_s)
+         C_LOC(f5d_s), &
+         an_error_code)
    END SUBROUTINE
 
    SUBROUTINE koliop_ComputeUparTCorrection_f( &
@@ -738,14 +1028,14 @@ CONTAINS
 
       TYPE(C_PTR), INTENT(IN) :: an_operator_handle
       REAL(C_DOUBLE), INTENT(IN) :: dt
-      ! REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(INOUT) :: f5d_s
-      TYPE(C_PTR), INTENT(IN) :: f5d_s
+      REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(INOUT) :: f5d_s
       INTEGER(koliop_Status), INTENT(OUT) :: an_error_code
 
-      an_error_code = koliop_ComputeUparTCorrection_c( &
+      call koliop_ComputeUparTCorrection_fp( &
          an_operator_handle, &
          dt, &
-         f5d_s)
+         C_LOC(f5d_s), &
+         an_error_code)
    END SUBROUTINE
 
    SUBROUTINE koliop_ExtractRaw_f( &
@@ -758,14 +1048,14 @@ CONTAINS
 
       TYPE(C_PTR), INTENT(IN) :: an_operator_handle
       INTEGER, INTENT(IN) :: the_value_identifier
-      ! REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(INOUT) :: an_output_buffer
-      TYPE(C_PTR), INTENT(IN) :: an_output_buffer
+      REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(INOUT) :: an_output_buffer
       INTEGER(koliop_Status), INTENT(OUT) :: an_error_code
 
-      an_error_code = koliop_ExtractRaw_c( &
+      call koliop_ExtractRaw_fp( &
          an_operator_handle, &
-         INT(the_value_identifier, C_INT32_T), &
-         an_output_buffer)
+         the_value_identifier, &
+         C_LOC(an_output_buffer), &
+         an_error_code)
    END SUBROUTINE
 END MODULE
 
@@ -808,28 +1098,28 @@ END MODULE
 !       INTEGER :: ir_SOL_separatrix = 32
 !       REAL(C_DOUBLE) :: dt = 50.0_C_DOUBLE
 
-!       REAL(C_DOUBLE), TARGET, DIMENSION(:,:), ALLOCATABLE :: comb_mat
-!       REAL(C_DOUBLE), TARGET, DIMENSION(:), ALLOCATABLE :: hat_As
-!       REAL(C_DOUBLE), TARGET, DIMENSION(:), ALLOCATABLE :: hat_Zs
-!       REAL(C_DOUBLE), TARGET, DIMENSION(:), ALLOCATABLE :: mug
-!       REAL(C_DOUBLE), TARGET, DIMENSION(:), ALLOCATABLE :: vparg
-!       REAL(C_DOUBLE), TARGET, DIMENSION(:), ALLOCATABLE :: coeff_intdmu
-!       REAL(C_DOUBLE), TARGET, DIMENSION(:), ALLOCATABLE :: coeff_intdvpar
-!       REAL(C_DOUBLE), TARGET, DIMENSION(:), ALLOCATABLE :: rg
-!       REAL(C_DOUBLE), TARGET, DIMENSION(:), ALLOCATABLE :: nustar0_r
-!       REAL(C_DOUBLE), TARGET, DIMENSION(:), ALLOCATABLE :: q_r
-!       REAL(C_DOUBLE), TARGET, DIMENSION(:), ALLOCATABLE :: mask_buffer_r
-!       REAL(C_DOUBLE), TARGET, DIMENSION(:,:), ALLOCATABLE :: mask_LIM
-!       REAL(C_DOUBLE), TARGET, DIMENSION(:,:), ALLOCATABLE :: B_norm
-!       REAL(C_DOUBLE), TARGET, DIMENSION(:,:,:,:), ALLOCATABLE :: Bstar_s
+!       REAL(C_DOUBLE), DIMENSION(:,:), ALLOCATABLE :: comb_mat
+!       REAL(C_DOUBLE), DIMENSION(:), ALLOCATABLE :: hat_As
+!       REAL(C_DOUBLE), DIMENSION(:), ALLOCATABLE :: hat_Zs
+!       REAL(C_DOUBLE), DIMENSION(:), ALLOCATABLE :: mug
+!       REAL(C_DOUBLE), DIMENSION(:), ALLOCATABLE :: vparg
+!       REAL(C_DOUBLE), DIMENSION(:), ALLOCATABLE :: coeff_intdmu
+!       REAL(C_DOUBLE), DIMENSION(:), ALLOCATABLE :: coeff_intdvpar
+!       REAL(C_DOUBLE), DIMENSION(:), ALLOCATABLE :: rg
+!       REAL(C_DOUBLE), DIMENSION(:), ALLOCATABLE :: nustar0_r
+!       REAL(C_DOUBLE), DIMENSION(:), ALLOCATABLE :: q_r
+!       REAL(C_DOUBLE), DIMENSION(:), ALLOCATABLE :: mask_buffer_r
+!       REAL(C_DOUBLE), DIMENSION(:,:), ALLOCATABLE :: mask_LIM
+!       REAL(C_DOUBLE), DIMENSION(:,:), ALLOCATABLE :: B_norm
+!       REAL(C_DOUBLE), DIMENSION(:,:,:,:), ALLOCATABLE :: Bstar_s
 
 !       INTEGER(koliop_Status) :: an_error_code
 
-!       REAL(C_DOUBLE), TARGET, DIMENSION(:,:,:,:,:,:), ALLOCATABLE :: f5d_s
+!       REAL(C_DOUBLE), DIMENSION(:,:,:,:,:,:), ALLOCATABLE :: f5d_s
 
 !       TYPE(C_PTR) :: an_operator_handle
 
-!       REAL(C_DOUBLE), TARGET, DIMENSION(:,:,:,:), ALLOCATABLE :: n_s
+!       REAL(C_DOUBLE), DIMENSION(:,:,:,:), ALLOCATABLE :: n_s
 
 !       allocate(comb_mat(index_max + 1 + 1, index_max + 1 + 1))
 !       allocate(hat_As(the_species_extent))
@@ -881,25 +1171,18 @@ END MODULE
 !          R0,&
 !          collision_interspecies, SOL, LIM, &
 !          ir_SOL_separatrix, &
-!          C_LOC(comb_mat), &
-!          C_LOC(hat_As), &
-!          C_LOC(hat_Zs), &
-!          C_LOC(mug), &
-!          C_LOC(vparg), &
-!          C_LOC(coeff_intdmu), &
-!          C_LOC(coeff_intdvpar), &
-!          C_LOC(rg), &
-!          C_LOC(nustar0_r), &
-!          C_LOC(q_r), &
-!          C_LOC(mask_buffer_r), &
-!          C_LOC(mask_LIM), &
-!          C_LOC(B_norm), &
-!          C_LOC(Bstar_s), &
+!          comb_mat, &
+!          hat_As, hat_Zs, &
+!          mug, vparg, &
+!          coeff_intdmu, coeff_intdvpar, &
+!          rg, nustar0_r, q_r, &
+!          mask_buffer_r, mask_LIM, &
+!          B_norm, Bstar_s, &
 !          an_error_code)
 !       print *, "koliop_Create_f:an_error_code", an_error_code
 
 !       call koliop_ComputeMoments_f(an_operator_handle, &
-!          C_LOC(f5d_s), &
+!          f5d_s, &
 !          an_error_code)
 !       print *, "koliop_ComputeMoments_f:an_error_code", an_error_code
 
@@ -909,47 +1192,47 @@ END MODULE
 
 !       call koliop_ComputeMaxwellianEvolution_f(an_operator_handle, &
 !          dt, &
-!          C_LOC(f5d_s), &
+!          f5d_s, &
 !          an_error_code)
 !       print *, "koliop_ComputeMaxwellianEvolution_f:an_error_code", an_error_code
 
 !       call koliop_ComputeQparOnNT_f(an_operator_handle, &
-!          C_LOC(f5d_s), &
+!          f5d_s, &
 !          an_error_code)
 !       print *, "koliop_ComputeQparOnNT_f:an_error_code", an_error_code
 
 !       call koliop_ComputeCpar_f(an_operator_handle, &
 !          dt, &
-!          C_LOC(f5d_s), &
+!          f5d_s, &
 !          an_error_code)
 !       print *, "koliop_ComputeCpar_f:an_error_code", an_error_code
 
 !       call koliop_ComputeMaxwellianUnshiftedLoc_f(an_operator_handle, &
-!          C_LOC(f5d_s), &
+!          f5d_s, &
 !          4, &
 !          an_error_code)
 !       print *, "koliop_ComputeMaxwellianUnshiftedLoc_f:an_error_code", an_error_code
 
 !       call koliop_Apply_f(an_operator_handle, &
 !          dt, &
-!          C_LOC(f5d_s), &
+!          f5d_s, &
 !          an_error_code)
 !       print *, "koliop_Apply_f:an_error_code", an_error_code
 
 !       call koliop_ComputeDensityCorrection_f(an_operator_handle, &
-!          C_LOC(f5d_s), &
+!          f5d_s, &
 !          an_error_code)
 !       print *, "koliop_ComputeDensityCorrection_f:an_error_code", an_error_code
 
 !       call koliop_ComputeUparTCorrection_f(an_operator_handle, &
 !          dt, &
-!          C_LOC(f5d_s), &
+!          f5d_s, &
 !          an_error_code)
 !       print *, "koliop_ComputeUparTCorrection_f:an_error_code", an_error_code
 
 !       call koliop_ExtractRaw_f(an_operator_handle, &
 !          KOLIOP_EXTRACTION_IDENTIFIER_n_s, &
-!          C_LOC(n_s), &
+!          n_s, &
 !          an_error_code)
 !       print *, "koliop_ExtractRaw_f:an_error_code", an_error_code
 
