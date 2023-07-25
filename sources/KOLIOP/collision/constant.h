@@ -30,7 +30,9 @@ namespace koliop {
             // TODO(Etienne M): Depending on the hardware, GPU/CPU, and between
             // GPUs, this value could be increased or reduced. Using future
             // GPUs, we could benefit from a higher value.
-            static inline constexpr OrdinalType kDisjointExecutionSpaceCount = 4;
+            static inline constexpr OrdinalType kDisjointExecutionSpaceCount    = 4;
+            static inline constexpr OrdinalType kDefaultExecutionSpacePoolIndex = 0;
+            static_assert(kDefaultExecutionSpacePoolIndex < kDisjointExecutionSpaceCount, "");
 
             // TODO(Etienne M): Note we should probably not use constant for the
             // blocking. Indeed, on CPU we benefit from a small block and on GPU
