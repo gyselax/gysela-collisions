@@ -131,7 +131,7 @@
            q_r == nullptr ||
            mask_buffer_r == nullptr ||
            // NOTE: XNOR on booleans is ==
-           (static_cast<bool>(LIM) == (mask_LIM == nullptr)) ||
+           (static_cast<bool>(LIM) && (mask_LIM == nullptr)) ||
            B_norm == nullptr ||
            Bstar_s == nullptr) {
             return KOLIOP_STATUS_INVALID_VALUE;
@@ -183,6 +183,22 @@
 
         // Freeing a nullptr is *fine*.
         delete reinterpret_cast<koliop::collision::Operator*>(an_operator);
+
+        return KOLIOP_STATUS_SUCCESS;
+    });
+}
+
+::koliop_Status koliop_Fence(::koliop_Operator an_operator) {
+    return koliop::error::FromException([&]() {
+        if(!Kokkos::is_initialized()) {
+            return KOLIOP_STATUS_INITIALIZATION_FAILURE;
+        }
+
+        if(an_operator == nullptr) {
+            return KOLIOP_STATUS_INVALID_VALUE;
+        }
+
+        // reinterpret_cast<koliop::collision::Operator*>(an_operator)->ComputeMoments(f5d_s);
 
         return KOLIOP_STATUS_SUCCESS;
     });

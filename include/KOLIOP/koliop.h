@@ -87,7 +87,10 @@ koliop_Status koliop_Create(koliop_Operator* an_operator_handle,
                             const double*    mask_LIM,
                             const double*    B_norm,
                             const double*    Bstar_s);
+
 koliop_Status koliop_Release(koliop_Operator an_operator);
+
+koliop_Status koliop_Fence(koliop_Operator an_operator);
 
 /// Computation of fluid moments term:
 ///   na =  int 2 * Pi * Bstar * dmu * dvpar * Fa

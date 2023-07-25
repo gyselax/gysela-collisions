@@ -23,12 +23,8 @@ MODULE koliop
    PUBLIC :: KOLIOP_EXTRACTION_IDENTIFIER_nu_ab
    PUBLIC :: KOLIOP_EXTRACTION_IDENTIFIER_q_par_on_nT_s
 
-   PUBLIC :: koliop_Initialize_fp
-   PUBLIC :: koliop_Deinitialize_fp
    PUBLIC :: koliop_Create_fp
-   PUBLIC :: koliop_Release_fp
    PUBLIC :: koliop_ComputeMoments_fp
-   PUBLIC :: koliop_PrecomputeNu_fp
    PUBLIC :: koliop_ComputeMaxwellianEvolution_fp
    PUBLIC :: koliop_ComputeQparOnNT_fp
    PUBLIC :: koliop_ComputeCpar_fp
@@ -42,6 +38,7 @@ MODULE koliop
    PUBLIC :: koliop_Deinitialize_f
    PUBLIC :: koliop_Create_f
    PUBLIC :: koliop_Release_f
+   PUBLIC :: koliop_Fence_f
    PUBLIC :: koliop_ComputeMoments_f
    PUBLIC :: koliop_PrecomputeNu_f
    PUBLIC :: koliop_ComputeMaxwellianEvolution_f
@@ -220,6 +217,19 @@ MODULE koliop
       INTEGER(koliop_Status) FUNCTION koliop_Release_c( &
          an_operator) &
          BIND(C, NAME='koliop_Release')
+
+         IMPORT :: koliop_Status
+         IMPORT :: C_PTR
+
+         IMPLICIT NONE
+
+         TYPE(C_PTR), VALUE, INTENT(IN) :: an_operator
+      END FUNCTION
+
+      ! koliop_Status koliop_Fence(koliop_Operator an_operator)
+      INTEGER(koliop_Status) FUNCTION koliop_Fence_c( &
+         an_operator) &
+         BIND(C, NAME='koliop_Fence')
 
          IMPORT :: koliop_Status
          IMPORT :: C_PTR
@@ -417,6 +427,9 @@ CONTAINS
    ! For this reason we offer two version of the interface. Routines suffixed
    ! with "_f" take plain DIMENTION(*) array as input and convert them to C_PTR.
    ! "_fp" suffixed routines take C_PTR as input (for use with OpenMP).
+
+   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
    SUBROUTINE koliop_Create_fp(&
       an_operator_handle, &
       Npolmax, &
@@ -724,6 +737,8 @@ CONTAINS
          an_output_buffer)
    END SUBROUTINE
 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
    SUBROUTINE koliop_Initialize_f( &
       a_host_thread_count, &
       a_device_index, &
@@ -872,6 +887,18 @@ CONTAINS
       INTEGER(koliop_Status), INTENT(OUT) :: an_error_code
 
       an_error_code = koliop_Release_c(an_operator_handle)
+   END SUBROUTINE
+
+   SUBROUTINE koliop_Fence_f( &
+      an_operator_handle, &
+      an_error_code)
+
+      IMPLICIT NONE
+
+      TYPE(C_PTR), INTENT(IN) :: an_operator_handle
+      INTEGER(koliop_Status), INTENT(OUT) :: an_error_code
+
+      an_error_code = koliop_Fence_c(an_operator_handle)
    END SUBROUTINE
 
    SUBROUTINE koliop_ComputeMoments_f( &
@@ -1117,7 +1144,7 @@ END MODULE
 
 !       REAL(C_DOUBLE), DIMENSION(:,:,:,:,:,:), ALLOCATABLE :: f5d_s
 
-!       TYPE(C_PTR) :: an_operator_handle
+!       TYPE(C_PTR) :: an_operator
 
 !       REAL(C_DOUBLE), DIMENSION(:,:,:,:), ALLOCATABLE :: n_s
 
@@ -1163,7 +1190,7 @@ END MODULE
 !          an_error_code)
 !       print *, "koliop_Initialize_f:an_error_code", an_error_code
 
-!       call koliop_Create_f(an_operator_handle, &
+!       call koliop_Create_f(an_operator, &
 !          Npolmax, index_max, &
 !          pSpecies_id, mu_id, &
 !          the_mu_extent, the_vpar_extent, the_r_extent, &
@@ -1181,62 +1208,72 @@ END MODULE
 !          an_error_code)
 !       print *, "koliop_Create_f:an_error_code", an_error_code
 
-!       call koliop_ComputeMoments_f(an_operator_handle, &
+!       call koliop_ComputeMoments_f(an_operator, &
 !          f5d_s, &
 !          an_error_code)
 !       print *, "koliop_ComputeMoments_f:an_error_code", an_error_code
 
-!       call koliop_PrecomputeNu_f(an_operator_handle, &
+!       call koliop_PrecomputeNu_f(an_operator, &
 !          an_error_code)
 !       print *, "koliop_PrecomputeNu_f:an_error_code", an_error_code
 
-!       call koliop_ComputeMaxwellianEvolution_f(an_operator_handle, &
+!       call koliop_ComputeMaxwellianEvolution_f(an_operator, &
 !          dt, &
 !          f5d_s, &
 !          an_error_code)
 !       print *, "koliop_ComputeMaxwellianEvolution_f:an_error_code", an_error_code
 
-!       call koliop_ComputeQparOnNT_f(an_operator_handle, &
+!       call koliop_ComputeQparOnNT_f(an_operator, &
 !          f5d_s, &
 !          an_error_code)
 !       print *, "koliop_ComputeQparOnNT_f:an_error_code", an_error_code
 
-!       call koliop_ComputeCpar_f(an_operator_handle, &
+!       call koliop_ComputeCpar_f(an_operator, &
 !          dt, &
 !          f5d_s, &
 !          an_error_code)
 !       print *, "koliop_ComputeCpar_f:an_error_code", an_error_code
 
-!       call koliop_ComputeMaxwellianUnshiftedLoc_f(an_operator_handle, &
+!       call koliop_ComputeMaxwellianUnshiftedLoc_f(an_operator, &
 !          f5d_s, &
 !          4, &
 !          an_error_code)
 !       print *, "koliop_ComputeMaxwellianUnshiftedLoc_f:an_error_code", an_error_code
 
-!       call koliop_Apply_f(an_operator_handle, &
+!       call koliop_Fence_f(an_operator, &
+!          an_error_code)
+!       print *, "koliop_Fence_f:an_error_code", an_error_code
+
+!       call koliop_Apply_f(an_operator, &
 !          dt, &
 !          f5d_s, &
 !          an_error_code)
 !       print *, "koliop_Apply_f:an_error_code", an_error_code
 
-!       call koliop_ComputeDensityCorrection_f(an_operator_handle, &
+!      ! Implied fence.
+
+!       call koliop_ComputeDensityCorrection_f(an_operator, &
 !          f5d_s, &
 !          an_error_code)
 !       print *, "koliop_ComputeDensityCorrection_f:an_error_code", an_error_code
 
-!       call koliop_ComputeUparTCorrection_f(an_operator_handle, &
+!       call koliop_ComputeUparTCorrection_f(an_operator, &
 !          dt, &
 !          f5d_s, &
 !          an_error_code)
 !       print *, "koliop_ComputeUparTCorrection_f:an_error_code", an_error_code
 
-!       call koliop_ExtractRaw_f(an_operator_handle, &
+!       call koliop_ExtractRaw_f(an_operator, &
 !          KOLIOP_EXTRACTION_IDENTIFIER_n_s, &
 !          n_s, &
 !          an_error_code)
 !       print *, "koliop_ExtractRaw_f:an_error_code", an_error_code
 
-!       call koliop_Release_f(an_operator_handle, &
+!       call koliop_Fence_f(an_operator, &
+!          an_error_code)
+!       print *, "koliop_Fence_f:an_error_code", an_error_code
+
+!       call koliop_Release_f(an_operator, &
 !          an_error_code)
 !       print *, "koliop_Release_f:an_error_code", an_error_code
 
