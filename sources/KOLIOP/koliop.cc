@@ -197,7 +197,10 @@
             return KOLIOP_STATUS_INVALID_VALUE;
         }
 
-        // reinterpret_cast<koliop::collision::Operator*>(an_operator)->ComputeMoments(f5d_s);
+        // NOTE: We fence on the first stream of the pool. Maybe we should offer
+        // to the user the possibility of choosing which stream to use for
+        // computation and for fencing.
+        reinterpret_cast<const koliop::collision::Operator*>(an_operator)->Fence(0);
 
         return KOLIOP_STATUS_SUCCESS;
     });

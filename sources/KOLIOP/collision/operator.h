@@ -157,6 +157,8 @@ namespace koliop {
                      const Flo64* B_norm,
                      const Flo64* Bstar_s);
 
+            void Fence(OrdinalType the_execution_space_index) const;
+
             void ComputeMoments(Flo64* f5d_s);
 
             void PrecomputeNu();
