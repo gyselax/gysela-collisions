@@ -130,7 +130,6 @@
            nustar0_r == nullptr ||
            q_r == nullptr ||
            mask_buffer_r == nullptr ||
-           // NOTE: XNOR on booleans is ==
            (static_cast<bool>(LIM) && (mask_LIM == nullptr)) ||
            B_norm == nullptr ||
            Bstar_s == nullptr) {
