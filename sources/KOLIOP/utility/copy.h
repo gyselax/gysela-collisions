@@ -45,19 +45,23 @@ namespace koliop {
             /// NOTE: In case the shallow copy is realized, we loose the View's
             /// labe !!
             ///
-            template <typename SourceView,
+            template <typename ExecutionSpace,
+                      typename SourceView,
                       typename DestinationView>
             static auto
-            Shallow(SourceView&&      a_source_view,
+            Shallow(ExecutionSpace&&  an_execution_space,
+                    SourceView&&      a_source_view,
                     DestinationView&& a_destination_view);
 
             /// The storage for the a_destination_view should already exist and the extents
             /// must match.
             ///
-            template <typename SourceView,
+            template <typename ExecutionSpace,
+                      typename SourceView,
                       typename DestinationView>
             static auto
-            Deep(SourceView&&      a_source_view,
+            Deep(ExecutionSpace&&  an_execution_space,
+                 SourceView&&      a_source_view,
                  DestinationView&& a_destination_view);
 
             /// May or may not allocate new memory to represent the_raw_data. As
@@ -87,9 +91,11 @@ namespace koliop {
         // Copy methods definition
         ////////////////////////////////////////////////////////////////////////
 
-        template <typename SourceView,
+        template <typename ExecutionSpace,
+                  typename SourceView,
                   typename DestinationView>
-        auto Copy::Shallow(SourceView&&      a_source_view,
+        auto Copy::Shallow(ExecutionSpace&&  an_execution_space,
+                           SourceView&&      a_source_view,
                            DestinationView&& a_destination_view) {
 
             // TODO(Etienne M): Should we use
@@ -102,15 +108,17 @@ namespace koliop {
                                         typename std::remove_reference_t<DestinationView>::array_layout>) {
                 a_destination_view = a_source_view;
             } else {
-                Deep(a_source_view, a_destination_view);
+                Deep(an_execution_space, a_source_view, a_destination_view);
             }
 
             return a_destination_view;
         }
 
-        template <typename SourceView,
+        template <typename ExecutionSpace,
+                  typename SourceView,
                   typename DestinationView>
-        auto Copy::Deep(SourceView&&      a_source_view,
+        auto Copy::Deep(ExecutionSpace&&  an_execution_space,
+                        SourceView&&      a_source_view,
                         DestinationView&& a_destination_view) {
             if constexpr(std::is_same_v<typename std::remove_reference_t<SourceView>::memory_space,
                                         typename std::remove_reference_t<DestinationView>::memory_space> ||
@@ -118,7 +126,9 @@ namespace koliop {
                                         typename std::remove_reference_t<DestinationView>::array_layout>) {
                 // Either we are in the same memory space, or we have a
                 // compatible layout which makes copying a simple memcpy.
-                Kokkos::deep_copy(a_destination_view, a_source_view);
+                Kokkos::deep_copy(an_execution_space,
+                                  a_destination_view,
+                                  a_source_view);
             } else {
 
                 // // TODO(Etienne M): create_mirror_view_and_copy ?
@@ -136,15 +146,18 @@ namespace koliop {
                 auto a_host_visible_target_mirror = Kokkos::create_mirror_view(Kokkos::view_alloc(Kokkos::WithoutInitializing), a_destination_view);
 
                 // Could be a no-op.
-                Kokkos::deep_copy(a_host_visible_source_mirror,
+                Kokkos::deep_copy(an_execution_space,
+                                  a_host_visible_source_mirror,
                                   a_source_view);
 
                 // Resolve potential layout issues on the host.
-                Kokkos::deep_copy(a_host_visible_target_mirror,
+                Kokkos::deep_copy(an_execution_space,
+                                  a_host_visible_target_mirror,
                                   a_host_visible_source_mirror);
 
                 // Could be a no-op.
-                Kokkos::deep_copy(a_destination_view,
+                Kokkos::deep_copy(an_execution_space,
+                                  a_destination_view,
                                   a_host_visible_target_mirror);
             }
 
@@ -176,7 +189,8 @@ namespace koliop {
                 return UnmanagedView{the_raw_data,
                                      static_cast<std::size_t>(the_indicies)...};
             } else {
-                return Deep(UnmanagedView{the_raw_data,
+                return Deep(typename DestinationView::traits::execution_space{},
+                            UnmanagedView{the_raw_data,
                                           static_cast<std::size_t>(the_indicies)...},
                             DestinationView{Kokkos::view_alloc(Kokkos::WithoutInitializing,
                                                                std::string{the_view_label}),
@@ -205,7 +219,8 @@ namespace koliop {
                (a_source_view.data() == the_raw_data)) {
                 return the_raw_data;
             } else {
-                return Deep(a_source_view,
+                return Deep(typename UnmanagedView::traits::execution_space{},
+                            a_source_view,
                             UnmanagedView{the_raw_data,
                                           static_cast<std::size_t>(the_indicies)...})
                     .data();

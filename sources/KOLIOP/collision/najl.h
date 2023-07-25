@@ -61,7 +61,13 @@ namespace koliop {
                     }
                 }
 
-                koliop::utility::Copy::Shallow(a_host_visible_C_jl, C_jl);
+                const Constant::DeviceExecutionSpaceType an_execution_space{};
+
+                koliop::utility::Copy::Shallow(an_execution_space,
+                                               a_host_visible_C_jl,
+                                               C_jl);
+
+                an_execution_space.fence();
             }
 
             namespace {
@@ -508,9 +514,14 @@ namespace koliop {
 
             , C_jl_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "C_jl_")} {
 
-            koliop::utility::Copy::Shallow(koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL2<const Flo64>,
+            const Constant::DeviceExecutionSpaceType an_execution_space{};
+
+            koliop::utility::Copy::Shallow(an_execution_space,
+                                           koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL2<const Flo64>,
                                                                                 koliop::utility::View::InternalInputL2>(comb_mat, "comb_mat_", 2 * Constant::kMaximumLaguerrePolynomialDegree, 2 * Constant::kMaximumLaguerrePolynomialDegree),
                                            comb_mat_);
+
+            an_execution_space.fence();
 
             // TODO(Etienne M): Observe how the C_j_ and C_jl_ values are
             // constant. They could be compile time computed or hardcoded.

@@ -83,7 +83,13 @@ namespace koliop {
                 }
             }
 
-            koliop::utility::Copy::Shallow(a_host_visible_nustar_coeff, nustar_coeff);
+            const Constant::DeviceExecutionSpaceType an_execution_space{};
+
+            koliop::utility::Copy::Shallow(an_execution_space,
+                                           a_host_visible_nustar_coeff,
+                                           nustar_coeff);
+
+            an_execution_space.fence();
         }
 
         Operator::Operator(uint64_t     pSpecies_id,
