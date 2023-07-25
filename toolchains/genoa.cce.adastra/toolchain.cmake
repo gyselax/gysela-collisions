@@ -19,7 +19,7 @@ set(Kokkos_ARCH_ZEN3 ON CACHE BOOL "Optimize for AMD Zen3 architecture (HOST).")
 
 set(koliop_TOOLCHAIN_NAME "genoa.cce.adastra")
 
-set(koliop_FENCE_ON_OPERATOR_EXIT ON) # TODO(Etienne M): Turn that off when the work on stream is done.
+set(koliop_FENCE_ON_OPERATOR_EXIT OFF)
 set(koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE ON)
 
 # The rest is optional:
