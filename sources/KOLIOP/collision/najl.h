@@ -518,7 +518,9 @@ namespace koliop {
 
             koliop::utility::Copy::Shallow(an_execution_space,
                                            koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL2<const Flo64>,
-                                                                                koliop::utility::View::InternalInputL2>(comb_mat, "comb_mat_", 2 * Constant::kMaximumLaguerrePolynomialDegree, 2 * Constant::kMaximumLaguerrePolynomialDegree),
+                                                                                koliop::utility::View::InternalInputL2>(an_execution_space,
+                                                                                                                        comb_mat, "comb_mat_",
+                                                                                                                        2 * Constant::kMaximumLaguerrePolynomialDegree, 2 * Constant::kMaximumLaguerrePolynomialDegree),
                                            comb_mat_);
 
             an_execution_space.fence();

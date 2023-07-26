@@ -71,17 +71,21 @@ namespace koliop {
             template <typename UnmanagedView,
                       template <typename>
                       typename DestinationViewTemplate,
+                      typename ExecutionSpace,
                       typename... Indicies>
             static auto
-            RawDataToView(typename UnmanagedView::value_type* the_raw_data,
+            RawDataToView(ExecutionSpace&&                    an_execution_space,
+                          typename UnmanagedView::value_type* the_raw_data,
                           const char*                         the_view_label,
                           Indicies... the_indicies);
 
             template <typename SourceView,
                       typename UnmanagedView,
+                      typename ExecutionSpace,
                       typename... Indicies>
             static typename SourceView::value_type*
-            ViewToRawData(SourceView                          a_source_view,
+            ViewToRawData(ExecutionSpace&&                    an_execution_space,
+                          SourceView                          a_source_view,
                           typename UnmanagedView::value_type* the_raw_data,
                           Indicies... the_indicies);
         };
@@ -167,8 +171,10 @@ namespace koliop {
         template <typename UnmanagedView,
                   template <typename>
                   typename DestinationViewTemplate,
+                  typename ExecutionSpace,
                   typename... Indicies>
-        auto Copy::RawDataToView(typename UnmanagedView::value_type* the_raw_data,
+        auto Copy::RawDataToView(ExecutionSpace&&                    an_execution_space,
+                                 typename UnmanagedView::value_type* the_raw_data,
                                  const char*                         the_view_label,
                                  Indicies... the_indicies) {
 
@@ -189,7 +195,7 @@ namespace koliop {
                 return UnmanagedView{the_raw_data,
                                      static_cast<std::size_t>(the_indicies)...};
             } else {
-                return Deep(typename DestinationView::traits::execution_space{},
+                return Deep(an_execution_space,
                             UnmanagedView{the_raw_data,
                                           static_cast<std::size_t>(the_indicies)...},
                             DestinationView{Kokkos::view_alloc(Kokkos::WithoutInitializing,
@@ -200,9 +206,11 @@ namespace koliop {
 
         template <typename SourceView,
                   typename UnmanagedView,
+                  typename ExecutionSpace,
                   typename... Indicies>
         typename SourceView::value_type*
-        Copy::ViewToRawData(SourceView                          a_source_view,
+        Copy::ViewToRawData(ExecutionSpace&&                    an_execution_space,
+                            SourceView                          a_source_view,
                             typename UnmanagedView::value_type* the_raw_data,
                             Indicies... the_indicies) {
 
@@ -219,7 +227,7 @@ namespace koliop {
                (a_source_view.data() == the_raw_data)) {
                 return the_raw_data;
             } else {
-                return Deep(typename UnmanagedView::traits::execution_space{},
+                return Deep(an_execution_space,
                             a_source_view,
                             UnmanagedView{the_raw_data,
                                           static_cast<std::size_t>(the_indicies)...})
