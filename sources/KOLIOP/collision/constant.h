@@ -26,7 +26,9 @@ namespace koliop {
             using BatchTraitsType = koliop::blas::BatchTraits<ComputeFloatType,
                                                               DeviceExecutionSpaceType>;
 
-            // Aka, HIP/Cuda stream count.
+            // Aka, HIP/Cuda stream count. Bigger means more memory used but
+            // also, potentially faster. Trade memory and inconvenience for
+            // speed.
             // TODO(Etienne M): Depending on the hardware, GPU/CPU, and between
             // GPUs, this value could be increased or reduced. Using future
             // GPUs, we could benefit from a higher value.
