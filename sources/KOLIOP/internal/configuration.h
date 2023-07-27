@@ -243,8 +243,9 @@ namespace koliop {
     using Flo32 = float;
     using Flo64 = double;
 
-    // TODO(Etienne M): Using Flo32 requires doing conversion from the Float64
-    // input data.
+    // NOTE: Naively, using Flo32 instead of Flo64 leads to a ~ 1.22 speedup on
+    // the benchmarks used during Koliop's writhing.
+    // using ComputeFloatType = Flo32;
     using ComputeFloatType = Flo64;
 
     /// Represent a coordinate. Can be negative. Should not be used to store
