@@ -232,13 +232,11 @@ int main(int, char**) {
                                            &f5d_s[0][0][0][0][0][0],
                                            choice);
 
-    ::koliop_Fence(an_operator);
-
     ::koliop_Apply(an_operator,
                    dt,
                    &f5d_s[0][0][0][0][0][0]);
 
-    // Implied fence
+    ::koliop_Fence(an_operator);
 
     ::koliop_ComputeDensityCorrection(an_operator,
                                       &f5d_s[0][0][0][0][0][0]);

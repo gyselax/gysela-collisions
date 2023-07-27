@@ -1250,8 +1250,6 @@ END MODULE
 !          an_error_code)
 !       print *, "koliop_Apply_f:an_error_code", an_error_code
 
-!      ! Implied fence.
-
 !       call koliop_ComputeDensityCorrection_f(an_operator, &
 !          f5d_s, &
 !          an_error_code)
