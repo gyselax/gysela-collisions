@@ -37,6 +37,8 @@
             std::cout << "  koliop::collision::Constant::kBlockExtentR: " << koliop::collision::Constant::kBlockExtentR << "\n";
             std::cout << "  koliop::collision::Constant::kBlockExtentTheta: " << koliop::collision::Constant::kBlockExtentTheta << "\n";
             std::cout << "  koliop::collision::Constant::kBlockExtentPhi: " << koliop::collision::Constant::kBlockExtentPhi << "\n";
+            std::cout << "  koliop::collision::Constant::kDisjointExecutionSpaceCount: " << koliop::collision::Constant::kDisjointExecutionSpaceCount << "\n";
+            std::cout << "  koliop::collision::Constant::kDefaultExecutionSpacePoolIndex: " << koliop::collision::Constant::kDefaultExecutionSpacePoolIndex << "\n";
         }
 
         Kokkos::initialize(Kokkos::InitializationSettings()
