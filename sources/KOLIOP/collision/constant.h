@@ -33,7 +33,12 @@ namespace koliop {
             // GPUs, this value could be increased or reduced. Using future
             // GPUs, we could benefit from a higher value.
             // Bigger blocking needs less streams ad inversely.
-            static inline constexpr OrdinalType kDisjointExecutionSpaceCount    = 4;
+
+#if defined(KOKKOS_ENABLE_HIP)
+            static inline constexpr OrdinalType kDisjointExecutionSpaceCount = 4;
+#elif defined(KOKKOS_ENABLE_OPENMP)
+            static inline constexpr OrdinalType kDisjointExecutionSpaceCount = 1;
+#endif
             static inline constexpr OrdinalType kDefaultExecutionSpacePoolIndex = kDisjointExecutionSpaceCount - 1;
             static_assert((kDisjointExecutionSpaceCount >= 0) && (kDefaultExecutionSpacePoolIndex < kDisjointExecutionSpaceCount),
                           "");

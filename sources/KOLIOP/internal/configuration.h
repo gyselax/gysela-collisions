@@ -211,7 +211,6 @@ namespace koliop {
 ////////////////////////////////////////
 /// KOLIOP_FENCE_ON_OPERATOR_EXIT
 ///
-/// TODO(Etienne M): Put that in the CMake config
 /// Forces the operator to kokkos::fence after each Operator::XXX method call.
 ///
 ////////////////////////////////////////
@@ -220,7 +219,6 @@ namespace koliop {
 ////////////////////////////////////////
 /// KOLIOP_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE
 ///
-/// TODO(Etienne M): Put that in the CMake config
 /// Suppose that the memory input to the operator through pointers resides on a
 /// memory space *compatible* with the Kokkos device memory space.
 ///
@@ -243,8 +241,9 @@ namespace koliop {
     using Flo32 = float;
     using Flo64 = double;
 
-    // TODO(Etienne M): Using Flo32 requires doing conversion from the Float64
-    // input data.
+    // NOTE: Naively, using Flo32 instead of Flo64 leads to a ~ 1.22 speedup on
+    // the benchmarks used during Koliop's writhing.
+    // using ComputeFloatType = Flo32;
     using ComputeFloatType = Flo64;
 
     /// Represent a coordinate. Can be negative. Should not be used to store

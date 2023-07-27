@@ -188,10 +188,6 @@ namespace koliop {
                             const MatrixSampler<View6D0, View1D>& the_matrix_sampler,
                             View6D1&&                             the_output_matrix) {
 
-                // TODO(Etienne M): We could reduce the loads by preparing
-                // the_output_matrix and the_rhs. Indeed the sampling of the T
-                // matrix is the same.
-
                 const auto& the_vpar_extent = an_operator.the_vpar_extent_;
 
                 const auto the_kernel = KOKKOS_LAMBDA(auto the_batch_element_index, auto jpol, auto ipol, auto ivpar, auto the_batch_index) {
@@ -212,11 +208,6 @@ namespace koliop {
                                                                       ipol, jpol,
                                                                       the_batch_element_index));
                 };
-
-                // TODO(Etienne M): Should I launch 3 kernels, one per diagonal ?
-                // This way we could remove the conditional and avoid doing more
-                // computation than needed for the first lower and last upper
-                // diagonal blocks.
 
                 const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<5,
                                                                          Kokkos::Iterate::Default,

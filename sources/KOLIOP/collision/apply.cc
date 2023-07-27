@@ -11,8 +11,6 @@ namespace koliop {
         DoApply(Operator&        an_operator,
                 ComputeFloatType dt,
                 View6D&&         f5d_s) {
-            // TODO(Etienne M): The blocking is mainly done for memory consumption reasons,
-            // we have to do something similar.
 
             const auto& the_r_extent     = an_operator.the_r_extent_;
             const auto& the_theta_extent = an_operator.the_theta_extent_;
@@ -31,9 +29,6 @@ namespace koliop {
             // potential remaining grid point recursively. Supposing we do not
             // template CvCd on the block size anymore, we could reuse them for
             // smaller blocs.
-
-            // TODO(Etienne M): investigate the issue with full fence during
-            // view deallocation.
 
             using CvCdDriver = decltype(an_operator.the_cvcd_drivers_)::value_type;
 

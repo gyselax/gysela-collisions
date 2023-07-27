@@ -195,14 +195,17 @@ namespace koliop {
             }
 
 #if defined(KOKKOS_ENABLE_HIP)
-            static_assert(Constant::kDisjointExecutionSpaceCount >= 2, "");
+            if constexpr(Constant::kDisjointExecutionSpaceCount >= 1) {
+                // The null stream.
+                the_execution_space_pool_.emplace_back(nullptr, true);
+            }
 
-            // The default execution space.
-            // Do we benefit from specifying that the first value of
-            // the_execution_space_pool_ is always the default execution space ?
-            // This could help solving bugs.
-            the_execution_space_pool_.emplace_back(nullptr, true);
-            the_execution_space_pool_.emplace_back();
+            if constexpr(Constant::kDisjointExecutionSpaceCount >= 2) {
+                // Then, we use the default execution space.
+                the_execution_space_pool_.emplace_back();
+            }
+
+            // Then we fill in with new streams.
 #endif
 
             while(the_execution_space_pool_.size() != Constant::kDisjointExecutionSpaceCount) {

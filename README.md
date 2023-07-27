@@ -77,9 +77,9 @@ NOTE:
 
 ## TODOs
 
-- Fix the fact that we can't pass pointer to the fortran interface. Pointers need to be supported as they are a byproduct of using OpenMP's omp_get_mapped_ptr or use_device_ptr. We could ask the user to pass a fortran array and ourselves, call omp_get_mapped_ptr if Gysela is build with GPU mode.
-- Cleanup redundant names, long namespaces, View naming
 - Document the C interface:
+    - When to fence.
+    -
     - Assuming we CPUs for computation, the input buffer are expected to be on the CPU.
     - Assuming we GPUs for computation, the input buffer are expected to be on the CPU too! `koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL6<Flo64>, koliop::utility::View::MDL6>` vs `koliop::utility::Copy::RawDataToView<koliop::utility::View::UDL6<Flo64>, koliop::utility::View::MDL6>`
 
@@ -87,14 +87,8 @@ NOTE:
     - Test KOKKOS_BOUNDS_CHECK Kokkos_ENABLE_DEBUG_BOUNDS_CHECKS Kokkos_ENABLE_DEBUG
 
 - Tuning:
-    - compute during species transfer ? Few par of the code rely on Nspecies, most only need pspecies_id.
     - Simplify computations
-    - Inter exchange loops
-    - Tune for GPU (coalesced reads)
     - Reduce register usage. Each time you use a view, you consume a LOT of register (dimension/stride storage ?).. much more than a simple pointer.
     - Performance depending on the choice of OrdinalType/ComputeFloatType (32bits / 64bits)
         - Note that the fact that we do not have pivoting for the LU factorization *could* reduce the precision more when treating Flo32 matrices.
-
-- auto should not be used in computations (Flo64 or an other alias)
-- Make sure the C interface does not leak (exception et al.)
 - https://github.com/cpm-cmake/CPM.cmake
