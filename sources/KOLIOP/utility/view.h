@@ -12,7 +12,6 @@ namespace koliop {
         // View definition
         ////////////////////////////////////////////////////////////////////////
 
-        /// TODO(Etienne M): Cleanup that stuff.
         /// View[U|M]               [H|D]                              [L|R|D]                [1-8]
         ///      Unmanaged/Managed | Host or Default (device or host) | Left or Right layout | Dimension
         ///

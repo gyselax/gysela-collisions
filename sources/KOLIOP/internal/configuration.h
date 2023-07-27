@@ -211,7 +211,6 @@ namespace koliop {
 ////////////////////////////////////////
 /// KOLIOP_FENCE_ON_OPERATOR_EXIT
 ///
-/// TODO(Etienne M): Put that in the CMake config
 /// Forces the operator to kokkos::fence after each Operator::XXX method call.
 ///
 ////////////////////////////////////////
@@ -220,7 +219,6 @@ namespace koliop {
 ////////////////////////////////////////
 /// KOLIOP_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE
 ///
-/// TODO(Etienne M): Put that in the CMake config
 /// Suppose that the memory input to the operator through pointers resides on a
 /// memory space *compatible* with the Kokkos device memory space.
 ///

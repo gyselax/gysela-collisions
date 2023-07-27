@@ -177,14 +177,14 @@ koliop_Status koliop_ExtractRaw(koliop_Operator an_operator,
 // TODO(Etienne M): Diags, not that making copies back into gysela could be
 // unecessary. Could we avoid copies ? Should we do everything in koliop or not ?
 
-koliop_Status koliop_ExtractUrtheta(koliop_Operator an_operator,
-                                    double*         U_par_a_rtheta);
+// koliop_Status koliop_ExtractUrtheta(koliop_Operator an_operator,
+//                                     double*         U_par_a_rtheta);
 
-koliop_Status koliop_ExtractQrtheta(koliop_Operator an_operator,
-                                    double*         q_par_);
+// koliop_Status koliop_ExtractQrtheta(koliop_Operator an_operator,
+//                                     double*         q_par_);
 
-koliop_Status koliop_ExtractNuab(koliop_Operator an_operator,
-                                 double*         nu_ab);
+// koliop_Status koliop_ExtractNuab(koliop_Operator an_operator,
+//                                  double*         nu_ab);
 
 #if defined(__cplusplus)
 }

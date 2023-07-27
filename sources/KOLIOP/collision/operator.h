@@ -93,8 +93,6 @@ namespace koliop {
         ///         }
         ///     }
         ///
-        /// TODO(Etienne M): Convert all these indicies to half open ranges
-        /// counter.
         ///
         class Operator {
         public:
@@ -191,7 +189,6 @@ namespace koliop {
 
             // Constant, externally computed values
 
-            // TODO(Etienne M): Cleanup unused values
             OrdinalType      pSpecies_id_;
             OrdinalType      mu_id_;
             OrdinalType      the_mu_extent_;
