@@ -2,6 +2,7 @@
 
 #include "KOLIOP/collision/operator.h"
 #include "KOLIOP/portability/cmath.h"
+#include "KOLIOP/utility/select.h"
 
 namespace koliop {
     namespace collision {
@@ -32,9 +33,6 @@ namespace koliop {
 
         } // namespace
 
-        /// TODO(Etienne M): We precompute the species' Nu but in some cases, it
-        /// may be cheaper to just rematerialize it.
-        ///
         template <typename View5D>
         static inline void
         DoPrecomputeNu(const Operator& an_operator,
@@ -52,33 +50,54 @@ namespace koliop {
 
             const auto& ir_SOL_separatrix = an_operator.ir_SOL_separatrix_;
 
-            const auto the_kernel = KOKKOS_LAMBDA(auto itheta, auto iphi, auto ispeciesA, auto ispeciesB) {
-                // TODO(Etienne M): INDEX not coalesced. Flatten more ?
+            const auto& the_execution_space_pool = an_operator.the_execution_space_pool_;
 
-                const OrdinalType the_local_r_extent = Kokkos::min(the_r_extent, ir_SOL_separatrix + 1);
+            const OrdinalType the_local_r_extent = Kokkos::min(the_r_extent, ir_SOL_separatrix + 1);
 
-                for(OrdinalType ir = 0; ir < the_local_r_extent; ++ir) {
-                    nu_ab(ir, itheta, iphi, ispeciesA, ispeciesB) = DoComputeFrequencyNuab(nustar_coeff(ispeciesA, ispeciesB, ir),
-                                                                                           hat_As(ispeciesA), hat_As(ispeciesB),
-                                                                                           T_s(ir, itheta, iphi, ispeciesA),
-                                                                                           n_s(ir, itheta, iphi, ispeciesB),
-                                                                                           T_s(ir, itheta, iphi, ispeciesB));
-                }
+            const auto the_kernel = KOKKOS_LAMBDA(const auto& a_team_handle) {
 
-                for(OrdinalType ir = the_local_r_extent; ir < the_r_extent; ++ir) {
-                    // Propagate the value at nu_ab(ir_SOL_separatrix_, itheta, iphi, ispeciesA, ispeciesB) or
-                    // nu_ab(the_local_r_extent - 1, itheta, iphi, ispeciesA, ispeciesB)
-                    nu_ab(ir, itheta, iphi, ispeciesA, ispeciesB) = nu_ab(ir_SOL_separatrix, itheta, iphi, ispeciesA, ispeciesB);
-                }
+                const OrdinalType the_team_index = a_team_handle.league_rank();
+
+                const OrdinalType itheta    = (the_team_index) % the_theta_extent;
+                const OrdinalType iphi      = (the_team_index / (the_theta_extent)) % the_phi_extent;
+                const OrdinalType ispeciesA = (the_team_index / (the_theta_extent * the_phi_extent)) % the_species_extent;
+                const OrdinalType ispeciesB = (the_team_index / (the_theta_extent * the_phi_extent * the_species_extent)) /* % the_species_extent */;
+
+                Kokkos::parallel_for(Kokkos::TeamThreadRange(a_team_handle,
+                                                             0, the_local_r_extent),
+                                     [&](auto ir) {
+                                         nu_ab(ir, itheta, iphi, ispeciesA, ispeciesB) = DoComputeFrequencyNuab(nustar_coeff(ispeciesA, ispeciesB, ir),
+                                                                                                                hat_As(ispeciesA), hat_As(ispeciesB),
+                                                                                                                T_s(ir, itheta, iphi, ispeciesA),
+                                                                                                                n_s(ir, itheta, iphi, ispeciesB),
+                                                                                                                T_s(ir, itheta, iphi, ispeciesB));
+                                     });
+
+                // NOTE: We must ensure that the DoPrecomputeNu0 kernel ended
+                // before DoPrecomputeNu1. Here, they are executed on the same
+                // execution space so this condition is always respected.
+                a_team_handle.team_barrier();
+
+                Kokkos::parallel_for(Kokkos::TeamThreadRange(a_team_handle,
+                                                             the_local_r_extent, the_r_extent),
+                                     [&](auto ir) {
+                                         // Propagate the value at nu_ab(ir_SOL_separatrix, itheta, iphi, ispeciesA, ispeciesB) or
+                                         // nu_ab(the_local_r_extent - 1, itheta, iphi, ispeciesA, ispeciesB)
+                                         nu_ab(ir, itheta, iphi, ispeciesA, ispeciesB) = nu_ab(ir_SOL_separatrix, itheta, iphi, ispeciesA, ispeciesB);
+                                     });
             };
 
-            const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<4,
-                                                                     Kokkos::Iterate::Left,
-                                                                     Kokkos::Iterate::Left>>{{0, 0, 0, 0},
-                                                                                             {the_theta_extent,
-                                                                                              the_phi_extent,
-                                                                                              the_species_extent,
-                                                                                              the_species_extent}};
+            const auto the_team_count = the_theta_extent * the_phi_extent * the_species_extent * the_species_extent;
+
+            // Due to the inherent Cuda/HIP thread block limit.
+            KOLIOP_ASSERT(the_team_count <= std::numeric_limits<int>::max());
+
+            // TODO(Etienne M): TEAM hardcoded size, check for auto tuning
+            // opportunities.
+            const auto a_policy = Kokkos::TeamPolicy<Constant::DeviceExecutionSpaceType>{
+                the_execution_space_pool[Constant::kDefaultExecutionSpacePoolIndex],
+                static_cast<int>(the_team_count),
+                koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, 64)};
 
             Kokkos::parallel_for("DoPrecomputeNu",
                                  a_policy, the_kernel);

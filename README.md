@@ -87,13 +87,13 @@ NOTE:
     - Test KOKKOS_BOUNDS_CHECK Kokkos_ENABLE_DEBUG_BOUNDS_CHECKS Kokkos_ENABLE_DEBUG
 
 - Tuning:
-    - many 'ir % Constant::kBlockExtentR' could be replaced with 'ir - the_block_first_r'
     - compute during species transfer ? Few par of the code rely on Nspecies, most only need pspecies_id.
     - Simplify computations
     - Inter exchange loops
     - Tune for GPU (coalesced reads)
     - Reduce register usage. Each time you use a view, you consume a LOT of register (dimension/stride storage ?).. much more than a simple pointer.
     - Performance depending on the choice of OrdinalType/ComputeFloatType (32bits / 64bits)
+        - Note that the fact that we do not have pivoting for the LU factorization *could* reduce the precision more when treating Flo32 matrices.
 
 - auto should not be used in computations (Flo64 or an other alias)
 - Make sure the C interface does not leak (exception et al.)

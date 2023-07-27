@@ -123,17 +123,12 @@ namespace koliop {
 
 
 #if defined(KOLIOP_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE)
-            // TODO(Etienne M): Make sure the copies are elided (that is, it
+            // TODO(Etienne M): Make sure the copies are elided (that is, Gysela
             // validates)
             template <typename Extent>
             using ExternalInputL = UDL<Extent>;
             template <typename Extent>
             using InternalInputL = UDL<Extent>;
-            template <typename Extent>
-            using InternalInputD = std::conditional_t<std::is_same_v<Kokkos::LayoutLeft,
-                                                                     Kokkos::DefaultExecutionSpace::array_layout>,
-                                                      UDD<Extent>,
-                                                      MDD<Extent>>;
 #else
             // The inputs MUST come from the host memory.
 
@@ -141,8 +136,6 @@ namespace koliop {
             using ExternalInputL = UHL<Extent>;
             template <typename Extent>
             using InternalInputL = MDL<Extent>;
-            template <typename Extent>
-            using InternalInputD = MDD<Extent>;
 #endif
 
             template <typename T>
@@ -170,19 +163,6 @@ namespace koliop {
             using InternalInputL5 = InternalInputL<T*****>;
             template <typename T>
             using InternalInputL6 = InternalInputL<T******>;
-
-            template <typename T>
-            using InternalInputD1 = InternalInputD<T*>;
-            template <typename T>
-            using InternalInputD2 = InternalInputD<T**>;
-            template <typename T>
-            using InternalInputD3 = InternalInputD<T***>;
-            template <typename T>
-            using InternalInputD4 = InternalInputD<T****>;
-            template <typename T>
-            using InternalInputD5 = InternalInputD<T*****>;
-            template <typename T>
-            using InternalInputD6 = InternalInputD<T******>;
         };
 
     } // namespace utility

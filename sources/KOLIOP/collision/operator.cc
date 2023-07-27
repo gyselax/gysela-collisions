@@ -83,7 +83,9 @@ namespace koliop {
                 }
             }
 
-            koliop::utility::Copy::Shallow(a_host_visible_nustar_coeff, nustar_coeff);
+            koliop::utility::Copy::Shallow(Constant::DeviceExecutionSpaceType{},
+                                           a_host_visible_nustar_coeff,
+                                           nustar_coeff);
         }
 
         Operator::Operator(uint64_t     pSpecies_id,
@@ -127,20 +129,20 @@ namespace koliop {
             , SOL_{SOL}
             , LIM_{LIM}
             , ir_SOL_separatrix_{static_cast<OrdinalType>(ir_SOL_separatrix)}
-            , hat_As_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputD1>(hat_As, "hat_As_", the_species_extent_)} // NOTE: in practice, this hat_Xs contains 3 values. The size being hardcoded in global::Nspecies_max = 2
-            , hat_Zs_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputD1>(hat_Zs, "hat_Zs_", the_species_extent_)} // NOTE: in practice, this hat_Xs contains 3 values. The size being hardcoded in global::Nspecies_max = 2
-            , mug_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputD1>(mug, "mug_", the_mu_extent_)}
-            , vparg_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputD1>(vparg, "vparg_", the_vpar_extent_)}
-            , coeff_intdmu_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputD1>(coeff_intdmu, "coeff_intdmu_", the_mu_extent_)}
-            , coeff_intdvpar_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputD1>(coeff_intdvpar, "coeff_intdvpar_", the_vpar_extent_)}
-            , rg_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputD1>(rg, "rg_", the_r_extent_)}
-            , nustar0_r_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputD1>(nustar0_r, "nustar0_r_", the_r_extent_)}
-            , q_r_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputD1>(q_r, "q_r_", the_r_extent_)}
-            , mask_buffer_r_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputD1>(mask_buffer_r, "mask_buffer_r_", the_r_extent_)}
-            , mask_LIM_{LIM_ ? koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL2<const Flo64>, koliop::utility::View::InternalInputD2>(mask_LIM, "mask_LIM_", the_r_extent, the_theta_extent) :
-                               koliop::utility::View::InternalInputD2<Flo64>{}}
-            , B_norm_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL2<const Flo64>, koliop::utility::View::InternalInputD2>(B_norm, "B_norm_", the_r_extent_, the_theta_extent_ + 1 /* Weird +1 */)}
-            , Bstar_s_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL4<const Flo64>, koliop::utility::View::InternalInputD4>(Bstar_s, "Bstar_s_", the_vpar_extent_, the_r_extent_, the_theta_extent_, the_species_extent_)}
+            , hat_As_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputL1>(Constant::DeviceExecutionSpaceType{}, hat_As, "hat_As_", the_species_extent_)} // NOTE: in practice, this hat_Xs contains 3 values. The size being hardcoded in global::Nspecies_max = 2
+            , hat_Zs_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputL1>(Constant::DeviceExecutionSpaceType{}, hat_Zs, "hat_Zs_", the_species_extent_)} // NOTE: in practice, this hat_Xs contains 3 values. The size being hardcoded in global::Nspecies_max = 2
+            , mug_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputL1>(Constant::DeviceExecutionSpaceType{}, mug, "mug_", the_mu_extent_)}
+            , vparg_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputL1>(Constant::DeviceExecutionSpaceType{}, vparg, "vparg_", the_vpar_extent_)}
+            , coeff_intdmu_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputL1>(Constant::DeviceExecutionSpaceType{}, coeff_intdmu, "coeff_intdmu_", the_mu_extent_)}
+            , coeff_intdvpar_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputL1>(Constant::DeviceExecutionSpaceType{}, coeff_intdvpar, "coeff_intdvpar_", the_vpar_extent_)}
+            , rg_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputL1>(Constant::DeviceExecutionSpaceType{}, rg, "rg_", the_r_extent_)}
+            , nustar0_r_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputL1>(Constant::DeviceExecutionSpaceType{}, nustar0_r, "nustar0_r_", the_r_extent_)}
+            , q_r_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputL1>(Constant::DeviceExecutionSpaceType{}, q_r, "q_r_", the_r_extent_)}
+            , mask_buffer_r_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputL1>(Constant::DeviceExecutionSpaceType{}, mask_buffer_r, "mask_buffer_r_", the_r_extent_)}
+            , mask_LIM_{LIM_ ? koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL2<const Flo64>, koliop::utility::View::InternalInputL2>(Constant::DeviceExecutionSpaceType{}, mask_LIM, "mask_LIM_", the_r_extent, the_theta_extent) :
+                               koliop::utility::View::InternalInputL2<Flo64>{}}
+            , B_norm_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL2<const Flo64>, koliop::utility::View::InternalInputL2>(Constant::DeviceExecutionSpaceType{}, B_norm, "B_norm_", the_r_extent_, the_theta_extent_ + 1 /* Weird +1 */)}
+            , Bstar_s_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL4<const Flo64>, koliop::utility::View::InternalInputL4>(Constant::DeviceExecutionSpaceType{}, Bstar_s, "Bstar_s_", the_vpar_extent_, the_r_extent_, the_theta_extent_, the_species_extent_)}
 
             // Constant, internally computed values
 
@@ -161,17 +163,12 @@ namespace koliop {
                              static_cast<std::size_t>(the_r_extent_), static_cast<std::size_t>(the_theta_extent_), static_cast<std::size_t>(the_phi_extent_), static_cast<std::size_t>(the_species_extent_)}
 
             // Miscellaneous numerical tooling
+            , the_cvcd_drivers_{}
+            // Miscellaneous tooling
+            , the_execution_space_pool_{} {
 
-            , the_najl_provider_{pSpecies_id_, the_vpar_extent_, the_species_extent_, collision_interspecies_, comb_mat, hat_As_, hat_Zs_, vparg_}
-            , the_factorizer_{}
-            , the_solver_{}
-            , the_mv_{}
-
-        // Miscellaneous tooling
-        {
-
-            // Somewhat redundant as we do not give an ExecutionSpace to the
-            // arg_prop used in the copies done above.
+            // Ensure the copies above are completed.
+            // Constant::DeviceExecutionSpaceType{}.fence() would also work.
             Kokkos::fence();
 
             DoPrepareNuStar(*this,
@@ -183,13 +180,44 @@ namespace koliop {
                             q_r_,
                             mask_buffer_r_);
 
-            // Somewhat useless as DoPrepareNuStar runs on the host.
-            Kokkos::fence();
-
-            for(auto&& a_stream : the_stream_pool_) {
-                // TODO(Etienne M): Partition the space
-                a_stream = Kokkos::DefaultExecutionSpace{};
+            for(OrdinalType i = 0; i < Constant::kDisjointExecutionSpaceCount; ++i) {
+                // We cant do copies as the Views have a shared pointer
+                // semantic. Here we want disjoint states.
+                the_cvcd_drivers_.emplace_back(pSpecies_id_,
+                                               the_vpar_extent_,
+                                               the_species_extent_,
+                                               collision_interspecies_,
+                                               comb_mat,
+                                               hat_As_,
+                                               hat_Zs_,
+                                               vparg_,
+                                               coeff_intdvpar_);
             }
+
+#if defined(KOKKOS_ENABLE_HIP)
+            static_assert(Constant::kDisjointExecutionSpaceCount >= 2, "");
+
+            // The default execution space.
+            // Do we benefit from specifying that the first value of
+            // the_execution_space_pool_ is always the default execution space ?
+            // This could help solving bugs.
+            the_execution_space_pool_.emplace_back(nullptr, true);
+            the_execution_space_pool_.emplace_back();
+#endif
+
+            while(the_execution_space_pool_.size() != Constant::kDisjointExecutionSpaceCount) {
+                // NOTE: We do not want to *potentially* split the resource
+                // pool. Thus the repeated call to partition_space which creates
+                // execution space with all the same amount of hardware
+                // resources.
+                // TODO(Etienne M): See what hipStreamCreateWithPriority can get
+                // us.
+                the_execution_space_pool_.emplace_back(Kokkos::Experimental::partition_space(the_execution_space_pool_[0], 1)[0]);
+            }
+        }
+
+        void Operator::Fence(OrdinalType the_execution_space_index) const {
+            the_execution_space_pool_[the_execution_space_index].fence();
         }
 
     } // namespace collision

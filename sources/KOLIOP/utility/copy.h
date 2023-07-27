@@ -15,6 +15,10 @@ namespace koliop {
         /// TODO(Etienne M):
         /// Add execution space aware version of the functions below ?
         ///
+        /// NOTE: the fact that this facility does not exist already in Kokkos
+        /// should be enough to call it a defect (and place it in the
+        /// appropriate koliop header).
+        ///
         struct Copy {
         public:
             /// May still do a deep copy if memory spaces or layouts are not
@@ -41,20 +45,24 @@ namespace koliop {
             /// NOTE: In case the shallow copy is realized, we loose the View's
             /// labe !!
             ///
-            template <typename SourceView,
+            template <typename ExecutionSpace,
+                      typename SourceView,
                       typename DestinationView>
             static auto
-            Shallow(SourceView      a_source_view,
-                    DestinationView a_destination_view);
+            Shallow(ExecutionSpace&&  an_execution_space,
+                    SourceView&&      a_source_view,
+                    DestinationView&& a_destination_view);
 
             /// The storage for the a_destination_view should already exist and the extents
             /// must match.
             ///
-            template <typename SourceView,
+            template <typename ExecutionSpace,
+                      typename SourceView,
                       typename DestinationView>
             static auto
-            Deep(SourceView      a_source_view,
-                 DestinationView a_destination_view);
+            Deep(ExecutionSpace&&  an_execution_space,
+                 SourceView&&      a_source_view,
+                 DestinationView&& a_destination_view);
 
             /// May or may not allocate new memory to represent the_raw_data. As
             /// such it is required that the_raw_data's lifetime may be as long
@@ -63,17 +71,21 @@ namespace koliop {
             template <typename UnmanagedView,
                       template <typename>
                       typename DestinationViewTemplate,
+                      typename ExecutionSpace,
                       typename... Indicies>
             static auto
-            RawDataToView(typename UnmanagedView::value_type* the_raw_data,
+            RawDataToView(ExecutionSpace&&                    an_execution_space,
+                          typename UnmanagedView::value_type* the_raw_data,
                           const char*                         the_view_label,
                           Indicies... the_indicies);
 
             template <typename SourceView,
                       typename UnmanagedView,
+                      typename ExecutionSpace,
                       typename... Indicies>
             static typename SourceView::value_type*
-            ViewToRawData(SourceView                          a_source_view,
+            ViewToRawData(ExecutionSpace&&                    an_execution_space,
+                          SourceView                          a_source_view,
                           typename UnmanagedView::value_type* the_raw_data,
                           Indicies... the_indicies);
         };
@@ -83,33 +95,44 @@ namespace koliop {
         // Copy methods definition
         ////////////////////////////////////////////////////////////////////////
 
-        template <typename SourceView,
+        template <typename ExecutionSpace,
+                  typename SourceView,
                   typename DestinationView>
-        auto Copy::Shallow(SourceView      a_source_view,
-                           DestinationView a_destination_view) {
+        auto Copy::Shallow(ExecutionSpace&&  an_execution_space,
+                           SourceView&&      a_source_view,
+                           DestinationView&& a_destination_view) {
+
+            // TODO(Etienne M): Should we use
+            // Kokkos::is_always_assignable_v<DestinationView, SourceView> ?
+            // It would lead to silent errors where the user thinks a shallow
+            // copy is done when if fact a deep copy is realized.
             if constexpr(std::is_same_v<typename std::remove_reference_t<SourceView>::memory_space,
                                         typename std::remove_reference_t<DestinationView>::memory_space> &&
                          std::is_same_v<typename std::remove_reference_t<SourceView>::array_layout,
                                         typename std::remove_reference_t<DestinationView>::array_layout>) {
                 a_destination_view = a_source_view;
             } else {
-                Deep(a_source_view, a_destination_view);
+                Deep(an_execution_space, a_source_view, a_destination_view);
             }
 
             return a_destination_view;
         }
 
-        template <typename SourceView,
+        template <typename ExecutionSpace,
+                  typename SourceView,
                   typename DestinationView>
-        auto Copy::Deep(SourceView      a_source_view,
-                        DestinationView a_destination_view) {
+        auto Copy::Deep(ExecutionSpace&&  an_execution_space,
+                        SourceView&&      a_source_view,
+                        DestinationView&& a_destination_view) {
             if constexpr(std::is_same_v<typename std::remove_reference_t<SourceView>::memory_space,
                                         typename std::remove_reference_t<DestinationView>::memory_space> ||
                          std::is_same_v<typename std::remove_reference_t<SourceView>::array_layout,
                                         typename std::remove_reference_t<DestinationView>::array_layout>) {
                 // Either we are in the same memory space, or we have a
                 // compatible layout which makes copying a simple memcpy.
-                Kokkos::deep_copy(a_destination_view, a_source_view);
+                Kokkos::deep_copy(an_execution_space,
+                                  a_destination_view,
+                                  a_source_view);
             } else {
 
                 // // TODO(Etienne M): create_mirror_view_and_copy ?
@@ -127,15 +150,18 @@ namespace koliop {
                 auto a_host_visible_target_mirror = Kokkos::create_mirror_view(Kokkos::view_alloc(Kokkos::WithoutInitializing), a_destination_view);
 
                 // Could be a no-op.
-                Kokkos::deep_copy(a_host_visible_source_mirror,
+                Kokkos::deep_copy(an_execution_space,
+                                  a_host_visible_source_mirror,
                                   a_source_view);
 
                 // Resolve potential layout issues on the host.
-                Kokkos::deep_copy(a_host_visible_target_mirror,
+                Kokkos::deep_copy(an_execution_space,
+                                  a_host_visible_target_mirror,
                                   a_host_visible_source_mirror);
 
                 // Could be a no-op.
-                Kokkos::deep_copy(a_destination_view,
+                Kokkos::deep_copy(an_execution_space,
+                                  a_destination_view,
                                   a_host_visible_target_mirror);
             }
 
@@ -145,8 +171,10 @@ namespace koliop {
         template <typename UnmanagedView,
                   template <typename>
                   typename DestinationViewTemplate,
+                  typename ExecutionSpace,
                   typename... Indicies>
-        auto Copy::RawDataToView(typename UnmanagedView::value_type* the_raw_data,
+        auto Copy::RawDataToView(ExecutionSpace&&                    an_execution_space,
+                                 typename UnmanagedView::value_type* the_raw_data,
                                  const char*                         the_view_label,
                                  Indicies... the_indicies) {
 
@@ -167,7 +195,8 @@ namespace koliop {
                 return UnmanagedView{the_raw_data,
                                      static_cast<std::size_t>(the_indicies)...};
             } else {
-                return Deep(UnmanagedView{the_raw_data,
+                return Deep(an_execution_space,
+                            UnmanagedView{the_raw_data,
                                           static_cast<std::size_t>(the_indicies)...},
                             DestinationView{Kokkos::view_alloc(Kokkos::WithoutInitializing,
                                                                std::string{the_view_label}),
@@ -177,11 +206,18 @@ namespace koliop {
 
         template <typename SourceView,
                   typename UnmanagedView,
+                  typename ExecutionSpace,
                   typename... Indicies>
         typename SourceView::value_type*
-        Copy::ViewToRawData(SourceView                          a_source_view,
+        Copy::ViewToRawData(ExecutionSpace&&                    an_execution_space,
+                            SourceView                          a_source_view,
                             typename UnmanagedView::value_type* the_raw_data,
                             Indicies... the_indicies) {
+
+            // TODO(Etienne M): Should we use
+            // Kokkos::is_always_assignable_v<DestinationView, SourceView> ?
+            // It would lead to silent errors where the user thinks a shallow
+            // copy is done when if fact a deep copy is realized.
             if(std::is_same_v<typename std::remove_reference_t<SourceView>::array_layout,
                               typename std::remove_reference_t<UnmanagedView>::array_layout> &&
                std::is_same_v<typename std::remove_reference_t<SourceView>::memory_space,
@@ -191,7 +227,8 @@ namespace koliop {
                (a_source_view.data() == the_raw_data)) {
                 return the_raw_data;
             } else {
-                return Deep(a_source_view,
+                return Deep(an_execution_space,
+                            a_source_view,
                             UnmanagedView{the_raw_data,
                                           static_cast<std::size_t>(the_indicies)...})
                     .data();

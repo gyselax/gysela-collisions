@@ -76,7 +76,7 @@ namespace koliop {
         /// ]
         ///
         /// For the_rhs vector we expect the following format:
-        ///     View<ValueType **cc>{A_matrix_extent / BatchTraitsType::kBatchSize, kBigBlockExtent, kSmallBlockExtent, BatchTraitsType::kBatchSize}
+        ///     View<value_type **cc>{A_matrix_extent / BatchTraitsType::kBatchSize, kBigBlockExtent, kSmallBlockExtent, BatchTraitsType::kBatchSize}
         ///
         /// NOTE:
         /// In Gysela, kBigBlockExtent = Npar, kSmallBlockExtent = Npolmax and
@@ -130,7 +130,7 @@ namespace koliop {
         public:
             using BatchTraitsType = BatchTraits;
 
-            using ValueType = typename BatchTraitsType::ValueType;
+            using value_type = typename BatchTraitsType::value_type;
 
             using ExecutionSpaceType = typename BatchTraitsType::ExecutionSpaceType;
 
@@ -171,7 +171,7 @@ namespace koliop {
             /// @param the_M_matrix_extent The number extent of the block
             /// diagonal problem.
             void Factorize(ExecutionSpaceType an_execution_space,
-                           ValueType*         the_A_matrix,
+                           value_type*        the_A_matrix,
                            OrdinalType        the_A_matrix_extent,
                            OrdinalType        the_M_matrix_extent) const;
 
@@ -187,7 +187,7 @@ namespace koliop {
                   OrdinalType kSmallBlockExtent>
         void BatchedBlockTridiagonalByBlockTRF<BatchTraits,
                                                kSmallBlockExtent>::Factorize(ExecutionSpaceType an_execution_space,
-                                                                             ValueType*         the_A_matrix,
+                                                                             value_type*        the_A_matrix,
                                                                              OrdinalType        the_A_matrix_extent,
                                                                              OrdinalType        the_M_matrix_extent) const {
 
@@ -253,10 +253,11 @@ namespace koliop {
                     A_next.assign_data(&the_batch_element(the_small_block_index + 1, 0, 0, 0));
                     B_next.assign_data(&the_batch_element(the_small_block_index + 1, 1, 0, 0));
 
-                    LU::invoke(B);                              // B = L + U - I
-                    TRSMLower::invoke(1.0, B, C);               // Solve: B_lower * X = C, X is put into C
-                    TRSMUpper::invoke(1.0, B, A_next);          // Solve: B_upper * X = A_next, X is put into A_next
-                    GEMM::invoke(-1.0, A_next, C, 1.0, B_next); // B_next = 1.0 * B_next + -1.0 * A_next * C
+                    LU::invoke(B);                                              // B = L + U - I
+                    TRSMLower::invoke(static_cast<value_type>(1.0), B, C);      // Solve: B_lower * X = C, X is put into C
+                    TRSMUpper::invoke(static_cast<value_type>(1.0), B, A_next); // Solve: B_upper * X = A_next, X is put into A_next
+                    GEMM::invoke(static_cast<value_type>(-1.0), A_next, C,      // B_next = 1.0 * B_next + -1.0 * A_next * C
+                                 static_cast<value_type>(1.0), B_next);
                 }
 
                 LU::invoke(B_next);

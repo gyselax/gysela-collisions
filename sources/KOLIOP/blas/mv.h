@@ -21,7 +21,7 @@ namespace koliop {
         public:
             using BatchTraitsType = BatchTraits;
 
-            using ValueType = typename BatchTraitsType::ValueType;
+            using value_type = typename BatchTraitsType::value_type;
 
             using ExecutionSpaceType = typename BatchTraitsType::ExecutionSpaceType;
 
@@ -43,13 +43,13 @@ namespace koliop {
             ///
             template <typename MatrixSampler>
             void Apply(ExecutionSpaceType an_execution_space,
-                       ValueType          the_alpha_scalar,
+                       value_type         the_alpha_scalar,
                        MatrixSampler&&    the_A_matrix_sampler,
                        OrdinalType        the_A_matrix_extent,
                        OrdinalType        the_M_matrix_extent,
-                       const ValueType*   the_x_vector,
-                       ValueType          the_beta_scalar,
-                       ValueType*         the_y_vector) const;
+                       const value_type*  the_x_vector,
+                       value_type         the_beta_scalar,
+                       value_type*        the_y_vector) const;
 
         protected:
         };
@@ -63,13 +63,13 @@ namespace koliop {
                   OrdinalType kSmallBlockExtent>
         template <typename MatrixSampler>
         void BatchedMatrixSamplingBlockTridiagonalByBlockMV<BatchTraits, kSmallBlockExtent>::Apply(ExecutionSpaceType an_execution_space,
-                                                                                                   ValueType          the_alpha_scalar,
+                                                                                                   value_type         the_alpha_scalar,
                                                                                                    MatrixSampler&&    the_A_matrix_sampler,
                                                                                                    OrdinalType        the_A_matrix_extent,
                                                                                                    OrdinalType        the_M_matrix_extent,
-                                                                                                   const ValueType*   the_x_vector,
-                                                                                                   ValueType          the_beta_scalar,
-                                                                                                   ValueType*         the_y_vector) const {
+                                                                                                   const value_type*  the_x_vector,
+                                                                                                   value_type         the_beta_scalar,
+                                                                                                   value_type*        the_y_vector) const {
 
             KOLIOP_ASSERT(the_x_vector != nullptr);
             KOLIOP_ASSERT(the_y_vector != nullptr);
@@ -82,11 +82,11 @@ namespace koliop {
             const OrdinalType kBatchCount     = BatchTraitsType::BatchCount(the_A_matrix_extent);
             const OrdinalType kBigBlockExtent = the_M_matrix_extent;
 
-            typename VectorKindType::ConstScalarType the_x_vector_view{reinterpret_cast<const typename BatchTraitsType::ValueType*>(the_x_vector),
+            typename VectorKindType::ConstScalarType the_x_vector_view{reinterpret_cast<const typename BatchTraitsType::value_type*>(the_x_vector),
                                                                        static_cast<std::size_t>(kBatchCount),
                                                                        static_cast<std::size_t>(kBigBlockExtent)};
 
-            typename VectorKindType::ScalarType the_y_vector_view{reinterpret_cast<typename BatchTraitsType::ValueType*>(the_y_vector),
+            typename VectorKindType::ScalarType the_y_vector_view{reinterpret_cast<typename BatchTraitsType::value_type*>(the_y_vector),
                                                                   static_cast<std::size_t>(kBatchCount),
                                                                   static_cast<std::size_t>(kBigBlockExtent)};
 
@@ -102,12 +102,7 @@ namespace koliop {
                                                                         Kokkos::ALL(), // kSmallBlockExtent
                                                                         the_batch_element_index);
 
-                ValueType the_dot_product{};
-
-                // TODO(Etienne M): in practice, the_A_matrix_sampler samples
-                // the Najl in a *transposed* way. That is, it could lead to
-                // better accesses if we iterated faster on the
-                // the_scalar_index than on j.
+                value_type the_dot_product{};
 
                 // TODO(Etienne M): These reduction are not ideal for numerical
                 // stability. Using more threads, we could do some kind of tree

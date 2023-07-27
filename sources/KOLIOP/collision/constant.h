@@ -20,10 +20,23 @@ namespace koliop {
             // TODO(Etienne M): better name
             static inline constexpr OrdinalType kIndexMax = 2 * (kMaximumLaguerrePolynomialDegree - 1);
 
+            using HostExecutionSpaceType   = Kokkos::DefaultHostExecutionSpace;
             using DeviceExecutionSpaceType = Kokkos::DefaultExecutionSpace;
 
             using BatchTraitsType = koliop::blas::BatchTraits<ComputeFloatType,
                                                               DeviceExecutionSpaceType>;
+
+            // Aka, HIP/Cuda stream count. Bigger means more memory used but
+            // also, potentially faster. Trade memory and inconvenience for
+            // speed.
+            // TODO(Etienne M): Depending on the hardware, GPU/CPU, and between
+            // GPUs, this value could be increased or reduced. Using future
+            // GPUs, we could benefit from a higher value.
+            // Bigger blocking needs less streams ad inversely.
+            static inline constexpr OrdinalType kDisjointExecutionSpaceCount    = 4;
+            static inline constexpr OrdinalType kDefaultExecutionSpacePoolIndex = kDisjointExecutionSpaceCount - 1;
+            static_assert((kDisjointExecutionSpaceCount >= 0) && (kDefaultExecutionSpacePoolIndex < kDisjointExecutionSpaceCount),
+                          "");
 
             // TODO(Etienne M): Note we should probably not use constant for the
             // blocking. Indeed, on CPU we benefit from a small block and on GPU
@@ -32,13 +45,6 @@ namespace koliop {
             // afford a constraint on the simulation through
             // kBlockExtent[R, Theta, Phi] but on GPU, this constraints would be
             // unaffordable. On GPU we need dynamic kBlockExtent[R, Theta, Phi].
-            // This cost use a *lot* (still has to be measured) in modulo
-            // operations.
-
-            // TODO(Etienne M): Tune that size or rework batching. If we can not
-            // have larger block, we have to check if kokkos supports
-            // distributing on vector/teams.
-            //
 
             // NOTE: The amount of memory used during the collision operator is
             // at most approximately:
@@ -61,18 +67,6 @@ namespace koliop {
 #else
     #error "Unsupported architecture."
 #endif
-
-            static inline constexpr OffsetType kFlattenedBlockExtent = kBlockExtentR * kBlockExtentTheta * kBlockExtentPhi;
-
-            static inline constexpr OffsetType kBatchCount = BatchTraitsType::BatchCount(kFlattenedBlockExtent);
-            static_assert(kBatchCount * BatchTraitsType::kBatchSize == kFlattenedBlockExtent, "");
-
-        public:
-            using VectorKindType = koliop::blas::kind::vector::BatchedBlockByBlock<BatchTraitsType,
-                                                                                   kMaximumLaguerrePolynomialDegree>;
-
-            using MatrixKindType = koliop::blas::kind::matrix::BatchedBlockTridiagonalByBlock<BatchTraitsType,
-                                                                                              kMaximumLaguerrePolynomialDegree>;
         };
 
     } // namespace collision

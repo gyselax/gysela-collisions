@@ -37,6 +37,8 @@
             std::cout << "  koliop::collision::Constant::kBlockExtentR: " << koliop::collision::Constant::kBlockExtentR << "\n";
             std::cout << "  koliop::collision::Constant::kBlockExtentTheta: " << koliop::collision::Constant::kBlockExtentTheta << "\n";
             std::cout << "  koliop::collision::Constant::kBlockExtentPhi: " << koliop::collision::Constant::kBlockExtentPhi << "\n";
+            std::cout << "  koliop::collision::Constant::kDisjointExecutionSpaceCount: " << koliop::collision::Constant::kDisjointExecutionSpaceCount << "\n";
+            std::cout << "  koliop::collision::Constant::kDefaultExecutionSpacePoolIndex: " << koliop::collision::Constant::kDefaultExecutionSpacePoolIndex << "\n";
         }
 
         Kokkos::initialize(Kokkos::InitializationSettings()
@@ -130,8 +132,7 @@
            nustar0_r == nullptr ||
            q_r == nullptr ||
            mask_buffer_r == nullptr ||
-           // NOTE: XNOR on booleans is ==
-           (static_cast<bool>(LIM) == (mask_LIM == nullptr)) ||
+           (static_cast<bool>(LIM) && (mask_LIM == nullptr)) ||
            B_norm == nullptr ||
            Bstar_s == nullptr) {
             return KOLIOP_STATUS_INVALID_VALUE;
@@ -183,6 +184,24 @@
 
         // Freeing a nullptr is *fine*.
         delete reinterpret_cast<koliop::collision::Operator*>(an_operator);
+
+        return KOLIOP_STATUS_SUCCESS;
+    });
+}
+
+::koliop_Status koliop_Fence(::koliop_Operator an_operator) {
+    return koliop::error::FromException([&]() {
+        if(!Kokkos::is_initialized()) {
+            return KOLIOP_STATUS_INITIALIZATION_FAILURE;
+        }
+
+        if(an_operator == nullptr) {
+            return KOLIOP_STATUS_INVALID_VALUE;
+        }
+
+        // NOTE: Maybe we should offer to the user the possibility of choosing
+        // which stream to use for computation and for fencing.
+        reinterpret_cast<const koliop::collision::Operator*>(an_operator)->Fence();
 
         return KOLIOP_STATUS_SUCCESS;
     });
@@ -311,7 +330,7 @@
             return KOLIOP_STATUS_INVALID_VALUE;
         }
 
-        reinterpret_cast<const koliop::collision::Operator*>(an_operator)->Apply(static_cast<koliop::ComputeFloatType>(dt), f5d_s);
+        reinterpret_cast<koliop::collision::Operator*>(an_operator)->Apply(static_cast<koliop::ComputeFloatType>(dt), f5d_s);
 
         return KOLIOP_STATUS_SUCCESS;
     });

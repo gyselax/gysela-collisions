@@ -31,8 +31,6 @@ int main(int, char**) {
 
     ::koliop_Operator an_operator;
 
-    // TODO(Etienne M): Use small values for non indexing integer ?
-
     static constexpr size_t   Npolmax                = 3;
     static constexpr size_t   index_max              = 4;
     static constexpr uint64_t Nmu                    = 47;
@@ -75,16 +73,12 @@ int main(int, char**) {
     // static constexpr uint64_t comb_mat_extent_0 = ((index_max + 1) + 1) - 0;
     // static constexpr uint64_t comb_mat_extent_1 = ((index_max + 1) + 1) - 0;
 
-    // TODO(Etienne M): Is that a bug that hat_As contains more than Nspecies
-    // values ?
     // lbound(hat_As,1) = 0;
     // ubound(hat_As,1) = 2;
     // size(hat_As,1) = 3;
     static constexpr double hat_As[the_species_extent] = {1.0};
     // static constexpr uint64_t hat_As_extent_0 = the_species_extent;
 
-    // TODO(Etienne M): Is that a bug that hat_As contains more than Nspecies
-    //  values ?
     // lbound(hat_Zs,1) = 0;
     // ubound(hat_Zs,1) = 2;
     // size(hat_Zs,1) = 3;
@@ -242,6 +236,8 @@ int main(int, char**) {
                    dt,
                    &f5d_s[0][0][0][0][0][0]);
 
+    ::koliop_Fence(an_operator);
+
     ::koliop_ComputeDensityCorrection(an_operator,
                                       &f5d_s[0][0][0][0][0][0]);
 
@@ -249,11 +245,13 @@ int main(int, char**) {
                                     dt,
                                     &f5d_s[0][0][0][0][0][0]);
 
-    // TODO(Etienne M):
-    // double nu_ab_r[the_r_extent][the_species_extent][the_species_extent]{{{42.0}}};
+    double n_s[the_species_extent][the_phi_extent][the_theta_extent][the_r_extent]{{{{42.0}}}};
 
-    // ::koliop_ExtractNuab(koliop_Operator an_operator,
-    //                      &nu_ab_r[0][0][0]);
+    ::koliop_ExtractRaw(an_operator,
+                        KOLIOP_EXTRACTION_IDENTIFIER_n_s,
+                        &n_s[0][0][0]);
+
+    ::koliop_Fence(an_operator);
 
     if(::koliop_Release(an_operator) != KOLIOP_STATUS_SUCCESS) {
         std::cout << "::koliop_Release() failed\n";

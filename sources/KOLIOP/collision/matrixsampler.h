@@ -21,9 +21,14 @@ namespace koliop {
         class MatrixSampler {
         public:
         public:
-            MatrixSampler(const View6D&    the_Najl,
-                          const View1D&    vparg,
-                          ComputeFloatType a_time_delta_coefficient);
+            MatrixSampler(const View6D& the_Najl,
+                          const View1D& vparg);
+
+            KOKKOS_INLINE_FUNCTION ComputeFloatType&
+            DeltaTime();
+
+            KOKKOS_INLINE_FUNCTION const ComputeFloatType&
+            DeltaTime() const;
 
             KOKKOS_INLINE_FUNCTION ComputeFloatType
             operator()(OrdinalType the_batch_index,
@@ -66,7 +71,7 @@ namespace koliop {
 
         protected:
             // TODO(Etienne M): having a copy may not be ideal. Maybe we should
-            // pass everything the the sampling function.
+            // pass everything to the sampling function.
             View6D           the_Najl_;
             View1D           vpar_delta_;
             ComputeFloatType the_time_delta_coefficient_;
@@ -79,13 +84,26 @@ namespace koliop {
 
         template <typename View6D,
                   typename View1D>
-        MatrixSampler<View6D, View1D>::MatrixSampler(const View6D&    the_Najl,
-                                                     const View1D&    vpar_delta,
-                                                     ComputeFloatType a_time_delta_coefficient)
+        MatrixSampler<View6D, View1D>::MatrixSampler(const View6D& the_Najl,
+                                                     const View1D& vpar_delta)
             : the_Najl_{the_Najl}
             , vpar_delta_{vpar_delta}
-            , the_time_delta_coefficient_{a_time_delta_coefficient} {
+            , the_time_delta_coefficient_{} {
             // EMPTY
+        }
+
+        template <typename View6D,
+                  typename View1D>
+        KOKKOS_INLINE_FUNCTION ComputeFloatType&
+        MatrixSampler<View6D, View1D>::DeltaTime() {
+            return the_time_delta_coefficient_;
+        }
+
+        template <typename View6D,
+                  typename View1D>
+        KOKKOS_INLINE_FUNCTION const ComputeFloatType&
+        MatrixSampler<View6D, View1D>::DeltaTime() const {
+            return the_time_delta_coefficient_;
         }
 
         template <typename View6D,
@@ -129,16 +147,10 @@ namespace koliop {
                                                      OrdinalType ipol,
                                                      OrdinalType jpol,
                                                      OrdinalType the_batch_element_index) const {
-            // NOTE: Careful with the i,j. The value of the 3x3 matrix block are
-            // given using transposed values of the Najl. With i the row and j
-            // the column:
-            // A[i, j] = -N1(j, i) * ...
-
-            // TODO(Etienne M): stop using a uniform vparg.
             const auto a_vpar_delta = vpar_delta_(ivpar);
 
-            return the_time_delta_coefficient_ * (the_Najl_(the_batch_index, ivpar, 2, jpol, ipol, the_batch_element_index) / (a_vpar_delta * a_vpar_delta) -
-                                                  the_Najl_(the_batch_index, ivpar, 1, jpol, ipol, the_batch_element_index) / (a_vpar_delta * 2.0));
+            return DeltaTime() * (the_Najl_(the_batch_index, ivpar, 2, ipol, jpol, the_batch_element_index) / (a_vpar_delta * a_vpar_delta) -
+                                  the_Najl_(the_batch_index, ivpar, 1, ipol, jpol, the_batch_element_index) / (a_vpar_delta * 2.0));
         }
 
         template <typename View6D,
@@ -151,16 +163,15 @@ namespace koliop {
                                                       OrdinalType the_batch_element_index) const {
             const auto a_vpar_delta = vpar_delta_(ivpar);
 
-            const ComputeFloatType the_value = the_time_delta_coefficient_ * (the_Najl_(the_batch_index, ivpar, 0, jpol, ipol, the_batch_element_index) -
-                                                                              (the_Najl_(the_batch_index, ivpar, 2, jpol, ipol, the_batch_element_index) * 2.0) / (a_vpar_delta * a_vpar_delta));
+            const ComputeFloatType the_value = DeltaTime() * (the_Najl_(the_batch_index, ivpar, 0, ipol, jpol, the_batch_element_index) -
+                                                              (the_Najl_(the_batch_index, ivpar, 2, ipol, jpol, the_batch_element_index) * 2.0) / (a_vpar_delta * a_vpar_delta));
 
 
             // the_matrix = I - dt/4 * T
 
-            // TODO(Etienne M): On CPU this branch should get moved up
-            // in the loop and on GPU I hope it does not cost too much.
-            // Else we have to launch another kernel on the diagonal.
-            // TODO(Etienne M): What about branch divergence.
+            // NOTE: On CPU this branch should get moved up in the loop and on
+            // GPU I hope it does not cost too much. Else we have to launch
+            // another kernel on the diagonal.
 
             return jpol == ipol ?
                        the_value + 1.0 :
@@ -177,8 +188,8 @@ namespace koliop {
                                                      OrdinalType the_batch_element_index) const {
             const auto a_vpar_delta = vpar_delta_(ivpar);
 
-            return the_time_delta_coefficient_ * (the_Najl_(the_batch_index, ivpar, 2, jpol, ipol, the_batch_element_index) / (a_vpar_delta * a_vpar_delta) +
-                                                  the_Najl_(the_batch_index, ivpar, 1, jpol, ipol, the_batch_element_index) / (a_vpar_delta * 2.0));
+            return DeltaTime() * (the_Najl_(the_batch_index, ivpar, 2, ipol, jpol, the_batch_element_index) / (a_vpar_delta * a_vpar_delta) +
+                                  the_Najl_(the_batch_index, ivpar, 1, ipol, jpol, the_batch_element_index) / (a_vpar_delta * 2.0));
         }
 
         template <typename View6D,
