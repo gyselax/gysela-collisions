@@ -153,15 +153,17 @@ namespace koliop {
                                   the_batch_element_index) += the_alpha_scalar * the_dot_product;
             };
 
-            const auto a_policy = Kokkos::MDRangePolicy<ExecutionSpaceType,
-                                                        Kokkos::Rank<4,
-                                                                     // TODO(Etienne M): Tune blocking.
-                                                                     Kokkos::Iterate::Left,
-                                                                     Kokkos::Iterate::Left>>{an_execution_space,
-                                                                                             {0, 0, 0, 0},
-                                                                                             {BatchTraitsType::kBatchSize,
-                                                                                              kSmallBlockExtent, kBigBlockExtent,
-                                                                                              kBatchCount}};
+            const auto a_policy = Kokkos::MDRangePolicy<
+                // Kokkos::LaunchBounds<256, 1>, Kokkos::IndexType<OrdinalType>,
+                ExecutionSpaceType,
+                Kokkos::Rank<4,
+                             // TODO(Etienne M): Tune blocking.
+                             Kokkos::Iterate::Left,
+                             Kokkos::Iterate::Left>>{an_execution_space,
+                                                     {0, 0, 0, 0},
+                                                     {BatchTraitsType::kBatchSize,
+                                                      kSmallBlockExtent, kBigBlockExtent,
+                                                      kBatchCount}};
 
             Kokkos::parallel_for("BatchedMatrixSamplingBlockTridiagonalByBlockMV::Apply",
                                  a_policy, the_kernel);

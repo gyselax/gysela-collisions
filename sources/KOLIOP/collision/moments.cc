@@ -133,7 +133,9 @@ namespace koliop {
 
             // TODO(Etienne M): TEAM hardcoded size, check for auto tuning
             // opportunities.
-            const auto a_policy = Kokkos::TeamPolicy<Constant::DeviceExecutionSpaceType>{
+            const auto a_policy = Kokkos::TeamPolicy<
+                // Kokkos::LaunchBounds<256, 1>, Kokkos::IndexType<OrdinalType>,
+                Constant::DeviceExecutionSpaceType>{
                 the_execution_space_pool[Constant::kDefaultExecutionSpacePoolIndex],
                 static_cast<int>(the_team_count),
                 koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, 256)};

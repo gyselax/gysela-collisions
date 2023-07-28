@@ -67,13 +67,16 @@ namespace koliop {
                               itheta - the_block_first_theta) = the_mask_value;
                 };
 
-                const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<2,
-                                                                         Kokkos::Iterate::Default,
-                                                                         Kokkos::Iterate::Default>>{an_execution_space,
-                                                                                                    {the_block_first_r,
-                                                                                                     the_block_first_theta},
-                                                                                                    {the_block_first_r + CvCdDriver::kBlockExtentR,
-                                                                                                     the_block_first_theta + CvCdDriver::kBlockExtentTheta}};
+                const auto a_policy = Kokkos::MDRangePolicy<
+                    // Kokkos::LaunchBounds<256, 1>, Kokkos::IndexType<OrdinalType>,
+                    ExecutionSpace,
+                    Kokkos::Rank<2,
+                                 Kokkos::Iterate::Default,
+                                 Kokkos::Iterate::Default>>{an_execution_space,
+                                                            {the_block_first_r,
+                                                             the_block_first_theta},
+                                                            {the_block_first_r + CvCdDriver::kBlockExtentR,
+                                                             the_block_first_theta + CvCdDriver::kBlockExtentTheta}};
 
                 Kokkos::parallel_for("DoPrepareCollisionMask",
                                      a_policy, the_kernel);
@@ -162,15 +165,18 @@ namespace koliop {
                     }
                 };
 
-                const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<3,
-                                                                         Kokkos::Iterate::Default,
-                                                                         Kokkos::Iterate::Default>>{an_execution_space,
-                                                                                                    {the_block_first_r,
-                                                                                                     the_block_first_theta,
-                                                                                                     the_block_first_phi},
-                                                                                                    {the_block_first_r + CvCdDriver::kBlockExtentR,
-                                                                                                     the_block_first_theta + CvCdDriver::kBlockExtentTheta,
-                                                                                                     the_block_first_phi + CvCdDriver::kBlockExtentPhi}};
+                const auto a_policy = Kokkos::MDRangePolicy<
+                    // Kokkos::LaunchBounds<256, 1>, Kokkos::IndexType<OrdinalType>,
+                    ExecutionSpace,
+                    Kokkos::Rank<3,
+                                 Kokkos::Iterate::Default,
+                                 Kokkos::Iterate::Default>>{an_execution_space,
+                                                            {the_block_first_r,
+                                                             the_block_first_theta,
+                                                             the_block_first_phi},
+                                                            {the_block_first_r + CvCdDriver::kBlockExtentR,
+                                                             the_block_first_theta + CvCdDriver::kBlockExtentTheta,
+                                                             the_block_first_phi + CvCdDriver::kBlockExtentPhi}};
 
                 Kokkos::parallel_for("DoComputeAlphaProjection",
                                      a_policy, the_kernel);
@@ -209,15 +215,18 @@ namespace koliop {
                                                                       the_batch_element_index));
                 };
 
-                const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<5,
-                                                                         Kokkos::Iterate::Default,
-                                                                         Kokkos::Iterate::Default>>{an_execution_space,
-                                                                                                    {0, 0, 0, 0, 0},
-                                                                                                    {CvCdDriver::BatchTraitsType::kBatchSize,
-                                                                                                     Constant::kMaximumLaguerrePolynomialDegree,
-                                                                                                     Constant::kMaximumLaguerrePolynomialDegree,
-                                                                                                     the_vpar_extent,
-                                                                                                     CvCdDriver::kBatchCount}};
+                const auto a_policy = Kokkos::MDRangePolicy<
+                    // Kokkos::LaunchBounds<256, 1>, Kokkos::IndexType<OrdinalType>,
+                    ExecutionSpace,
+                    Kokkos::Rank<5,
+                                 Kokkos::Iterate::Default,
+                                 Kokkos::Iterate::Default>>{an_execution_space,
+                                                            {0, 0, 0, 0, 0},
+                                                            {CvCdDriver::BatchTraitsType::kBatchSize,
+                                                             Constant::kMaximumLaguerrePolynomialDegree,
+                                                             Constant::kMaximumLaguerrePolynomialDegree,
+                                                             the_vpar_extent,
+                                                             CvCdDriver::kBatchCount}};
 
                 Kokkos::parallel_for("DoPrepareMatrix",
                                      a_policy, the_kernel);
@@ -275,19 +284,22 @@ namespace koliop {
                                                                                        2.0 * q_para_on_naTa * (3.0 * vpar_tmp / Ta * the_Najl(the_batch_index, ivpar, 2, ipol, 0, the_batch_element_index) - vpar_tmp * the_Najl(the_batch_index, ivpar, 0, ipol, 1, the_batch_element_index) - the_Najl(the_batch_index, ivpar, 1, ipol, 1, the_batch_element_index)));
                 };
 
-                const auto a_policy = Kokkos::MDRangePolicy<Kokkos::Rank<5,
-                                                                         Kokkos::Iterate::Default,
-                                                                         Kokkos::Iterate::Default>>{an_execution_space,
-                                                                                                    {0,
-                                                                                                     0,
-                                                                                                     the_block_first_r,
-                                                                                                     the_block_first_theta,
-                                                                                                     the_block_first_phi},
-                                                                                                    {Constant::kMaximumLaguerrePolynomialDegree,
-                                                                                                     the_vpar_extent,
-                                                                                                     the_block_first_r + CvCdDriver::kBlockExtentR,
-                                                                                                     the_block_first_theta + CvCdDriver::kBlockExtentTheta,
-                                                                                                     the_block_first_phi + CvCdDriver::kBlockExtentPhi}};
+                const auto a_policy = Kokkos::MDRangePolicy<
+                    // Kokkos::LaunchBounds<256, 1>, Kokkos::IndexType<OrdinalType>,
+                    ExecutionSpace,
+                    Kokkos::Rank<5,
+                                 Kokkos::Iterate::Default,
+                                 Kokkos::Iterate::Default>>{an_execution_space,
+                                                            {0,
+                                                             0,
+                                                             the_block_first_r,
+                                                             the_block_first_theta,
+                                                             the_block_first_phi},
+                                                            {Constant::kMaximumLaguerrePolynomialDegree,
+                                                             the_vpar_extent,
+                                                             the_block_first_r + CvCdDriver::kBlockExtentR,
+                                                             the_block_first_theta + CvCdDriver::kBlockExtentTheta,
+                                                             the_block_first_phi + CvCdDriver::kBlockExtentPhi}};
 
                 Kokkos::parallel_for("DoComputeCvCdSource",
                                      a_policy, the_kernel);
@@ -375,9 +387,11 @@ namespace koliop {
 
                 // TODO(Etienne M): TEAM hardcoded size, check for auto tuning
                 // opportunities.
-                const auto a_policy = Kokkos::TeamPolicy<Constant::DeviceExecutionSpaceType>{an_execution_space,
-                                                                                             static_cast<int>(the_team_count),
-                                                                                             koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, 384)};
+                const auto a_policy = Kokkos::TeamPolicy<
+                    // Kokkos::LaunchBounds<384, 1>, Kokkos::IndexType<OrdinalType>,
+                    ExecutionSpace>{an_execution_space,
+                                    static_cast<int>(the_team_count),
+                                    koliop::utility::Select<ExecutionSpace>(Kokkos::AUTO, 384)};
 
                 Kokkos::parallel_for("DoComputeReconstruction",
                                      a_policy, the_kernel);
