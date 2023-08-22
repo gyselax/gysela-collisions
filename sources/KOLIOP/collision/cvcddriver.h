@@ -567,8 +567,9 @@ namespace koliop {
             the_LHS_matrix_sampler_.DeltaTime() = static_cast<ComputeFloatType>(-dt / 4.0);
             the_RHS_matrix_sampler_.DeltaTime() = static_cast<ComputeFloatType>(dt / 4.0);
 
-            // TODO(Etienne M): If mask_coll depends on r and theta,
-            // we could bring it up two loops into Apply.
+            // NOTE: If mask_coll depends on r and theta, we could interchange
+            // iphi with itheta and ir. that said, this call is so fast compared
+            // to the rest that it does not seem useful.
             detail::DoPrepareCollisionMask<CvCdDriver>(an_operator,
                                                        an_execution_space,
                                                        the_block_first_r, the_block_first_theta,
