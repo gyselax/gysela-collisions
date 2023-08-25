@@ -22,7 +22,7 @@ bool ValidateAbsoluteError(const T* a_reference,
 }
 
 int main(int, char**) {
-    if(::koliop_Initialize(8, 0, KOLIOP_TRUE) != KOLIOP_STATUS_SUCCESS) {
+    if(::koliop_Initialize(KOLIOP_TRUE, 8, 0, KOLIOP_TRUE) != KOLIOP_STATUS_SUCCESS) {
         std::cout << "::koliop_Initialize() failed\n";
         return -1;
     }
@@ -257,7 +257,7 @@ int main(int, char**) {
         std::cout << "::koliop_Release() failed\n";
     }
 
-    if(::koliop_Deinitialize() != KOLIOP_STATUS_SUCCESS) {
+    if(::koliop_Deinitialize(KOLIOP_TRUE) != KOLIOP_STATUS_SUCCESS) {
         std::cout << "::koliop_Deinitialize() failed\n";
         return -1;
     }
