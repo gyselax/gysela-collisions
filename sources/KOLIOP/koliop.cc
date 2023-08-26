@@ -3,9 +3,12 @@
 #include "KOLIOP/koliop.h"
 
 #include <Kokkos_Core.hpp>
+#include <iostream>
 
+#include "KOLIOP/collision/constant.h"
 #include "KOLIOP/collision/operator.h"
 #include "KOLIOP/error/exception.h"
+#include "KOLIOP/internal/configuration.h"
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -17,7 +20,6 @@
                                   size_t a_device_index,
                                   int8_t with_verbose_initialization) {
     return koliop::error::FromException([&]() {
-
         if(static_cast<bool>(do_kokkos_initialization) !=
            Kokkos::is_initialized()) {
             // Either we are asked to initialize Kokkos and it is already

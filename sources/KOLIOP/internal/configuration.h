@@ -3,6 +3,11 @@
 #ifndef KOLIOP_INTERNAL_CONFIGURATION_H
 #define KOLIOP_INTERNAL_CONFIGURATION_H
 
+#include <stddef.h>
+#include <stdint.h>
+
+#include <cstddef>
+
 #include "KOLIOP/internal/buildspecificities.h"
 #include "KOLIOP/utility/preprocessor.h"
 

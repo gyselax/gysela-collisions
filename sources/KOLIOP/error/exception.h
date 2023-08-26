@@ -3,6 +3,7 @@
 #ifndef KOLIOP_ERROR_EXCEPTION_H
 #define KOLIOP_ERROR_EXCEPTION_H
 
+#include <exception>
 #include <stdexcept>
 
 #include "KOLIOP/error/status.h"

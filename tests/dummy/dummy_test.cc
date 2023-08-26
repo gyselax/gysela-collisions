@@ -1,6 +1,6 @@
 #include <KOLIOP/koliop.h>
 
-#include <cmath>
+#include <cstdlib>
 #include <iostream>
 
 template <typename T>

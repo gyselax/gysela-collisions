@@ -1,9 +1,16 @@
 // SPDX-License-Identifier: MIT
 
+#include <Kokkos_Core.hpp>
+#include <limits>
+#include <type_traits>
+
+#include "KOLIOP/collision/constant.h"
 #include "KOLIOP/collision/operator.h"
+#include "KOLIOP/internal/configuration.h"
 #include "KOLIOP/portability/cmath.h"
 #include "KOLIOP/utility/copy.h"
 #include "KOLIOP/utility/select.h"
+#include "KOLIOP/utility/view.h"
 
 namespace koliop {
     namespace collision {

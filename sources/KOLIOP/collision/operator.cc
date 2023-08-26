@@ -2,6 +2,9 @@
 
 #include "KOLIOP/collision/operator.h"
 
+#include <Kokkos_Core.hpp>
+
+#include "KOLIOP/internal/configuration.h"
 #include "KOLIOP/portability/cmath.h"
 #include "KOLIOP/utility/copy.h"
 
