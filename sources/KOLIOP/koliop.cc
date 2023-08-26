@@ -20,8 +20,7 @@
                                   size_t a_device_index,
                                   int8_t with_verbose_initialization) {
     return koliop::error::FromException([&]() {
-        if(static_cast<bool>(do_kokkos_initialization) !=
-           Kokkos::is_initialized()) {
+        if(static_cast<bool>(do_kokkos_initialization) == Kokkos::is_initialized()) {
             // Either we are asked to initialize Kokkos and it is already
             // initialized or we are asked not to initialize kokkos and it was
             // done already (XNOR).
