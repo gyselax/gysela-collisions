@@ -78,10 +78,12 @@ MODULE koliop
    ! REAL(C_DOUBLE), DIMENSION(*)
    !
    INTERFACE
-      ! koliop_Status koliop_Initialize(size_t a_host_thread_count,
+      ! koliop_Status koliop_Initialize(int8_t do_kokkos_initialization,
+      !                                 size_t a_host_thread_count,
       !                                 size_t a_device_index,
       !                                 int8_t with_verbose_initialization);
       INTEGER(koliop_Status) FUNCTION koliop_Initialize_c( &
+         do_kokkos_initialization, &
          a_host_thread_count, &
          a_device_index, &
          with_verbose_initialization) &
@@ -93,18 +95,23 @@ MODULE koliop
 
          IMPLICIT NONE
 
+         INTEGER(C_INT8_T), VALUE, INTENT(IN) :: do_kokkos_initialization
          INTEGER(C_SIZE_T), VALUE, INTENT(IN) :: a_host_thread_count
          INTEGER(C_SIZE_T), VALUE, INTENT(IN) :: a_device_index
          INTEGER(C_INT8_T), VALUE, INTENT(IN) :: with_verbose_initialization
       END FUNCTION
 
       ! koliop_Status koliop_Deinitialize(void);
-      INTEGER(koliop_Status) FUNCTION koliop_Deinitialize_c() &
+      INTEGER(koliop_Status) FUNCTION koliop_Deinitialize_c( &
+         do_kokkos_deinitialization) &
          BIND(C, NAME='koliop_Deinitialize')
 
          IMPORT :: koliop_Status
+         IMPORT :: C_INT8_T
 
          IMPLICIT NONE
+
+         INTEGER(C_INT8_T), VALUE, INTENT(IN) :: do_kokkos_deinitialization
       END FUNCTION
 
       ! koliop_Status koliop_Create(koliop_Operator* an_operator_handle,
@@ -740,6 +747,7 @@ CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
    SUBROUTINE koliop_Initialize_f( &
+      do_kokkos_initialization, &
       a_host_thread_count, &
       a_device_index, &
       with_verbose_initialization, &
@@ -747,12 +755,20 @@ CONTAINS
 
       IMPLICIT NONE
 
+      LOGICAL, INTENT(IN) :: do_kokkos_initialization
       INTEGER, INTENT(IN) :: a_host_thread_count
       INTEGER, INTENT(IN) :: a_device_index
       LOGICAL, INTENT(IN) :: with_verbose_initialization
       INTEGER(koliop_Status), INTENT(OUT) :: an_error_code
 
+      INTEGER(C_INT8_T) :: do_kokkos_initialization_cast
       INTEGER(C_INT8_T) :: with_verbose_initialization_cast
+
+      IF (do_kokkos_initialization) THEN
+         do_kokkos_initialization_cast = 1
+      ELSE
+         do_kokkos_initialization_cast = 0
+      END IF
 
       IF (with_verbose_initialization) THEN
          with_verbose_initialization_cast = 1
@@ -761,19 +777,30 @@ CONTAINS
       END IF
 
       an_error_code = koliop_Initialize_c( &
+         do_kokkos_initialization_cast, &
          INT(a_host_thread_count, C_SIZE_T), &
          INT(a_device_index, C_SIZE_T), &
          with_verbose_initialization_cast)
    END SUBROUTINE
 
    SUBROUTINE koliop_Deinitialize_f( &
+      do_kokkos_deinitialization, &
       an_error_code)
 
       IMPLICIT NONE
 
+      LOGICAL, INTENT(IN) :: do_kokkos_deinitialization
       INTEGER(koliop_Status), INTENT(OUT) :: an_error_code
 
-      an_error_code = koliop_Deinitialize_c()
+      INTEGER(C_INT8_T) :: do_kokkos_deinitialization_cast
+
+      IF (do_kokkos_deinitialization) THEN
+         do_kokkos_deinitialization_cast = 1
+      ELSE
+         do_kokkos_deinitialization_cast = 0
+      END IF
+
+      an_error_code = koliop_Deinitialize_c(do_kokkos_deinitialization_cast)
    END SUBROUTINE
 
    SUBROUTINE koliop_Create_f(&
@@ -1104,6 +1131,7 @@ END MODULE
 
 !       IMPLICIT NONE
 
+!       LOGICAL :: do_kokkos_initialization = .TRUE.
 !       INTEGER :: a_host_thread_count = 8
 !       INTEGER :: a_device_index = 0
 !       LOGICAL :: with_verbose_initialization = .TRUE.
@@ -1184,7 +1212,8 @@ END MODULE
 
 !       n_s = 42.0_C_DOUBLE
 
-!       call koliop_Initialize_f(a_host_thread_count, &
+!       call koliop_Initialize_f(do_kokkos_initialization, &
+!          a_host_thread_count, &
 !          a_device_index, &
 !          with_verbose_initialization, &
 !          an_error_code)
@@ -1275,7 +1304,7 @@ END MODULE
 !          an_error_code)
 !       print *, "koliop_Release_f:an_error_code", an_error_code
 
-!       call koliop_Deinitialize_f(an_error_code)
+!       call koliop_Deinitialize_f(do_kokkos_initialization, an_error_code)
 !       print *, "koliop_Deinitialize_f:an_error_code", an_error_code
 !    END SUBROUTINE
 ! END PROGRAM

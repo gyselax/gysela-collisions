@@ -9,14 +9,15 @@ namespace koliop {
 
         void PresentErrorExplanation(const char* a_category,
                                      const char* an_explanation) noexcept {
-            std::printf("[KOLIOP][%s] %s\n",
-                        a_category,
-                        an_explanation);
+            std::fprintf(stderr,
+                         "[KOLIOP][%s] %s\n",
+                         a_category,
+                         an_explanation);
         }
 
-        void AssertionFailure(const char* an_expression) noexcept {
-            PresentErrorExplanation("ASSERTION_FAILURE",
-                                    an_expression);
+        void AssertionFailure(const char* the_message) noexcept {
+            PresentErrorExplanation("ASSERTION_FAILURE", the_message);
+
             std::fflush(stdout);
             std::fflush(stderr);
 

@@ -3,20 +3,27 @@
 #include "KOLIOP/koliop.h"
 
 #include <Kokkos_Core.hpp>
+#include <iostream>
 
+#include "KOLIOP/collision/constant.h"
 #include "KOLIOP/collision/operator.h"
 #include "KOLIOP/error/exception.h"
+#include "KOLIOP/internal/configuration.h"
 
 
 ////////////////////////////////////////////////////////////////////////////////
 // koliop method definition
 ////////////////////////////////////////////////////////////////////////////////
 
-::koliop_Status koliop_Initialize(size_t a_host_thread_count,
+::koliop_Status koliop_Initialize(int8_t do_kokkos_initialization,
+                                  size_t a_host_thread_count,
                                   size_t a_device_index,
                                   int8_t with_verbose_initialization) {
     return koliop::error::FromException([&]() {
-        if(Kokkos::is_initialized()) {
+        if(static_cast<bool>(do_kokkos_initialization) == Kokkos::is_initialized()) {
+            // Either we are asked to initialize Kokkos and it is already
+            // initialized or we are asked not to initialize kokkos and it was
+            // done already (XNOR).
             return KOLIOP_STATUS_INITIALIZATION_FAILURE;
         }
 
@@ -41,13 +48,15 @@
             std::cout << "  koliop::collision::Constant::kDefaultExecutionSpacePoolIndex: " << koliop::collision::Constant::kDefaultExecutionSpacePoolIndex << "\n";
         }
 
-        Kokkos::initialize(Kokkos::InitializationSettings()
-                               .set_num_threads(static_cast<int>(a_host_thread_count))
-                               .set_device_id(static_cast<int>(a_device_index))
-                               .set_disable_warnings(!static_cast<bool>(with_verbose_initialization))
-                               // NOTE: As of version 4.0.0
-                               // set_print_configuration does not work ?
-                               .set_print_configuration(static_cast<bool>(with_verbose_initialization)));
+        if(static_cast<bool>(do_kokkos_initialization)) {
+            Kokkos::initialize(Kokkos::InitializationSettings()
+                                   .set_num_threads(static_cast<int>(a_host_thread_count))
+                                   .set_device_id(static_cast<int>(a_device_index))
+                                   .set_disable_warnings(!static_cast<bool>(with_verbose_initialization))
+                                   // NOTE: As of version 4.0.0
+                                   // set_print_configuration does not work ?
+                                   .set_print_configuration(static_cast<bool>(with_verbose_initialization)));
+        }
 
         if(!Kokkos::is_initialized()) {
             return KOLIOP_STATUS_INITIALIZATION_FAILURE;
@@ -63,16 +72,18 @@
     });
 }
 
-::koliop_Status koliop_Deinitialize(void) {
-    return koliop::error::FromException([]() {
+::koliop_Status koliop_Deinitialize(int8_t do_kokkos_deinitialization) {
+    return koliop::error::FromException([&]() {
         if(!Kokkos::is_initialized()) {
             return KOLIOP_STATUS_DEINITIALIZATION_FAILURE;
         }
 
-        Kokkos::finalize();
+        if(static_cast<bool>(do_kokkos_deinitialization)) {
+            Kokkos::finalize();
 
-        if(Kokkos::is_initialized()) {
-            return KOLIOP_STATUS_DEINITIALIZATION_FAILURE;
+            if(Kokkos::is_initialized()) {
+                return KOLIOP_STATUS_DEINITIALIZATION_FAILURE;
+            }
         }
 
         return KOLIOP_STATUS_SUCCESS;

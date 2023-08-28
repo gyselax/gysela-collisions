@@ -2,6 +2,9 @@
 
 #include "KOLIOP/collision/operator.h"
 
+#include <Kokkos_Core.hpp>
+
+#include "KOLIOP/internal/configuration.h"
 #include "KOLIOP/portability/cmath.h"
 #include "KOLIOP/utility/copy.h"
 
@@ -195,14 +198,16 @@ namespace koliop {
             }
 
 #if defined(KOKKOS_ENABLE_HIP)
-            if constexpr(Constant::kDisjointExecutionSpaceCount >= 1) {
-                // The null stream.
-                the_execution_space_pool_.emplace_back(nullptr, true);
-            }
+            KOLIOP_ASSERT(the_execution_space_pool_.size() == 0);
+
+            // The null stream.
+            the_execution_space_pool_.emplace_back(nullptr, true);
 
             if constexpr(Constant::kDisjointExecutionSpaceCount >= 2) {
                 // Then, we use the default execution space.
                 the_execution_space_pool_.emplace_back();
+
+                KOLIOP_ASSERT(the_execution_space_pool_.size() == 2);
             }
 
             // Then we fill in with new streams.

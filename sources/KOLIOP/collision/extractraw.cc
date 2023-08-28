@@ -1,10 +1,14 @@
 // SPDX-License-Identifier: MIT
 
 #include <stdexcept>
+#include <string>
 
+#include "KOLIOP/collision/constant.h"
 #include "KOLIOP/collision/operator.h"
+#include "KOLIOP/internal/configuration.h"
 #include "KOLIOP/koliop.h"
 #include "KOLIOP/utility/copy.h"
+#include "KOLIOP/utility/view.h"
 
 namespace koliop {
     namespace collision {

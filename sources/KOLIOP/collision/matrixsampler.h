@@ -22,7 +22,7 @@ namespace koliop {
         public:
         public:
             MatrixSampler(const View6D& the_Najl,
-                          const View1D& vparg);
+                          const View1D& vpar_delta);
 
             KOKKOS_INLINE_FUNCTION ComputeFloatType&
             DeltaTime();

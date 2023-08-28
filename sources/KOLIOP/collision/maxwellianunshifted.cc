@@ -1,9 +1,18 @@
 // SPDX-License-Identifier: MIT
 
+#include <Kokkos_Core.hpp>
+#include <limits>
+#include <stdexcept>
+#include <string>
+#include <type_traits>
+
+#include "KOLIOP/collision/constant.h"
 #include "KOLIOP/collision/operator.h"
+#include "KOLIOP/internal/configuration.h"
 #include "KOLIOP/portability/cmath.h"
 #include "KOLIOP/utility/copy.h"
 #include "KOLIOP/utility/select.h"
+#include "KOLIOP/utility/view.h"
 
 namespace koliop {
     namespace collision {
@@ -37,7 +46,9 @@ namespace koliop {
 
             // TODO(Etienne M): TEAM hardcoded size, check for auto tuning
             // opportunities.
-            const auto a_policy = Kokkos::TeamPolicy<Constant::DeviceExecutionSpaceType>{
+            const auto a_policy = Kokkos::TeamPolicy<
+                // Kokkos::LaunchBounds<320, 1>, Kokkos::IndexType<OrdinalType>,
+                Constant::DeviceExecutionSpaceType>{
                 the_execution_space_pool[Constant::kDefaultExecutionSpacePoolIndex],
                 static_cast<int>(the_team_count),
                 koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, 320)};

@@ -39,7 +39,8 @@ extern "C" {
 /// present additional information.
 /// @return KOLIOP_STATUS_SUCCESS on success.
 ///
-koliop_Status koliop_Initialize(size_t a_host_thread_count,
+koliop_Status koliop_Initialize(int8_t do_kokkos_initialization,
+                                size_t a_host_thread_count,
                                 size_t a_device_index,
                                 int8_t with_verbose_initialization);
 
@@ -47,11 +48,11 @@ koliop_Status koliop_Initialize(size_t a_host_thread_count,
 /// lifetime of the program.
 /// @return KOLIOP_STATUS_SUCCESS on success.
 ///
-koliop_Status koliop_Deinitialize(void);
+koliop_Status koliop_Deinitialize(int8_t do_kokkos_deinitialization);
 
 /// Represent a collision operator.
 ///
-typedef struct _koliop_Operator* koliop_Operator;
+typedef struct koliop_OpaqueOperator_* koliop_Operator;
 
 /// The values given below are expected NOT to change during the lifetime
 /// of the operator.

@@ -1,9 +1,16 @@
 // SPDX-License-Identifier: MIT
 
+#include <Kokkos_Core.hpp>
+#include <limits>
+#include <type_traits>
+
+#include "KOLIOP/collision/constant.h"
 #include "KOLIOP/collision/operator.h"
+#include "KOLIOP/internal/configuration.h"
 #include "KOLIOP/portability/cmath.h"
 #include "KOLIOP/utility/copy.h"
 #include "KOLIOP/utility/select.h"
+#include "KOLIOP/utility/view.h"
 
 namespace koliop {
     namespace collision {
@@ -128,7 +135,9 @@ namespace koliop {
 
             // TODO(Etienne M): TEAM hardcoded size, check for auto tuning
             // opportunities.
-            auto a_policy = Kokkos::TeamPolicy<Constant::DeviceExecutionSpaceType>{
+            auto a_policy = Kokkos::TeamPolicy<
+                // Kokkos::LaunchBounds<64, 1>, Kokkos::IndexType<OrdinalType>,
+                Constant::DeviceExecutionSpaceType>{
                 the_execution_space_pool[Constant::kDefaultExecutionSpacePoolIndex],
                 static_cast<int>(the_team_count),
                 koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, 64)};
@@ -154,7 +163,7 @@ namespace koliop {
 
             koliop::utility::Copy::ViewToRawData<koliop::utility::View::InternalInputL6<Flo64>,
                                                  koliop::utility::View::ExternalInputL6<Flo64>>(the_execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],
-                                                                                                                       a_device_visible_f5d_s,
+                                                                                                a_device_visible_f5d_s,
                                                                                                 f5d_s,
                                                                                                 the_mu_extent_, the_vpar_extent_,
                                                                                                 the_r_extent_, the_theta_extent_, the_phi_extent_,

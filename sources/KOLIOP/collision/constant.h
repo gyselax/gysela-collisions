@@ -40,7 +40,7 @@ namespace koliop {
             static inline constexpr OrdinalType kDisjointExecutionSpaceCount = 1;
 #endif
             static inline constexpr OrdinalType kDefaultExecutionSpacePoolIndex = kDisjointExecutionSpaceCount - 1;
-            static_assert((kDisjointExecutionSpaceCount >= 0) && (kDefaultExecutionSpacePoolIndex < kDisjointExecutionSpaceCount),
+            static_assert((kDisjointExecutionSpaceCount >= 1) && (kDefaultExecutionSpacePoolIndex < kDisjointExecutionSpaceCount),
                           "");
 
             // TODO(Etienne M): Note we should probably not use constant for the

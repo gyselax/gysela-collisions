@@ -234,13 +234,15 @@ namespace koliop {
                 }
             };
 
-            const auto a_policy = Kokkos::MDRangePolicy<ExecutionSpaceType,
-                                                        Kokkos::Rank<2,
-                                                                     // TODO(Etienne M): Tune blocking.
-                                                                     Kokkos::Iterate::Left,
-                                                                     Kokkos::Iterate::Left>>{an_execution_space,
-                                                                                             {0, 0},
-                                                                                             {BatchTraitsType::kVectorPerBatch, kBatchCount}};
+            const auto a_policy = Kokkos::MDRangePolicy<
+                // Kokkos::LaunchBounds<64, 1>, Kokkos::IndexType<OrdinalType>,
+                ExecutionSpaceType,
+                Kokkos::Rank<2,
+                             // TODO(Etienne M): Tune blocking.
+                             Kokkos::Iterate::Left,
+                             Kokkos::Iterate::Left>>{an_execution_space,
+                                                     {0, 0},
+                                                     {BatchTraitsType::kVectorPerBatch, kBatchCount}};
 
             Kokkos::parallel_for("BatchedBlockTridiagonalByBlockTRSV::Solve",
                                  a_policy, the_kernel);

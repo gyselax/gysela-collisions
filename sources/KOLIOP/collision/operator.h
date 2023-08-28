@@ -3,9 +3,13 @@
 #ifndef KOLIOP_COLLISION_OPERATOR_H
 #define KOLIOP_COLLISION_OPERATOR_H
 
+#include <Kokkos_Core.hpp>
 #include <vector>
 
+#include "KOLIOP/collision/constant.h"
 #include "KOLIOP/collision/cvcddriver.h"
+#include "KOLIOP/internal/configuration.h"
+#include "KOLIOP/utility/view.h"
 
 namespace koliop {
     namespace collision {
@@ -155,7 +159,7 @@ namespace koliop {
                      const Flo64* B_norm,
                      const Flo64* Bstar_s);
 
-            void Fence(OrdinalType the_execution_space_index  = Constant::kDefaultExecutionSpacePoolIndex) const;
+            void Fence(OrdinalType the_execution_space_index = Constant::kDefaultExecutionSpacePoolIndex) const;
 
             void ComputeMoments(Flo64* f5d_s);
 
