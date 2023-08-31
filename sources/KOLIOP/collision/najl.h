@@ -85,8 +85,32 @@ namespace koliop {
                            ValueType     sqrtXtr_inv,
                            Array1D       I_mat) {
 
-                    static constexpr OrdinalType the_Xtr_pows_size = Constant::kIndexMax + 1 + 1;
-                    static constexpr OrdinalType the_J_vec_size    = Constant::kIndexMax + 2 + 1;
+                    // NOTE: Numerical accuracy of this whole function isn't
+                    // good!
+                    // The error comes from the fact that contraction of
+                    // suitable floating point operations into FMA changes the
+                    // accuracy of the computation. Coupled with the different
+                    // behavior of the exp and erfc function (GPU vs GLibC), we
+                    // get a very significant error (up to ~1E-5 relative).
+                    // Initially the error is not large (~1E14 relative,
+                    // measured out of erfc) but the whole Najl coefficient
+                    // computation is extraordinarily powerful when it copy to
+                    // spreading and amplifying errors.
+                    // To mitigate that divergence from the reference CrayFTN
+                    // Gysela, two facts, use:
+                    // - #pragma clang fp contract(on) : instead of the fast or
+                    // fast-honor-pragmas which is the default for GPU on Clang.
+                    // - Use more accurate transcendental function
+                    // implementation (relative to GLibC).
+                    // NOTE: theses error would also obviously manifest
+                    // themselve if we changed the compiler from gfortran to
+                    // ifort or crayftn and as such, trying to be bit-perfect
+                    // with the CrayFTN reference is but an illusion (and incurs
+                    // a performance penalty). What matters is, are the result
+                    // making physical sense right ?
+
+                    static constexpr OrdinalType the_Xtr_pows_size = Constant::kIndexMax + 1;
+                    static constexpr OrdinalType the_J_vec_size    = Constant::kIndexMax + 1 + 1;
 
                     ValueType Xtr_pows[the_Xtr_pows_size]; // std::pow(-Xtr, i);
                     ValueType J_vec[the_J_vec_size];
@@ -99,8 +123,9 @@ namespace koliop {
 
                     const ValueType the_exp_Xtr                = Kokkos::exp(Xtr);
                     const ValueType the_sqrtXtr_inv_on_exp_Xtr = sqrtXtr_inv / the_exp_Xtr;
+                    const ValueType the_erfc_sqrt_Xtr          = Kokkos::erfc(sqrtXtr);
 
-                    J_vec[1] = koliop::portability::MathematicalConstant<ValueType>::kSqrtPi * Kokkos::erfc(sqrtXtr);
+                    J_vec[1] = koliop::portability::MathematicalConstant<ValueType>::kSqrtPi * the_erfc_sqrt_Xtr;
                     J_vec[0] = 2.0 * (the_sqrtXtr_inv_on_exp_Xtr - J_vec[1]);
 
                     for(OrdinalType ind_k = 2; ind_k < the_J_vec_size; ++ind_k) {
@@ -116,17 +141,8 @@ namespace koliop {
 
                     for(OrdinalType ind_i = 0; ind_i < the_Xtr_pows_size; ++ind_i) {
                         for(OrdinalType ind_k = 0; ind_k <= ind_i; ++ind_k) {
-                            // NOTE: The numerical stability of this whole operation
-                            // is not good !
-                            // TODO(Etienne M): Analyze the numerical stability of
-                            // the Najl
-                            // A few order of magnitude in relative error seem to
-                            // come from this part! Where small and very large
-                            // (1e-300 vs 1e300) values cohabit.
-                            I_mat[ind_i] += (comb_mat(ind_k, ind_i) *
-                                             Xtr_pows[ind_i - ind_k]) *
-                                            (J_vec[ind_k + offset] *
-                                             the_exp_Xtr);
+                            I_mat[ind_i] += comb_mat(ind_k, ind_i) * J_vec[ind_k + offset] *
+                                            Xtr_pows[ind_i - ind_k] * the_exp_Xtr;
                         }
                     }
                 }
@@ -173,7 +189,7 @@ namespace koliop {
                             const ValueType sqrtXtr     = Kokkos::sqrt(Xtr);
                             const ValueType sqrtXtr_inv = 1.0 / sqrtXtr;
 
-                            ValueType I_mat[Constant::kIndexMax + 1 + 1]{};
+                            ValueType I_mat[Constant::kIndexMax + 1]{};
 
                             DoComputeI(comb_mat, 1, Xtr, sqrtXtr, sqrtXtr_inv, I_mat);
 
@@ -188,7 +204,7 @@ namespace koliop {
                             const ValueType sqrtXtr     = Kokkos::sqrt(Xtr);
                             const ValueType sqrtXtr_inv = 1.0 / sqrtXtr;
 
-                            ValueType I_mat[Constant::kIndexMax + 1 + 1]{};
+                            ValueType I_mat[Constant::kIndexMax + 1]{};
 
                             DoComputeI(comb_mat, 0, Xtr, sqrtXtr, sqrtXtr_inv, I_mat);
 
@@ -212,11 +228,14 @@ namespace koliop {
                                    L_mat[2][1] -
                                    L_mat[2][0];
 
-                    for(OrdinalType ind_i = 1; ind_i <= Constant::kIndexMax; ++ind_i) {
+                    for(OrdinalType ind_i = 1; ind_i < Constant::kIndexMax; ++ind_i) {
                         L_mat[3][ind_i] += -L_mat[2][ind_i - 1] * static_cast<ValueType>(ind_i) * vpar2_on_Ta * 0.5 +
                                            L_mat[2][ind_i] * (vpar2_on_Ta * 0.5 - static_cast<ValueType>(ind_i + 1)) +
                                            L_mat[2][ind_i + 1];
                     }
+
+                    L_mat[3][Constant::kIndexMax] += -L_mat[2][Constant::kIndexMax - 1] * static_cast<ValueType>(Constant::kIndexMax) * vpar2_on_Ta * 0.5 +
+                                                     L_mat[2][Constant::kIndexMax] * (vpar2_on_Ta * 0.5 - static_cast<ValueType>(Constant::kIndexMax + 1));
 
                     L_mat[4][0] += L_mat[2][0];
 
@@ -317,7 +336,7 @@ namespace koliop {
                     const ValueType vpar2_on_Ta = vparg(ivpar) * vparg(ivpar) / local_T_s(pSpecies_id);
 
                     // NOTE: Careful, L_mat is layout right
-                    ValueType L_mat[5][Constant::kIndexMax + 1 + 1]{};
+                    ValueType L_mat[5][Constant::kIndexMax + 1]{};
 
                     DoComputeL<ValueType>(the_species_extent,
                                           pSpecies_id,
@@ -342,7 +361,10 @@ namespace koliop {
                             }
                         }
 
-                        N_coeff -= (L_mat[0][ind_i] + L_mat[2][ind_i + 1]) * 2.0;
+                        N_coeff -= (L_mat[0][ind_i] +
+                                    ((ind_i + 1) == (Constant::kIndexMax + 1) ? 0.0 :
+                                                                                L_mat[2][ind_i + 1])) *
+                                   2.0;
 
                         for(OrdinalType l = 0; l < Constant::kMaximumLaguerrePolynomialDegree; ++l) {
                             for(OrdinalType j = 1; j < Constant::kMaximumLaguerrePolynomialDegree; ++j) {
@@ -352,7 +374,8 @@ namespace koliop {
 
                         N_coeff = -L_mat[0][ind_i] +
                                   L_mat[1][ind_i] -
-                                  L_mat[2][ind_i + 1] +
+                                  ((ind_i + 1) == (Constant::kIndexMax + 1) ? 0.0 :
+                                                                              L_mat[2][ind_i + 1]) +
                                   L_mat[2][ind_i] * (2.0 - vpar2_on_Ta * 0.5) +
                                   L_mat[3][ind_i];
 
@@ -364,7 +387,6 @@ namespace koliop {
                                                                       2.0 * static_cast<ValueType>(j) * L_mat[2][ind_i] * (C_jl(ind_i, j, l) - C_jl(ind_i, j - 1, l)));
                                 }
                             }
-
                         } else {
                             for(OrdinalType l = 0; l < Constant::kMaximumLaguerrePolynomialDegree; ++l) {
                                 for(OrdinalType j = 0; j < Constant::kMaximumLaguerrePolynomialDegree; ++j) {

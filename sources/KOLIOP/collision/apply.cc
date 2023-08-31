@@ -3,7 +3,6 @@
 #include <Kokkos_Core.hpp>
 
 #include "KOLIOP/collision/constant.h"
-#include "KOLIOP/collision/cvcddriver.h"
 #include "KOLIOP/collision/operator.h"
 #include "KOLIOP/internal/configuration.h"
 #include "KOLIOP/utility/copy.h"
@@ -11,7 +10,6 @@
 
 namespace koliop {
     namespace collision {
-
 
         template <typename View6D>
         static inline void
