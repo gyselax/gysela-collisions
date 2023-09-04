@@ -169,7 +169,7 @@ namespace koliop {
                     auto b_next = Kokkos::subview(the_vector_batch_element, 0 /* Putting 1 here is illegal ? */, Kokkos::ALL());
 
                     for(OrdinalType the_small_block_index = 0;
-                        the_small_block_index != (kBigBlockExtent - 1);
+                        the_small_block_index < (kBigBlockExtent - 1);
                         ++the_small_block_index) {
 
                         // TODO(Etienne M): Recreate view or assign ? Which is
@@ -207,7 +207,7 @@ namespace koliop {
                     // is the *previous* one when iterating in natural order.
 
                     for(OrdinalType the_reversed_small_block_index = kBigBlockExtent;
-                        the_reversed_small_block_index != 1;
+                        the_reversed_small_block_index > 1;
                         --the_reversed_small_block_index) {
 
                         const OrdinalType the_small_block_index = the_reversed_small_block_index - 1;

@@ -43,7 +43,10 @@ namespace koliop {
             const ComputeFloatType half_dt = dt / 2.0;
 
             // NOTE: We use scratch memory to avoid overwriting the T_s.
-            using ScratchMemory = Kokkos::View<ComputeFloatType*, Constant::DeviceExecutionSpaceType::scratch_memory_space>;
+            using ScratchMemory = Kokkos::View<ComputeFloatType*,
+                                               Constant::DeviceExecutionSpaceType::scratch_memory_space,
+                                               // NOTE: Be careful with the restrict.
+                                               Kokkos::MemoryTraits<Kokkos::Restrict>>;
 
             const uint64_t the_scratch_memory_bytes_per_thread = the_species_extent * sizeof(ComputeFloatType);
 

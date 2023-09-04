@@ -23,21 +23,24 @@ namespace koliop {
             static_assert(std::is_arithmetic_v<value_type>, "");
 
         public:
-            static inline constexpr value_type kE        = static_cast<value_type>(2.71828182845904523536);             // e
-            static inline constexpr value_type kLog2E    = static_cast<value_type>(1.44269504088896340736);             // log2(e)
-            static inline constexpr value_type kLog10E   = static_cast<value_type>(0.434294481903251827651);            // log10(e)
-            static inline constexpr value_type kLn2      = static_cast<value_type>(0.693147180559945309417);            // ln(2)
-            static inline constexpr value_type kLn10     = static_cast<value_type>(2.30258509299404568402);             // ln(10)
-            static inline constexpr value_type kPi       = static_cast<value_type>(3.14159265358979323846);             // pi
-            static inline constexpr value_type k2Pi      = static_cast<value_type>(kPi * static_cast<value_type>(2.0)); // 2*pi
-            static inline constexpr value_type kPi_2     = static_cast<value_type>(1.57079632679489661923);             // pi/2
-            static inline constexpr value_type kPi_4     = static_cast<value_type>(0.785398163397448309616);            // pi/4
-            static inline constexpr value_type k1_Pi     = static_cast<value_type>(0.318309886183790671538);            // 1/pi
-            static inline constexpr value_type k2_Pi     = static_cast<value_type>(0.636619772367581343076);            // 2/pi
-            static inline constexpr value_type kSqrtPi   = static_cast<value_type>(1.772453850905516027298);            // sqrt(pi)
-            static inline constexpr value_type k2_SqrtPi = static_cast<value_type>(1.12837916709551257390);             // 2/sqrt(pi)
-            static inline constexpr value_type kSqrt2    = static_cast<value_type>(1.41421356237309504880);             // sqrt(2)
-            static inline constexpr value_type k1_Sqrt2  = static_cast<value_type>(0.707106781186547524401);            // 1/sqrt(2) or sqrt(1/2)
+            // NOTE: We could specify less significant digit as a double can
+            // only represent 53/log2(10) ~ 15.95 (due to rounding 17 max)
+            // significant digit.
+            static inline constexpr value_type kE        = static_cast<value_type>(2.71828182845904523536);  // e
+            static inline constexpr value_type kLog2E    = static_cast<value_type>(1.44269504088896340736);  // log2(e)
+            static inline constexpr value_type kLog10E   = static_cast<value_type>(0.434294481903251827651); // log10(e)
+            static inline constexpr value_type kLn2      = static_cast<value_type>(0.693147180559945309418); // ln(2)
+            static inline constexpr value_type kLn10     = static_cast<value_type>(2.30258509299404568402);  // ln(10)
+            static inline constexpr value_type kPi       = static_cast<value_type>(3.14159265358979323846);  // pi
+            static inline constexpr value_type k2Pi      = static_cast<value_type>(6.28318530717958647692);  // 2*pi
+            static inline constexpr value_type kPi_2     = static_cast<value_type>(1.57079632679489661923);  // pi/2
+            static inline constexpr value_type kPi_4     = static_cast<value_type>(0.785398163397448309616); // pi/4
+            static inline constexpr value_type k1_Pi     = static_cast<value_type>(0.318309886183790671538); // 1/pi
+            static inline constexpr value_type k2_Pi     = static_cast<value_type>(0.636619772367581343076); // 2/pi
+            static inline constexpr value_type kSqrtPi   = static_cast<value_type>(1.77245385090551602730);  // sqrt(pi)
+            static inline constexpr value_type k2_SqrtPi = static_cast<value_type>(1.12837916709551257390);  // 2/sqrt(pi)
+            static inline constexpr value_type kSqrt2    = static_cast<value_type>(1.41421356237309504880);  // sqrt(2)
+            static inline constexpr value_type k1_Sqrt2  = static_cast<value_type>(0.707106781186547524402); // 1/sqrt(2) or sqrt(1/2)
         };
 
 

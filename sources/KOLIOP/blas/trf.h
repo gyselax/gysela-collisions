@@ -242,7 +242,7 @@ namespace koliop {
                 auto B_next = Kokkos::subview(the_batch_element, kBigBlockExtent - 1, 1, Kokkos::ALL(), Kokkos::ALL());
 
                 for(OrdinalType the_small_block_index = 0;
-                    the_small_block_index != (kBigBlockExtent - 1);
+                    the_small_block_index < (kBigBlockExtent - 1);
                     ++the_small_block_index) {
 
                     // TODO(Etienne M): Recreate view or assign ? Which is
