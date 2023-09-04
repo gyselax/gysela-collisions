@@ -29,19 +29,23 @@ namespace koliop {
                 public:
                     using ScalarType = Kokkos::View<value_type** [kSmallBlockExtent][BatchTraitsType::kBatchSize],
                                                     Kokkos::LayoutRight,
-                                                    ExecutionSpaceType>;
+                                                    ExecutionSpaceType,
+                                                    Kokkos::MemoryTraits<Kokkos::Restrict>>;
 
                     using VectorType = Kokkos::View<typename BatchTraitsType::ThreadVectorType** [kSmallBlockExtent][BatchTraitsType::kVectorPerBatch],
                                                     Kokkos::LayoutRight,
-                                                    ExecutionSpaceType>;
+                                                    ExecutionSpaceType,
+                                                    Kokkos::MemoryTraits<Kokkos::Restrict>>;
 
                     using ConstScalarType = Kokkos::View<const value_type** [kSmallBlockExtent][BatchTraitsType::kBatchSize],
                                                          Kokkos::LayoutRight,
-                                                         ExecutionSpaceType>;
+                                                         ExecutionSpaceType,
+                                                         Kokkos::MemoryTraits<Kokkos::Restrict>>;
 
                     using ConstVectorType = Kokkos::View<const typename BatchTraitsType::ThreadVectorType** [kSmallBlockExtent][BatchTraitsType::kVectorPerBatch],
                                                          Kokkos::LayoutRight,
-                                                         ExecutionSpaceType>;
+                                                         ExecutionSpaceType,
+                                                         Kokkos::MemoryTraits<Kokkos::Restrict>>;
                 };
 
             } // namespace vector
@@ -69,22 +73,26 @@ namespace koliop {
 
                     using ScalarType = Kokkos::View<value_type** [kDiagonalCount][kSmallBlockExtent][kSmallBlockExtent][BatchTraitsType::kBatchSize],
                                                     Kokkos::LayoutRight,
-                                                    ExecutionSpaceType>;
+                                                    ExecutionSpaceType,
+                                                    Kokkos::MemoryTraits<Kokkos::Restrict>>;
 
                     /// The batch count did not changed compared to ScalarType
                     /// but the batch potentially gets subdivided in vectors.
                     /// NOTE: We changed the View's type.
                     using VectorType = Kokkos::View<typename BatchTraitsType::ThreadVectorType** [kDiagonalCount][kSmallBlockExtent][kSmallBlockExtent][BatchTraitsType::kVectorPerBatch],
                                                     Kokkos::LayoutRight,
-                                                    ExecutionSpaceType>;
+                                                    ExecutionSpaceType,
+                                                    Kokkos::MemoryTraits<Kokkos::Restrict>>;
 
                     using ConstScalarType = Kokkos::View<const value_type** [kDiagonalCount][kSmallBlockExtent][kSmallBlockExtent][BatchTraitsType::kBatchSize],
                                                          Kokkos::LayoutRight,
-                                                         ExecutionSpaceType>;
+                                                         ExecutionSpaceType,
+                                                         Kokkos::MemoryTraits<Kokkos::Restrict>>;
 
                     using ConstVectorType = Kokkos::View<const typename BatchTraitsType::ThreadVectorType** [kDiagonalCount][kSmallBlockExtent][kSmallBlockExtent][BatchTraitsType::kVectorPerBatch],
                                                          Kokkos::LayoutRight,
-                                                         ExecutionSpaceType>;
+                                                         ExecutionSpaceType,
+                                                         Kokkos::MemoryTraits<Kokkos::Restrict>>;
                 };
 
             } // namespace matrix

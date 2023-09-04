@@ -15,12 +15,19 @@ namespace koliop {
         /// View[U|M]               [H|D]                              [L|R|D]                [1-8]
         ///      Unmanaged/Managed | Host or Default (device or host) | Left or Right layout | Dimension
         ///
+        /// NOTE: All the views a using the Kokkos::Restrict MemoryTraits. This
+        /// means that one should not try to access a given value via more than
+        /// one pointer alias.
+        ///
         struct View {
         public:
             /// @brief Unmanaged Host layout Left
             /// @tparam Extent
             template <typename Extent>
-            using UHL = Kokkos::View<Extent, Kokkos::LayoutLeft, Kokkos::DefaultHostExecutionSpace::memory_space, Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
+            using UHL = Kokkos::View<Extent,
+                                     Kokkos::LayoutLeft,
+                                     Kokkos::DefaultHostExecutionSpace::memory_space,
+                                     Kokkos::MemoryTraits<Kokkos::Unmanaged | Kokkos::Restrict>>;
             template <typename T>
             using UHL1 = UHL<T*>;
             template <typename T>
@@ -38,7 +45,10 @@ namespace koliop {
             /// May be similar to UHL if the device is the CPU.
             /// @tparam Extent
             template <typename Extent>
-            using UDL = Kokkos::View<Extent, Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace::memory_space, Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
+            using UDL = Kokkos::View<Extent,
+                                     Kokkos::LayoutLeft,
+                                     Kokkos::DefaultExecutionSpace::memory_space,
+                                     Kokkos::MemoryTraits<Kokkos::Unmanaged | Kokkos::Restrict>>;
             template <typename T>
             using UDL1 = UDL<T*>;
             template <typename T>
@@ -55,7 +65,10 @@ namespace koliop {
             /// @brief Unmanaged Device layout Default for device
             /// @tparam Extent
             template <typename Extent>
-            using UDD = Kokkos::View<Extent, Kokkos::DefaultExecutionSpace::array_layout, Kokkos::DefaultExecutionSpace::memory_space, Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
+            using UDD = Kokkos::View<Extent,
+                                     Kokkos::DefaultExecutionSpace::array_layout,
+                                     Kokkos::DefaultExecutionSpace::memory_space,
+                                     Kokkos::MemoryTraits<Kokkos::Unmanaged | Kokkos::Restrict>>;
             template <typename T>
             using UDD1 = UDD<T*>;
             template <typename T>
@@ -72,7 +85,10 @@ namespace koliop {
             /// @brief Managed Host layout Left
             /// @tparam Extent
             template <typename Extent>
-            using MHL = Kokkos::View<Extent, Kokkos::LayoutLeft, Kokkos::DefaultHostExecutionSpace::memory_space>;
+            using MHL = Kokkos::View<Extent,
+                                     Kokkos::LayoutLeft,
+                                     Kokkos::DefaultHostExecutionSpace::memory_space,
+                                     Kokkos::MemoryTraits<Kokkos::Restrict>>;
             template <typename T>
             using MHL1 = MHL<T*>;
             template <typename T>
@@ -89,7 +105,10 @@ namespace koliop {
             /// @brief Managed Device layout Left
             /// @tparam Extent
             template <typename Extent>
-            using MDL = Kokkos::View<Extent, Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace::memory_space>;
+            using MDL = Kokkos::View<Extent,
+                                     Kokkos::LayoutLeft,
+                                     Kokkos::DefaultExecutionSpace::memory_space,
+                                     Kokkos::MemoryTraits<Kokkos::Restrict>>;
             template <typename T>
             using MDL1 = MDL<T*>;
             template <typename T>
@@ -106,7 +125,10 @@ namespace koliop {
             /// @brief Managed Device layout Default for device
             /// @tparam Extent
             template <typename Extent>
-            using MDD = Kokkos::View<Extent, Kokkos::DefaultExecutionSpace::array_layout, Kokkos::DefaultExecutionSpace::memory_space>;
+            using MDD = Kokkos::View<Extent,
+                                     Kokkos::DefaultExecutionSpace::array_layout,
+                                     Kokkos::DefaultExecutionSpace::memory_space,
+                                     Kokkos::MemoryTraits<Kokkos::Restrict>>;
             template <typename T>
             using MDD1 = MDD<T*>;
             template <typename T>
