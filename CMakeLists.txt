@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 
-project("koliop" VERSION 0.0.4 LANGUAGES CXX)
+project("koliop" VERSION 0.0.6 LANGUAGES CXX)
 
 include(CheckIPOSupported)
 include(FetchContent)
