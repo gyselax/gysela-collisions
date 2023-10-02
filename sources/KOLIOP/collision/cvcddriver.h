@@ -544,6 +544,15 @@ namespace koliop {
                                             ComputeFloatType dt,
                                             View6D&&         f5d_s) {
 
+            // try {
+            //     koliop::blas::detail::DoResidualTest(an_execution_space,
+            //                                          the_factorizer_, the_solver_, the_mv_,
+            //                                          the_matrix_, the_rhs_, the_alpha_coefficients_);
+            // } catch(...) {
+            // }
+
+            // std::exit(42);
+
             const auto& the_vpar_extent  = an_operator.the_vpar_extent_;
             const auto& the_r_extent     = an_operator.the_r_extent_;
             const auto& the_theta_extent = an_operator.the_theta_extent_;
