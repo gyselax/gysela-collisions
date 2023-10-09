@@ -25,9 +25,6 @@ namespace koliop {
 
             const auto& the_execution_space_pool = an_operator.the_execution_space_pool_;
 
-            // TODO(Etienne M): Make the Cvcd opaque to the operator, reducing
-            // the dependencies and recompilation duration.
-
             // TODO(Etienne M): Blocking idea, use a recursive approach where we
             // try to fit the biggest block size to process the domain, and if
             // not possible we fallback to a smaller size. Then, we process the
@@ -35,21 +32,19 @@ namespace koliop {
             // template CvCd on the block size anymore, we could reuse them for
             // smaller blocs.
 
-            using CvCdDriver = decltype(an_operator.the_cvcd_drivers_)::value_type;
-
             KOLIOP_ASSERT(the_cvcd_drivers.size() == Constant::kDisjointExecutionSpaceCount);
 
             OrdinalType the_cvcd_operation_index = 0;
 
             for(OrdinalType the_block_first_phi = 0;
                 the_block_first_phi < the_phi_extent;
-                the_block_first_phi += CvCdDriver::kBlockExtentPhi) {
+                the_block_first_phi += Constant::kBlockExtentPhi) {
                 for(OrdinalType the_block_first_theta = 0;
                     the_block_first_theta < the_theta_extent;
-                    the_block_first_theta += CvCdDriver::kBlockExtentTheta) {
+                    the_block_first_theta += Constant::kBlockExtentTheta) {
                     for(OrdinalType the_block_first_r = 0;
                         the_block_first_r < the_r_extent;
-                        the_block_first_r += CvCdDriver::kBlockExtentR) {
+                        the_block_first_r += Constant::kBlockExtentR) {
                         const OrdinalType the_driver_index = the_cvcd_operation_index % Constant::kDisjointExecutionSpaceCount;
 
                         // NOTE: We make sure that the execution space index and
@@ -58,13 +53,13 @@ namespace koliop {
                         // potential, previous execution space ended using it.
                         const OrdinalType the_execution_space_index = the_driver_index;
 
-                        the_cvcd_drivers[the_driver_index].Apply(an_operator,
-                                                                 the_execution_space_pool[the_execution_space_index],
-                                                                 the_block_first_r,
-                                                                 the_block_first_theta,
-                                                                 the_block_first_phi,
-                                                                 dt,
-                                                                 f5d_s);
+                        the_cvcd_drivers[the_driver_index]->Apply(an_operator,
+                                                                  the_execution_space_pool[the_execution_space_index],
+                                                                  the_block_first_r,
+                                                                  the_block_first_theta,
+                                                                  the_block_first_phi,
+                                                                  dt,
+                                                                  f5d_s);
 
                         ++the_cvcd_operation_index;
                     }

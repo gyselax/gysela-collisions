@@ -4,6 +4,7 @@
 
 #include <Kokkos_Core.hpp>
 
+#include "KOLIOP/collision/cvcddriver.h"
 #include "KOLIOP/internal/configuration.h"
 #include "KOLIOP/portability/cmath.h"
 #include "KOLIOP/utility/copy.h"
@@ -200,17 +201,21 @@ namespace koliop {
                             mask_buffer_r_);
 
             for(OrdinalType i = 0; i < Constant::kDisjointExecutionSpaceCount; ++i) {
-                // We cant do copies as the Views have a shared pointer
-                // semantic. Here we want disjoint states.
-                the_cvcd_drivers_.emplace_back(pSpecies_id_,
-                                               the_vpar_extent_,
-                                               the_species_extent_,
-                                               collision_interspecies_,
-                                               comb_mat,
-                                               hat_As_,
-                                               hat_Zs_,
-                                               vparg_,
-                                               coeff_intdvpar_);
+                // We cant do copies of a given CvCdDriver as the Views have a
+                // shared pointer semantic. Here we want disjoint states.
+                the_cvcd_drivers_.emplace_back();
+                the_cvcd_drivers_.back().Set(CvCdDriver<Constant::kBlockExtentR,
+                                                        Constant::kBlockExtentTheta,
+                                                        Constant::kBlockExtentPhi,
+                                                        Constant::BatchTraitsType>{pSpecies_id_,
+                                                                                   the_vpar_extent_,
+                                                                                   the_species_extent_,
+                                                                                   collision_interspecies_,
+                                                                                   comb_mat,
+                                                                                   hat_As_,
+                                                                                   hat_Zs_,
+                                                                                   vparg_,
+                                                                                   coeff_intdvpar_});
             }
 
 #if defined(KOKKOS_ENABLE_HIP)

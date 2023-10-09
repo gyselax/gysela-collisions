@@ -7,7 +7,7 @@
 #include <vector>
 
 #include "KOLIOP/collision/constant.h"
-#include "KOLIOP/collision/cvcddriver.h"
+#include "KOLIOP/collision/cvcddrivereraser.h"
 #include "KOLIOP/internal/configuration.h"
 #include "KOLIOP/utility/view.h"
 
@@ -248,17 +248,7 @@ namespace koliop {
 
             // Miscellaneous numerical tooling
 
-            // TODO(Etienne M): Much pain in brought upon us when a single
-            // character is modified in cvcd or najl as for the whole project,
-            // we must suffer a recompilation.
-            // Use some kind of time erasure technic and only expose the
-            // *affordance* of cvcd (that is, Appl())
-
-            std::vector<CvCdDriver<Constant::kBlockExtentR,
-                                   Constant::kBlockExtentTheta,
-                                   Constant::kBlockExtentPhi,
-                                   Constant::BatchTraitsType>>
-                the_cvcd_drivers_;
+            std::vector<CvCdDriverEraser> the_cvcd_drivers_;
 
             // Miscellaneous tooling
 
