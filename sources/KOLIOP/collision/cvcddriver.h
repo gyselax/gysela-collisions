@@ -53,15 +53,19 @@ namespace koliop {
                                    OrdinalType     the_block_first_theta,
                                    View2D&&        mask_coll) {
 
+                const auto& the_local_domain_r_offset = an_operator.the_local_domain_r_offset_;
+                const auto& the_local_domain_theta_offset = an_operator.the_local_domain_theta_offset_;
+
                 const auto& LIM = an_operator.LIM_;
 
                 const auto& mask_buffer_r = an_operator.mask_buffer_r_;
                 const auto& mask_LIM      = an_operator.mask_LIM_;
 
                 const auto the_kernel = KOKKOS_LAMBDA(auto ir, auto itheta) {
-                    const bool the_mask_value = static_cast<OrdinalType>(mask_buffer_r(ir) < 0.99) |
+                    const bool the_mask_value = static_cast<OrdinalType>(mask_buffer_r(the_local_domain_r_offset + ir) < 0.99) |
                                                 // NOTE: mask_lim may not be allocated ! We need the && first.
-                                                static_cast<OrdinalType>(LIM && (mask_LIM(ir, itheta) < 0.99));
+                                                static_cast<OrdinalType>(LIM && (mask_LIM(the_local_domain_r_offset + ir,
+                                                                                          the_local_domain_theta_offset + itheta) < 0.99));
 
                     mask_coll(ir - the_block_first_r,
                               itheta - the_block_first_theta) = the_mask_value;
@@ -324,6 +328,9 @@ namespace koliop {
                 const auto& the_mu_extent   = an_operator.the_mu_extent_;
                 const auto& the_vpar_extent = an_operator.the_vpar_extent_;
 
+                const auto& the_local_domain_r_offset     = an_operator.the_local_domain_r_offset_;
+                const auto& the_local_domain_theta_offset = an_operator.the_local_domain_theta_offset_;
+
                 const auto& mug    = an_operator.mug_;
                 const auto& B_norm = an_operator.B_norm_;
                 const auto& T_s    = an_operator.T_s_;
@@ -360,7 +367,9 @@ namespace koliop {
                     const OrdinalType itheta = the_block_first_theta + the_block_local_index_itheta;
                     const OrdinalType iphi   = the_block_first_phi + the_block_local_index_iphi;
 
-                    const ComputeFloatType BoT = B_norm(ir, itheta) / T_s(ir, itheta, iphi, pSpecies_id);
+                    const ComputeFloatType BoT = B_norm(the_local_domain_r_offset + ir,
+                                                        the_local_domain_theta_offset + itheta) /
+                                                 T_s(ir, itheta, iphi, pSpecies_id);
 
                     Kokkos::parallel_for(
                         Kokkos::TeamThreadMDRange<Kokkos::Rank<2, Kokkos::Iterate::Default, Kokkos::Iterate::Default>,

@@ -29,6 +29,9 @@ namespace koliop {
             const auto& the_theta_extent = an_operator.the_theta_extent_;
             const auto& the_phi_extent   = an_operator.the_phi_extent_;
 
+            const auto& the_local_domain_r_offset     = an_operator.the_local_domain_r_offset_;
+            const auto& the_local_domain_theta_offset = an_operator.the_local_domain_theta_offset_;
+
             const auto& mug    = an_operator.mug_;
             const auto& vparg  = an_operator.vparg_;
             const auto& B_norm = an_operator.B_norm_;
@@ -66,7 +69,8 @@ namespace koliop {
                         const OrdinalType itheta = (the_team_index / (the_r_extent)) % the_theta_extent;
                         const OrdinalType iphi   = (the_team_index / (the_r_extent * the_theta_extent)) /* % the_phi_extent */;
 
-                        const ComputeFloatType Bij    = B_norm(ir, itheta);
+                        const ComputeFloatType Bij    = B_norm(the_local_domain_r_offset + ir,
+                                                               the_local_domain_theta_offset + itheta);
                         const ComputeFloatType na     = n_s(ir, itheta, iphi, pSpecies_id);
                         const ComputeFloatType Ta     = T_s(ir, itheta, iphi, pSpecies_id);
                         const ComputeFloatType BijoTa = Bij / Ta;
@@ -97,7 +101,8 @@ namespace koliop {
                         const OrdinalType itheta = (the_team_index / (the_r_extent)) % the_theta_extent;
                         const OrdinalType iphi   = (the_team_index / (the_r_extent * the_theta_extent)) /* % the_phi_extent */;
 
-                        const ComputeFloatType Bij    = B_norm(ir, itheta);
+                        const ComputeFloatType Bij    = B_norm(the_local_domain_r_offset + ir,
+                                                               the_local_domain_theta_offset + itheta);
                         const ComputeFloatType na     = n_s(ir, itheta, iphi, pSpecies_id);
                         const ComputeFloatType Ta     = T_s(ir, itheta, iphi, pSpecies_id);
                         const ComputeFloatType BijoTa = Bij / Ta;
@@ -140,6 +145,9 @@ namespace koliop {
                 const auto& the_theta_extent = an_operator.the_theta_extent_;
                 const auto& the_phi_extent   = an_operator.the_phi_extent_;
 
+                const auto& the_local_domain_r_offset     = an_operator.the_local_domain_r_offset_;
+                const auto& the_local_domain_theta_offset = an_operator.the_local_domain_theta_offset_;
+
                 const auto& mug    = an_operator.mug_;
                 const auto& vparg  = an_operator.vparg_;
                 const auto& B_norm = an_operator.B_norm_;
@@ -164,7 +172,8 @@ namespace koliop {
                     case 3: {
                         const auto the_kernel_choice_3 = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi) {
                             // TODO(Etienne M): INDEX not coalesced. Flatten more ?
-                            const ComputeFloatType Bij    = B_norm(ir, itheta);
+                            const ComputeFloatType Bij    = B_norm(the_local_domain_r_offset + ir,
+                                                                   the_local_domain_theta_offset + itheta);
                             const ComputeFloatType na     = n_s(ir, itheta, iphi, pSpecies_id);
                             const ComputeFloatType Ta     = T_s(ir, itheta, iphi, pSpecies_id);
                             const ComputeFloatType BijoTa = Bij / Ta;
@@ -188,7 +197,8 @@ namespace koliop {
                     case 4: {
                         const auto the_kernel_choice_4 = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi) {
                             // TODO(Etienne M): INDEX not coalesced. Flatten more ?
-                            const ComputeFloatType Bij    = B_norm(ir, itheta);
+                            const ComputeFloatType Bij    = B_norm(the_local_domain_r_offset + ir,
+                                                                   the_local_domain_theta_offset + itheta);
                             const ComputeFloatType na     = n_s(ir, itheta, iphi, pSpecies_id);
                             const ComputeFloatType Ta     = T_s(ir, itheta, iphi, pSpecies_id);
                             const ComputeFloatType BijoTa = Bij / Ta;
@@ -227,6 +237,9 @@ namespace koliop {
                 const auto& the_theta_extent = an_operator.the_theta_extent_;
                 const auto& the_phi_extent   = an_operator.the_phi_extent_;
 
+                const auto& the_local_domain_r_offset     = an_operator.the_local_domain_r_offset_;
+                const auto& the_local_domain_theta_offset = an_operator.the_local_domain_theta_offset_;
+
                 const auto& mug    = an_operator.mug_;
                 const auto& vparg  = an_operator.vparg_;
                 const auto& B_norm = an_operator.B_norm_;
@@ -247,7 +260,8 @@ namespace koliop {
                 switch(choice) {
                     case 3: {
                         const auto the_kernel_choice_3 = KOKKOS_LAMBDA(auto imu, auto ivpar, auto ir, auto itheta, auto iphi) {
-                            const ComputeFloatType Bij    = B_norm(ir, itheta);
+                            const ComputeFloatType Bij    = B_norm(the_local_domain_r_offset + ir,
+                                                                   the_local_domain_theta_offset + itheta);
                             const ComputeFloatType na     = n_s(ir, itheta, iphi, pSpecies_id);
                             const ComputeFloatType Ta     = T_s(ir, itheta, iphi, pSpecies_id);
                             const ComputeFloatType BijoTa = Bij / Ta;
@@ -266,7 +280,8 @@ namespace koliop {
                     }
                     case 4: {
                         const auto the_kernel_choice_4 = KOKKOS_LAMBDA(auto imu, auto ivpar, auto ir, auto itheta, auto iphi) {
-                            const ComputeFloatType Bij    = B_norm(ir, itheta);
+                            const ComputeFloatType Bij    = B_norm(the_local_domain_r_offset + ir,
+                                                                   the_local_domain_theta_offset + itheta);
                             const ComputeFloatType na     = n_s(ir, itheta, iphi, pSpecies_id);
                             const ComputeFloatType Ta     = T_s(ir, itheta, iphi, pSpecies_id);
                             const ComputeFloatType BijoTa = Bij / Ta;

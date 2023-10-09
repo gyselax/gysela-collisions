@@ -56,7 +56,15 @@ typedef struct koliop_OpaqueOperator_* koliop_Operator;
 
 /// The values given below are expected NOT to change during the lifetime
 /// of the operator.
-/// NOTE: Npolmax is expected to be 3 and index_max = 2 * (index_max - 1) = 4
+/// NOTE:
+/// - Npolmax is expected to be 3 and index_max = 2 * (index_max - 1) = 4
+/// - the_mu_extent, the_vpar_extent and the_species_extent are the same for all
+/// ranks.
+/// - the_r_extent, the_theta_extent and the_phi_extent are the same for all
+/// rank but due to the parallelization, the size of the whole domain could be
+/// bigger. the_global_domain_r_extent and the_global_domain_theta_extent
+/// represent the size of the whole domain, not a chunk that is handled to a
+/// rank (due to parallelization) .
 ///
 koliop_Status koliop_Create(koliop_Operator* an_operator_handle,
                             size_t           Npolmax,
@@ -69,6 +77,10 @@ koliop_Status koliop_Create(koliop_Operator* an_operator_handle,
                             size_t           the_theta_extent,
                             size_t           the_phi_extent,
                             size_t           the_species_extent,
+                            size_t           the_global_domain_r_extent,
+                            size_t           the_global_domain_theta_extent,
+                            size_t           the_local_domain_r_offset,
+                            size_t           the_local_domain_theta_offset,
                             double           R0,
                             int8_t           collision_interspecies,
                             int8_t           SOL,

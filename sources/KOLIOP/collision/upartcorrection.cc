@@ -30,6 +30,9 @@ namespace koliop {
             const auto& the_phi_extent     = an_operator.the_phi_extent_;
             const auto& the_species_extent = an_operator.the_species_extent_;
 
+            const auto& the_local_domain_r_offset     = an_operator.the_local_domain_r_offset_;
+            const auto& the_local_domain_theta_offset = an_operator.the_local_domain_theta_offset_;
+
             const auto& hat_As         = an_operator.hat_As_;
             const auto& mug            = an_operator.mug_;
             const auto& vparg          = an_operator.vparg_;
@@ -66,7 +69,8 @@ namespace koliop {
                 Kokkos::Sum<ComputeFloatType> the_impulsion_coll_reducer{impulsion_coll};
                 the_impulsion_coll_reducer.init(the_impulsion_coll_reducer.reference());
 
-                const ComputeFloatType Bij = B_norm(ir, itheta);
+                const ComputeFloatType Bij = B_norm(the_local_domain_r_offset + ir,
+                                                    the_local_domain_theta_offset + itheta);
                 const ComputeFloatType na  = n_s(ir, itheta, iphi, pSpecies_id);
 
                 // TODO(Etienne M): Is parallel_for + TeamThreadMDRange +
@@ -143,7 +147,8 @@ namespace koliop {
 
                     const ComputeFloatType nu = nu_ab(ir, itheta, iphi, pSpecies_id, ispecies);
 
-                    const ComputeFloatType R_ab = -nu * (Vpara - Rat * Vparb -
+                    const ComputeFloatType R_ab = -nu * (Vpara -
+                                                         Rat * Vparb -
                                                          0.6 * k_ab * q_par_on_nT +
                                                          Rat * 0.6 * k_ba * q_parb_on_nbTb);
                     U_par_new += dt * R_ab;

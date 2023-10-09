@@ -139,6 +139,10 @@ namespace koliop {
                      uint64_t     the_theta_extent,
                      uint64_t     the_phi_extent,
                      uint64_t     the_species_extent,
+                     uint64_t     the_global_domain_r_extent,
+                     uint64_t     the_global_domain_theta_extent,
+                     uint64_t     the_global_domain_r_offset,
+                     uint64_t     the_global_domain_theta_offset,
                      Flo64        R0,
                      bool         collision_interspecies,
                      bool         SOL,
@@ -201,6 +205,10 @@ namespace koliop {
             OrdinalType      the_theta_extent_;
             OrdinalType      the_phi_extent_;
             OrdinalType      the_species_extent_;
+            OrdinalType      the_global_domain_r_extent_;
+            OrdinalType      the_global_domain_theta_extent_;
+            OrdinalType      the_local_domain_r_offset_;
+            OrdinalType      the_local_domain_theta_offset_;
             ComputeFloatType R0_;
             bool             collision_interspecies_;
             bool             SOL_;

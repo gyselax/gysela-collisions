@@ -58,6 +58,11 @@ int main(int, char**) {
     static constexpr size_t the_phi_extent     = static_cast<size_t>((collend + 1) - collstart);
     static constexpr size_t the_species_extent = Nspecies;
 
+    static constexpr size_t the_global_domain_r_extent     = the_r_extent;
+    static constexpr size_t the_global_domain_theta_extent = the_theta_extent + 1;
+    static constexpr size_t the_global_domain_r_offset     = 0;
+    static constexpr size_t the_global_domain_theta_offset = 0;
+
     // lbound(comb_mat,1) = 0;
     // ubound(comb_mat,1) = 5;
     // size(comb_mat,1) = 6;
@@ -135,10 +140,10 @@ int main(int, char**) {
     // mom B_norm lbound 1   1
     // mom B_norm lbound 2   1
     // mom B_norm size   1   32
-    // mom B_norm size   2   33 // NOTE: why the 32 + 1 ?
+    // mom B_norm size   2   33
     // mom B_norm ubound 1   32
     // mom B_norm ubound 2   33
-    static constexpr double B_norm[the_theta_extent + /* This +1 is weird */ 1][the_r_extent]{};
+    static constexpr double B_norm[the_global_domain_theta_extent][the_global_domain_r_extent]{};
 
     // mom Bstar_s lbound 1   1
     // mom Bstar_s lbound 2   1
@@ -165,6 +170,10 @@ int main(int, char**) {
                        the_theta_extent,
                        the_phi_extent,
                        the_species_extent,
+                       the_global_domain_r_extent,
+                       the_global_domain_theta_extent,
+                       the_global_domain_r_offset,
+                       the_global_domain_theta_offset,
                        R0,
                        collision_interspecies,
                        SOL,

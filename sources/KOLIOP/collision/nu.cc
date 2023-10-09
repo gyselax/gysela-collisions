@@ -47,12 +47,18 @@ namespace koliop {
             const auto& the_phi_extent     = an_operator.the_phi_extent_;
             const auto& the_species_extent = an_operator.the_species_extent_;
 
+            const auto& the_local_domain_r_offset = an_operator.the_local_domain_r_offset_;
+
             const auto& hat_As       = an_operator.hat_As_;
             const auto& nustar_coeff = an_operator.nustar_coeff_;
             const auto& n_s          = an_operator.n_s_;
             const auto& T_s          = an_operator.T_s_;
 
-            const auto& ir_SOL_separatrix = an_operator.ir_SOL_separatrix_;
+            KOLIOP_ASSERT(an_operator.ir_SOL_separatrix_ >= the_local_domain_r_offset);
+
+            // Here we make sure ir_SOL_separatrix is in the rank's domain, not
+            // global domain.
+            const auto& ir_SOL_separatrix = an_operator.ir_SOL_separatrix_ - the_local_domain_r_offset;
 
             const auto& the_execution_space_pool = an_operator.the_execution_space_pool_;
 
@@ -78,8 +84,7 @@ namespace koliop {
                                      });
 
                 // NOTE: We must ensure that the DoPrecomputeNu0 kernel ended
-                // before DoPrecomputeNu1. Here, they are executed on the same
-                // execution space so this condition is always respected.
+                // before DoPrecomputeNu1.
                 a_team_handle.team_barrier();
 
                 Kokkos::parallel_for(Kokkos::TeamThreadRange(a_team_handle,

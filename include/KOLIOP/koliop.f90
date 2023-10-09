@@ -125,6 +125,10 @@ MODULE koliop
       !                             size_t           the_theta_extent,
       !                             size_t           the_phi_extent,
       !                             size_t           the_species_extent,
+      !                             size_t           the_global_domain_r_extent,
+      !                             size_t           the_global_domain_theta_extent,
+      !                             size_t           the_local_domain_r_offset,
+      !                             size_t           the_local_domain_theta_offset,
       !                             double           R0,
       !                             int8_t           collision_interspecies,
       !                             int8_t           SOL,
@@ -156,6 +160,10 @@ MODULE koliop
          the_theta_extent, &
          the_phi_extent, &
          the_species_extent, &
+         the_global_domain_r_extent, &
+         the_global_domain_theta_extent, &
+         the_local_domain_r_offset, &
+         the_local_domain_theta_offset, &
          R0, &
          collision_interspecies, &
          SOL, &
@@ -199,6 +207,10 @@ MODULE koliop
          INTEGER(C_SIZE_T), VALUE, INTENT(IN) :: the_theta_extent
          INTEGER(C_SIZE_T), VALUE, INTENT(IN) :: the_phi_extent
          INTEGER(C_SIZE_T), VALUE, INTENT(IN) :: the_species_extent
+         INTEGER(C_SIZE_T), VALUE, INTENT(IN) :: the_global_domain_r_extent
+         INTEGER(C_SIZE_T), VALUE, INTENT(IN) :: the_global_domain_theta_extent
+         INTEGER(C_SIZE_T), VALUE, INTENT(IN) :: the_local_domain_r_offset
+         INTEGER(C_SIZE_T), VALUE, INTENT(IN) :: the_local_domain_theta_offset
          REAL(C_DOUBLE), VALUE, INTENT(IN) :: R0
          INTEGER(C_INT8_T), VALUE, INTENT(IN) :: collision_interspecies
          INTEGER(C_INT8_T), VALUE, INTENT(IN) :: SOL
@@ -449,6 +461,10 @@ CONTAINS
       the_theta_extent, &
       the_phi_extent, &
       the_species_extent, &
+      the_global_domain_r_extent, &
+      the_global_domain_theta_extent, &
+      the_local_domain_r_offset, &
+      the_local_domain_theta_offset, &
       R0, &
       collision_interspecies, &
       SOL, &
@@ -483,6 +499,10 @@ CONTAINS
       INTEGER, INTENT(IN) :: the_theta_extent
       INTEGER, INTENT(IN) :: the_phi_extent
       INTEGER, INTENT(IN) :: the_species_extent
+      INTEGER, INTENT(IN) :: the_global_domain_r_extent
+      INTEGER, INTENT(IN) :: the_global_domain_theta_extent
+      INTEGER, INTENT(IN) :: the_local_domain_r_offset
+      INTEGER, INTENT(IN) :: the_local_domain_theta_offset
       REAL(C_DOUBLE), INTENT(IN) :: R0
       LOGICAL, INTENT(IN) :: collision_interspecies
       LOGICAL, INTENT(IN) :: SOL
@@ -552,6 +572,10 @@ CONTAINS
          INT(the_theta_extent, C_SIZE_T), &
          INT(the_phi_extent, C_SIZE_T), &
          INT(the_species_extent, C_SIZE_T), &
+         INT(the_global_domain_r_extent, C_SIZE_T), &
+         INT(the_global_domain_theta_extent, C_SIZE_T), &
+         INT(the_local_domain_r_offset, C_SIZE_T), &
+         INT(the_local_domain_theta_offset, C_SIZE_T), &
          R0, &
          collision_interspecies_cast, &
          SOL_cast, &
@@ -815,6 +839,10 @@ CONTAINS
       the_theta_extent, &
       the_phi_extent, &
       the_species_extent, &
+      the_global_domain_r_extent, &
+      the_global_domain_theta_extent, &
+      the_local_domain_r_offset, &
+      the_local_domain_theta_offset, &
       R0, &
       collision_interspecies, &
       SOL, &
@@ -849,6 +877,10 @@ CONTAINS
       INTEGER, INTENT(IN) :: the_theta_extent
       INTEGER, INTENT(IN) :: the_phi_extent
       INTEGER, INTENT(IN) :: the_species_extent
+      INTEGER, INTENT(IN) :: the_global_domain_r_extent
+      INTEGER, INTENT(IN) :: the_global_domain_theta_extent
+      INTEGER, INTENT(IN) :: the_local_domain_r_offset
+      INTEGER, INTENT(IN) :: the_local_domain_theta_offset
       REAL(C_DOUBLE), INTENT(IN) :: R0
       LOGICAL, INTENT(IN) :: collision_interspecies
       LOGICAL, INTENT(IN) :: SOL
@@ -882,6 +914,10 @@ CONTAINS
          the_theta_extent, &
          the_phi_extent, &
          the_species_extent, &
+         the_global_domain_r_extent, &
+         the_global_domain_theta_extent, &
+         the_local_domain_r_offset, &
+         the_local_domain_theta_offset, &
          R0, &
          collision_interspecies, &
          SOL, &
@@ -1145,6 +1181,10 @@ END MODULE
 !       INTEGER :: the_r_extent = 32
 !       INTEGER :: the_theta_extent = 32
 !       INTEGER :: the_phi_extent = 1
+!       INTEGER :: the_global_domain_r_extent = 32
+!       INTEGER :: the_global_domain_theta_extent = 33
+!       INTEGER :: the_local_domain_r_offset = 0
+!       INTEGER :: the_local_domain_theta_offset = 0
 !       INTEGER :: the_species_extent = 1
 !       REAL(C_DOUBLE) :: R0 = 320.0_C_DOUBLE
 !       LOGICAL :: collision_interspecies = .TRUE.
@@ -1183,12 +1223,12 @@ END MODULE
 !       allocate(vparg(the_vpar_extent))
 !       allocate(coeff_intdmu(the_mu_extent))
 !       allocate(coeff_intdvpar(the_vpar_extent))
-!       allocate(rg(the_r_extent))
-!       allocate(nustar0_r(the_r_extent))
-!       allocate(q_r(the_r_extent))
-!       allocate(mask_buffer_r(the_r_extent))
-!       ! allocate(mask_LIM(the_r_extent, the_theta_extent)) ! LIM is false
-!       allocate(B_norm(the_r_extent, the_theta_extent + 1)) ! This +1 is weird.
+!       allocate(rg(the_global_domain_r_extent))
+!       allocate(nustar0_r(the_global_domain_r_extent))
+!       allocate(q_r(the_global_domain_r_extent))
+!       allocate(mask_buffer_r(the_global_domain_r_extent))
+!       ! allocate(mask_LIM(the_global_domain_r_extent, the_global_domain_theta_extent)) ! LIM is false
+!       allocate(B_norm(the_global_domain_r_extent, the_global_domain_theta_extent))
 !       allocate(Bstar_s(the_vpar_extent, the_r_extent, the_theta_extent, the_species_extent))
 !       allocate(f5d_s(the_mu_extent, the_vpar_extent, the_r_extent, the_theta_extent, the_phi_extent, the_species_extent))
 
@@ -1224,7 +1264,9 @@ END MODULE
 !          pSpecies_id, mu_id, &
 !          the_mu_extent, the_vpar_extent, the_r_extent, &
 !          the_theta_extent, the_phi_extent, the_species_extent, &
-!          R0,&
+!          the_global_domain_r_extent, the_global_domain_theta_extent, &
+!          the_local_domain_r_offset, the_local_domain_theta_offset, &
+!          R0, &
 !          collision_interspecies, SOL, LIM, &
 !          ir_SOL_separatrix, &
 !          comb_mat, &
