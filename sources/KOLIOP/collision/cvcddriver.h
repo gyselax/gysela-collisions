@@ -107,6 +107,9 @@ namespace koliop {
                 const auto& the_mu_extent   = an_operator.the_mu_extent_;
                 const auto& the_vpar_extent = an_operator.the_vpar_extent_;
 
+                const auto& the_local_domain_r_offset     = an_operator.the_local_domain_r_offset_;
+                const auto& the_local_domain_theta_offset = an_operator.the_local_domain_theta_offset_;
+
                 const auto& mug          = an_operator.mug_;
                 const auto& coeff_intdmu = an_operator.coeff_intdmu_;
                 const auto& B_norm       = an_operator.B_norm_;
@@ -139,7 +142,9 @@ namespace koliop {
 
                     if(mask_coll(ir - the_block_first_r,
                                  itheta - the_block_first_theta)) {
-                        const ComputeFloatType BoT = B_norm(ir, itheta) / T_s(ir, itheta, iphi, pSpecies_id);
+                        const ComputeFloatType BoT = B_norm(the_local_domain_r_offset + ir,
+                                                            the_local_domain_theta_offset + itheta) /
+                                                     T_s(ir, itheta, iphi, pSpecies_id);
 
                         for(OrdinalType ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
                             for(OrdinalType ipol = 0; ipol < Constant::kMaximumLaguerrePolynomialDegree; ++ipol) {
