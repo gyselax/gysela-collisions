@@ -28,6 +28,9 @@ namespace koliop {
             const auto& the_phi_extent     = an_operator.the_phi_extent_;
             const auto& the_species_extent = an_operator.the_species_extent_;
 
+            const auto& the_local_domain_r_offset     = an_operator.the_local_domain_r_offset_;
+            const auto& the_local_domain_theta_offset = an_operator.the_local_domain_theta_offset_;
+
             const auto& hat_As        = an_operator.hat_As_;
             const auto& hat_Zs        = an_operator.hat_Zs_;
             const auto& mug           = an_operator.mug_;
@@ -63,16 +66,17 @@ namespace koliop {
                 const ComputeFloatType hat_Za     = hat_Zs(pSpecies_id);
                 const ComputeFloatType inv_hat_Aa = 1.0 / hat_Aa;
 
-                const ComputeFloatType smcsfqri = q_r(ir);
-                const ComputeFloatType Bij      = B_norm(ir, itheta);
+                const ComputeFloatType smcsfqri = q_r(the_local_domain_r_offset + ir);
+                const ComputeFloatType Bij      = B_norm(the_local_domain_r_offset + ir,
+                                                         the_local_domain_theta_offset + itheta);
 
                 const ComputeFloatType na          = n_s(ir, itheta, iphi, pSpecies_id);
                 const ComputeFloatType Vpara       = U_par_s(ir, itheta, iphi, pSpecies_id);
                 const ComputeFloatType Ta          = T_s(ir, itheta, iphi, pSpecies_id);
                 const ComputeFloatType q_par_on_nT = q_par_on_nT_s(ir, itheta, iphi, pSpecies_id);
 
-                const ComputeFloatType nustaR0_i = nustar0_r(ir);
-                const ComputeFloatType epstemp   = rg(ir) * R0_inverse;
+                const ComputeFloatType nustaR0_i = nustar0_r(the_local_domain_r_offset + ir);
+                const ComputeFloatType epstemp   = rg(the_local_domain_r_offset + ir) * R0_inverse;
                 const ComputeFloatType vTa       = Kokkos::sqrt(Ta * inv_hat_Aa);
                 const ComputeFloatType coeff1    = 1.0 / (2.0 * Ta);
                 const ComputeFloatType coeff3    = na / (koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta * Kokkos::sqrt(koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta));

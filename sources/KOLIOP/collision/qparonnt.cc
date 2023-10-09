@@ -29,6 +29,9 @@ namespace koliop {
             const auto& the_phi_extent     = an_operator.the_phi_extent_;
             const auto& the_species_extent = an_operator.the_species_extent_;
 
+            const auto& the_local_domain_r_offset     = an_operator.the_local_domain_r_offset_;
+            const auto& the_local_domain_theta_offset = an_operator.the_local_domain_theta_offset_;
+
             const auto& mug            = an_operator.mug_;
             const auto& vparg          = an_operator.vparg_;
             const auto& coeff_intdmu   = an_operator.coeff_intdmu_;
@@ -53,7 +56,8 @@ namespace koliop {
                 const OrdinalType iphi     = (the_team_index / (the_r_extent * the_theta_extent)) % the_phi_extent;
                 const OrdinalType ispecies = (the_team_index / (the_r_extent * the_theta_extent * the_phi_extent)) /* % the_species_extent */;
 
-                const ComputeFloatType Bij   = B_norm(ir, itheta);
+                const ComputeFloatType Bij   = B_norm(the_local_domain_r_offset + ir,
+                                                      the_local_domain_theta_offset + itheta);
                 const ComputeFloatType na    = n_s(ir, itheta, iphi, ispecies);
                 const ComputeFloatType Vpara = U_par_s(ir, itheta, iphi, ispecies);
                 const ComputeFloatType Ta    = T_s(ir, itheta, iphi, ispecies);
@@ -93,12 +97,12 @@ namespace koliop {
 
                 a_team_handle.team_reduce(the_q_par_on_nT_s_reducer);
 
+                // NOTE: This should be a no-op.
+                q_par_on_nT_s_reduction = the_q_par_on_nT_s_reducer.reference();
+
                 Kokkos::single(
                     Kokkos::PerTeam(a_team_handle),
                     [&]() {
-                        // NOTE: This should be a no-op.
-                        q_par_on_nT_s_reduction = the_q_par_on_nT_s_reducer.reference();
-
                         q_par_on_nT_s(ir, itheta, iphi, ispecies) = q_par_on_nT_s_reduction / (na * Ta);
                     });
             };

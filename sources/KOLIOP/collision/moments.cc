@@ -31,6 +31,9 @@ namespace koliop {
             const auto& the_phi_extent     = an_operator.the_phi_extent_;
             const auto& the_species_extent = an_operator.the_species_extent_;
 
+            const auto& the_local_domain_r_offset     = an_operator.the_local_domain_r_offset_;
+            const auto& the_local_domain_theta_offset = an_operator.the_local_domain_theta_offset_;
+
             const auto& mug            = an_operator.mug_;
             const auto& vparg          = an_operator.vparg_;
             const auto& coeff_intdmu   = an_operator.coeff_intdmu_;
@@ -75,8 +78,10 @@ namespace koliop {
                         const ComputeFloatType f5d_s_value = Kokkos::max(1.0E-40,
                                                                          f5d_s(imu, ivpar, ir, itheta, iphi, ispecies));
 
-                        const ComputeFloatType ftmp = (Bstar_s(ivpar, ir, itheta, ispecies) * coeff_intdvpar(ivpar)) *
-                                                      (coeff_intdmu(imu) * f5d_s_value);
+                        const ComputeFloatType ftmp = Bstar_s(ivpar, ir, itheta, ispecies) *
+                                                      coeff_intdmu(imu) *
+                                                      coeff_intdvpar(ivpar) *
+                                                      f5d_s_value;
 
                         the_na_reducer.join(the_na_reducer.reference(),
                                             ftmp);
@@ -90,9 +95,10 @@ namespace koliop {
                 a_team_handle.team_reduce(the_vpara_reducer);
 
                 // NOTE: This should be a no-op.
-                na = the_na_reducer.reference();
+                na    = the_na_reducer.reference();
+                vpara = the_vpara_reducer.reference();
 
-                vpara = the_vpara_reducer.reference() / na;
+                vpara = vpara / na;
 
                 ComputeFloatType Ta;
 
@@ -107,24 +113,27 @@ namespace koliop {
                         // Gysela fortran, a temporary buffer is used but
                         // that would hardly fit on a GPU.
                         // TODO(Etienne M): LOAD Hoist the invariant load.
-                        const ComputeFloatType ftmp = (Bstar_s(ivpar, ir, itheta, ispecies) * coeff_intdvpar(ivpar)) *
-                                                      (coeff_intdmu(imu) * f5d_s(imu, ivpar, ir, itheta, iphi, ispecies));
+                        const ComputeFloatType ftmp = Bstar_s(ivpar, ir, itheta, ispecies) *
+                                                      coeff_intdmu(imu) *
+                                                      coeff_intdvpar(ivpar) *
+                                                      f5d_s(imu, ivpar, ir, itheta, iphi, ispecies);
 
                         the_Ta_reducer.join(the_Ta_reducer.reference(),
-                                            ((vparg(ivpar) - vpara) * (vparg(ivpar) - vpara) +
-                                             2.0 * mug(imu) * B_norm(ir, itheta)) *
+                                            (((vparg(ivpar) - vpara) * (vparg(ivpar) - vpara)) +
+                                             (2.0 * mug(imu) * B_norm(the_local_domain_r_offset + ir, the_local_domain_theta_offset + itheta))) *
                                                 ftmp);
                     });
 
                 a_team_handle.team_reduce(the_Ta_reducer);
 
+                // NOTE: This should be a no-op.
+                Ta = the_Ta_reducer.reference();
+
                 Kokkos::single(
                     Kokkos::PerTeam(a_team_handle),
                     [&]() {
-                        // NOTE: This should be a no-op.
-                        Ta = the_Ta_reducer.reference();
-
                         Ta = Ta / (3.0 * na);
+
                         na = koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * na;
 
                         n_s(ir, itheta, iphi, ispecies)     = na;
