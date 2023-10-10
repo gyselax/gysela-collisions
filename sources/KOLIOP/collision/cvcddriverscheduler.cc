@@ -9,6 +9,83 @@ namespace koliop {
     namespace collision {
         namespace detail {
 
+            static inline void
+            PrepareBlockPosition(const Operator&                                            an_operator,
+                                 std::vector<CvCdDriverScheduler::CvCdDriverConfiguration>& the_cvcd_drivers_configurations,
+                                 std::size_t                                                the_preset_block_extent_count,
+                                 const OrdinalType (*the_preset_block_extent)[3]) {
+
+                auto the_local_domain_r_extent     = an_operator.the_r_extent_;
+                auto the_local_domain_theta_extent = an_operator.the_theta_extent_;
+                auto the_local_domain_phi_extent   = an_operator.the_phi_extent_;
+
+                auto       the_first_block_extent = the_preset_block_extent;
+                const auto the_last_block_extent  = the_first_block_extent + the_preset_block_extent_count;
+
+                for(; the_first_block_extent != the_last_block_extent; ++the_first_block_extent) {
+                    const auto& the_current_block_extent = *the_first_block_extent;
+
+                    const auto the_current_r_block_extent     = the_current_block_extent[0];
+                    const auto the_current_theta_block_extent = the_current_block_extent[1];
+                    const auto the_current_phi_block_extent   = the_current_block_extent[2];
+
+                    KOLIOP_ASSERT(the_current_r_block_extent > 0 &&
+                                  the_current_theta_block_extent > 0 &&
+                                  the_current_phi_block_extent > 0);
+
+                    const auto the_block_count_in_r     = the_local_domain_r_extent / the_current_r_block_extent;
+                    const auto the_block_count_in_theta = the_local_domain_theta_extent / the_current_theta_block_extent;
+                    const auto the_block_count_in_phi   = the_local_domain_phi_extent / the_current_phi_block_extent;
+
+                    if(the_block_count_in_r > 0 &&
+                       the_block_count_in_theta > 0 &&
+                       the_block_count_in_phi > 0) {
+
+                        OrdinalType the_block_first_phi = the_local_domain_phi_extent;
+                        for(OrdinalType the_block_index_in_phi = 0; the_block_index_in_phi < the_block_count_in_phi; ++the_block_index_in_phi) {
+                            the_block_first_phi -= the_current_phi_block_extent;
+
+                            OrdinalType the_block_first_theta = the_local_domain_theta_extent;
+                            for(OrdinalType the_block_index_in_theta = 0; the_block_index_in_theta < the_block_count_in_theta; ++the_block_index_in_theta) {
+                                the_block_first_theta -= the_current_theta_block_extent;
+
+                                OrdinalType the_block_first_r = the_local_domain_r_extent;
+                                for(OrdinalType the_block_index_in_r = 0; the_block_index_in_r < the_block_count_in_r; ++the_block_index_in_r) {
+                                    the_block_first_r -= the_current_r_block_extent;
+
+                                    auto& a_driver_configuration = the_cvcd_drivers_configurations.emplace_back();
+
+                                    a_driver_configuration.the_block_first_r_     = the_block_first_r;
+                                    a_driver_configuration.the_block_first_theta_ = the_block_first_theta;
+                                    a_driver_configuration.the_block_first_phi_   = the_block_first_phi;
+
+                                    a_driver_configuration.the_block_r_extent_     = the_current_r_block_extent;
+                                    a_driver_configuration.the_block_theta_extent_ = the_current_theta_block_extent;
+                                    a_driver_configuration.the_block_phi_extent_   = the_current_phi_block_extent;
+                                }
+                            }
+                        }
+
+
+                        // If we could create some block, decrease the local
+                        // domain by as much as we have fitted of.
+                        the_local_domain_r_extent -= the_block_count_in_r * the_current_r_block_extent;
+                        the_local_domain_theta_extent -= the_block_count_in_theta * the_current_theta_block_extent;
+                        the_local_domain_phi_extent -= the_block_count_in_phi * the_current_phi_block_extent;
+                    }
+
+                    // NOTE: We could early exit if at least
+                    // the_local_domain_XXX_extent == 0.
+
+                    // NOTE: The block wont fit, go to the next (smaller) block
+                    // size.
+                }
+
+                KOLIOP_ASSERT(the_local_domain_r_extent == 0 &&
+                              the_local_domain_theta_extent == 0 &&
+                              the_local_domain_phi_extent == 0);
+            }
+
             // Sort of factory.
             static inline void
             CreateCvCdDriver(const Operator&   an_operator,
@@ -103,84 +180,27 @@ namespace koliop {
 
             the_cvcd_drivers_configurations_.clear();
 
-            // TODO(Etienne M): Blocking idea, use a recursive approach where we
-            // try to fit the biggest block size to process the domain, and if
-            // not possible we fallback to a smaller size. Then, we process the
-            // potential remaining grid point recursively. Supposing we do not
-            // template CvCd on the block size anymore, we could reuse them for
-            // smaller blocs.
-
-            // in the constants, create a static cosnexpr array of the size we wish to support. when initialization the operator, depending on the size of the localc domain, instantiate the gbest set of cvcd driver.
-            // also, register the sequence of cvcd driver and the position they should execute at in an array.
-
-            // Basicaly, in the cosntructor of the operator, buidl a table of indices:
-
-            // NOTE: do not forget to add a loggin optio to get the plannified schedule.
-
-            auto the_local_domain_r_extent     = an_operator.the_r_extent_;
-            auto the_local_domain_theta_extent = an_operator.the_theta_extent_;
-            auto the_local_domain_phi_extent   = an_operator.the_phi_extent_;
+            detail::PrepareBlockPosition(an_operator,
+                                         the_cvcd_drivers_configurations_,
+                                         the_preset_block_extent_count,
+                                         the_preset_block_extent);
 
             const auto& the_execution_space_pool = an_operator.the_execution_space_pool_;
 
-            auto       the_first_block_extent = the_preset_block_extent;
-            const auto the_last_block_extent  = the_first_block_extent + the_preset_block_extent_count;
+            for(auto&& a_driver_configuration : the_cvcd_drivers_configurations_) {
+                detail::CreateCvCdDriver(an_operator,
+                                         a_driver_configuration.the_cvcd_driver_,
+                                         a_driver_configuration.the_block_r_extent_,
+                                         a_driver_configuration.the_block_theta_extent_,
+                                         a_driver_configuration.the_block_phi_extent_);
 
-            for(; the_first_block_extent != the_last_block_extent; ++the_first_block_extent) {
-                const auto& the_current_block_extent = *the_first_block_extent;
-
-                const auto the_current_r_block_extent     = the_current_block_extent[0];
-                const auto the_current_theta_block_extent = the_current_block_extent[1];
-                const auto the_current_phi_block_extent   = the_current_block_extent[2];
-
-                KOLIOP_ASSERT(the_current_r_block_extent > 0 &&
-                              the_current_theta_block_extent > 0 &&
-                              the_current_phi_block_extent > 0);
-
-                while(the_local_domain_r_extent >= the_current_r_block_extent &&
-                      the_local_domain_theta_extent >= the_current_theta_block_extent &&
-                      the_local_domain_phi_extent >= the_current_phi_block_extent) {
-                    // NOTE: While we can breakdown the domain in block of
-                    // the_current_block_extent
-
-                    the_local_domain_r_extent -= the_current_r_block_extent;
-                    the_local_domain_theta_extent -= the_current_theta_block_extent;
-                    the_local_domain_phi_extent -= the_current_phi_block_extent;
-
-                    auto& a_driver_configuration = the_cvcd_drivers_configurations_.emplace_back();
-
-                    detail::CreateCvCdDriver(an_operator,
-                                             a_driver_configuration.the_cvcd_driver_,
-                                             the_current_r_block_extent,
-                                             the_current_theta_block_extent,
-                                             the_current_phi_block_extent);
-
-                    // NOTE: it is as if we go backward to fill the local
-                    // domain. For instance, a 1D domain of size 64:
-                    // A initialization the space that has not yet been
-                    // associated to a block (call it s), is 64. Say we have
-                    // blocks of size 8 and 16.
-                    // |----------------| s = 64
-                    // |------------++++| s >= 16 -> s = s - 16 -> 48. This block will handle range [48, 64)
-                    // |--------++++++++| s >= 16 -> s = s - 16 -> 32. This block will handle range [32, 48)
-                    // etc.
-                    a_driver_configuration.the_block_first_r_     = the_local_domain_r_extent;
-                    a_driver_configuration.the_block_first_theta_ = the_local_domain_theta_extent;
-                    a_driver_configuration.the_block_first_phi_   = the_local_domain_phi_extent;
-
-                    a_driver_configuration.the_execution_space_ = the_execution_space_pool[the_cvcd_drivers_configurations_.size() %
-                                                                                           the_execution_space_pool.size()];
-                }
-
-                // NOTE: The block wont fit, go to the next (smaller) block
-                // size.
+                // the_cvcd_drivers_configurations_.size() % the_execution_space_pool.size()
+                a_driver_configuration.the_execution_space_ = the_execution_space_pool[0];
             }
 
-            KOLIOP_ASSERT(the_local_domain_r_extent == 0 &&
-                          the_local_domain_theta_extent == 0 &&
-                          the_local_domain_phi_extent == 0);
-
             // NOTE: we have an issue with the amount of memory allocated !!
+            // NOTE: use a shared ptr in the eraser ? reuse the same cvcddrier
+            // n times ?
         }
 
         void CvCdDriverScheduler::ScheduleExecution(const Operator&                                an_operator,

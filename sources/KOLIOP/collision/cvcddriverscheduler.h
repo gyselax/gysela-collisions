@@ -21,13 +21,15 @@ namespace koliop {
 
         class CvCdDriverScheduler {
         public:
-        protected:
             struct CvCdDriverConfiguration {
             public:
                 CvCdDriverEraser                   the_cvcd_driver_;
                 OrdinalType                        the_block_first_r_;
                 OrdinalType                        the_block_first_theta_;
                 OrdinalType                        the_block_first_phi_;
+                OrdinalType                        the_block_r_extent_;
+                OrdinalType                        the_block_theta_extent_;
+                OrdinalType                        the_block_phi_extent_;
                 Constant::DeviceExecutionSpaceType the_execution_space_;
             };
 
