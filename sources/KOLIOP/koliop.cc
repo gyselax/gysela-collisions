@@ -158,17 +158,6 @@
             return KOLIOP_STATUS_INVALID_VALUE;
         }
 
-        // std::cout << "the_mu_extent: " << the_mu_extent << "\n"
-        //           << "the_vpar_extent: " << the_vpar_extent << "\n"
-        //           << "the_r_extent: " << the_r_extent << "\n"
-        //           << "the_theta_extent: " << the_theta_extent << "\n"
-        //           << "the_phi_extent: " << the_phi_extent << "\n"
-        //           << "the_species_extent: " << the_species_extent << "\n"
-        //           << "the_global_domain_r_extent: " << the_global_domain_r_extent << "\n"
-        //           << "the_global_domain_theta_extent: " << the_global_domain_theta_extent << "\n"
-        //           << "the_local_domain_r_offset: " << the_local_domain_r_offset << "\n"
-        //           << "the_local_domain_theta_offset: " << the_local_domain_theta_offset << std::endl;
-
         using Operator = koliop::collision::Operator;
 
         auto* const an_operator = new Operator{static_cast<uint64_t>(pSpecies_id),
