@@ -446,15 +446,15 @@ namespace koliop {
                                                 koliop::utility::View::InternalInputL1<const Flo64>>;
 
         public:
-            CvCdDriver(OrdinalType                                          pSpecies_id,
-                       OrdinalType                                          the_vpar_extent,
-                       OrdinalType                                          the_species_extent,
-                       bool                                                 collision_interspecies,
-                       const Flo64*                                         comb_mat,
-                       koliop::utility::View::InternalInputL1<const Flo64>& hat_As,
-                       koliop::utility::View::InternalInputL1<const Flo64>& hat_Zs,
-                       koliop::utility::View::InternalInputL1<const Flo64>& vparg,
-                       koliop::utility::View::InternalInputL1<const Flo64>& coeff_intdvpar);
+            CvCdDriver(OrdinalType                                                pSpecies_id,
+                       OrdinalType                                                the_vpar_extent,
+                       OrdinalType                                                the_species_extent,
+                       bool                                                       collision_interspecies,
+                       const Flo64*                                               comb_mat,
+                       const koliop::utility::View::InternalInputL1<const Flo64>& hat_As,
+                       const koliop::utility::View::InternalInputL1<const Flo64>& hat_Zs,
+                       const koliop::utility::View::InternalInputL1<const Flo64>& vparg,
+                       const koliop::utility::View::InternalInputL1<const Flo64>& coeff_intdvpar);
 
             template <typename Operator, // Templatized to avoid dependency loops
                       typename ExecutionSpace,
@@ -503,15 +503,15 @@ namespace koliop {
         CvCdDriver<the_block_extent_r,
                    the_block_extent_theta,
                    the_block_extent_phi,
-                   BatchTraits>::CvCdDriver(OrdinalType                                          pSpecies_id,
-                                            OrdinalType                                          the_vpar_extent,
-                                            OrdinalType                                          the_species_extent,
-                                            bool                                                 collision_interspecies,
-                                            const Flo64*                                         comb_mat,
-                                            koliop::utility::View::InternalInputL1<const Flo64>& hat_As,
-                                            koliop::utility::View::InternalInputL1<const Flo64>& hat_Zs,
-                                            koliop::utility::View::InternalInputL1<const Flo64>& vparg,
-                                            koliop::utility::View::InternalInputL1<const Flo64>& coeff_intdvpar)
+                   BatchTraits>::CvCdDriver(OrdinalType                                                pSpecies_id,
+                                            OrdinalType                                                the_vpar_extent,
+                                            OrdinalType                                                the_species_extent,
+                                            bool                                                       collision_interspecies,
+                                            const Flo64*                                               comb_mat,
+                                            const koliop::utility::View::InternalInputL1<const Flo64>& hat_As,
+                                            const koliop::utility::View::InternalInputL1<const Flo64>& hat_Zs,
+                                            const koliop::utility::View::InternalInputL1<const Flo64>& vparg,
+                                            const koliop::utility::View::InternalInputL1<const Flo64>& coeff_intdvpar)
             : the_najl_provider_{pSpecies_id,
                                  the_vpar_extent, the_species_extent,
                                  collision_interspecies,

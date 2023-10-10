@@ -4,7 +4,6 @@
 
 #include <Kokkos_Core.hpp>
 
-#include "KOLIOP/collision/cvcddriver.h"
 #include "KOLIOP/internal/configuration.h"
 #include "KOLIOP/portability/cmath.h"
 #include "KOLIOP/utility/copy.h"
@@ -149,6 +148,7 @@ namespace koliop {
             , SOL_{SOL}
             , LIM_{LIM}
             , ir_SOL_separatrix_{static_cast<OrdinalType>(ir_SOL_separatrix)}
+            , comb_mat_{comb_mat}
             , hat_As_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputL1>(Constant::DeviceExecutionSpaceType{}, hat_As, "hat_As_", the_species_extent_)} // NOTE: in practice, this hat_Xs contains 3 values. The size being hardcoded in global::Nspecies_max = 2
             , hat_Zs_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputL1>(Constant::DeviceExecutionSpaceType{}, hat_Zs, "hat_Zs_", the_species_extent_)} // NOTE: in practice, this hat_Xs contains 3 values. The size being hardcoded in global::Nspecies_max = 2
             , mug_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputL1>(Constant::DeviceExecutionSpaceType{}, mug, "mug_", the_mu_extent_)}
@@ -182,10 +182,11 @@ namespace koliop {
             , q_par_on_nT_s_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "q_par_on_nT_s_"),
                              static_cast<std::size_t>(the_r_extent_), static_cast<std::size_t>(the_theta_extent_), static_cast<std::size_t>(the_phi_extent_), static_cast<std::size_t>(the_species_extent_)}
 
-            // Miscellaneous numerical tooling
-            , the_cvcd_drivers_{}
             // Miscellaneous tooling
-            , the_execution_space_pool_{} {
+            , the_execution_space_pool_{}
+
+            // Miscellaneous numerical tooling
+            , the_cvcd_drivers_scheduler_{} {
 
             // Ensure the copies above are completed.
             // Constant::DeviceExecutionSpaceType{}.fence() would also work.
@@ -199,24 +200,6 @@ namespace koliop {
                             nustar0_r_,
                             q_r_,
                             mask_buffer_r_);
-
-            for(OrdinalType i = 0; i < Constant::kDisjointExecutionSpaceCount; ++i) {
-                // We cant do copies of a given CvCdDriver as the Views have a
-                // shared pointer semantic. Here we want disjoint states.
-                the_cvcd_drivers_.emplace_back();
-                the_cvcd_drivers_.back().Set(CvCdDriver<Constant::kBlockExtentR,
-                                                        Constant::kBlockExtentTheta,
-                                                        Constant::kBlockExtentPhi,
-                                                        Constant::BatchTraitsType>{pSpecies_id_,
-                                                                                   the_vpar_extent_,
-                                                                                   the_species_extent_,
-                                                                                   collision_interspecies_,
-                                                                                   comb_mat,
-                                                                                   hat_As_,
-                                                                                   hat_Zs_,
-                                                                                   vparg_,
-                                                                                   coeff_intdvpar_});
-            }
 
 #if defined(KOKKOS_ENABLE_HIP)
             KOLIOP_ASSERT(the_execution_space_pool_.size() == 0);
@@ -243,6 +226,10 @@ namespace koliop {
                 // us.
                 the_execution_space_pool_.emplace_back(Kokkos::Experimental::partition_space(the_execution_space_pool_[0], 1)[0]);
             }
+
+            the_cvcd_drivers_scheduler_.Plan(*this,
+                                             Constant::kPresetBlockExtentCount,
+                                             Constant::kPresetBlockExtent);
         }
 
         void Operator::Fence(OrdinalType the_execution_space_index) const {

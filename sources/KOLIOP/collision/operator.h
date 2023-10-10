@@ -7,7 +7,7 @@
 #include <vector>
 
 #include "KOLIOP/collision/constant.h"
-#include "KOLIOP/collision/cvcddrivereraser.h"
+#include "KOLIOP/collision/cvcddriverscheduler.h"
 #include "KOLIOP/internal/configuration.h"
 #include "KOLIOP/utility/view.h"
 
@@ -220,6 +220,7 @@ namespace koliop {
             // conversions from Flo64 to whatever ComputeFloatType is (say
             // Flo32).
 
+            const Flo64*                                        comb_mat_;
             koliop::utility::View::InternalInputL1<const Flo64> hat_As_;
             koliop::utility::View::InternalInputL1<const Flo64> hat_Zs_;
             koliop::utility::View::InternalInputL1<const Flo64> mug_;
@@ -246,13 +247,13 @@ namespace koliop {
             koliop::utility::View::MDD5<ComputeFloatType> nu_ab_;
             koliop::utility::View::MDD4<ComputeFloatType> q_par_on_nT_s_;
 
-            // Miscellaneous numerical tooling
-
-            std::vector<CvCdDriverEraser> the_cvcd_drivers_;
-
             // Miscellaneous tooling
 
             std::vector<Constant::DeviceExecutionSpaceType> the_execution_space_pool_;
+
+            // Miscellaneous numerical tooling
+
+            CvCdDriverScheduler the_cvcd_drivers_scheduler_;
         };
 
     } // namespace collision

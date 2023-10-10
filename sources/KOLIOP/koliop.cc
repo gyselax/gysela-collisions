@@ -41,9 +41,6 @@
 #else
             std::cout << "  KOLIOP_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE: false\n";
 #endif
-            std::cout << "  koliop::collision::Constant::kBlockExtentR: " << koliop::collision::Constant::kBlockExtentR << "\n";
-            std::cout << "  koliop::collision::Constant::kBlockExtentTheta: " << koliop::collision::Constant::kBlockExtentTheta << "\n";
-            std::cout << "  koliop::collision::Constant::kBlockExtentPhi: " << koliop::collision::Constant::kBlockExtentPhi << "\n";
             std::cout << "  koliop::collision::Constant::kDisjointExecutionSpaceCount: " << koliop::collision::Constant::kDisjointExecutionSpaceCount << "\n";
             std::cout << "  koliop::collision::Constant::kDefaultExecutionSpacePoolIndex: " << koliop::collision::Constant::kDefaultExecutionSpacePoolIndex << "\n";
         }
@@ -152,6 +149,17 @@
            Bstar_s == nullptr) {
             return KOLIOP_STATUS_INVALID_VALUE;
         }
+
+        // std::cout << "the_mu_extent: " << the_mu_extent << "\n"
+        //           << "the_vpar_extent: " << the_vpar_extent << "\n"
+        //           << "the_r_extent: " << the_r_extent << "\n"
+        //           << "the_theta_extent: " << the_theta_extent << "\n"
+        //           << "the_phi_extent: " << the_phi_extent << "\n"
+        //           << "the_species_extent: " << the_species_extent << "\n"
+        //           << "the_global_domain_r_extent: " << the_global_domain_r_extent << "\n"
+        //           << "the_global_domain_theta_extent: " << the_global_domain_theta_extent << "\n"
+        //           << "the_local_domain_r_offset: " << the_local_domain_r_offset << "\n"
+        //           << "the_local_domain_theta_offset: " << the_local_domain_theta_offset << std::endl;
 
         using Operator = koliop::collision::Operator;
 
