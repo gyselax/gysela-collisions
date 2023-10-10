@@ -43,6 +43,14 @@
 #endif
             std::cout << "  koliop::collision::Constant::kDisjointExecutionSpaceCount: " << koliop::collision::Constant::kDisjointExecutionSpaceCount << "\n";
             std::cout << "  koliop::collision::Constant::kDefaultExecutionSpacePoolIndex: " << koliop::collision::Constant::kDefaultExecutionSpacePoolIndex << "\n";
+            std::cout << "  Available block sizes:";
+            for(std::size_t i = 0; i < koliop::collision::Constant::kPresetBlockExtentCount; ++i) {
+                std::cout << "[" << koliop::collision::Constant::kPresetBlockExtent[i][0]
+                          << "," << koliop::collision::Constant::kPresetBlockExtent[i][1]
+                          << "," << koliop::collision::Constant::kPresetBlockExtent[i][2]
+                          << "] ";
+            }
+            std::cout << "\n";
         }
 
         if(static_cast<bool>(do_kokkos_initialization)) {

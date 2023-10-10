@@ -118,6 +118,8 @@ namespace koliop {
 
             const auto& the_execution_space_pool = an_operator.the_execution_space_pool_;
 
+            OrdinalType the_cvcd_operation_index = 0;
+
             for(auto&& a_driver_configuration : the_cvcd_drivers_configurations_) {
                 detail::CreateCvCdDriver(an_operator,
                                          a_driver_configuration.the_cvcd_driver_,
@@ -125,8 +127,12 @@ namespace koliop {
                                          a_driver_configuration.the_block_theta_extent_,
                                          a_driver_configuration.the_block_phi_extent_);
 
-                // the_cvcd_drivers_configurations_.size() % the_execution_space_pool.size()
-                a_driver_configuration.the_execution_space_ = the_execution_space_pool[0];
+                const OrdinalType the_execution_space_index = the_cvcd_operation_index %
+                                                              the_execution_space_pool.size();
+
+                a_driver_configuration.the_execution_space_ = the_execution_space_pool[the_execution_space_index];
+
+                ++the_cvcd_operation_index;
             }
 
             // NOTE: we have an issue with the amount of memory allocated !!
