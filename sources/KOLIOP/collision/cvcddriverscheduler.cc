@@ -10,14 +10,12 @@ namespace koliop {
         namespace detail {
 
             static inline void
-            PrepareBlockPosition(const Operator&                                            an_operator,
+            PrepareBlockPosition(OrdinalType                                                the_local_domain_r_extent,
+                                 OrdinalType                                                the_local_domain_theta_extent,
+                                 OrdinalType                                                the_local_domain_phi_extent,
                                  std::vector<CvCdDriverScheduler::CvCdDriverConfiguration>& the_cvcd_drivers_configurations,
                                  std::size_t                                                the_preset_block_extent_count,
                                  const OrdinalType (*the_preset_block_extent)[3]) {
-
-                auto the_local_domain_r_extent     = an_operator.the_r_extent_;
-                auto the_local_domain_theta_extent = an_operator.the_theta_extent_;
-                auto the_local_domain_phi_extent   = an_operator.the_phi_extent_;
 
                 auto       the_first_block_extent = the_preset_block_extent;
                 const auto the_last_block_extent  = the_first_block_extent + the_preset_block_extent_count;
@@ -180,7 +178,9 @@ namespace koliop {
 
             the_cvcd_drivers_configurations_.clear();
 
-            detail::PrepareBlockPosition(an_operator,
+            detail::PrepareBlockPosition(an_operator.the_r_extent,
+                                         an_operator.the_theta_extent,
+                                         an_operator.the_phi_extent,
                                          the_cvcd_drivers_configurations_,
                                          the_preset_block_extent_count,
                                          the_preset_block_extent);
