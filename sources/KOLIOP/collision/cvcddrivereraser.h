@@ -72,16 +72,17 @@ namespace koliop {
             template <typename T>
             CvCdDriverEraser& Set(T&& a_cvcd_driver);
 
-            InterfaceType* get();
-            InterfaceType& operator*();
-            InterfaceType* operator->();
+            InterfaceType*       get();
+            const InterfaceType* get() const;
+            InterfaceType&       operator*();
+            InterfaceType*       operator->();
 
             void clear();
 
             bool IsSet() const;
 
         protected:
-            std::unique_ptr<InterfaceType> the_erased_cvcd_driver_;
+            std::shared_ptr<InterfaceType> the_erased_cvcd_driver_;
         };
 
 
@@ -92,7 +93,7 @@ namespace koliop {
         template <typename T>
         CvCdDriverEraser&
         CvCdDriverEraser::Set(T&& a_cvcd_driver) {
-            the_erased_cvcd_driver_ = std::make_unique<ImplementationType<
+            the_erased_cvcd_driver_ = std::make_shared<ImplementationType<
                 std::remove_reference_t<
                     std::remove_cv_t<T>>>>(std::forward<T>(a_cvcd_driver));
             return *this;

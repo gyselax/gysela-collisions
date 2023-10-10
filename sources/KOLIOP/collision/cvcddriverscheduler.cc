@@ -9,9 +9,9 @@ namespace koliop {
         namespace detail {
 
             static inline void
-            PrepareBlockPosition(OrdinalType                                                the_local_domain_r_extent,
-                                 OrdinalType                                                the_local_domain_theta_extent,
-                                 OrdinalType                                                the_local_domain_phi_extent,
+            PrepareBlockPosition(const OrdinalType                                          the_local_domain_r_extent,
+                                 const OrdinalType                                          the_local_domain_theta_extent,
+                                 const OrdinalType                                          the_local_domain_phi_extent,
                                  std::vector<CvCdDriverScheduler::CvCdDriverConfiguration>& the_cvcd_drivers_configurations,
                                  std::size_t                                                the_preset_block_extent_count,
                                  const OrdinalType (*the_preset_block_extent)[3]) {
@@ -63,23 +63,19 @@ namespace koliop {
                             }
                         }
 
-                        // If we could create some blocks, decrease the local
-                        // domain by as much as we have fitted of block.
-                        the_local_domain_r_extent -= the_block_count_in_r * the_current_r_block_extent;
-                        the_local_domain_theta_extent -= the_block_count_in_theta * the_current_theta_block_extent;
-                        the_local_domain_phi_extent -= the_block_count_in_phi * the_current_phi_block_extent;
-                    }
+                        // NOTE: Once a block that fits is found, because the domain's dimension are power of two, we
+                        // know that we wont need an other block size. We can exit early.
 
-                    // NOTE: We could early exit if at least
-                    // the_local_domain_XXX_extent == 0.
+                        KOLIOP_ASSERT((the_local_domain_r_extent - the_block_count_in_r * the_current_r_block_extent) == 0 &&
+                                      (the_local_domain_theta_extent - the_block_count_in_theta * the_current_theta_block_extent) == 0 &&
+                                      (the_local_domain_phi_extent - the_block_count_in_phi * the_current_phi_block_extent) == 0);
+
+                        break;
+                    }
 
                     // NOTE: The block wont fit, go to the next (smaller) block
                     // size.
                 }
-
-                KOLIOP_ASSERT(the_local_domain_r_extent == 0 &&
-                              the_local_domain_theta_extent == 0 &&
-                              the_local_domain_phi_extent == 0);
             }
 
             // Sort of factory. I put in into an other translation unit because
@@ -116,28 +112,62 @@ namespace koliop {
                                          the_preset_block_extent_count,
                                          the_preset_block_extent);
 
+            // NOTE:
+            // - A larger block take more memory.
+            // - By definition, we only need one block size to pave the plane.
+            // - We have at most kDisjointExecutionSpaceCount disjoint execution
+            // spaces.
+            // - Drivers using different execution space MUST have disjoint
+            // state!
+            // - Knowing that, we can allocate only kDisjointExecutionSpaceCount
+            // drivers (of the same size) and simply ventilate theses driver on
+            // the execution spaces. We use shared pointer to share the drivers.
+            // We can guarantee that at most something proportionate to
+            // kDisjointExecutionSpaceCount * BlockSize will be allocated.
+            // We must make sure that only one execution space used for a given
+            // execution space. So shared instances of a driver share the same
+            // execution space. This basically serialize the work from the POV
+            // of a driver preventing race condition.
+
             const auto& the_execution_space_pool = an_operator.the_execution_space_pool_;
 
-            OrdinalType the_cvcd_operation_index = 0;
+            // The first (at most) the_execution_space_pool.size() get a freshly
+            // allocated CvCdDriver and an execution space. The other block will
+            // be copies of these ones.
+            const OrdinalType the_original_block_count = std::min(the_cvcd_drivers_configurations_.size(),
+                                                                  the_execution_space_pool.size());
 
-            for(auto&& a_driver_configuration : the_cvcd_drivers_configurations_) {
+            for(OrdinalType i = 0; i < the_original_block_count; ++i) {
+                auto& a_driver_configuration = the_cvcd_drivers_configurations_[i];
+
                 detail::CreateCvCdDriver(an_operator,
                                          a_driver_configuration.the_cvcd_driver_,
                                          a_driver_configuration.the_block_r_extent_,
                                          a_driver_configuration.the_block_theta_extent_,
                                          a_driver_configuration.the_block_phi_extent_);
 
-                const OrdinalType the_execution_space_index = the_cvcd_operation_index %
-                                                              the_execution_space_pool.size();
+                // The modulo would be redundant thanks to
+                // the_original_block_count.
+                const OrdinalType the_execution_space_index = i /* % the_execution_space_pool.size() */;
 
                 a_driver_configuration.the_execution_space_ = the_execution_space_pool[the_execution_space_index];
-
-                ++the_cvcd_operation_index;
             }
 
-            // NOTE: we have an issue with the amount of memory allocated !!
-            // NOTE: use a shared ptr in the eraser ? reuse the same cvcddrier
-            // n times ?
+            for(OrdinalType i = the_original_block_count;
+                i < static_cast<OrdinalType>(the_cvcd_drivers_configurations_.size());
+                ++i) {
+                auto&       a_driver_configuration           = the_cvcd_drivers_configurations_[i];
+                const auto& an_original_driver_configuration = the_cvcd_drivers_configurations_[i % the_original_block_count];
+
+                // NOTE: We copy, but the CvCdDriverEraser uses shared pointer
+                // which *prevents* deep copying.
+
+                // NOTE: We copy the execution space and the driver but NOT
+                // the_block_first_r_, the_block_first_theta_ and
+                // the_block_first_phi_. These are and must stay different.
+                a_driver_configuration.the_cvcd_driver_     = an_original_driver_configuration.the_cvcd_driver_;
+                a_driver_configuration.the_execution_space_ = an_original_driver_configuration.the_execution_space_;
+            }
         }
 
         void CvCdDriverScheduler::ScheduleExecution(const Operator&                                an_operator,

@@ -14,22 +14,29 @@ namespace koliop {
             return the_erased_cvcd_driver_.get();
         }
 
+        const CvCdDriverEraser::InterfaceType*
+        CvCdDriverEraser::get() const {
+            return the_erased_cvcd_driver_.get();
+        }
+
         CvCdDriverEraser::InterfaceType&
         CvCdDriverEraser::operator*() {
-            return *the_erased_cvcd_driver_.get();
+            return *get();
         }
 
         CvCdDriverEraser::InterfaceType*
         CvCdDriverEraser::operator->() {
-            return the_erased_cvcd_driver_.get();
+            return get();
         }
 
         void CvCdDriverEraser::clear() {
-            the_erased_cvcd_driver_.reset(nullptr);
+            // NOTE: there is an asymmetry where a unique_ptr's reset can take a
+            // nullptr but not a shared_ptr's.
+            the_erased_cvcd_driver_.reset(/* nullptr */);
         }
 
         bool CvCdDriverEraser::IsSet() const {
-            return the_erased_cvcd_driver_.get() != nullptr;
+            return get() != nullptr;
         }
 
     } // namespace collision
