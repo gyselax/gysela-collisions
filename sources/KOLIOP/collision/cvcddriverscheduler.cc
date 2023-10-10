@@ -178,9 +178,9 @@ namespace koliop {
 
             the_cvcd_drivers_configurations_.clear();
 
-            detail::PrepareBlockPosition(an_operator.the_r_extent,
-                                         an_operator.the_theta_extent,
-                                         an_operator.the_phi_extent,
+            detail::PrepareBlockPosition(an_operator.the_r_extent_,
+                                         an_operator.the_theta_extent_,
+                                         an_operator.the_phi_extent_,
                                          the_cvcd_drivers_configurations_,
                                          the_preset_block_extent_count,
                                          the_preset_block_extent);
