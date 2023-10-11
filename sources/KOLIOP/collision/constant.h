@@ -57,32 +57,34 @@ namespace koliop {
             // fd5                   Matrix                 RHS
 
 #if defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_OPENMP)
-            static inline constexpr std::size_t kPresetBlockExtentCount                        = 22;
-            static inline constexpr OrdinalType kPresetBlockExtent[kPresetBlockExtentCount][3] = {{256, 128, 2},
-                                                                                                  {128, 256, 2},
-                                                                                                  {256, 128, 1},
-                                                                                                  {128, 256, 1},
-                                                                                                  {128, 128, 2},
-                                                                                                  {128, 128, 1},
-                                                                                                  {128, 64, 2},
-                                                                                                  {64, 128, 2},
-                                                                                                  {128, 64, 1},
-                                                                                                  {128, 32, 2},
-                                                                                                  {64, 128, 1},
-                                                                                                  {64, 64, 2},
-                                                                                                  {32, 128, 2},
-                                                                                                  {128, 32, 1},
-                                                                                                  {64, 64, 1},
-                                                                                                  {64, 32, 2},
-                                                                                                  {32, 128, 1},
-                                                                                                  {32, 64, 2},
-                                                                                                  {64, 32, 1},
-                                                                                                  {32, 64, 1},
-                                                                                                  {32, 32, 2},
-                                                                                                  {32, 32, 1}};
+            static inline constexpr OrdinalType kPresetBlockExtent[][3] = {{256, 128, 2},
+                                                                           {128, 256, 2},
+                                                                           {256, 128, 1},
+                                                                           {128, 256, 1},
+                                                                           {128, 128, 2},
+                                                                           {128, 128, 1},
+                                                                           {128, 64, 2},
+                                                                           {64, 128, 2},
+                                                                           {128, 64, 1},
+                                                                           {128, 32, 2},
+                                                                           {64, 128, 1},
+                                                                           {64, 64, 2},
+                                                                           {32, 128, 2},
+                                                                           {128, 32, 1},
+                                                                           {64, 64, 1},
+                                                                           {64, 32, 2},
+                                                                           {32, 128, 1},
+                                                                           {32, 64, 2},
+                                                                           {64, 32, 1},
+                                                                           {32, 64, 1},
+                                                                           {32, 32, 2},
+                                                                           {32, 32, 1}};
 #else
     #error "Unsupported architecture."
 #endif
+
+            static inline constexpr std::size_t kPresetBlockExtentCount = sizeof(kPresetBlockExtent) /
+                                                                          sizeof(kPresetBlockExtent[0]);
         };
 
     } // namespace collision
