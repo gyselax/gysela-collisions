@@ -121,6 +121,11 @@ namespace koliop {
                 static_cast<int>(the_team_count),
                 koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, 64)};
 
+            // NOTE: When this parallel_for is called I observe an unexpected
+            // hipEventSynchronize followed by a memcpy and then the
+            // hipLaunchKernel.
+            // I believe this is due to kokkos copying kernel arguments into the
+            // global memory.
             Kokkos::parallel_for("DoComputeQparOnNT",
                                  a_policy, the_kernel);
         }
