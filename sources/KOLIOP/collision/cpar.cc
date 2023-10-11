@@ -131,7 +131,7 @@ namespace koliop {
                 Constant::DeviceExecutionSpaceType>{
                 the_execution_space_pool[Constant::kDefaultExecutionSpacePoolIndex],
                 static_cast<int>(the_team_count),
-                koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, 64)};
+                koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, Kokkos::AUTO)};
 
             Kokkos::parallel_for("DoComputeCpar",
                                  a_policy, the_kernel);

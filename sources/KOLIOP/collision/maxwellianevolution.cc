@@ -147,7 +147,7 @@ namespace koliop {
                 Constant::DeviceExecutionSpaceType>{
                 the_execution_space_pool[Constant::kDefaultExecutionSpacePoolIndex],
                 static_cast<int>(the_team_count),
-                koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, 64)};
+                koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, Kokkos::AUTO)};
 
             a_policy.set_scratch_size(0,
                                       Kokkos::PerThread(ScratchMemory::shmem_size(the_scratch_memory_bytes_per_thread)));

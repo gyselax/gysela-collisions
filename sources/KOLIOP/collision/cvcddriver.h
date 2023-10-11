@@ -405,7 +405,7 @@ namespace koliop {
                     // Kokkos::LaunchBounds<384, 1>, Kokkos::IndexType<OrdinalType>,
                     ExecutionSpace>{an_execution_space,
                                     static_cast<int>(the_team_count),
-                                    koliop::utility::Select<ExecutionSpace>(Kokkos::AUTO, 384)};
+                                    koliop::utility::Select<ExecutionSpace>(Kokkos::AUTO, Kokkos::AUTO)};
 
                 Kokkos::parallel_for("DoComputeReconstruction",
                                      a_policy, the_kernel);

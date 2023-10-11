@@ -98,7 +98,7 @@ namespace koliop {
                 Constant::DeviceExecutionSpaceType>{
                 the_execution_space_pool[Constant::kDefaultExecutionSpacePoolIndex],
                 static_cast<int>(the_team_count),
-                koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, 512)};
+                koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, Kokkos::AUTO)};
 
             Kokkos::parallel_for("DoComputeDensityCorrection",
                                  a_policy, the_kernel);
