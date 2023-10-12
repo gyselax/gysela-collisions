@@ -78,8 +78,8 @@ namespace koliop {
                 }
             }
 
-            // Sort of factory. I put in into an other translation unit because
-            // it is soo long to compile (yay for c++ templates).
+            // NOTE: Sort of factory. I put in into an other translation unit
+            // to mitigate the long compilation time (yay for c++ templates).
             void CreateCvCdDriver(const Operator&   an_operator,
                                   CvCdDriverEraser& a_cvcd_driver,
                                   OrdinalType       the_block_r_extent,
