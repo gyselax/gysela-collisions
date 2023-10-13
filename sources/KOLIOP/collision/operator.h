@@ -163,6 +163,8 @@ namespace koliop {
                      const Flo64* B_norm,
                      const Flo64* Bstar_s);
 
+            ~Operator();
+
             void Fence(OrdinalType the_execution_space_index = Constant::kDefaultExecutionSpacePoolIndex) const;
 
             void ComputeMoments(Flo64* f5d_s);

@@ -232,6 +232,10 @@ namespace koliop {
                                              Constant::kPresetBlockExtent);
         }
 
+        Operator::~Operator() {
+            Kokkos::fence();
+        }
+
         void Operator::Fence(OrdinalType the_execution_space_index) const {
             the_execution_space_pool_[the_execution_space_index].fence();
         }
