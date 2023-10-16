@@ -298,19 +298,21 @@ int Test1() {
 
     std::vector<double> a_big_dummy_array{};
     a_big_dummy_array.resize(the_mu_extent *
-                             the_vpar_extent *
-                             the_r_extent *
-                             the_theta_extent *
-                             the_phi_extent *
-                             the_species_extent);
+                                 the_vpar_extent *
+                                 the_r_extent *
+                                 the_theta_extent *
+                                 the_phi_extent *
+                                 the_species_extent,
+                             1.0);
 
     std::vector<double> a_big_dummy_f5d_s{};
     a_big_dummy_f5d_s.resize(the_mu_extent *
-                             the_vpar_extent *
-                             the_r_extent *
-                             the_theta_extent *
-                             the_phi_extent *
-                             the_species_extent);
+                                 the_vpar_extent *
+                                 the_r_extent *
+                                 the_theta_extent *
+                                 the_phi_extent *
+                                 the_species_extent,
+                             1.0);
 
     if(::koliop_Create(&an_operator,
                        Npolmax,

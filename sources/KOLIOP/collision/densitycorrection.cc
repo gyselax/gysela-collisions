@@ -35,8 +35,7 @@ namespace koliop {
 
             const auto& pSpecies_id = an_operator.pSpecies_id_;
 
-            // TODO(Etienne M): Make sure the accesses are coalesced on GPU
-            // and sequential on CPU.
+            // TODO(Etienne M): Make sure the accesses are sequential on CPU.
 
             const auto the_kernel = KOKKOS_LAMBDA(const auto& a_team_handle) {
 
@@ -46,7 +45,9 @@ namespace koliop {
                 const OrdinalType itheta = (the_team_index / (the_r_extent)) % the_theta_extent;
                 const OrdinalType iphi   = (the_team_index / (the_r_extent * the_theta_extent)) /* % the_phi_extent */;
 
-                const auto an_intra_team_policy = Kokkos::TeamThreadMDRange<Kokkos::Rank<2, Kokkos::Iterate::Default, Kokkos::Iterate::Default>,
+                // NOTE: The explicit Left iteration direction may not benefit
+                // the CPUs depending on how that is implemented.
+                const auto an_intra_team_policy = Kokkos::TeamThreadMDRange<Kokkos::Rank<2, Kokkos::Iterate::Left, Kokkos::Iterate::Left>,
                                                                             std::remove_reference_t<decltype(a_team_handle)>>(a_team_handle,
                                                                                                                               the_mu_extent, the_vpar_extent);
 
@@ -91,14 +92,15 @@ namespace koliop {
             // Due to the inherent Cuda/HIP thread block limit.
             KOLIOP_ASSERT(the_team_count <= std::numeric_limits<int>::max());
 
-            // TODO(Etienne M): TEAM hardcoded size, check for auto tuning
-            // opportunities.
             const auto a_policy = Kokkos::TeamPolicy<
-                // Kokkos::LaunchBounds<512, 1>, Kokkos::IndexType<OrdinalType>,
+                // Kokkos::LaunchBounds<64, 1>, Kokkos::IndexType<OrdinalType>,
                 Constant::DeviceExecutionSpaceType>{
                 the_execution_space_pool[Constant::kDefaultExecutionSpacePoolIndex],
                 static_cast<int>(the_team_count),
-                koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, Kokkos::AUTO)};
+                // NOTE: The thread block size and the Nmu benefit from being
+                // close. This is due to the TeamThreadMDRange which
+                // parallelizes only the left most index which is Nmu.
+                koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, 64 /* 128 */)};
 
             Kokkos::parallel_for("DoComputeDensityCorrection",
                                  a_policy, the_kernel);

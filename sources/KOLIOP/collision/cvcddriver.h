@@ -53,7 +53,7 @@ namespace koliop {
                                    OrdinalType     the_block_first_theta,
                                    View2D&&        mask_coll) {
 
-                const auto& the_local_domain_r_offset = an_operator.the_local_domain_r_offset_;
+                const auto& the_local_domain_r_offset     = an_operator.the_local_domain_r_offset_;
                 const auto& the_local_domain_theta_offset = an_operator.the_local_domain_theta_offset_;
 
                 const auto& LIM = an_operator.LIM_;
@@ -342,8 +342,8 @@ namespace koliop {
 
                 const auto& pSpecies_id = an_operator.pSpecies_id_;
 
-                // TODO(Etienne M): Make sure the accesses are coalesced on GPU
-                // and sequential on CPU.
+                // TODO(Etienne M): Make sure the accesses are sequential on
+                // CPU.
 
                 const auto the_kernel = KOKKOS_LAMBDA(const auto& a_team_handle) {
 
@@ -377,7 +377,9 @@ namespace koliop {
                                                  T_s(ir, itheta, iphi, pSpecies_id);
 
                     Kokkos::parallel_for(
-                        Kokkos::TeamThreadMDRange<Kokkos::Rank<2, Kokkos::Iterate::Default, Kokkos::Iterate::Default>,
+                        // NOTE: The explicit Left iteration direction may not benefit
+                        // the CPUs depending on how that is implemented.
+                        Kokkos::TeamThreadMDRange<Kokkos::Rank<2, Kokkos::Iterate::Left, Kokkos::Iterate::Left>,
                                                   std::remove_reference_t<decltype(a_team_handle)>>(a_team_handle,
                                                                                                     the_mu_extent, the_vpar_extent),
                         [&](auto imu, auto ivpar) {
@@ -399,13 +401,15 @@ namespace koliop {
                 // Due to the inherent Cuda/HIP thread block limit.
                 KOLIOP_ASSERT(the_team_count <= std::numeric_limits<int>::max());
 
-                // TODO(Etienne M): TEAM hardcoded size, check for auto tuning
-                // opportunities.
                 const auto a_policy = Kokkos::TeamPolicy<
-                    // Kokkos::LaunchBounds<384, 1>, Kokkos::IndexType<OrdinalType>,
-                    ExecutionSpace>{an_execution_space,
-                                    static_cast<int>(the_team_count),
-                                    koliop::utility::Select<ExecutionSpace>(Kokkos::AUTO, Kokkos::AUTO)};
+                    // Kokkos::LaunchBounds<64, 1>, Kokkos::IndexType<OrdinalType>,
+                    ExecutionSpace>{
+                    an_execution_space,
+                    static_cast<int>(the_team_count),
+                    // NOTE: The thread block size and the Nmu benefit from being
+                    // close. This is due to the TeamThreadMDRange which
+                    // parallelizes only the left most index which is Nmu.
+                    koliop::utility::Select<ExecutionSpace>(Kokkos::AUTO, 64 /* 128 */)};
 
                 Kokkos::parallel_for("DoComputeReconstruction",
                                      a_policy, the_kernel);

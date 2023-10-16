@@ -239,15 +239,15 @@ namespace koliop {
 
             // Constant, internally computed values
 
-            koliop::utility::View::MDD3<ComputeFloatType> nustar_coeff_;
+            koliop::utility::View::MDL3<ComputeFloatType> nustar_coeff_;
 
             // Variable, internally computed values
 
-            koliop::utility::View::MDD4<ComputeFloatType> n_s_;
-            koliop::utility::View::MDD4<ComputeFloatType> U_par_s_;
-            koliop::utility::View::MDD4<ComputeFloatType> T_s_;
-            koliop::utility::View::MDD5<ComputeFloatType> nu_ab_;
-            koliop::utility::View::MDD4<ComputeFloatType> q_par_on_nT_s_;
+            koliop::utility::View::MDL4<ComputeFloatType> n_s_;
+            koliop::utility::View::MDL4<ComputeFloatType> U_par_s_;
+            koliop::utility::View::MDL4<ComputeFloatType> T_s_;
+            koliop::utility::View::MDL5<ComputeFloatType> nu_ab_;
+            koliop::utility::View::MDL4<ComputeFloatType> q_par_on_nT_s_;
 
             // Miscellaneous tooling
 
