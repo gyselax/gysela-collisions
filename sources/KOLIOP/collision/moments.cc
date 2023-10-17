@@ -43,8 +43,7 @@ namespace koliop {
 
             const auto& the_execution_space_pool = an_operator.the_execution_space_pool_;
 
-            // TODO(Etienne M): Make sure the accesses are coalesced on GPU
-            // and sequential on CPU.
+            // TODO(Etienne M): Make sure the accesses are sequential on CPU.
 
             const auto the_kernel = KOKKOS_LAMBDA(const auto& a_team_handle) {
 
@@ -55,12 +54,21 @@ namespace koliop {
                 const OrdinalType iphi     = (the_team_index / (the_r_extent * the_theta_extent)) % the_phi_extent;
                 const OrdinalType ispecies = (the_team_index / (the_r_extent * the_theta_extent * the_phi_extent)) /* % the_species_extent */;
 
-                const auto an_intra_team_policy = Kokkos::TeamThreadMDRange<Kokkos::Rank<2, Kokkos::Iterate::Default, Kokkos::Iterate::Default>,
+                // NOTE: The explicit Left iteration direction may not benefit
+                // the CPUs depending on how that is implemented.
+                const auto an_intra_team_policy = Kokkos::TeamThreadMDRange<Kokkos::Rank<2, Kokkos::Iterate::Left, Kokkos::Iterate::Left>,
                                                                             std::remove_reference_t<decltype(a_team_handle)>>(a_team_handle,
                                                                                                                               the_mu_extent, the_vpar_extent);
 
                 ComputeFloatType na;
                 ComputeFloatType vpara;
+
+                // NOTE: As I reported issues with reduction in team policies
+                // (mentioned here https://github.com/kokkos/kokkos/pull/6511) I
+                // prefer not relying on them while not they are not stable.
+                // Thus the explicit reductions which IMO, also reduce the load
+                // of implicit stuff you need to know and in the end, make the
+                // code more maintainable.
 
                 Kokkos::Sum<ComputeFloatType> the_na_reducer{na};
                 Kokkos::Sum<ComputeFloatType> the_vpara_reducer{vpara};
@@ -100,10 +108,8 @@ namespace koliop {
 
                 vpara = vpara / na;
 
-                ComputeFloatType Ta;
-
+                ComputeFloatType              Ta;
                 Kokkos::Sum<ComputeFloatType> the_Ta_reducer{Ta};
-
                 the_Ta_reducer.init(the_Ta_reducer.reference());
 
                 Kokkos::parallel_for(
@@ -147,14 +153,35 @@ namespace koliop {
             // Due to the inherent Cuda/HIP thread block limit.
             KOLIOP_ASSERT(the_team_count <= std::numeric_limits<int>::max());
 
-            // TODO(Etienne M): TEAM hardcoded size, check for auto tuning
-            // opportunities.
             const auto a_policy = Kokkos::TeamPolicy<
-                // Kokkos::LaunchBounds<256, 1>, Kokkos::IndexType<OrdinalType>,
+                // Kokkos::LaunchBounds<64, 1>, Kokkos::IndexType<OrdinalType>,
                 Constant::DeviceExecutionSpaceType>{
                 the_execution_space_pool[Constant::kDefaultExecutionSpacePoolIndex],
                 static_cast<int>(the_team_count),
-                koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, 256)};
+                // NOTE: The thread block size and the Nmu benefit from being
+                // close. This is due to the TeamThreadMDRange which
+                // parallelizes only the left most index which is Nmu.
+                // NOTE: In the thread blocks, we parallelize on Nmu. If we have
+                // more thread than Nmu we may be wasting resources.
+                // This is mitigated by the occupancy and the wavefront
+                // granularity:
+                // - Say you have a kernel using 64 threads while Nmu is 64, that
+                // is perfect. If Nmu is now 48, we wast 16 threads but in any
+                // case, on AMD GPUs, we can only allocate threads in chunks on
+                // 64 called a wavefront.
+                // - Also, if we have an kernel with 64 threads and whose
+                // occupancy is limited by something other that proportional to
+                // the thread amount (LDS ?), it could be beneficial to use more
+                // threads say, 128. This would cover the case where Nmu is > 64
+                // and due to the occupancy, you would not waste threads (there
+                // is a maximum wavefront count per compute unit). That said, on
+                // future GPUs where the factor limiting the occupancy mentioned
+                // above disappear, one would then start wasting threads.
+                // - That said, having less wavefront on a kernel will increase
+                // the cache hits. This is significant if you know for a fact
+                // that few of your kernels are need to reach peak memory
+                // throughput.
+                koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, 64 /* 128 */)};
 
             Kokkos::parallel_for("DoComputeMoments",
                                  a_policy, the_kernel);

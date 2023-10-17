@@ -43,35 +43,47 @@ namespace koliop {
             static_assert((kDisjointExecutionSpaceCount >= 1) && (kDefaultExecutionSpacePoolIndex < kDisjointExecutionSpaceCount),
                           "");
 
-            // TODO(Etienne M): Note we should probably not use constant for the
-            // blocking. Indeed, on CPU we benefit from a small block and on GPU
-            // we would rather to everything at once if possible. This leads us
-            // to the dilemma where on CPU due to the small block size, we can
-            // afford a constraint on the simulation through
-            // kBlockExtent[R, Theta, Phi] but on GPU, this constraints would be
-            // unaffordable. On GPU we need dynamic kBlockExtent[R, Theta, Phi].
+            // NOTE: The amount of memory used internally by the operator
+            // depends on the number of disjoint execution space allowing
+            // asynchronous blocked CvCd computation and on the maximum block
+            // size that can be used to fill the rank local domain.
+            // For a fixed kDisjointExecutionSpaceCount lowering the block size
+            // wont have an impact on the memory consumption until all the
+            // kDisjointExecutionSpaceCount have at least a block each to
+            // process. Else, lowering either kDisjointExecutionSpaceCount (down
+            // to 1) and lowering the block size can help reduce the memory
+            // consumption.
 
-            // NOTE: The amount of memory used during the collision operator is
-            // at most approximately:
-            // 8*(Nspace*Nvpar*Nmu + 2*3*3*3*Nspace*Nvpar + 1*3*Nspace*Nvpar)
-            // fd5                   Matrix                 RHS
-
-#if defined(KOKKOS_ENABLE_HIP)
-            static inline constexpr OrdinalType kBlockExtentR     = 128;
-            static inline constexpr OrdinalType kBlockExtentTheta = 32;
-            static inline constexpr OrdinalType kBlockExtentPhi   = 4;
-
-                // static inline constexpr OrdinalType kBlockExtentR     = 32;
-                // static inline constexpr OrdinalType kBlockExtentTheta = 16;
-                // static inline constexpr OrdinalType kBlockExtentPhi   = 2;
-
-#elif defined(KOKKOS_ENABLE_OPENMP)
-            static inline constexpr OrdinalType kBlockExtentR     = 16;
-            static inline constexpr OrdinalType kBlockExtentTheta = 16;
-            static inline constexpr OrdinalType kBlockExtentPhi   = 1;
+#if defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_OPENMP)
+            static inline constexpr OrdinalType kPresetBlockExtent[][3] = {{256, 128, 2},
+                                                                           {128, 256, 2},
+                                                                           {256, 128, 1},
+                                                                           {128, 256, 1},
+                                                                           {128, 128, 2},
+                                                                           {128, 128, 1},
+                                                                           {128, 64, 2},
+                                                                           {128, 32, 4},
+                                                                           {64, 128, 2},
+                                                                           {128, 64, 1},
+                                                                           {128, 32, 2},
+                                                                           {64, 128, 1},
+                                                                           {64, 64, 2},
+                                                                           {32, 128, 2},
+                                                                           {128, 32, 1},
+                                                                           {64, 64, 1},
+                                                                           {64, 32, 2},
+                                                                           {32, 128, 1},
+                                                                           {32, 64, 2},
+                                                                           {64, 32, 1},
+                                                                           {32, 64, 1},
+                                                                           {32, 32, 2},
+                                                                           {32, 32, 1}};
 #else
     #error "Unsupported architecture."
 #endif
+
+            static inline constexpr std::size_t kPresetBlockExtentCount = sizeof(kPresetBlockExtent) /
+                                                                          sizeof(kPresetBlockExtent[0]);
         };
 
     } // namespace collision

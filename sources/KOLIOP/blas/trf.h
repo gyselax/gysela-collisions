@@ -247,6 +247,9 @@ namespace koliop {
 
                     // TODO(Etienne M): Recreate view or assign ? Which is
                     // faster ?
+                    // NOTE: Is using restricted view correct here ? While none
+                    // of the B, C, A_next and B_next alias in a given iteration
+                    // if there is unrolling then B_next becomes B.
 
                     B.assign_data(&the_batch_element(the_small_block_index, 1, 0, 0));
                     C.assign_data(&the_batch_element(the_small_block_index, 2, 0, 0));

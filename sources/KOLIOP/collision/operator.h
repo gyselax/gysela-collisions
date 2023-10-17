@@ -7,7 +7,7 @@
 #include <vector>
 
 #include "KOLIOP/collision/constant.h"
-#include "KOLIOP/collision/cvcddriver.h"
+#include "KOLIOP/collision/cvcddriverscheduler.h"
 #include "KOLIOP/internal/configuration.h"
 #include "KOLIOP/utility/view.h"
 
@@ -163,6 +163,8 @@ namespace koliop {
                      const Flo64* B_norm,
                      const Flo64* Bstar_s);
 
+            ~Operator();
+
             void Fence(OrdinalType the_execution_space_index = Constant::kDefaultExecutionSpacePoolIndex) const;
 
             void ComputeMoments(Flo64* f5d_s);
@@ -220,6 +222,7 @@ namespace koliop {
             // conversions from Flo64 to whatever ComputeFloatType is (say
             // Flo32).
 
+            const Flo64*                                        comb_mat_;
             koliop::utility::View::InternalInputL1<const Flo64> hat_As_;
             koliop::utility::View::InternalInputL1<const Flo64> hat_Zs_;
             koliop::utility::View::InternalInputL1<const Flo64> mug_;
@@ -236,33 +239,23 @@ namespace koliop {
 
             // Constant, internally computed values
 
-            koliop::utility::View::MDD3<ComputeFloatType> nustar_coeff_;
+            koliop::utility::View::MDL3<ComputeFloatType> nustar_coeff_;
 
             // Variable, internally computed values
 
-            koliop::utility::View::MDD4<ComputeFloatType> n_s_;
-            koliop::utility::View::MDD4<ComputeFloatType> U_par_s_;
-            koliop::utility::View::MDD4<ComputeFloatType> T_s_;
-            koliop::utility::View::MDD5<ComputeFloatType> nu_ab_;
-            koliop::utility::View::MDD4<ComputeFloatType> q_par_on_nT_s_;
-
-            // Miscellaneous numerical tooling
-
-            // TODO(Etienne M): Much pain in brought upon us when a single
-            // character is modified in cvcd or najl as for the whole project,
-            // we must suffer a recompilation.
-            // Use some kind of time erasure technic and only expose the
-            // *affordance* of cvcd (that is, Appl())
-
-            std::vector<CvCdDriver<Constant::kBlockExtentR,
-                                   Constant::kBlockExtentTheta,
-                                   Constant::kBlockExtentPhi,
-                                   Constant::BatchTraitsType>>
-                the_cvcd_drivers_;
+            koliop::utility::View::MDL4<ComputeFloatType> n_s_;
+            koliop::utility::View::MDL4<ComputeFloatType> U_par_s_;
+            koliop::utility::View::MDL4<ComputeFloatType> T_s_;
+            koliop::utility::View::MDL5<ComputeFloatType> nu_ab_;
+            koliop::utility::View::MDL4<ComputeFloatType> q_par_on_nT_s_;
 
             // Miscellaneous tooling
 
             std::vector<Constant::DeviceExecutionSpaceType> the_execution_space_pool_;
+
+            // Miscellaneous numerical tooling
+
+            CvCdDriverScheduler the_cvcd_drivers_scheduler_;
         };
 
     } // namespace collision

@@ -41,11 +41,16 @@
 #else
             std::cout << "  KOLIOP_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE: false\n";
 #endif
-            std::cout << "  koliop::collision::Constant::kBlockExtentR: " << koliop::collision::Constant::kBlockExtentR << "\n";
-            std::cout << "  koliop::collision::Constant::kBlockExtentTheta: " << koliop::collision::Constant::kBlockExtentTheta << "\n";
-            std::cout << "  koliop::collision::Constant::kBlockExtentPhi: " << koliop::collision::Constant::kBlockExtentPhi << "\n";
             std::cout << "  koliop::collision::Constant::kDisjointExecutionSpaceCount: " << koliop::collision::Constant::kDisjointExecutionSpaceCount << "\n";
             std::cout << "  koliop::collision::Constant::kDefaultExecutionSpacePoolIndex: " << koliop::collision::Constant::kDefaultExecutionSpacePoolIndex << "\n";
+            std::cout << "  koliop::collision::Constant::kPresetBlockExtent: ";
+            for(std::size_t i = 0; i < koliop::collision::Constant::kPresetBlockExtentCount; ++i) {
+                std::cout << "[" << koliop::collision::Constant::kPresetBlockExtent[i][0]
+                          << "," << koliop::collision::Constant::kPresetBlockExtent[i][1]
+                          << "," << koliop::collision::Constant::kPresetBlockExtent[i][2]
+                          << "] ";
+            }
+            std::cout << "\n";
         }
 
         if(static_cast<bool>(do_kokkos_initialization)) {

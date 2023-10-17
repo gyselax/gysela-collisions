@@ -53,7 +53,7 @@ namespace koliop {
                                    OrdinalType     the_block_first_theta,
                                    View2D&&        mask_coll) {
 
-                const auto& the_local_domain_r_offset = an_operator.the_local_domain_r_offset_;
+                const auto& the_local_domain_r_offset     = an_operator.the_local_domain_r_offset_;
                 const auto& the_local_domain_theta_offset = an_operator.the_local_domain_theta_offset_;
 
                 const auto& LIM = an_operator.LIM_;
@@ -75,12 +75,12 @@ namespace koliop {
                     // Kokkos::LaunchBounds<256, 1>, Kokkos::IndexType<OrdinalType>,
                     ExecutionSpace,
                     Kokkos::Rank<2,
-                                 Kokkos::Iterate::Default,
-                                 Kokkos::Iterate::Default>>{an_execution_space,
-                                                            {the_block_first_r,
-                                                             the_block_first_theta},
-                                                            {the_block_first_r + CvCdDriver::kBlockExtentR,
-                                                             the_block_first_theta + CvCdDriver::kBlockExtentTheta}};
+                                 Kokkos::Iterate::Left,
+                                 Kokkos::Iterate::Left>>{an_execution_space,
+                                                         {the_block_first_r,
+                                                          the_block_first_theta},
+                                                         {the_block_first_r + CvCdDriver::kBlockExtentR,
+                                                          the_block_first_theta + CvCdDriver::kBlockExtentTheta}};
 
                 Kokkos::parallel_for("DoPrepareCollisionMask",
                                      a_policy, the_kernel);
@@ -117,75 +117,88 @@ namespace koliop {
 
                 const auto& pSpecies_id = an_operator.pSpecies_id_;
 
-                // TODO(Etienne M): Make sure the accesses are coalesced on GPU
-                // and sequential on CPU.
-                // Using an MDRange policy and taking into account the
-                // the_batch_element_index, should lead to very decent accesses.
-                // TODO(Etienne M): Maybe we could get better performance by
-                // replacing the MDRange policy with a TeamPolicy and our own
-                // indices computation.
+                // TODO(Etienne M): Make sure the accesses are sequential on
+                // CPU.
 
-                const auto the_kernel = KOKKOS_LAMBDA(auto ir, auto itheta, auto iphi) {
+                const auto the_kernel = KOKKOS_LAMBDA(const auto& a_team_handle) {
+
+                    const OrdinalType the_team_index = a_team_handle.league_rank();
 
                     // NOTE: kBlockExtentXXX are constant, the compiler can replace
                     // the modulo with faster instructions.
-                    const OrdinalType the_block_local_index_r     = ir - the_block_first_r;
-                    const OrdinalType the_block_local_index_theta = itheta - the_block_first_theta;
-                    const OrdinalType the_block_local_index_phi   = iphi - the_block_first_phi;
+                    const OrdinalType the_block_local_index_ir     = (the_team_index) % CvCdDriver::kBlockExtentR;
+                    const OrdinalType the_block_local_index_itheta = (the_team_index / (CvCdDriver::kBlockExtentR)) % CvCdDriver::kBlockExtentTheta;
+                    const OrdinalType the_block_local_index_iphi   = (the_team_index / (CvCdDriver::kBlockExtentR * CvCdDriver::kBlockExtentTheta)) /* % CvCdDriver::kBlockExtentPhi */;
 
-                    const OffsetType the_flattened_index = CvCdDriver::kBlockExtentR * CvCdDriver::kBlockExtentTheta * the_block_local_index_phi +
-                                                           CvCdDriver::kBlockExtentR * the_block_local_index_theta +
-                                                           the_block_local_index_r;
+                    const OffsetType the_flattened_index = the_team_index;
 
                     const OrdinalType the_batch_element_index = (the_flattened_index) % CvCdDriver::BatchTraitsType::kBatchSize;
                     const OrdinalType the_batch_index         = (the_flattened_index / (CvCdDriver::BatchTraitsType::kBatchSize)) /* % CvCdDriver::kBatchCount */;
 
-                    if(mask_coll(ir - the_block_first_r,
-                                 itheta - the_block_first_theta)) {
+                    const OrdinalType ir     = the_block_first_r + the_block_local_index_ir;
+                    const OrdinalType itheta = the_block_first_theta + the_block_local_index_itheta;
+                    const OrdinalType iphi   = the_block_first_phi + the_block_local_index_iphi;
+
+                    if(mask_coll(the_block_local_index_ir,
+                                 the_block_local_index_itheta)) {
+
                         const ComputeFloatType BoT = B_norm(the_local_domain_r_offset + ir,
                                                             the_local_domain_theta_offset + itheta) /
                                                      T_s(ir, itheta, iphi, pSpecies_id);
 
                         for(OrdinalType ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
                             for(OrdinalType ipol = 0; ipol < Constant::kMaximumLaguerrePolynomialDegree; ++ipol) {
-                                the_rhs(the_batch_index, ivpar, ipol, the_batch_element_index) = 0.0;
-                                for(OrdinalType imu = 0; imu < the_mu_extent; ++imu) {
-                                    const ComputeFloatType muBoT = mug(imu) * BoT;
 
-                                    // TODO(Etienne M): Expensive
-                                    // DoComputeLaguerrePol call.
-                                    // NOTE: This is can be mitigated with
-                                    // unrolling. Also, on GPUs, we should not get
-                                    // mich thread divergence except if mask_coll
-                                    // has a *wild* pattern.
-                                    const ComputeFloatType coeff_tot = DoComputeLaguerrePol(ipol, muBoT) * BoT * coeff_intdmu(imu) * Kokkos::exp(-muBoT);
+                                ComputeFloatType              the_rhs_value;
+                                Kokkos::Sum<ComputeFloatType> the_rhs_value_reducer{the_rhs_value};
+                                the_rhs_value_reducer.init(the_rhs_value_reducer.reference());
 
-                                    the_rhs(the_batch_index, ivpar, ipol, the_batch_element_index) += coeff_tot *
-                                                                                                      f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id);
-                                }
+                                Kokkos::parallel_for(
+                                    Kokkos::TeamThreadRange(a_team_handle,
+                                                            the_mu_extent),
+                                    [&](auto imu) {
+                                        const ComputeFloatType muBoT     = mug(imu) * BoT;
+                                        const ComputeFloatType coeff_tot = DoComputeLaguerrePol(ipol, muBoT) * BoT * coeff_intdmu(imu) * Kokkos::exp(-muBoT);
+
+                                        the_rhs_value_reducer.join(the_rhs_value_reducer.reference(),
+                                                                   coeff_tot * f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id));
+                                    });
+
+                                a_team_handle.team_reduce(the_rhs_value_reducer);
+
+                                // NOTE: This should be a no-op.
+                                the_rhs_value = the_rhs_value_reducer.reference();
+
+                                the_rhs(the_batch_index, ivpar, ipol, the_batch_element_index) = the_rhs_value;
                             }
                         }
                     } else {
-                        for(OrdinalType ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
-                            for(OrdinalType ipol = 0; ipol < Constant::kMaximumLaguerrePolynomialDegree; ++ipol) {
-                                the_rhs(the_batch_index, ivpar, ipol, the_batch_element_index) = 0.0;
-                            }
-                        }
+                        Kokkos::parallel_for(
+                            Kokkos::TeamThreadRange(a_team_handle,
+                                                    the_vpar_extent),
+                            [&](auto ivpar) {
+                                for(OrdinalType ipol = 0; ipol < Constant::kMaximumLaguerrePolynomialDegree; ++ipol) {
+                                    // NOTE: These access are.. bad.
+                                    the_rhs(the_batch_index, ivpar, ipol, the_batch_element_index) = 0.0;
+                                }
+                            });
                     }
                 };
 
-                const auto a_policy = Kokkos::MDRangePolicy<
-                    // Kokkos::LaunchBounds<256, 1>, Kokkos::IndexType<OrdinalType>,
-                    ExecutionSpace,
-                    Kokkos::Rank<3,
-                                 Kokkos::Iterate::Default,
-                                 Kokkos::Iterate::Default>>{an_execution_space,
-                                                            {the_block_first_r,
-                                                             the_block_first_theta,
-                                                             the_block_first_phi},
-                                                            {the_block_first_r + CvCdDriver::kBlockExtentR,
-                                                             the_block_first_theta + CvCdDriver::kBlockExtentTheta,
-                                                             the_block_first_phi + CvCdDriver::kBlockExtentPhi}};
+                const auto the_team_count = CvCdDriver::kBlockExtentR * CvCdDriver::kBlockExtentTheta * CvCdDriver::kBlockExtentPhi;
+
+                // Due to the inherent Cuda/HIP thread block limit.
+                KOLIOP_ASSERT(the_team_count <= std::numeric_limits<int>::max());
+
+                const auto a_policy = Kokkos::TeamPolicy<
+                    // Kokkos::LaunchBounds<64, 1>, Kokkos::IndexType<OrdinalType>,
+                    ExecutionSpace>{
+                    an_execution_space,
+                    static_cast<int>(the_team_count),
+                    // NOTE: The thread block size and the Nmu benefit from being
+                    // close. This is due to the TeamThreadMDRange which
+                    // parallelizes only the left most index which is Nmu.
+                    koliop::utility::Select<ExecutionSpace>(Kokkos::AUTO, 64 /* 128 */)};
 
                 Kokkos::parallel_for("DoComputeAlphaProjection",
                                      a_policy, the_kernel);
@@ -228,14 +241,14 @@ namespace koliop {
                     // Kokkos::LaunchBounds<256, 1>, Kokkos::IndexType<OrdinalType>,
                     ExecutionSpace,
                     Kokkos::Rank<5,
-                                 Kokkos::Iterate::Default,
-                                 Kokkos::Iterate::Default>>{an_execution_space,
-                                                            {0, 0, 0, 0, 0},
-                                                            {CvCdDriver::BatchTraitsType::kBatchSize,
-                                                             Constant::kMaximumLaguerrePolynomialDegree,
-                                                             Constant::kMaximumLaguerrePolynomialDegree,
-                                                             the_vpar_extent,
-                                                             CvCdDriver::kBatchCount}};
+                                 Kokkos::Iterate::Left,
+                                 Kokkos::Iterate::Left>>{an_execution_space,
+                                                         {0, 0, 0, 0, 0},
+                                                         {CvCdDriver::BatchTraitsType::kBatchSize,
+                                                          Constant::kMaximumLaguerrePolynomialDegree,
+                                                          Constant::kMaximumLaguerrePolynomialDegree,
+                                                          the_vpar_extent,
+                                                          CvCdDriver::kBatchCount}};
 
                 Kokkos::parallel_for("DoPrepareMatrix",
                                      a_policy, the_kernel);
@@ -269,13 +282,13 @@ namespace koliop {
 
                     // NOTE: kBlockExtentXXX are constant, the compiler can replace
                     // the modulo with faster instructions.
-                    const OrdinalType the_block_local_index_r     = ir - the_block_first_r;
-                    const OrdinalType the_block_local_index_theta = itheta - the_block_first_theta;
-                    const OrdinalType the_block_local_index_phi   = iphi - the_block_first_phi;
+                    const OrdinalType the_block_local_index_ir     = ir - the_block_first_r;
+                    const OrdinalType the_block_local_index_itheta = itheta - the_block_first_theta;
+                    const OrdinalType the_block_local_index_iphi   = iphi - the_block_first_phi;
 
-                    const OffsetType the_flattened_index = CvCdDriver::kBlockExtentR * CvCdDriver::kBlockExtentTheta * the_block_local_index_phi +
-                                                           CvCdDriver::kBlockExtentR * the_block_local_index_theta +
-                                                           the_block_local_index_r;
+                    const OffsetType the_flattened_index = CvCdDriver::kBlockExtentR * CvCdDriver::kBlockExtentTheta * the_block_local_index_iphi +
+                                                           CvCdDriver::kBlockExtentR * the_block_local_index_itheta +
+                                                           the_block_local_index_ir;
 
                     const OrdinalType the_batch_element_index = (the_flattened_index) % CvCdDriver::BatchTraitsType::kBatchSize;
                     const OrdinalType the_batch_index         = (the_flattened_index / (CvCdDriver::BatchTraitsType::kBatchSize)) /* % CvCdDriver::kBatchCount */;
@@ -294,21 +307,23 @@ namespace koliop {
                 };
 
                 const auto a_policy = Kokkos::MDRangePolicy<
-                    // Kokkos::LaunchBounds<256, 1>, Kokkos::IndexType<OrdinalType>,
+                    // NOTE: Weird stuff happens when I set LaunchBounds <64,1>.
+                    // Notably, the kernel is not launched ??
+                    // Kokkos::LaunchBounds<64, 1>, Kokkos::IndexType<OrdinalType>,
                     ExecutionSpace,
                     Kokkos::Rank<5,
-                                 Kokkos::Iterate::Default,
-                                 Kokkos::Iterate::Default>>{an_execution_space,
-                                                            {0,
-                                                             0,
-                                                             the_block_first_r,
-                                                             the_block_first_theta,
-                                                             the_block_first_phi},
-                                                            {Constant::kMaximumLaguerrePolynomialDegree,
-                                                             the_vpar_extent,
-                                                             the_block_first_r + CvCdDriver::kBlockExtentR,
-                                                             the_block_first_theta + CvCdDriver::kBlockExtentTheta,
-                                                             the_block_first_phi + CvCdDriver::kBlockExtentPhi}};
+                                 Kokkos::Iterate::Left,
+                                 Kokkos::Iterate::Left>>{an_execution_space,
+                                                         {0,
+                                                          0,
+                                                          the_block_first_r,
+                                                          the_block_first_theta,
+                                                          the_block_first_phi},
+                                                         {Constant::kMaximumLaguerrePolynomialDegree,
+                                                          the_vpar_extent,
+                                                          the_block_first_r + CvCdDriver::kBlockExtentR,
+                                                          the_block_first_theta + CvCdDriver::kBlockExtentTheta,
+                                                          the_block_first_phi + CvCdDriver::kBlockExtentPhi}};
 
                 Kokkos::parallel_for("DoComputeCvCdSource",
                                      a_policy, the_kernel);
@@ -342,8 +357,8 @@ namespace koliop {
 
                 const auto& pSpecies_id = an_operator.pSpecies_id_;
 
-                // TODO(Etienne M): Make sure the accesses are coalesced on GPU
-                // and sequential on CPU.
+                // TODO(Etienne M): Make sure the accesses are sequential on
+                // CPU.
 
                 const auto the_kernel = KOKKOS_LAMBDA(const auto& a_team_handle) {
 
@@ -377,7 +392,9 @@ namespace koliop {
                                                  T_s(ir, itheta, iphi, pSpecies_id);
 
                     Kokkos::parallel_for(
-                        Kokkos::TeamThreadMDRange<Kokkos::Rank<2, Kokkos::Iterate::Default, Kokkos::Iterate::Default>,
+                        // NOTE: The explicit Left iteration direction may not benefit
+                        // the CPUs depending on how that is implemented.
+                        Kokkos::TeamThreadMDRange<Kokkos::Rank<2, Kokkos::Iterate::Left, Kokkos::Iterate::Left>,
                                                   std::remove_reference_t<decltype(a_team_handle)>>(a_team_handle,
                                                                                                     the_mu_extent, the_vpar_extent),
                         [&](auto imu, auto ivpar) {
@@ -385,7 +402,6 @@ namespace koliop {
                             ComputeFloatType       f5d_s_value = 0.0;
 
                             for(OrdinalType ipol = 0; ipol < Constant::kMaximumLaguerrePolynomialDegree; ++ipol) {
-                                // TODO(Etienne M): Expensive DoComputeLaguerrePol call.
                                 f5d_s_value += the_rhs(the_batch_index, ivpar, ipol, the_batch_element_index) *
                                                DoComputeLaguerrePol(ipol, muBoT);
                             }
@@ -399,13 +415,15 @@ namespace koliop {
                 // Due to the inherent Cuda/HIP thread block limit.
                 KOLIOP_ASSERT(the_team_count <= std::numeric_limits<int>::max());
 
-                // TODO(Etienne M): TEAM hardcoded size, check for auto tuning
-                // opportunities.
                 const auto a_policy = Kokkos::TeamPolicy<
-                    // Kokkos::LaunchBounds<384, 1>, Kokkos::IndexType<OrdinalType>,
-                    ExecutionSpace>{an_execution_space,
-                                    static_cast<int>(the_team_count),
-                                    koliop::utility::Select<ExecutionSpace>(Kokkos::AUTO, 384)};
+                    // Kokkos::LaunchBounds<64, 1>, Kokkos::IndexType<OrdinalType>,
+                    ExecutionSpace>{
+                    an_execution_space,
+                    static_cast<int>(the_team_count),
+                    // NOTE: The thread block size and the Nmu benefit from being
+                    // close. This is due to the TeamThreadMDRange which
+                    // parallelizes only the left most index which is Nmu.
+                    koliop::utility::Select<ExecutionSpace>(Kokkos::AUTO, 64 /* 128 */)};
 
                 Kokkos::parallel_for("DoComputeReconstruction",
                                      a_policy, the_kernel);
@@ -446,15 +464,15 @@ namespace koliop {
                                                 koliop::utility::View::InternalInputL1<const Flo64>>;
 
         public:
-            CvCdDriver(OrdinalType                                          pSpecies_id,
-                       OrdinalType                                          the_vpar_extent,
-                       OrdinalType                                          the_species_extent,
-                       bool                                                 collision_interspecies,
-                       const Flo64*                                         comb_mat,
-                       koliop::utility::View::InternalInputL1<const Flo64>& hat_As,
-                       koliop::utility::View::InternalInputL1<const Flo64>& hat_Zs,
-                       koliop::utility::View::InternalInputL1<const Flo64>& vparg,
-                       koliop::utility::View::InternalInputL1<const Flo64>& coeff_intdvpar);
+            CvCdDriver(OrdinalType                                                pSpecies_id,
+                       OrdinalType                                                the_vpar_extent,
+                       OrdinalType                                                the_species_extent,
+                       bool                                                       collision_interspecies,
+                       const Flo64*                                               comb_mat,
+                       const koliop::utility::View::InternalInputL1<const Flo64>& hat_As,
+                       const koliop::utility::View::InternalInputL1<const Flo64>& hat_Zs,
+                       const koliop::utility::View::InternalInputL1<const Flo64>& vparg,
+                       const koliop::utility::View::InternalInputL1<const Flo64>& coeff_intdvpar);
 
             template <typename Operator, // Templatized to avoid dependency loops
                       typename ExecutionSpace,
@@ -503,15 +521,15 @@ namespace koliop {
         CvCdDriver<the_block_extent_r,
                    the_block_extent_theta,
                    the_block_extent_phi,
-                   BatchTraits>::CvCdDriver(OrdinalType                                          pSpecies_id,
-                                            OrdinalType                                          the_vpar_extent,
-                                            OrdinalType                                          the_species_extent,
-                                            bool                                                 collision_interspecies,
-                                            const Flo64*                                         comb_mat,
-                                            koliop::utility::View::InternalInputL1<const Flo64>& hat_As,
-                                            koliop::utility::View::InternalInputL1<const Flo64>& hat_Zs,
-                                            koliop::utility::View::InternalInputL1<const Flo64>& vparg,
-                                            koliop::utility::View::InternalInputL1<const Flo64>& coeff_intdvpar)
+                   BatchTraits>::CvCdDriver(OrdinalType                                                pSpecies_id,
+                                            OrdinalType                                                the_vpar_extent,
+                                            OrdinalType                                                the_species_extent,
+                                            bool                                                       collision_interspecies,
+                                            const Flo64*                                               comb_mat,
+                                            const koliop::utility::View::InternalInputL1<const Flo64>& hat_As,
+                                            const koliop::utility::View::InternalInputL1<const Flo64>& hat_Zs,
+                                            const koliop::utility::View::InternalInputL1<const Flo64>& vparg,
+                                            const koliop::utility::View::InternalInputL1<const Flo64>& coeff_intdvpar)
             : the_najl_provider_{pSpecies_id,
                                  the_vpar_extent, the_species_extent,
                                  collision_interspecies,

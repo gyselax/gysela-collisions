@@ -1,0 +1,43 @@
+// SPDX-License-Identifier: MIT
+
+#include "KOLIOP/collision/cvcddrivereraser.h"
+
+namespace koliop {
+    namespace collision {
+
+        ////////////////////////////////////////////////////////////////////////
+        // CvCdDriverEraser methods definition
+        ////////////////////////////////////////////////////////////////////////
+
+        CvCdDriverEraser::InterfaceType*
+        CvCdDriverEraser::get() {
+            return the_erased_cvcd_driver_.get();
+        }
+
+        const CvCdDriverEraser::InterfaceType*
+        CvCdDriverEraser::get() const {
+            return the_erased_cvcd_driver_.get();
+        }
+
+        CvCdDriverEraser::InterfaceType&
+        CvCdDriverEraser::operator*() {
+            return *get();
+        }
+
+        CvCdDriverEraser::InterfaceType*
+        CvCdDriverEraser::operator->() {
+            return get();
+        }
+
+        void CvCdDriverEraser::clear() {
+            // NOTE: there is an asymmetry where a unique_ptr's reset can take a
+            // nullptr but not a shared_ptr's.
+            the_erased_cvcd_driver_.reset(/* nullptr */);
+        }
+
+        bool CvCdDriverEraser::IsSet() const {
+            return get() != nullptr;
+        }
+
+    } // namespace collision
+} // namespace koliop

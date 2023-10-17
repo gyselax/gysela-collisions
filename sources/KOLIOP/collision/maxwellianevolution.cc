@@ -53,8 +53,7 @@ namespace koliop {
 
             const uint64_t the_scratch_memory_bytes_per_thread = the_species_extent * sizeof(ComputeFloatType);
 
-            // TODO(Etienne M): Make sure the accesses are coalesced on GPU
-            // and sequential on CPU.
+            // TODO(Etienne M): Make sure the accesses are sequential on CPU.
 
             const auto the_kernel = KOKKOS_LAMBDA(const auto& a_team_handle) {
 
@@ -69,7 +68,8 @@ namespace koliop {
                                      the_scratch_memory_bytes_per_thread};
 
                 // NOTE: Iterating on species leads to large strides in
-                // memory access.
+                // memory access. These *bad* accesses are few and proportional
+                // to the_species_extent.
 
                 for(OrdinalType ispeciesA = 0; ispeciesA < the_species_extent; ++ispeciesA) {
                     const ComputeFloatType hat_Aa = hat_As(ispeciesA);
@@ -112,7 +112,9 @@ namespace koliop {
                     const ComputeFloatType bot_new = Bij / Ta_new;
 
                     Kokkos::parallel_for(
-                        Kokkos::TeamThreadMDRange<Kokkos::Rank<2, Kokkos::Iterate::Default, Kokkos::Iterate::Default>,
+                        // NOTE: The explicit Left iteration direction may not benefit
+                        // the CPUs depending on how that is implemented.
+                        Kokkos::TeamThreadMDRange<Kokkos::Rank<2, Kokkos::Iterate::Left, Kokkos::Iterate::Left>,
                                                   std::remove_reference_t<decltype(a_team_handle)>>(a_team_handle,
                                                                                                     the_mu_extent, the_vpar_extent),
                         [&](auto imu, auto ivpar) {
@@ -140,14 +142,15 @@ namespace koliop {
             // Due to the inherent Cuda/HIP thread block limit.
             KOLIOP_ASSERT(the_team_count <= std::numeric_limits<int>::max());
 
-            // TODO(Etienne M): TEAM hardcoded size, check for auto tuning
-            // opportunities.
             auto a_policy = Kokkos::TeamPolicy<
                 // Kokkos::LaunchBounds<64, 1>, Kokkos::IndexType<OrdinalType>,
                 Constant::DeviceExecutionSpaceType>{
                 the_execution_space_pool[Constant::kDefaultExecutionSpacePoolIndex],
                 static_cast<int>(the_team_count),
-                koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, 64)};
+                // NOTE: The thread block size and the Nmu benefit from being
+                // close. This is due to the TeamThreadMDRange which
+                // parallelizes only the left most index which is Nmu.
+                koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, 64 /* 128 */)};
 
             a_policy.set_scratch_size(0,
                                       Kokkos::PerThread(ScratchMemory::shmem_size(the_scratch_memory_bytes_per_thread)));
