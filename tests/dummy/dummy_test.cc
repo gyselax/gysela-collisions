@@ -285,16 +285,15 @@ int Test1() {
 
     static constexpr size_t the_mu_extent      = 64;
     static constexpr size_t the_vpar_extent    = 128;
-    static constexpr size_t the_r_extent       = 128;
-    static constexpr size_t the_theta_extent   = 32;
-    static constexpr size_t the_phi_extent     = 4;
-    static constexpr size_t the_species_extent = 2;
+    static constexpr size_t the_r_extent       = 64;
+    static constexpr size_t the_theta_extent   = 128;
+    static constexpr size_t the_phi_extent     = 1;
+    static constexpr size_t the_species_extent = 1;
 
     static constexpr size_t the_global_domain_r_extent     = the_r_extent;
     static constexpr size_t the_global_domain_theta_extent = the_theta_extent + 1;
     static constexpr size_t the_global_domain_r_offset     = 0;
     static constexpr size_t the_global_domain_theta_offset = 0;
-
 
     std::vector<double> a_big_dummy_array{};
     a_big_dummy_array.resize(the_mu_extent *
