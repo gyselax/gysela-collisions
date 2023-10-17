@@ -413,16 +413,16 @@ namespace koliop {
                     // Kokkos::LaunchBounds<256, 1>, Kokkos::IndexType<OrdinalType>,
                     ExecutionSpace,
                     Kokkos::Rank<4,
-                                 Kokkos::Iterate::Default,
-                                 Kokkos::Iterate::Default>>{an_execution_space,
-                                                            {0,
-                                                             the_block_first_r,
-                                                             the_block_first_theta,
-                                                             the_block_first_phi},
-                                                            {the_vpar_extent,
-                                                             the_block_first_r + Najl::CvCdDriverType::kBlockExtentR,
-                                                             the_block_first_theta + Najl::CvCdDriverType::kBlockExtentTheta,
-                                                             the_block_first_phi + Najl::CvCdDriverType::kBlockExtentPhi}};
+                                 Kokkos::Iterate::Left,
+                                 Kokkos::Iterate::Left>>{an_execution_space,
+                                                         {0,
+                                                          the_block_first_r,
+                                                          the_block_first_theta,
+                                                          the_block_first_phi},
+                                                         {the_vpar_extent,
+                                                          the_block_first_r + Najl::CvCdDriverType::kBlockExtentR,
+                                                          the_block_first_theta + Najl::CvCdDriverType::kBlockExtentTheta,
+                                                          the_block_first_phi + Najl::CvCdDriverType::kBlockExtentPhi}};
 
                 Kokkos::parallel_for("DoComputeNajl",
                                      a_policy, the_kernel);
