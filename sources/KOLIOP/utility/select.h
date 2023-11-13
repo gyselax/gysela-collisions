@@ -36,14 +36,24 @@ namespace koliop {
             using HIPExecutionSpace = struct DummyHIP {};
 #endif
 
+#if defined(KOKKOS_ENABLE_CUDA)
+            using CUDAExecutionSpace = Kokkos::Cuda;
+#else
+            // Unique type name.
+            using CUDAExecutionSpace = struct DummyHIP {};
+#endif
+
             if constexpr(std::is_same_v<ExecutionSpace, OpenMPExecutionSpace>) {
                 return the_openmp_value;
             } else if constexpr(std::is_same_v<ExecutionSpace, HIPExecutionSpace>) {
                 return the_hip_value;
+            } else if constexpr(std::is_same_v<ExecutionSpace, CUDAExecutionSpace>) {
+                return the_hip_value;
             } else {
                 // NOTE: A shame there is no *else constexpr*.
                 static_assert(std::is_same_v<ExecutionSpace, OpenMPExecutionSpace> ||
-                                  std::is_same_v<ExecutionSpace, HIPExecutionSpace>,
+                                   std::is_same_v<ExecutionSpace, HIPExecutionSpace>||
+                                  std::is_same_v<ExecutionSpace, CUDAExecutionSpace> ,
                               "Execution space not supported we need to work on that.");
             }
         }

@@ -34,7 +34,7 @@ namespace koliop {
             // GPUs, we could benefit from a higher value.
             // Bigger blocking needs less streams ad inversely.
 
-#if defined(KOKKOS_ENABLE_HIP)
+#if defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_CUDA)
             static inline constexpr OrdinalType kDisjointExecutionSpaceCount = 4;
 #elif defined(KOKKOS_ENABLE_OPENMP)
             static inline constexpr OrdinalType kDisjointExecutionSpaceCount = 1;
@@ -54,7 +54,7 @@ namespace koliop {
             // to 1) and lowering the block size can help reduce the memory
             // consumption.
 
-#if defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_OPENMP)
+#if defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_OPENMP)
             static inline constexpr OrdinalType kPresetBlockExtent[][3] = {{256, 128, 2},
                                                                            {128, 256, 2},
                                                                            {256, 128, 1},

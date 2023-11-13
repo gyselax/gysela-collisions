@@ -201,7 +201,7 @@ namespace koliop {
                             q_r_,
                             mask_buffer_r_);
 
-#if defined(KOKKOS_ENABLE_HIP)
+#if defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_CUDA)
             KOLIOP_ASSERT(the_execution_space_pool_.size() == 0);
 
             // The null stream.
