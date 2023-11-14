@@ -281,7 +281,7 @@ namespace koliop {
                 const auto& pSpecies_id            = the_najl_provider.pSpecies_id_;
                 const auto& collision_interspecies = the_najl_provider.collision_interspecies_;
 
-                const auto the_kernel = KOKKOS_LAMBDA(auto ivpar, auto ir, auto itheta, auto iphi) {
+                const auto the_kernel = KOKKOS_LAMBDA(OrdinalType ivpar, OrdinalType ir, OrdinalType itheta, OrdinalType iphi) {
 
                     // NOTE: kBlockExtentXXX are constant, the compiler can replace
                     // the modulo with faster instructions.

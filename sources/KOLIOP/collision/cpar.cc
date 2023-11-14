@@ -53,7 +53,24 @@ namespace koliop {
 
             // TODO(Etienne M): Make sure the accesses are sequential on CPU.
 
-            const auto the_kernel = KOKKOS_LAMBDA(const auto& a_team_handle) {
+            const auto the_team_count = the_r_extent * the_theta_extent * the_phi_extent;
+
+            // Due to the inherent Cuda/HIP thread block limit.
+            KOLIOP_ASSERT(the_team_count <= std::numeric_limits<int>::max());
+
+            using PolicyType = Kokkos::TeamPolicy<
+                // Kokkos::LaunchBounds<64, 1>, Kokkos::IndexType<OrdinalType>,
+                Constant::DeviceExecutionSpaceType>;
+
+            const auto a_policy = PolicyType{
+                the_execution_space_pool[Constant::kDefaultExecutionSpacePoolIndex],
+                static_cast<int>(the_team_count),
+                // NOTE: The thread block size and the Nmu benefit from being
+                // close. This is due to the TeamThreadMDRange which
+                // parallelizes only the left most index which is Nmu.
+                koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, 64 /* 128 */)};
+
+            const auto the_kernel = KOKKOS_LAMBDA(const typename PolicyType::member_type& a_team_handle) {
 
                 const OrdinalType the_team_index = a_team_handle.league_rank();
 
@@ -120,20 +137,6 @@ namespace koliop {
                 }
             };
 
-            const auto the_team_count = the_r_extent * the_theta_extent * the_phi_extent;
-
-            // Due to the inherent Cuda/HIP thread block limit.
-            KOLIOP_ASSERT(the_team_count <= std::numeric_limits<int>::max());
-
-            const auto a_policy = Kokkos::TeamPolicy<
-                // Kokkos::LaunchBounds<64, 1>, Kokkos::IndexType<OrdinalType>,
-                Constant::DeviceExecutionSpaceType>{
-                the_execution_space_pool[Constant::kDefaultExecutionSpacePoolIndex],
-                static_cast<int>(the_team_count),
-                // NOTE: The thread block size and the Nmu benefit from being
-                // close. This is due to the TeamThreadMDRange which
-                // parallelizes only the left most index which is Nmu.
-                koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, 64 /* 128 */)};
 
             Kokkos::parallel_for("DoComputeCpar",
                                  a_policy, the_kernel);
