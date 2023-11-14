@@ -193,6 +193,8 @@ namespace koliop {
             void ExtractRaw(uint32_t the_value_identifier,
                             void*    an_output_buffer) const;
 
+            /// Compute the evolution of the distribution function due to collisions.
+            ///
             void Collision(ComputeFloatType dt,
                            Flo64*           f5d_s);
 
