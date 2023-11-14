@@ -40,7 +40,7 @@ namespace koliop {
             using CUDAExecutionSpace = Kokkos::Cuda;
 #else
             // Unique type name.
-            using CUDAExecutionSpace = struct DummyHIP {};
+            using CUDAExecutionSpace = struct DummyCUDA {};
 #endif
 
             if constexpr(std::is_same_v<ExecutionSpace, OpenMPExecutionSpace>) {
