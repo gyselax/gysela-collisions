@@ -416,3 +416,22 @@
         return KOLIOP_STATUS_SUCCESS;
     });
 }
+
+::koliop_Status koliop_Collision(::koliop_Operator an_operator,
+                                 double            dt,
+                                 double*           f5d_s) {
+    return koliop::error::FromException([&]() {
+        if(!Kokkos::is_initialized()) {
+            return KOLIOP_STATUS_INITIALIZATION_FAILURE;
+        }
+
+        if(an_operator == nullptr ||
+           f5d_s == nullptr) {
+            return KOLIOP_STATUS_INVALID_VALUE;
+        }
+
+        reinterpret_cast<koliop::collision::Operator*>(an_operator)->Collision(static_cast<koliop::ComputeFloatType>(dt), f5d_s);
+
+        return KOLIOP_STATUS_SUCCESS;
+    });
+}

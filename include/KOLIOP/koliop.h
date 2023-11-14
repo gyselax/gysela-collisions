@@ -199,6 +199,14 @@ koliop_Status koliop_ExtractRaw(koliop_Operator an_operator,
 // koliop_Status koliop_ExtractNuab(koliop_Operator an_operator,
 //                                  double*         nu_ab);
 
+/// This is the main routine to apply the collision Operator. One can either
+/// call the above function in the appropriate order or call koliop_Collision
+/// to do the work for you (at the cost fo flexibility).
+///
+koliop_Status koliop_Collision(koliop_Operator an_operator,
+                               double          dt,
+                               double*         f5d_s);
+
 #if defined(__cplusplus)
 }
 #endif

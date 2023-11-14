@@ -240,5 +240,9 @@ namespace koliop {
             the_execution_space_pool_[the_execution_space_index].fence();
         }
 
+        void Operator::Collision(ComputeFloatType dt,
+                                 Flo64*           f5d_s) {
+        }
+
     } // namespace collision
 } // namespace koliop

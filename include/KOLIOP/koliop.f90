@@ -397,6 +397,7 @@ MODULE koliop
       END FUNCTION
 
       ! koliop_Status koliop_ComputeUparTCorrection(koliop_Operator an_operator,
+      !                                             double          dt,
       !                                             double*         f5d_s);
       INTEGER(koliop_Status) FUNCTION koliop_ComputeUparTCorrection_c( &
          an_operator, &
@@ -433,6 +434,26 @@ MODULE koliop
          TYPE(C_PTR), VALUE, INTENT(IN) :: an_operator
          INTEGER(C_INT32_T), VALUE, INTENT(IN) :: the_value_identifier
          TYPE(C_PTR), VALUE, INTENT(IN) :: an_output_buffer
+      END FUNCTION
+
+      ! koliop_Status koliop_Collision_c(koliop_Operator an_operator,
+      !                                  double          dt,
+      !                                  double*         f5d_s);
+      INTEGER(koliop_Status) FUNCTION koliop_Collision_c( &
+         an_operator, &
+         dt, &
+         f5d_s) &
+         BIND(C, NAME='koliop_Collision')
+
+         IMPORT :: koliop_Status
+         IMPORT :: C_PTR
+         IMPORT :: C_DOUBLE
+
+         IMPLICIT NONE
+
+         TYPE(C_PTR), VALUE, INTENT(IN) :: an_operator
+         REAL(C_DOUBLE), VALUE, INTENT(IN) :: dt
+         TYPE(C_PTR), VALUE, INTENT(IN) :: f5d_s
       END FUNCTION
    END INTERFACE
 
@@ -766,6 +787,26 @@ CONTAINS
          an_operator_handle, &
          INT(the_value_identifier, C_INT32_T), &
          an_output_buffer)
+   END SUBROUTINE
+
+   SUBROUTINE koliop_Collision_fp( &
+      an_operator_handle, &
+      dt, &
+      f5d_s, &
+      an_error_code)
+
+      IMPLICIT NONE
+
+      TYPE(C_PTR), INTENT(IN) :: an_operator_handle
+      REAL(C_DOUBLE), INTENT(IN) :: dt
+      ! REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(INOUT) :: f5d_s
+      TYPE(C_PTR), INTENT(IN) :: f5d_s
+      INTEGER(koliop_Status), INTENT(OUT) :: an_error_code
+
+      an_error_code = koliop_Collision_c( &
+         an_operator_handle, &
+         dt, &
+         f5d_s)
    END SUBROUTINE
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1145,6 +1186,26 @@ CONTAINS
          an_operator_handle, &
          the_value_identifier, &
          C_LOC(an_output_buffer), &
+         an_error_code)
+   END SUBROUTINE
+
+   SUBROUTINE koliop_Collision_f( &
+      an_operator_handle, &
+      dt, &
+      f5d_s, &
+      an_error_code)
+
+      IMPLICIT NONE
+
+      TYPE(C_PTR), INTENT(IN) :: an_operator_handle
+      REAL(C_DOUBLE), INTENT(IN) :: dt
+      REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(INOUT) :: f5d_s
+      INTEGER(koliop_Status), INTENT(OUT) :: an_error_code
+
+      call koliop_Collision_fp( &
+         an_operator_handle, &
+         dt, &
+         C_LOC(f5d_s), &
          an_error_code)
    END SUBROUTINE
 END MODULE
