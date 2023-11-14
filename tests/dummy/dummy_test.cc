@@ -267,8 +267,9 @@ int Test0() {
 
 int Test1() {
     // NOTE: This function is used to test the GPU code. We pass the operator
-    // dummy arrays that get copied to the GPU anyway thus being disjoint
-    // (avoiding cache effects).
+    // dummy arrays that get copied to the GPU anyway (assuming
+    // koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE=OFF) thus being
+    // disjoint (avoiding cache effects).
 
     ::koliop_Operator an_operator;
 
@@ -403,6 +404,109 @@ int Test1() {
     return 0;
 }
 
+int Test2() {
+    // NOTE: This function is used to test the GPU code. We pass the operator
+    // dummy arrays that get copied to the GPU anyway (assuming
+    // koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE=OFF) thus being
+    // disjoint (avoiding cache effects).
+
+    ::koliop_Operator an_operator;
+
+    static constexpr size_t  Npolmax                = 3;
+    static constexpr size_t  index_max              = 4;
+    static constexpr int64_t pSpecies_id            = 0;
+    static constexpr int64_t mu_id                  = 0; // [0, nrank)
+    static constexpr double  R0                     = 320.0;
+    static constexpr int8_t  collision_interspecies = true;
+    static constexpr int8_t  SOL                    = false;
+    static constexpr int8_t  LIM                    = false;
+    static constexpr int64_t ir_SOL_separatrix      = 32;
+    static constexpr double  dt                     = 50.0;
+
+    static constexpr size_t the_mu_extent      = 64;
+    static constexpr size_t the_vpar_extent    = 128;
+    static constexpr size_t the_r_extent       = 64;
+    static constexpr size_t the_theta_extent   = 128;
+    static constexpr size_t the_phi_extent     = 1;
+    static constexpr size_t the_species_extent = 1;
+
+    static constexpr size_t the_global_domain_r_extent     = the_r_extent;
+    static constexpr size_t the_global_domain_theta_extent = the_theta_extent + 1;
+    static constexpr size_t the_global_domain_r_offset     = 0;
+    static constexpr size_t the_global_domain_theta_offset = 0;
+
+    std::vector<double> a_big_dummy_array{};
+    a_big_dummy_array.resize(the_mu_extent *
+                                 the_vpar_extent *
+                                 the_r_extent *
+                                 the_theta_extent *
+                                 the_phi_extent *
+                                 the_species_extent,
+                             1.0);
+
+    std::vector<double> a_big_dummy_f5d_s{};
+    a_big_dummy_f5d_s.resize(the_mu_extent *
+                                 the_vpar_extent *
+                                 the_r_extent *
+                                 the_theta_extent *
+                                 the_phi_extent *
+                                 the_species_extent,
+                             1.0);
+
+    if(::koliop_Create(&an_operator,
+                       Npolmax,
+                       index_max,
+                       pSpecies_id,
+                       mu_id,
+                       the_mu_extent,
+                       the_vpar_extent,
+                       the_r_extent,
+                       the_theta_extent,
+                       the_phi_extent,
+                       the_species_extent,
+                       the_global_domain_r_extent,
+                       the_global_domain_theta_extent,
+                       the_global_domain_r_offset,
+                       the_global_domain_theta_offset,
+                       R0,
+                       collision_interspecies,
+                       SOL,
+                       LIM,
+                       ir_SOL_separatrix,
+                       a_big_dummy_array.data(),
+                       a_big_dummy_array.data(),
+                       a_big_dummy_array.data(),
+                       a_big_dummy_array.data(),
+                       a_big_dummy_array.data(),
+                       a_big_dummy_array.data(),
+                       a_big_dummy_array.data(),
+                       a_big_dummy_array.data(),
+                       a_big_dummy_array.data(),
+                       a_big_dummy_array.data(),
+                       a_big_dummy_array.data(),
+                       nullptr, // &mask_LIM[0][0],
+                       a_big_dummy_array.data(),
+                       a_big_dummy_array.data()) != KOLIOP_STATUS_SUCCESS) {
+        std::cout << "::koliop_Create() failed\n";
+        return -1;
+    }
+
+    std::cout << an_operator << "\n";
+
+    if(::koliop_Collision(an_operator,
+                          dt,
+                          a_big_dummy_f5d_s.data()) != KOLIOP_STATUS_SUCCESS) {
+        std::cout << "::koliop_Collision() failed\n";
+        return -1;
+    }
+
+    if(::koliop_Release(an_operator) != KOLIOP_STATUS_SUCCESS) {
+        std::cout << "::koliop_Release() failed\n";
+    }
+
+    return 0;
+}
+
 int main(int, char**) {
     if(::koliop_Initialize(KOLIOP_TRUE, 8, 0, KOLIOP_TRUE) != KOLIOP_STATUS_SUCCESS) {
         std::cout << "::koliop_Initialize() failed\n";
@@ -422,6 +526,10 @@ int main(int, char**) {
         }
 
         if(Test1() < 0) {
+            return -1;
+        }
+
+        if(Test2() < 0) {
             return -1;
         }
     }
