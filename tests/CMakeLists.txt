@@ -11,7 +11,7 @@ function(koliop_add_test test_category test_name)
                    "${CMAKE_CURRENT_SOURCE_DIR}/${test_category}/${test_name}.cc")
 
     target_link_libraries("${target_name}"
-                          PRIVATE koliop)
+                          PRIVATE "koliop::koliop")
 
     koliop_dependent_target_build_options("${target_name}")
 

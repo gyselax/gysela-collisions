@@ -86,6 +86,7 @@ endfunction()
 # variable and GenerateExportHeader:
 # https://cmake.org/cmake/help/latest/module/GenerateExportHeader.html
 add_library(koliop STATIC)
+add_library("koliop::koliop" ALIAS "koliop")
 
 set(koliop_SOURCES_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/sources")
 set(koliop_INCLUDE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include")
@@ -119,7 +120,7 @@ target_include_directories(koliop
                            PUBLIC   "$<BUILD_INTERFACE:${koliop_INCLUDE_DIRECTORY}/>"
                                     "$<INSTALL_INTERFACE:include/>")
 
-option(koliop_BUILD_FORTRAN_INTERFACE "Enable the koliop_fortran glue code needed to interface koliop from Fortran." OFF)
+option(koliop_BUILD_FORTRAN_INTERFACE "Enable the koliop::fortran_interface glue code needed to interface koliop from Fortran." OFF)
 
 if(koliop_BUILD_FORTRAN_INTERFACE)
     message(STATUS "[koliop] Enabling the Fortran interface.")
@@ -131,18 +132,19 @@ if(koliop_BUILD_FORTRAN_INTERFACE)
 
     FortranCInterface_VERIFY(CXX)
 
-    add_library(koliop_fortran STATIC)
+    add_library(koliop_fortran_interface STATIC)
+    add_library("koliop::fortran_interface" ALIAS "koliop_fortran_interface")
 
-    target_include_directories(koliop_fortran
-                               INTERFACE "${CMAKE_CURRENT_BINARY_DIR}/koliop_fortran_FMOD")
+    target_include_directories(koliop_fortran_interface
+                               INTERFACE "${CMAKE_CURRENT_BINARY_DIR}/koliop_fortran_interface_FMOD")
 
-    set_target_properties(koliop_fortran
-                          PROPERTIES Fortran_MODULE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/koliop_fortran_FMOD")
+    set_target_properties(koliop_fortran_interface
+                          PROPERTIES Fortran_MODULE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/koliop_fortran_interface_FMOD")
 
-    target_sources(koliop_fortran
+    target_sources(koliop_fortran_interface
                    PRIVATE "${koliop_INCLUDE_DIRECTORY}/KOLIOP/koliop.f90")
 
-    target_link_libraries(koliop_fortran
+    target_link_libraries(koliop_fortran_interface
                           # NOTE: I set it to PRIVATE, but this may cause
                           # issues:
                           # https://gitlab.kitware.com/cmake/cmake/-/issues/24402
