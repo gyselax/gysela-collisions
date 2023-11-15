@@ -9,6 +9,9 @@ function(koliop_target_enable_lto target_name)
         # NOTE: We have had some issues with LTO and the Clang based compilers
         # on Adastra. Note that recent Clang offer the -foffload-lto, an LTO
         # pass that is device/target aware.
-        set_target_properties("${target_name}" PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
+
+        # NOTE: As much as I would like to use LTO, too many compilers just
+        # blatantly fail at making it work in production situation.
+        # set_target_properties("${target_name}" PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
     endif()
 endfunction()
