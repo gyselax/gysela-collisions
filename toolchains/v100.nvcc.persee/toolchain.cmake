@@ -1,6 +1,6 @@
 set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/installation")
 
-set(CMAKE_CXX_COMPILER "${CMAKE_SOURCE_DIR}/toolchains/v100.nvcc.persee/nvcc_wrapper")
+set(CMAKE_CXX_COMPILER "${CMAKE_CURRENT_LIST_DIR}/nvcc_wrapper")
 set(CMAKE_Fortran_COMPILER gfortran)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_EXTENSIONS OFF)
