@@ -1,4 +1,4 @@
-source /data/gyselarunner/voicexx_spackactivate.sh
+source /data/gyselarunner/gyselalibxx_spackactivate.sh
 
 module purge
 module list
