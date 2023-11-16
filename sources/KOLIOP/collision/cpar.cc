@@ -68,7 +68,7 @@ namespace koliop {
                 // NOTE: The thread block size and the Nmu benefit from being
                 // close. This is due to the TeamThreadMDRange which
                 // parallelizes only the left most index which is Nmu.
-                koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, 64 /* 128 */)};
+                koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, 64 /* 128 */, 32)};
 
             const auto the_kernel = KOKKOS_LAMBDA(const typename PolicyType::member_type& a_team_handle) {
 

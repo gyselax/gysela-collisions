@@ -71,7 +71,7 @@ namespace koliop {
                 // NOTE: The thread block size and the Nmu benefit from being
                 // close. This is due to the TeamThreadMDRange which
                 // parallelizes only the left most index which is Nmu.
-                koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, 64 /* 128 */)};
+                koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, 64 /* 128 */, 32)};
 
             a_policy.set_scratch_size(0,
                                       Kokkos::PerThread(ScratchMemory::shmem_size(the_scratch_memory_bytes_per_thread)));

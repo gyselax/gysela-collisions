@@ -57,7 +57,7 @@ typedef struct koliop_OpaqueOperator_* koliop_Operator;
 /// The values given below are expected NOT to change during the lifetime
 /// of the operator.
 /// NOTE:
-/// - Npolmax is expected to be 3 and index_max = 2 * (index_max - 1) = 4
+/// - Npolmax is expected to be 3 and index_max = 2 * (Npolmax - 1) = 4
 /// - the_mu_extent, the_vpar_extent and the_species_extent are the same for all
 /// ranks.
 /// - the_r_extent, the_theta_extent and the_phi_extent are the same for all

@@ -12,10 +12,12 @@ namespace koliop {
         /// Kokkos::AUTO_t.
         template <typename ExecutionSpace,
                   typename T0,
-                  typename T1>
+                  typename T1,
+                  typename T2>
         constexpr auto
-        Select(T0&& the_openmp_value,
-               T1&& the_hip_value) {
+        Select(T0&& the_OMP_value,
+               T1&& the_HIP_value,
+               T2&& the_CUDA_value) {
 
             // NOTE: We need these if def shenanigans to cover an other defect.
             // The fact that Kokkos::HIP simply does not exist if the backend is
@@ -44,11 +46,11 @@ namespace koliop {
 #endif
 
             if constexpr(std::is_same_v<ExecutionSpace, OpenMPExecutionSpace>) {
-                return the_openmp_value;
+                return the_OMP_value;
             } else if constexpr(std::is_same_v<ExecutionSpace, HIPExecutionSpace>) {
-                return the_hip_value;
+                return the_HIP_value;
             } else if constexpr(std::is_same_v<ExecutionSpace, CUDAExecutionSpace>) {
-                return the_hip_value;
+                return the_CUDA_value;
             } else {
                 // NOTE: A shame there is no *else constexpr*.
                 static_assert(std::is_same_v<ExecutionSpace, OpenMPExecutionSpace> ||
