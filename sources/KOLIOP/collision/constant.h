@@ -78,8 +78,12 @@ namespace koliop {
                                                                            {32, 64, 1},
                                                                            {32, 32, 2},
                                                                            {32, 32, 1},
-                                                                           // This small block size exists only for Gysela++.
-                                                                           {1, 1, 1}};
+                                                                           // This small block size exists only for
+                                                                           // Gysela++. Small block sizes may create
+                                                                           // issues due with the hardware vector size.
+                                                                           // All of that should be caught at compile
+                                                                           // time.
+                                                                           {8, 1, 1}};
 #else
     #error "Unsupported architecture."
 #endif
