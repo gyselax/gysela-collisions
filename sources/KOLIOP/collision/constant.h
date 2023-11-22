@@ -35,7 +35,7 @@ namespace koliop {
             // Bigger blocking needs less streams ad inversely.
 
 #if defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_CUDA)
-            static inline constexpr OrdinalType kDisjointExecutionSpaceCount = 4;
+            static inline constexpr OrdinalType kDisjointExecutionSpaceCount = 1;
 #elif defined(KOKKOS_ENABLE_OPENMP)
             static inline constexpr OrdinalType kDisjointExecutionSpaceCount = 1;
 #endif
