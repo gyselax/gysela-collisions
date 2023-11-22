@@ -76,9 +76,11 @@ namespace koliop {
                     a_cvcd_driver.Set(CvCdDriver<32, 32, 2, Constant::BatchTraitsType>{pSpecies_id, the_vpar_extent, the_species_extent, collision_interspecies, comb_mat, hat_As, hat_Zs, vparg, coeff_intdvpar});
                 } else if(the_block_r_extent == 32 && the_block_theta_extent == 32 && the_block_phi_extent == 1) {
                     a_cvcd_driver.Set(CvCdDriver<32, 32, 1, Constant::BatchTraitsType>{pSpecies_id, the_vpar_extent, the_species_extent, collision_interspecies, comb_mat, hat_As, hat_Zs, vparg, coeff_intdvpar});
-                } else if(the_block_r_extent == 8 && the_block_theta_extent == 1 && the_block_phi_extent == 1) {
-                    a_cvcd_driver.Set(CvCdDriver<8, 1, 1, Constant::BatchTraitsType>{pSpecies_id, the_vpar_extent, the_species_extent, collision_interspecies, comb_mat, hat_As, hat_Zs, vparg, coeff_intdvpar});
-                } else {
+                }
+                // else if(the_block_r_extent == 8 && the_block_theta_extent == 1 && the_block_phi_extent == 1) {
+                //     a_cvcd_driver.Set(CvCdDriver<8, 1, 1, Constant::BatchTraitsType>{pSpecies_id, the_vpar_extent, the_species_extent, collision_interspecies, comb_mat, hat_As, hat_Zs, vparg, coeff_intdvpar});
+                // }
+                else {
                     // The block size is registered in
                     // the_preset_block_extent but we are not able to build
                     // such block of this size.
