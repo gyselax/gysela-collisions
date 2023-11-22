@@ -206,6 +206,8 @@
             return KOLIOP_STATUS_INITIALIZATION_FAILURE;
         }
 
+        ::koliop_Fence(an_operator);
+
         // Freeing a nullptr is *fine*.
         delete reinterpret_cast<koliop::collision::Operator*>(an_operator);
 

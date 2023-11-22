@@ -124,10 +124,9 @@ namespace koliop {
             // the execution spaces. We use shared pointer to share the drivers.
             // We can guarantee that at most something proportionate to
             // kDisjointExecutionSpaceCount * BlockSize will be allocated.
-            // We must make sure that only one execution space used for a given
-            // execution space. So shared instances of a driver share the same
-            // execution space. This basically serialize the work from the POV
-            // of a driver preventing race condition.
+            // Shared instances of a driver share the same execution space. This
+            // basically serialize the work from the POV of a driver preventing
+            // race condition.
 
             const auto& the_execution_space_pool = an_operator.the_execution_space_pool_;
 

@@ -101,6 +101,8 @@ koliop_Status koliop_Create(koliop_Operator* an_operator_handle,
                             const double*    B_norm,
                             const double*    Bstar_s);
 
+/// koliop_Release does an implied koliop_Fence.
+///
 koliop_Status koliop_Release(koliop_Operator an_operator);
 
 koliop_Status koliop_Fence(koliop_Operator an_operator);
