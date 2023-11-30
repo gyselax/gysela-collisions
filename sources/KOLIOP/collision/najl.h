@@ -281,7 +281,7 @@ namespace koliop {
                 const auto& pSpecies_id            = the_najl_provider.pSpecies_id_;
                 const auto& collision_interspecies = the_najl_provider.collision_interspecies_;
 
-                const auto the_kernel = KOKKOS_LAMBDA(auto ivpar, auto ir, auto itheta, auto iphi) {
+                const auto the_kernel = KOKKOS_LAMBDA(OrdinalType ivpar, OrdinalType ir, OrdinalType itheta, OrdinalType iphi) {
 
                     // NOTE: kBlockExtentXXX are constant, the compiler can replace
                     // the modulo with faster instructions.
@@ -491,8 +491,8 @@ namespace koliop {
             OrdinalType the_species_extent_;
             bool        collision_interspecies_;
 
-            koliop::utility::View::InternalInputL<const Flo64[2 * Constant::kMaximumLaguerrePolynomialDegree]
-                                                             [2 * Constant::kMaximumLaguerrePolynomialDegree]>
+            koliop::utility::View::InternalInputL<const Flo64[6 /* 2*(Npolmax-1) + 1 + 1 */]
+                                                             [6 /* 2*(Npolmax-1) + 1 + 1 */]>
                                                                 comb_mat_;
             koliop::utility::View::InternalInputL1<const Flo64> hat_As_;
             koliop::utility::View::InternalInputL1<const Flo64> hat_Zs_;
@@ -570,7 +570,7 @@ namespace koliop {
 
             // TODO(Etienne M): what is the perf of such memset.
             // See if putting that in the main kernel improves the duration.
-            Kokkos::deep_copy(an_execution_space, the_Najl, 0.0);
+            Kokkos::deep_copy(an_execution_space, the_Najl, static_cast<ComputeFloatType>(0.0));
 
             // TODO(Etienne M): It is not currently possible to do something
             // like:

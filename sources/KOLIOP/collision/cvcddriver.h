@@ -61,7 +61,7 @@ namespace koliop {
                 const auto& mask_buffer_r = an_operator.mask_buffer_r_;
                 const auto& mask_LIM      = an_operator.mask_LIM_;
 
-                const auto the_kernel = KOKKOS_LAMBDA(auto ir, auto itheta) {
+                const auto the_kernel = KOKKOS_LAMBDA(OrdinalType ir, OrdinalType itheta) {
                     const bool the_mask_value = static_cast<OrdinalType>(mask_buffer_r(the_local_domain_r_offset + ir) < 0.99) |
                                                 // NOTE: mask_lim may not be allocated ! We need the && first.
                                                 static_cast<OrdinalType>(LIM && (mask_LIM(the_local_domain_r_offset + ir,
@@ -120,7 +120,24 @@ namespace koliop {
                 // TODO(Etienne M): Make sure the accesses are sequential on
                 // CPU.
 
-                const auto the_kernel = KOKKOS_LAMBDA(const auto& a_team_handle) {
+                const auto the_team_count = CvCdDriver::kBlockExtentR * CvCdDriver::kBlockExtentTheta * CvCdDriver::kBlockExtentPhi;
+
+                // Due to the inherent Cuda/HIP thread block limit.
+                KOLIOP_ASSERT(the_team_count <= std::numeric_limits<int>::max());
+
+                using PolicyType = Kokkos::TeamPolicy<
+                    // Kokkos::LaunchBounds<64, 1>, Kokkos::IndexType<OrdinalType>,
+                    ExecutionSpace>;
+
+                const auto a_policy = PolicyType{
+                    an_execution_space,
+                    static_cast<int>(the_team_count),
+                    // NOTE: The thread block size and the Nmu benefit from being
+                    // close. This is due to the TeamThreadMDRange which
+                    // parallelizes only the left most index which is Nmu.
+                    koliop::utility::Select<ExecutionSpace>(Kokkos::AUTO, 64 /* 128 */, 32)};
+
+                const auto the_kernel = KOKKOS_LAMBDA(const typename PolicyType::member_type& a_team_handle) {
 
                     const OrdinalType the_team_index = a_team_handle.league_rank();
 
@@ -185,21 +202,6 @@ namespace koliop {
                     }
                 };
 
-                const auto the_team_count = CvCdDriver::kBlockExtentR * CvCdDriver::kBlockExtentTheta * CvCdDriver::kBlockExtentPhi;
-
-                // Due to the inherent Cuda/HIP thread block limit.
-                KOLIOP_ASSERT(the_team_count <= std::numeric_limits<int>::max());
-
-                const auto a_policy = Kokkos::TeamPolicy<
-                    // Kokkos::LaunchBounds<64, 1>, Kokkos::IndexType<OrdinalType>,
-                    ExecutionSpace>{
-                    an_execution_space,
-                    static_cast<int>(the_team_count),
-                    // NOTE: The thread block size and the Nmu benefit from being
-                    // close. This is due to the TeamThreadMDRange which
-                    // parallelizes only the left most index which is Nmu.
-                    koliop::utility::Select<ExecutionSpace>(Kokkos::AUTO, 64 /* 128 */)};
-
                 Kokkos::parallel_for("DoComputeAlphaProjection",
                                      a_policy, the_kernel);
             }
@@ -218,7 +220,7 @@ namespace koliop {
 
                 const auto& the_vpar_extent = an_operator.the_vpar_extent_;
 
-                const auto the_kernel = KOKKOS_LAMBDA(auto the_batch_element_index, auto jpol, auto ipol, auto ivpar, auto the_batch_index) {
+                const auto the_kernel = KOKKOS_LAMBDA(OrdinalType the_batch_element_index, OrdinalType jpol, OrdinalType ipol, OrdinalType ivpar, OrdinalType the_batch_index) {
                     the_matrix_sampler.AllDiagonals(the_batch_index,
                                                     ivpar,
                                                     ipol, jpol,
@@ -278,7 +280,7 @@ namespace koliop {
 
                 const auto& pSpecies_id = an_operator.pSpecies_id_;
 
-                const auto the_kernel = KOKKOS_LAMBDA(auto ipol, auto ivpar, auto ir, auto itheta, auto iphi) {
+                const auto the_kernel = KOKKOS_LAMBDA(OrdinalType ipol, OrdinalType ivpar, OrdinalType ir, OrdinalType itheta, OrdinalType iphi) {
 
                     // NOTE: kBlockExtentXXX are constant, the compiler can replace
                     // the modulo with faster instructions.
@@ -360,7 +362,24 @@ namespace koliop {
                 // TODO(Etienne M): Make sure the accesses are sequential on
                 // CPU.
 
-                const auto the_kernel = KOKKOS_LAMBDA(const auto& a_team_handle) {
+                const auto the_team_count = CvCdDriver::kBlockExtentR * CvCdDriver::kBlockExtentTheta * CvCdDriver::kBlockExtentPhi;
+
+                // Due to the inherent Cuda/HIP thread block limit.
+                KOLIOP_ASSERT(the_team_count <= std::numeric_limits<int>::max());
+
+                using PolicyType = Kokkos::TeamPolicy<
+                    // Kokkos::LaunchBounds<64, 1>, Kokkos::IndexType<OrdinalType>,
+                    ExecutionSpace>;
+
+                const auto a_policy = PolicyType{
+                    an_execution_space,
+                    static_cast<int>(the_team_count),
+                    // NOTE: The thread block size and the Nmu benefit from being
+                    // close. This is due to the TeamThreadMDRange which
+                    // parallelizes only the left most index which is Nmu.
+                    koliop::utility::Select<ExecutionSpace>(Kokkos::AUTO, 64 /* 128 */, 32)};
+
+                const auto the_kernel = KOKKOS_LAMBDA(const typename PolicyType::member_type& a_team_handle) {
 
                     const OrdinalType the_team_index = a_team_handle.league_rank();
 
@@ -409,21 +428,6 @@ namespace koliop {
                             f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id) = f5d_s_value;
                         });
                 };
-
-                const auto the_team_count = CvCdDriver::kBlockExtentR * CvCdDriver::kBlockExtentTheta * CvCdDriver::kBlockExtentPhi;
-
-                // Due to the inherent Cuda/HIP thread block limit.
-                KOLIOP_ASSERT(the_team_count <= std::numeric_limits<int>::max());
-
-                const auto a_policy = Kokkos::TeamPolicy<
-                    // Kokkos::LaunchBounds<64, 1>, Kokkos::IndexType<OrdinalType>,
-                    ExecutionSpace>{
-                    an_execution_space,
-                    static_cast<int>(the_team_count),
-                    // NOTE: The thread block size and the Nmu benefit from being
-                    // close. This is due to the TeamThreadMDRange which
-                    // parallelizes only the left most index which is Nmu.
-                    koliop::utility::Select<ExecutionSpace>(Kokkos::AUTO, 64 /* 128 */)};
 
                 Kokkos::parallel_for("DoComputeReconstruction",
                                      a_policy, the_kernel);

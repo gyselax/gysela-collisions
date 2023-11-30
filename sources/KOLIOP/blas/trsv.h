@@ -108,7 +108,7 @@ namespace koliop {
                                                                     static_cast<std::size_t>(kBatchCount),
                                                                     static_cast<std::size_t>(kBigBlockExtent)};
 
-            const auto the_kernel = KOKKOS_LAMBDA(auto the_batch_element_index, auto the_batch_index) {
+            const auto the_kernel = KOKKOS_LAMBDA(OrdinalType the_batch_element_index, OrdinalType the_batch_index) {
 
                 auto the_matrix_batch_element = Kokkos::subview(the_A_matrix_view,
                                                                 the_batch_index,

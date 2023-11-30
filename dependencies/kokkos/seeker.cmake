@@ -1,13 +1,26 @@
 message(STATUS "[koliop] Seeking Kokkos implementation.")
 
-option(koliop_USE_SYSTEM_PROVIDED_KOKKOS        "Look for a system provided installation instead of downloading Kokkos and compiling it." OFF)
-option(koliop_USE_SYSTEM_PROVIDED_KOKKOS_KERNEL "Look for a system provided installation instead of downloading Kokkos Kernel and compiling it." OFF)
+option(koliop_USE_SYSTEM_PROVIDED_KOKKOS        "Look for an installation using find_package()." OFF)
+option(koliop_USE_SYSTEM_PROVIDED_KOKKOS_KERNEL "Look for an installation using find_package()." OFF)
+
+option(koliop_USE_ALREADY_PROVIDED_KOKKOS        "Does not look for an installation, assumes one can directly use target_link_library()." OFF)
+option(koliop_USE_ALREADY_PROVIDED_KOKKOS_KERNEL "Does not look for an installation, assumes one can directly use target_link_library()." OFF)
 
 # NOTE: It is a *bit* unfortunate that Kokkos relies on CMAKE_CXX_STANDARD
 # instead of a less pervasive set_target_properties(... CXX_STANDARD ...).
 # NOTE: Kokkos options provided in the toolchains.
 
-if(NOT koliop_USE_SYSTEM_PROVIDED_KOKKOS)
+if(koliop_USE_ALREADY_PROVIDED_KOKKOS)
+   # EMPTY, this is a noop. This means some parent library dependent on us
+   # already exposed a kokkos via FetchContent_MakeAvailable, add_subdirectory
+   # or find_package.
+elseif(koliop_USE_SYSTEM_PROVIDED_KOKKOS)
+    # NOTE: With CMake 3.24, we can jut ask FetchContent_Declare with
+    # OVERRIDE_FIND_PACKAGE and put the find_package in the main control flow
+    # (not in the else).
+    # https://cmake.org/cmake/help/latest/module/FetchContent.html#integrating-with-find-package
+    find_package(Kokkos 4.0.1 REQUIRED)
+elseif(NOT koliop_USE_ALREADY_PROVIDED_KOKKOS AND NOT koliop_USE_SYSTEM_PROVIDED_KOKKOS)
     # cmake_policy(SET CMP0135 NEW)
     FetchContent_Declare(Kokkos
                          SYSTEM                # For CMake v3.25 and up.
@@ -22,14 +35,21 @@ if(NOT koliop_USE_SYSTEM_PROVIDED_KOKKOS)
                          URL_HASH "SHA512=07ec941bf8f8a7f641ec260c48a8b5180278fee34b32571b9c724a072ebfb0a85b4a9939d66cb73a5c9172c0c662a94056040feae4569c0ddcf7f07f93a864f6")
     FetchContent_MakeAvailable(Kokkos)
 else()
-    # NOTE: With CMake 3.24, we can jut ask FetchContent_Declare with
-    # OVERRIDE_FIND_PACKAGE and put the find_package in the main control flow
-    # (not in the else).
-    # https://cmake.org/cmake/help/latest/module/FetchContent.html#integrating-with-find-package
-    find_package(Kokkos 4.0.1 REQUIRED)
+    message(FATAL_ERROR "[koliop] KoLiOp does not know how to use Kokkos. Should it use a system provided library or expect it is already available (say via add_subdirectory) ?")
 endif()
 
-if(NOT koliop_USE_SYSTEM_PROVIDED_KOKKOS_KERNEL)
+if(koliop_USE_ALREADY_PROVIDED_KOKKOS_KERNEL)
+   # EMPTY, this is a noop. This means some parent library dependent on us
+   # already exposed a kokkos via FetchContent_MakeAvailable, add_subdirectory
+   # or find_package.
+elseif(koliop_USE_SYSTEM_PROVIDED_KOKKOS_KERNEL)
+    set(KokkosKernels_ENABLE_ALL_COMPONENTS OFF CACHE BOOL "")
+    set(KokkosKernels_ENABLE_COMPONENT_BATCHED ON CACHE BOOL "")
+    set(KokkosKernels_ENABLE_COMPONENT_BLAS ON CACHE BOOL "")
+
+    # NOTE: Same remark as the previous find_package.
+    find_package(KokkosKernels 4.0.1 REQUIRED)
+elseif(NOT koliop_USE_ALREADY_PROVIDED_KOKKOS_KERNEL AND NOT koliop_USE_SYSTEM_PROVIDED_KOKKOS_KERNEL)
     set(KokkosKernels_ENABLE_ALL_COMPONENTS OFF CACHE BOOL "")
     set(KokkosKernels_ENABLE_COMPONENT_BATCHED ON CACHE BOOL "")
     set(KokkosKernels_ENABLE_COMPONENT_BLAS ON CACHE BOOL "")
@@ -48,8 +68,7 @@ if(NOT koliop_USE_SYSTEM_PROVIDED_KOKKOS_KERNEL)
                          URL_HASH "SHA512=0bec42f21ce7193c0da3be5fcf0039c44172d820cf597c07a358fe348fd082139c8a0c485ec4a11248632b804b5df427754bde1c5fcf501ffdd1f36e54718c22")
     FetchContent_MakeAvailable(KokkosKernels)
 else()
-    # NOTE: Same remark as the previous find_package.
-    find_package(KokkosKernels 4.0.1 REQUIRED)
+    message(FATAL_ERROR "[koliop] KoLiOp does not know how to use Kokkos kernels. Should it use a system provided library or expect it is already available (say via add_subdirectory) ?")
 endif()
 
 function(koliop_target_add_kokkos target_name)

@@ -34,8 +34,8 @@ namespace koliop {
             // GPUs, we could benefit from a higher value.
             // Bigger blocking needs less streams ad inversely.
 
-#if defined(KOKKOS_ENABLE_HIP)
-            static inline constexpr OrdinalType kDisjointExecutionSpaceCount = 4;
+#if defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_CUDA)
+            static inline constexpr OrdinalType kDisjointExecutionSpaceCount = 1;
 #elif defined(KOKKOS_ENABLE_OPENMP)
             static inline constexpr OrdinalType kDisjointExecutionSpaceCount = 1;
 #endif
@@ -54,30 +54,38 @@ namespace koliop {
             // to 1) and lowering the block size can help reduce the memory
             // consumption.
 
-#if defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_OPENMP)
-            static inline constexpr OrdinalType kPresetBlockExtent[][3] = {{256, 128, 2},
-                                                                           {128, 256, 2},
-                                                                           {256, 128, 1},
-                                                                           {128, 256, 1},
-                                                                           {128, 128, 2},
-                                                                           {128, 128, 1},
-                                                                           {128, 64, 2},
-                                                                           {128, 32, 4},
-                                                                           {64, 128, 2},
-                                                                           {128, 64, 1},
-                                                                           {128, 32, 2},
-                                                                           {64, 128, 1},
-                                                                           {64, 64, 2},
-                                                                           {32, 128, 2},
-                                                                           {128, 32, 1},
-                                                                           {64, 64, 1},
-                                                                           {64, 32, 2},
-                                                                           {32, 128, 1},
-                                                                           {32, 64, 2},
-                                                                           {64, 32, 1},
-                                                                           {32, 64, 1},
-                                                                           {32, 32, 2},
-                                                                           {32, 32, 1}};
+#if defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_OPENMP)
+            static inline constexpr OrdinalType kPresetBlockExtent[][3] = {
+                {256, 128, 2},
+                {128, 256, 2},
+                {256, 128, 1},
+                {128, 256, 1},
+                {128, 128, 2},
+                {128, 128, 1},
+                {128, 64, 2},
+                {128, 32, 4},
+                {64, 128, 2},
+                {128, 64, 1},
+                {128, 32, 2},
+                {64, 128, 1},
+                {64, 64, 2},
+                {32, 128, 2},
+                {128, 32, 1},
+                {64, 64, 1},
+                {64, 32, 2},
+                {32, 128, 1},
+                {32, 64, 2},
+                {64, 32, 1},
+                {32, 64, 1},
+                {32, 32, 2},
+                {32, 32, 1},
+                //    // This small block size exists only for
+                //    // Gysela++. Small block sizes may create
+                //    // issues due with the hardware vector size.
+                //    // All of that should be caught at compile
+                //    // time.
+                //    {8, 1, 1}
+            };
 #else
     #error "Unsupported architecture."
 #endif

@@ -93,7 +93,7 @@ namespace koliop {
             // TODO(Etienne M): Check that we do not benefit from using
             // TeamGEMV This require a trick with vector threads.
 
-            const auto the_kernel = KOKKOS_LAMBDA(auto the_batch_element_index, auto the_scalar_index, auto the_small_block_index, auto the_batch_index) {
+            const auto the_kernel = KOKKOS_LAMBDA(OrdinalType the_batch_element_index, OrdinalType the_scalar_index, OrdinalType the_small_block_index, OrdinalType the_batch_index) {
                 const auto the_vector_x_batch_element = Kokkos::subview(the_x_vector_view,
                                                                         the_batch_index,
                                                                         // TODO(Etienne M): These ALL() are constant, should we

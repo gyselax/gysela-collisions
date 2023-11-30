@@ -57,14 +57,14 @@ typedef struct koliop_OpaqueOperator_* koliop_Operator;
 /// The values given below are expected NOT to change during the lifetime
 /// of the operator.
 /// NOTE:
-/// - Npolmax is expected to be 3 and index_max = 2 * (index_max - 1) = 4
+/// - Npolmax is expected to be 3 and index_max = 2 * (Npolmax - 1) = 4
 /// - the_mu_extent, the_vpar_extent and the_species_extent are the same for all
 /// ranks.
 /// - the_r_extent, the_theta_extent and the_phi_extent are the same for all
 /// rank but due to the parallelization, the size of the whole domain could be
 /// bigger. the_global_domain_r_extent and the_global_domain_theta_extent
 /// represent the size of the whole domain, not a chunk that is handled to a
-/// rank (due to parallelization) .
+/// rank (due to parallelization).
 ///
 koliop_Status koliop_Create(koliop_Operator* an_operator_handle,
                             size_t           Npolmax,
@@ -101,11 +101,13 @@ koliop_Status koliop_Create(koliop_Operator* an_operator_handle,
                             const double*    B_norm,
                             const double*    Bstar_s);
 
+/// koliop_Release does an implied koliop_Fence.
+///
 koliop_Status koliop_Release(koliop_Operator an_operator);
 
 koliop_Status koliop_Fence(koliop_Operator an_operator);
 
-/// Computation of fluid moments term:
+/// Computes the fluid moments:
 ///   na =  int 2 * Pi * Bstar * dmu * dvpar * Fa
 ///   Vpara = (1/na) * int 2 * Pi * Bstar * dmu * dvpar * vpar * Fa
 ///   Ta = (1/(3*na)) * int 2 * Pi * Bstar * dmu * dvpar * Fa * &
@@ -116,10 +118,11 @@ koliop_Status koliop_ComputeMoments(koliop_Operator an_operator,
 
 koliop_Status koliop_PrecomputeNu(koliop_Operator an_operator);
 
-/// Remove the Maxwellian to the distribution function Fa = Fa - FMa
-/// Evolve temperature
-/// Compute the new Maxwellian
-/// Add it to the function distribution Fa = Fa + FMa
+/// Make the Maxwellian evolve:
+///     - remove the Maxwellian to the distribution function Fa = Fa - FMa;
+///     - evolve temperature;
+///     - compute the new Maxwellian;
+///     - add it to the function distribution Fa = Fa + FMa.
 /// Evolution of the temperatures via the term C0:
 ///   Ta = Ta + deltat*sum_b nu_ab * (2*hat_Aa/(hat_Aa + hat_Ab)*(Tb -Ta) +
 ///     (2/3) * Vpara *(Vpara - Vparb))
@@ -128,7 +131,7 @@ koliop_Status koliop_ComputeMaxwellianEvolution(koliop_Operator an_operator,
                                                 double          dt,
                                                 double*         f5d_s);
 
-/// Computation of q_para/(na*Ta)
+/// Computation of q_para/(na*Ta):
 ///   q_par_on_nT = 0.5*int (2 * Pi * Bstar) *  dmu * dvpar * &
 ///       (vpar-Vpara) * ((vpar-Vpara)^2 + vperp^2) * (Fa - FMa)
 ///  Indeed  q_par_on_nT = 0 for a Maxwellian distribution function
@@ -136,7 +139,7 @@ koliop_Status koliop_ComputeMaxwellianEvolution(koliop_Operator an_operator,
 koliop_Status koliop_ComputeQparOnNT(koliop_Operator an_operator,
                                      const double*   f5d_s);
 
-/// Evolution of f due to the Cpar
+/// Make Fa evolve:
 ///   f = f + dt * sum_b (nu_sab(xb) * vpar / Ta) * F_M0a * &
 ///           (Rat * Vparb - Vpara + (q_para / (na * Ta)) * (1 - 2*xa*xa/5) -
 ///           (3/5) *  Rat * (q_parb / (nb * Tb)) / (1 + (vTa/vTb)^2 ))
@@ -148,8 +151,8 @@ koliop_Status koliop_ComputeCpar(koliop_Operator an_operator,
                                  double          dt,
                                  double*         f5d_s);
 
-/// This routine compute one of the following operation on the
-/// distribution function:
+/// This routine compute one of the following operation on the distribution
+/// function:
 ///  - choice 3 : Fa = Fa * FM0a
 ///  - choice 4 : Fa = Fa / FM0a
 ///
@@ -159,6 +162,9 @@ koliop_Status koliop_ComputeMaxwellianUnshiftedLoc(koliop_Operator an_operator,
                                                    double*         f5d_s,
                                                    int32_t         choice);
 
+/// Compute alpha and;
+/// make alpha evolve;
+/// reconstruct Fa.
 koliop_Status koliop_Apply(koliop_Operator an_operator,
                            double          dt,
                            double*         f5d_s);
@@ -198,6 +204,16 @@ koliop_Status koliop_ExtractRaw(koliop_Operator an_operator,
 
 // koliop_Status koliop_ExtractNuab(koliop_Operator an_operator,
 //                                  double*         nu_ab);
+
+/// Compute the evolution of the distribution function due to collisions.
+///
+/// This is the main routine to apply the collision Operator. One can either
+/// call the above function in the appropriate order or call koliop_Collision
+/// to do the work for you (at the cost fo flexibility).
+///
+koliop_Status koliop_Collision(koliop_Operator an_operator,
+                               double          dt,
+                               double*         f5d_s);
 
 #if defined(__cplusplus)
 }

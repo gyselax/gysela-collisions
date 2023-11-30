@@ -47,21 +47,23 @@ namespace koliop {
             // Due to the inherent Cuda/HIP thread block limit.
             KOLIOP_ASSERT(the_team_count <= std::numeric_limits<int>::max());
 
-            const auto a_policy = Kokkos::TeamPolicy<
+            using PolicyType = Kokkos::TeamPolicy<
                 // Kokkos::LaunchBounds<64, 1>, Kokkos::IndexType<OrdinalType>,
-                Constant::DeviceExecutionSpaceType>{
+                Constant::DeviceExecutionSpaceType>;
+
+            const auto a_policy = PolicyType{
                 the_execution_space_pool[Constant::kDefaultExecutionSpacePoolIndex],
                 static_cast<int>(the_team_count),
                 // NOTE: The thread block size and the Nmu benefit from being
                 // close. This is due to the TeamThreadMDRange which
                 // parallelizes only the left most index which is Nmu.
-                koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, 64 /* 128 */)};
+                koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, 64 /* 128 */, 32)};
 
             // TODO(Etienne M): Make sure the accesses are sequential on CPU.
 
             switch(choice) {
                 case 3: {
-                    const auto the_kernel_choice_3 = KOKKOS_LAMBDA(const auto& a_team_handle) {
+                    const auto the_kernel_choice_3 = KOKKOS_LAMBDA(const typename PolicyType::member_type& a_team_handle) {
 
                         const OrdinalType the_team_index = a_team_handle.league_rank();
 
@@ -96,7 +98,7 @@ namespace koliop {
                     break;
                 }
                 case 4: {
-                    const auto the_kernel_choice_4 = KOKKOS_LAMBDA(const auto& a_team_handle) {
+                    const auto the_kernel_choice_4 = KOKKOS_LAMBDA(const typename PolicyType::member_type& a_team_handle) {
                         const OrdinalType the_team_index = a_team_handle.league_rank();
 
                         const OrdinalType ir     = (the_team_index) % the_r_extent;
