@@ -99,7 +99,7 @@
                               size_t             Npolmax,
                               size_t             index_max,
                               int64_t            pSpecies_id,
-                              int64_t            mu_id,
+                              int64_t            /* mu_id */,
                               size_t             the_mu_extent,
                               size_t             the_vpar_extent,
                               size_t             the_r_extent,
@@ -139,7 +139,6 @@
            Npolmax != koliop::collision::Constant::kMaximumLaguerrePolynomialDegree ||
            (index_max != 2 * (Npolmax - 1)) ||
            pSpecies_id < 0 ||
-           mu_id < 0 ||
            ir_SOL_separatrix < 0 ||
            comb_mat == nullptr ||
            hat_As == nullptr ||
@@ -161,7 +160,6 @@
         using Operator = koliop::collision::Operator;
 
         auto* const an_operator = new Operator{static_cast<uint64_t>(pSpecies_id),
-                                               static_cast<uint64_t>(mu_id),
                                                static_cast<uint64_t>(the_mu_extent),
                                                static_cast<uint64_t>(the_vpar_extent),
                                                static_cast<uint64_t>(the_r_extent),

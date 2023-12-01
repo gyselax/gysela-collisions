@@ -55,7 +55,6 @@ namespace koliop {
 
             // TODO(Etienne M): Make sure the accesses are sequential on CPU.
 
-
             const auto the_team_count = the_r_extent * the_theta_extent * the_phi_extent;
 
             // Due to the inherent Cuda/HIP thread block limit.

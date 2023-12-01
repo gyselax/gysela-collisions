@@ -35,8 +35,7 @@ namespace koliop {
                         //     // Factorized -> low latency       : ((-1.0 / 6.0) * (x - 0.41577455678347908331)) * ((x - 2.29428036027904171982) * (x - 6.28994508293747919686))
                         //     return 1.0 + (-3.0 + ((3.0 / 2.0) - (1.0 / 6.0) * x) * x) * x;
                         default:
-                            return -1.0; // TODO(Etienne M): Should we specify some
-                                         // garbage?
+                            return 0.0;
                     }
                 }
 
@@ -195,7 +194,7 @@ namespace koliop {
                                                     the_vpar_extent),
                             [&](auto ivpar) {
                                 for(OrdinalType ipol = 0; ipol < Constant::kMaximumLaguerrePolynomialDegree; ++ipol) {
-                                    // NOTE: These access are.. bad.
+                                    // NOTE: These accesses are .. bad.
                                     the_rhs(the_batch_index, ivpar, ipol, the_batch_element_index) = 0.0;
                                 }
                             });
@@ -639,8 +638,6 @@ namespace koliop {
                                                the_block_first_r, the_block_first_theta, the_block_first_phi,
                                                n_s, T_s, nu_ab, the_Najl_);
 
-                    // Fence for N0, N1, N2
-
                     {
                         detail::DoPrepareMatrix<CvCdDriver>(an_operator,
                                                             an_execution_space,
@@ -652,6 +649,7 @@ namespace koliop {
                                                   the_matrix_.data(),
                                                   kFlattenedBlockExtent, the_vpar_extent);
                     }
+
                     {
                         // the_rhs = (I + T * dt/4) * alpha(n)
                         the_mv_.Apply(an_execution_space,
@@ -665,8 +663,6 @@ namespace koliop {
                                       the_rhs_.data());
                     }
 
-                    // Fence for RHS_vec and the factorized matrix
-
                     {
                         // the_rhs = alpha~
                         the_solver_.Solve(an_execution_space,
@@ -674,16 +670,14 @@ namespace koliop {
                                           kFlattenedBlockExtent, the_vpar_extent,
                                           the_rhs_.data());
 
+                        std::swap(the_rhs_, the_alpha_coefficients_);
+
                         // the_rhs = alpha~~
                         detail::DoComputeCvCdSource<CvCdDriver>(an_operator,
                                                                 an_execution_space,
                                                                 dt,
                                                                 the_block_first_r, the_block_first_theta, the_block_first_phi,
-                                                                the_Najl_, the_rhs_);
-
-                        // NOTE: This swap is safe because the
-                        // kernels capture by copy
-                        std::swap(the_rhs_, the_alpha_coefficients_);
+                                                                the_Najl_, the_alpha_coefficients_);
 
                         // the_rhs = (I + T * dt/4) * alpha~~
                         the_mv_.Apply(an_execution_space,
@@ -699,6 +693,8 @@ namespace koliop {
                                           the_matrix_.data(),
                                           kFlattenedBlockExtent, the_vpar_extent,
                                           the_rhs_.data());
+
+                        std::swap(the_rhs_, the_alpha_coefficients_);
                     }
                 }
 
@@ -706,7 +702,7 @@ namespace koliop {
                                                             an_execution_space,
                                                             the_block_first_r,
                                                             the_block_first_theta, the_block_first_phi,
-                                                            mask_coll_, f5d_s, the_rhs_);
+                                                            mask_coll_, f5d_s, the_alpha_coefficients_);
             }
         }
 
