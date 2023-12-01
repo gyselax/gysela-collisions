@@ -241,7 +241,7 @@ namespace koliop {
         void Operator::Collision(ComputeFloatType dt,
                                  Flo64*           f5d_s) {
 
-            // TODO(Etienne M): We shouldn't need that for the Gysela++.
+            // TODO(Etienne M): We shouldn't need that for the Gysela++, yet.
             const OrdinalType collstart = 0;
 
             if(collstart != -1 /* TODO(Etienne M): Fortran index */) {

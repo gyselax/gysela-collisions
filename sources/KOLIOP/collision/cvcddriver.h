@@ -633,6 +633,7 @@ namespace koliop {
                                                              the_block_first_r,
                                                              the_block_first_theta, the_block_first_phi,
                                                              mask_coll_, f5d_s, the_alpha_coefficients_);
+
                 {
                     the_najl_provider_.Compute(an_execution_space,
                                                the_block_first_r, the_block_first_theta, the_block_first_phi,
