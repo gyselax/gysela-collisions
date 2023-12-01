@@ -597,6 +597,13 @@ namespace koliop {
             const auto& T_s   = an_operator.T_s_;
             const auto& nu_ab = an_operator.nu_ab_;
 
+            // TODO(Etienne M): Extent standardization:
+            // the_global_domain_[r|theta]_extent
+            // the_local_domain_[r|theta]_offset
+            // the_local_[mu|vpar|r|theta|phi|species]_extent
+            // the_block_[r|theta|phi]_offset
+            // the_block_[r|theta|phi]_extent
+
             // NOTE: If you have an issue with these assertions, checkout the
             // constant.h file and tune kBlockExtent[R|Theta|Phi].
             KOLIOP_ASSERT(the_r_extent % kBlockExtentR == 0);
