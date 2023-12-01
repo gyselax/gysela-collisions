@@ -76,6 +76,8 @@ namespace koliop {
                     // NOTE: The block wont fit, go to the next (smaller) block
                     // size.
                 }
+
+                KOLIOP_ASSERT(!the_cvcd_drivers_configurations.empty());
             }
 
             // NOTE: Sort of factory. I put in into an other translation unit

@@ -26,6 +26,12 @@ namespace koliop {
             using BatchTraitsType = koliop::blas::BatchTraits<ComputeFloatType,
                                                               DeviceExecutionSpaceType>;
 
+            /// Used to handle cases where the operator is to work on very small
+            /// spatial domain (say, 1x1x1).
+            ///
+            using FakeBatchTraitsType = koliop::blas::FakeBatchTraits<ComputeFloatType,
+                                                                      DeviceExecutionSpaceType>;
+
             // Aka, HIP/Cuda stream count. Bigger means more memory used but
             // also, potentially faster. Trade memory and inconvenience for
             // speed.
@@ -33,9 +39,12 @@ namespace koliop {
             // GPUs, this value could be increased or reduced. Using future
             // GPUs, we could benefit from a higher value.
             // Bigger blocking needs less streams ad inversely.
+            // NOTE: It may be that the block size is too small to use the whole
+            // GPU's resources on every kernels. By using streams we can fill
+            // the gapes left by the small kernels.
 
 #if defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_CUDA)
-            static inline constexpr OrdinalType kDisjointExecutionSpaceCount = 1;
+            static inline constexpr OrdinalType kDisjointExecutionSpaceCount = 4;
 #elif defined(KOKKOS_ENABLE_OPENMP)
             static inline constexpr OrdinalType kDisjointExecutionSpaceCount = 1;
 #endif
@@ -79,13 +88,9 @@ namespace koliop {
                 {32, 64, 1},
                 {32, 32, 2},
                 {32, 32, 1},
-                //    // This small block size exists only for
-                //    // Gysela++. Small block sizes may create
-                //    // issues due with the hardware vector size.
-                //    // All of that should be caught at compile
-                //    // time.
-                //    {8, 1, 1}
-            };
+                // NOTE: Degraded operation performance is expected for 1x1x1
+                // blocks.
+                {1, 1, 1}};
 #else
     #error "Unsupported architecture."
 #endif

@@ -100,7 +100,6 @@ namespace koliop {
         }
 
         Operator::Operator(uint64_t     pSpecies_id,
-                           uint64_t     mu_id,
                            uint64_t     the_mu_extent,
                            uint64_t     the_vpar_extent,
                            uint64_t     the_r_extent,
@@ -132,7 +131,6 @@ namespace koliop {
                            const Flo64* Bstar_s)
             // Constant, externally computed values
             : pSpecies_id_{static_cast<OrdinalType>(pSpecies_id)}
-            , mu_id_{static_cast<OrdinalType>(mu_id)}
             , the_mu_extent_{static_cast<OrdinalType>(the_mu_extent)}
             , the_vpar_extent_{static_cast<OrdinalType>(the_vpar_extent)}
             , the_r_extent_{static_cast<OrdinalType>(the_r_extent)}
@@ -243,21 +241,21 @@ namespace koliop {
         void Operator::Collision(ComputeFloatType dt,
                                  Flo64*           f5d_s) {
 
-            // TODO(Etienne M): We shouldn't need that for the Gysela++.
+            // TODO(Etienne M): We shouldn't need that for the Gysela++, yet.
             const OrdinalType collstart = 0;
 
             if(collstart != -1 /* TODO(Etienne M): Fortran index */) {
                 ComputeMoments(f5d_s);
                 PrecomputeNu();
 
-                if((the_species_extent_ != 1 /* TODO(Etienne M): Fortran index */) && collision_interspecies_) {
+                if((the_species_extent_ > 1) && collision_interspecies_) {
                     ComputeMaxwellianEvolution(dt, f5d_s);
                     PrecomputeNu();
                 }
 
                 ComputeQparOnNT(f5d_s);
 
-                if(the_species_extent_ != 1 /* TODO(Etienne M): Fortran index */) {
+                if(the_species_extent_ > 1) {
                     // Cpar operator
                     ComputeCpar(dt, f5d_s);
                 }
@@ -271,7 +269,7 @@ namespace koliop {
                 // Computes Fa = Fa * FM0a
                 ComputeMaxwellianUnshiftedLoc(f5d_s, 3);
 
-                if((the_species_extent_ != 1 /* TODO(Etienne M): Fortran index */) && collision_interspecies_) {
+                if((the_species_extent_ > 1) && collision_interspecies_) {
                     // Cpar operator
                     ComputeCpar(dt, f5d_s);
                 }
@@ -282,7 +280,7 @@ namespace koliop {
 
                 ComputeUparTCorrection(dt, f5d_s);
 
-                if((the_species_extent_ != 1 /* TODO(Etienne M): Fortran index */) && collision_interspecies_) {
+                if((the_species_extent_ > 1) && collision_interspecies_) {
                     ComputeMaxwellianEvolution(dt, f5d_s);
                     PrecomputeNu();
                 }

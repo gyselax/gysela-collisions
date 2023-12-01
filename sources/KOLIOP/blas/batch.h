@@ -68,6 +68,30 @@ namespace koliop {
 
 
         ////////////////////////////////////////////////////////////////////////
+        // FakeBatchTraits definition
+        ////////////////////////////////////////////////////////////////////////
+
+        template <typename Value,
+                  typename ExecutionSpace>
+        struct FakeBatchTraits : public BatchTraits<Value, ExecutionSpace> {
+        public:
+            using BaseType = BatchTraits<Value, ExecutionSpace>;
+
+            static inline constexpr OrdinalType kBatchSize = 1;
+
+            static inline constexpr OrdinalType kVectorSize = 1;
+
+            static inline constexpr OrdinalType kVectorPerBatch = kBatchSize / kVectorSize;
+
+            using ThreadVectorType = typename BaseType::value_type;
+
+        public:
+            KOKKOS_INLINE_FUNCTION static constexpr OrdinalType
+            BatchCount(OrdinalType an_extent);
+        };
+
+
+        ////////////////////////////////////////////////////////////////////////
         // BatchTraits methods definition
         ////////////////////////////////////////////////////////////////////////
 
@@ -75,6 +99,18 @@ namespace koliop {
                   typename ExecutionSpace>
         KOKKOS_INLINE_FUNCTION constexpr OrdinalType
         BatchTraits<Value, ExecutionSpace>::BatchCount(OrdinalType an_extent) {
+            return an_extent / kBatchSize;
+        }
+
+
+        ////////////////////////////////////////////////////////////////////////
+        // FakeBatchTraits methods definition
+        ////////////////////////////////////////////////////////////////////////
+
+        template <typename Value,
+                  typename ExecutionSpace>
+        KOKKOS_INLINE_FUNCTION constexpr OrdinalType
+        FakeBatchTraits<Value, ExecutionSpace>::BatchCount(OrdinalType an_extent) {
             return an_extent / kBatchSize;
         }
 

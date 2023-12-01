@@ -104,7 +104,6 @@ namespace koliop {
         public:
             /// @brief
             /// @param pSpecies_id
-            /// @param mu_id
             /// @param the_mu_extent
             /// @param the_vpar_extent
             /// @param the_r_extent
@@ -132,7 +131,6 @@ namespace koliop {
             /// @param B_norm
             /// @param Bstar_s
             Operator(uint64_t     pSpecies_id,
-                     uint64_t     mu_id,
                      uint64_t     the_mu_extent,
                      uint64_t     the_vpar_extent,
                      uint64_t     the_r_extent,
@@ -205,7 +203,6 @@ namespace koliop {
             // Constant, externally computed values
 
             OrdinalType      pSpecies_id_;
-            OrdinalType      mu_id_;
             OrdinalType      the_mu_extent_;
             OrdinalType      the_vpar_extent_;
             OrdinalType      the_r_extent_;
