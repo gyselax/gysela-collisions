@@ -94,6 +94,12 @@ namespace koliop {
                     // measured out of erfc) but the whole Najl coefficient
                     // computation is extraordinarily powerful when it copy to
                     // spreading and amplifying errors.
+                    // Also, by setting Xtr, sqrtXtr, sqrtXtr_inv to constant
+                    // and similar value say 2.0,3.0,4.0 on the Fortran and C++
+                    // version of the operator, we observe below 10^-10 abs and
+                    // relative errors which is good but weird.
+                    // Finally, note the comment below regarding the changes to
+                    // the computation of I_mat and the error that we then get.
                     // To mitigate that divergence from the reference CrayFTN
                     // Gysela, two facts, use:
                     // - #pragma clang fp contract(on) : instead of the fast or
@@ -104,8 +110,7 @@ namespace koliop {
                     // themselve if we changed the compiler from gfortran to
                     // ifort or crayftn and as such, trying to be bit-perfect
                     // with the CrayFTN reference is but an illusion (and incurs
-                    // a performance penalty). What matters is, are the result
-                    // making physical sense right ?
+                    // a performance penalty).
 
                     static constexpr OrdinalType the_Xtr_pows_size = Constant::kIndexMax + 1 + 1;
                     static constexpr OrdinalType the_J_vec_size    = Constant::kIndexMax + 2 + 1;
@@ -157,6 +162,110 @@ namespace koliop {
 
                     for(OrdinalType ind_i = 0; ind_i < the_Xtr_pows_size; ++ind_i) {
                         for(OrdinalType ind_k = 0; ind_k <= ind_i; ++ind_k) {
+                            // The numbers below represent:
+                            // NORM2(a - r) / NORM2(r)
+                            // MAXVAL(ABS(a - r))
+                            // MAXVAL(ABS(a - r) / ABS(r))
+                            // With a and r being approximation and reference.
+                            // the reference is the Fortran code.
+                            // Below we see multiple error report depending on
+                            // the computation leading to the I_mat values. For
+                            // each measurement, the same code transformation
+                            // was applied to the fortran code so in theory we
+                            // should have the same results. This is not the
+                            // case as show and add even more mystery to what
+                            // was reported in the comment at the tome of this
+                            // function.
+                            //
+
+                            // GOOD:
+                            // 9.0055254553295181E-16
+                            // 6.39488462184090167E-14
+                            // 1.66911273006078298E-12
+                            // I_mat[ind_i] = I_mat[ind_i] * kCombMat[ind_i][ind_k];
+
+                            // GOOD:
+                            // 9.22848380287682281E-16
+                            // 7.46069872548105195E-14
+                            // 7.23852371101561738E-13
+                            // I_mat[ind_i] = I_mat[ind_i] * J_vec[ind_k + offset];
+
+                            // GOOD:
+                            // 4.58332122622586803E-15
+                            // 3120562176.
+                            // 1.930299460045218E-12
+                            // I_mat[ind_i] = I_mat[ind_i] * Xtr_pows[ind_i - ind_k];
+
+                            // GOOD:
+                            // 1.4048455258283236E-13
+                            // 4.85505554119331165E+134
+                            // 4.77752425883472662E-13
+                            // I_mat[ind_i] = I_mat[ind_i] + the_exp_Xtr;
+
+                            // GOOD:
+                            // 9.26019275821356788E-16
+                            // 7.10542735760100186E-14
+                            // 7.23852371101561738E-13
+                            // I_mat[ind_i] = I_mat[ind_i] *
+                            //                kCombMat[ind_i][ind_k] * J_vec[ind_k + offset];
+
+                            // MEH:
+                            // +
+                            // 2.39600218077008314E-15
+                            // 4.17232513427734375E-7
+                            // 1.32255877974644926E-11
+                            // *
+                            // 4.5951505930168964E-15
+                            // 309237645312.
+                            // 1.93029924759351626E-12
+                            // I_mat[ind_i] = I_mat[ind_i] *
+                            //                kCombMat[ind_i][ind_k] * Xtr_pows[ind_i - ind_k];
+
+                            // MEH:
+                            // 1.39915089874609498E-13
+                            // 3.7122720000644766E+134
+                            // 1.2319135169780248E-11
+                            // I_mat[ind_i] = I_mat[ind_i] +
+                            //                kCombMat[ind_i][ind_k] * the_exp_Xtr;
+
+                            // GOOD:
+                            // 9.27452285782984381E-16
+                            // 7.10542735760100186E-14
+                            // 7.67019556279941316E-13
+                            // I_mat[ind_i] = I_mat[ind_i] +
+                            //                J_vec[ind_k + offset] * Xtr_pows[ind_i - ind_k];
+
+                            // BAD:
+                            // 1.90019131286443E-11
+                            // 7.09558662492781878E-7
+                            // 5.82693268469331832E-7
+                            // I_mat[ind_i] = I_mat[ind_i] +
+                            //                J_vec[ind_k + offset] *
+                            //                    Xtr_pows[ind_i - ind_k] * the_exp_Xtr;
+
+                            // MEH:
+                            // 1.39915089874609498E-13
+                            // 3.7122720000644766E+134
+                            // 1.2319135169780248E-11
+                            // I_mat[ind_i] = I_mat[ind_i] +
+                            //                kCombMat[ind_i][ind_k] * the_exp_Xtr;
+
+                            // GOOD:
+                            // 9.24565888941454475E-16
+                            // 6.75015598972095177E-14
+                            // 6.51097853232258926E-13
+                            // I_mat[ind_i] = I_mat[ind_i] +
+                            //                kCombMat[ind_i][ind_k] * J_vec[ind_k + offset] *
+                            //                    Xtr_pows[ind_i - ind_k];
+
+                            // BAD:
+                            // 7.08135327836351362E-9
+                            // 7.12772024513697033E-7
+                            // 4.18202253096459523E-8
+                            // I_mat[ind_i] = I_mat[ind_i] +
+                            //                kCombMat[ind_i][ind_k] * J_vec[ind_k + offset] *
+                            //                    Xtr_pows[ind_i - ind_k] * the_exp_Xtr;
+
                             // ind_i in [0, Constant::kIndexMax + 2 + 1)
                             I_mat[ind_i] = I_mat[ind_i] +
                                            kCombMat[ind_i][ind_k] * J_vec[ind_k + offset] *
