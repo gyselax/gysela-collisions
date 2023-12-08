@@ -300,6 +300,8 @@ namespace koliop {
 //                           << " | Small block count: " << the_matrix_buffer.extent(1)
 //                           << " | Batch size: " << the_matrix_buffer.extent(5) << "\n";
 
+//                 // NOTE: We do not guarantee that we have a weakly diagonally
+//                 // dominant matrix !!
 //                 // - Random [0, 1.0) the_matrix_buffer
 //                 // - Random [0, 1.0) the_original_x_buffer
 

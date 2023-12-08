@@ -115,7 +115,6 @@ namespace koliop {
                            bool         SOL,
                            bool         LIM,
                            uint64_t     ir_SOL_separatrix,
-                           const Flo64* comb_mat,
                            const Flo64* hat_As,
                            const Flo64* hat_Zs,
                            const Flo64* mug,
@@ -146,7 +145,6 @@ namespace koliop {
             , SOL_{SOL}
             , LIM_{LIM}
             , ir_SOL_separatrix_{static_cast<OrdinalType>(ir_SOL_separatrix)}
-            , comb_mat_{comb_mat}
             , hat_As_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputL1>(Constant::DeviceExecutionSpaceType{}, hat_As, "hat_As_", the_species_extent_)} // NOTE: in practice, this hat_Xs contains 3 values. The size being hardcoded in global::Nspecies_max = 2
             , hat_Zs_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputL1>(Constant::DeviceExecutionSpaceType{}, hat_Zs, "hat_Zs_", the_species_extent_)} // NOTE: in practice, this hat_Xs contains 3 values. The size being hardcoded in global::Nspecies_max = 2
             , mug_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputL1>(Constant::DeviceExecutionSpaceType{}, mug, "mug_", the_mu_extent_)}

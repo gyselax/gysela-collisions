@@ -26,6 +26,7 @@ namespace koliop {
                         case 1:
                             return 1.0 - x;
                         case 2:
+                            // return 0.5 * (x * x - 4.0 * x + 2.0);
                             return 1.0 + ((-2.0 + (1.0 / 2.0) * x) * x);
                         // case 3:
                         //     // Horner -> dependency            : 1 + (-3 + (1.5 - 1/6 * x) * x) * x
@@ -471,7 +472,6 @@ namespace koliop {
                        OrdinalType                                                the_vpar_extent,
                        OrdinalType                                                the_species_extent,
                        bool                                                       collision_interspecies,
-                       const Flo64*                                               comb_mat,
                        const koliop::utility::View::InternalInputL1<const Flo64>& hat_As,
                        const koliop::utility::View::InternalInputL1<const Flo64>& hat_Zs,
                        const koliop::utility::View::InternalInputL1<const Flo64>& vparg,
@@ -528,7 +528,6 @@ namespace koliop {
                                             OrdinalType                                                the_vpar_extent,
                                             OrdinalType                                                the_species_extent,
                                             bool                                                       collision_interspecies,
-                                            const Flo64*                                               comb_mat,
                                             const koliop::utility::View::InternalInputL1<const Flo64>& hat_As,
                                             const koliop::utility::View::InternalInputL1<const Flo64>& hat_Zs,
                                             const koliop::utility::View::InternalInputL1<const Flo64>& vparg,
@@ -536,7 +535,6 @@ namespace koliop {
             : the_najl_provider_{pSpecies_id,
                                  the_vpar_extent, the_species_extent,
                                  collision_interspecies,
-                                 comb_mat,
                                  hat_As, hat_Zs, vparg}
             , mask_coll_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "mask_coll")}
             , the_Najl_{Kokkos::view_alloc(Kokkos::WithoutInitializing,
