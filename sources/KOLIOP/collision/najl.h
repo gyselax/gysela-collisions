@@ -120,7 +120,7 @@ namespace koliop {
                     // n are the ind_i
                     // k are the ind_k
                     // clang-format off
-                    static constexpr double kCombMat[the_Xtr_pows_size][the_Xtr_pows_size] =
+                    static constexpr ValueType kCombMat[the_Xtr_pows_size][the_Xtr_pows_size] =
                         {{1.0, 0.0, 0.0, 0.0, 0.0, 0.0},
                          {1.0, 1.0, 0.0, 0.0, 0.0, 0.0},
                          {1.0, 2.0, 1.0, 0.0, 0.0, 0.0},
@@ -177,38 +177,38 @@ namespace koliop {
                             // was reported in the comment at the tome of this
                             // function.
                             //
-
+                            //
                             // GOOD:
                             // 9.0055254553295181E-16
                             // 6.39488462184090167E-14
                             // 1.66911273006078298E-12
                             // I_mat[ind_i] = I_mat[ind_i] * kCombMat[ind_i][ind_k];
-
+                            //
                             // GOOD:
                             // 9.22848380287682281E-16
                             // 7.46069872548105195E-14
                             // 7.23852371101561738E-13
                             // I_mat[ind_i] = I_mat[ind_i] * J_vec[ind_k + offset];
-
+                            //
                             // GOOD:
                             // 4.58332122622586803E-15
                             // 3120562176.
                             // 1.930299460045218E-12
                             // I_mat[ind_i] = I_mat[ind_i] * Xtr_pows[ind_i - ind_k];
-
+                            //
                             // GOOD:
                             // 1.4048455258283236E-13
                             // 4.85505554119331165E+134
                             // 4.77752425883472662E-13
                             // I_mat[ind_i] = I_mat[ind_i] + the_exp_Xtr;
-
+                            //
                             // GOOD:
                             // 9.26019275821356788E-16
                             // 7.10542735760100186E-14
                             // 7.23852371101561738E-13
                             // I_mat[ind_i] = I_mat[ind_i] *
                             //                kCombMat[ind_i][ind_k] * J_vec[ind_k + offset];
-
+                            //
                             // MEH:
                             // +
                             // 2.39600218077008314E-15
@@ -220,21 +220,21 @@ namespace koliop {
                             // 1.93029924759351626E-12
                             // I_mat[ind_i] = I_mat[ind_i] *
                             //                kCombMat[ind_i][ind_k] * Xtr_pows[ind_i - ind_k];
-
+                            //
                             // MEH:
                             // 1.39915089874609498E-13
                             // 3.7122720000644766E+134
                             // 1.2319135169780248E-11
                             // I_mat[ind_i] = I_mat[ind_i] +
                             //                kCombMat[ind_i][ind_k] * the_exp_Xtr;
-
+                            //
                             // GOOD:
                             // 9.27452285782984381E-16
                             // 7.10542735760100186E-14
                             // 7.67019556279941316E-13
                             // I_mat[ind_i] = I_mat[ind_i] +
                             //                J_vec[ind_k + offset] * Xtr_pows[ind_i - ind_k];
-
+                            //
                             // BAD:
                             // 1.90019131286443E-11
                             // 7.09558662492781878E-7
@@ -242,14 +242,14 @@ namespace koliop {
                             // I_mat[ind_i] = I_mat[ind_i] +
                             //                J_vec[ind_k + offset] *
                             //                    Xtr_pows[ind_i - ind_k] * the_exp_Xtr;
-
+                            //
                             // MEH:
                             // 1.39915089874609498E-13
                             // 3.7122720000644766E+134
                             // 1.2319135169780248E-11
                             // I_mat[ind_i] = I_mat[ind_i] +
                             //                kCombMat[ind_i][ind_k] * the_exp_Xtr;
-
+                            //
                             // GOOD:
                             // 9.24565888941454475E-16
                             // 6.75015598972095177E-14
@@ -257,7 +257,7 @@ namespace koliop {
                             // I_mat[ind_i] = I_mat[ind_i] +
                             //                kCombMat[ind_i][ind_k] * J_vec[ind_k + offset] *
                             //                    Xtr_pows[ind_i - ind_k];
-
+                            //
                             // BAD:
                             // 7.08135327836351362E-9
                             // 7.12772024513697033E-7
@@ -391,6 +391,7 @@ namespace koliop {
                 // release that would enable Kokkos::exp() on KokkosBatched::Vector.
 
                 using ValueType = typename std::remove_reference_t<View6D>::value_type;
+                // using ValueType = long double;
 
                 const auto& the_vpar_extent    = the_najl_provider.the_vpar_extent_;
                 const auto& the_species_extent = the_najl_provider.the_species_extent_;
@@ -599,9 +600,9 @@ namespace koliop {
                          OrdinalType                                          the_block_first_r,
                          OrdinalType                                          the_block_first_theta,
                          OrdinalType                                          the_block_first_phi,
-                         const koliop::utility::View::MDD4<ComputeFloatType>& n_s,
-                         const koliop::utility::View::MDD4<ComputeFloatType>& T_s,
-                         const koliop::utility::View::MDD5<ComputeFloatType>& nu_ab,
+                         const koliop::utility::View::MDL4<ComputeFloatType>& n_s,
+                         const koliop::utility::View::MDL4<ComputeFloatType>& T_s,
+                         const koliop::utility::View::MDL5<ComputeFloatType>& nu_ab,
                          typename MatrixKindType::ScalarType&                 the_Najl) const;
 
         public:
@@ -621,7 +622,7 @@ namespace koliop {
 
             // Constant, internally computed values
 
-            koliop::utility::View::MDD<ComputeFloatType[2 * Constant::kMaximumLaguerrePolynomialDegree - 1]
+            koliop::utility::View::MDL<ComputeFloatType[2 * Constant::kMaximumLaguerrePolynomialDegree - 1]
                                                        [Constant::kMaximumLaguerrePolynomialDegree]
                                                        [Constant::kMaximumLaguerrePolynomialDegree]>
                 C_jl_;
@@ -661,9 +662,9 @@ namespace koliop {
                                        OrdinalType                                          the_block_first_r,
                                        OrdinalType                                          the_block_first_theta,
                                        OrdinalType                                          the_block_first_phi,
-                                       const koliop::utility::View::MDD4<ComputeFloatType>& n_s,
-                                       const koliop::utility::View::MDD4<ComputeFloatType>& T_s,
-                                       const koliop::utility::View::MDD5<ComputeFloatType>& nu_ab,
+                                       const koliop::utility::View::MDL4<ComputeFloatType>& n_s,
+                                       const koliop::utility::View::MDL4<ComputeFloatType>& T_s,
+                                       const koliop::utility::View::MDL5<ComputeFloatType>& nu_ab,
                                        typename MatrixKindType::ScalarType&                 the_Najl) const {
 
             KOLIOP_ASSERT(the_Najl.size() != 0);

@@ -493,7 +493,7 @@ namespace koliop {
 
             Najl<CvCdDriver> the_najl_provider_;
 
-            koliop::utility::View::MDD<bool[kBlockExtentR][kBlockExtentTheta]> mask_coll_;
+            koliop::utility::View::MDL<bool[kBlockExtentR][kBlockExtentTheta]> mask_coll_;
 
             // NOTE: We know of an additional constant extent, the batch count
             // but we cannot exploit it due to kokkos enforcing that constant

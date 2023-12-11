@@ -197,21 +197,21 @@ namespace koliop {
                             q_r_,
                             mask_buffer_r_);
 
-#if defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_CUDA)
-            KOLIOP_ASSERT(the_execution_space_pool_.size() == 0);
+            KOLIOP_ASSERT(the_execution_space_pool_.empty());
 
+#if defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_CUDA)
             // The null stream.
             the_execution_space_pool_.emplace_back(nullptr, true);
+#endif
 
-            if constexpr(Constant::kDisjointExecutionSpaceCount >= 2) {
+            if(Constant::kDisjointExecutionSpaceCount > the_execution_space_pool_.size()) {
                 // Then, we use the default execution space.
                 the_execution_space_pool_.emplace_back();
-
-                KOLIOP_ASSERT(the_execution_space_pool_.size() == 2);
             }
 
+            KOLIOP_ASSERT(!the_execution_space_pool_.empty());
+
             // Then we fill in with new streams.
-#endif
 
             while(the_execution_space_pool_.size() != Constant::kDisjointExecutionSpaceCount) {
                 // NOTE: We do not want to *potentially* split the resource
