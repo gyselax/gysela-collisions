@@ -409,13 +409,13 @@ namespace koliop {
 
                     // NOTE: kBlockExtentXXX are constant, the compiler can replace
                     // the modulo with faster instructions.
-                    const OrdinalType the_block_local_index_r     = ir - the_block_first_r;
-                    const OrdinalType the_block_local_index_theta = itheta - the_block_first_theta;
-                    const OrdinalType the_block_local_index_phi   = iphi - the_block_first_phi;
+                    const OrdinalType the_block_local_index_ir     = ir - the_block_first_r;
+                    const OrdinalType the_block_local_index_itheta = itheta - the_block_first_theta;
+                    const OrdinalType the_block_local_index_iphi   = iphi - the_block_first_phi;
 
-                    const OffsetType the_flattened_index = Najl::CvCdDriverType::kBlockExtentR * Najl::CvCdDriverType::kBlockExtentTheta * the_block_local_index_phi +
-                                                           Najl::CvCdDriverType::kBlockExtentR * the_block_local_index_theta +
-                                                           the_block_local_index_r;
+                    const OffsetType the_flattened_index = Najl::CvCdDriverType::kBlockExtentR * Najl::CvCdDriverType::kBlockExtentTheta * the_block_local_index_iphi +
+                                                           Najl::CvCdDriverType::kBlockExtentR * the_block_local_index_itheta +
+                                                           the_block_local_index_ir;
 
                     const OrdinalType the_batch_element_index = (the_flattened_index) % Najl::CvCdDriverType::BatchTraitsType::kBatchSize;
                     const OrdinalType the_batch_index         = (the_flattened_index / (Najl::CvCdDriverType::BatchTraitsType::kBatchSize)) /* % Najl::CvCdDriverType::kBatchCount */;
@@ -484,7 +484,8 @@ namespace koliop {
                         if(ind_i != Constant::kIndexMax) {
                             for(OrdinalType l = 0; l < Constant::kMaximumLaguerrePolynomialDegree; ++l) {
                                 for(OrdinalType j = 1; j < Constant::kMaximumLaguerrePolynomialDegree; ++j) {
-                                    local_N0(l, j) -= static_cast<ValueType>(j) * N_coeff * C_jl(ind_i, j - 1, l);
+                                    local_N0(l, j) = local_N0(l, j) -
+                                                     static_cast<ValueType>(j) * N_coeff * C_jl(ind_i, j - 1, l);
                                 }
                             }
                         }

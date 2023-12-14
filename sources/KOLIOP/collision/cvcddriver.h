@@ -19,14 +19,13 @@ namespace koliop {
 
                 KOKKOS_INLINE_FUNCTION ComputeFloatType
                 DoComputeLaguerrePol(OrdinalType l, ComputeFloatType x) {
-                    // TODO(Etienne M): find a better way to compute that, based on l.
                     switch(l) {
                         case 0:
                             return 1.0;
                         case 1:
                             return 1.0 - x;
                         case 2:
-                            // return 0.5 * (x * x - 4.0 * x + 2.0);
+                            // return 0.5 * (x - 0.5857864376269049511983112758) * (x - 3.414213562373095048801688724);
                             return 1.0 + ((-2.0 + (1.0 / 2.0) * x) * x);
                         // case 3:
                         //     // Horner -> dependency            : 1 + (-3 + (1.5 - 1/6 * x) * x) * x
@@ -186,7 +185,11 @@ namespace koliop {
                                 // NOTE: This should be a no-op.
                                 the_rhs_value = the_rhs_value_reducer.reference();
 
-                                the_rhs(the_batch_index, ivpar, ipol, the_batch_element_index) = the_rhs_value;
+                                Kokkos::single(
+                                    Kokkos::PerTeam(a_team_handle),
+                                    [&]() {
+                                        the_rhs(the_batch_index, ivpar, ipol, the_batch_element_index) = the_rhs_value;
+                                    });
                             }
                         }
                     } else {
