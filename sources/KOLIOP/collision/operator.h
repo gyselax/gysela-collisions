@@ -116,7 +116,6 @@ namespace koliop {
             /// @param LIM
             /// @param ir_SOL_separatrix We do not need to shift it by -istart
             /// because we do not parallelize on ir across ranks.
-            /// @param comb_mat
             /// @param hat_As
             /// @param hat_Zs
             /// @param mug
@@ -146,7 +145,6 @@ namespace koliop {
                      bool         SOL,
                      bool         LIM,
                      uint64_t     ir_SOL_separatrix,
-                     const Flo64* comb_mat,
                      const Flo64* hat_As,
                      const Flo64* hat_Zs,
                      const Flo64* mug,
@@ -224,7 +222,6 @@ namespace koliop {
             // conversions from Flo64 to whatever ComputeFloatType is (say
             // Flo32).
 
-            const Flo64*                                        comb_mat_;
             koliop::utility::View::InternalInputL1<const Flo64> hat_As_;
             koliop::utility::View::InternalInputL1<const Flo64> hat_Zs_;
             koliop::utility::View::InternalInputL1<const Flo64> mug_;

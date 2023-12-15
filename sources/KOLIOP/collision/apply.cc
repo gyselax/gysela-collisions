@@ -33,7 +33,7 @@ namespace koliop {
 
             // TODO(Etienne M): Do we full fence or wait for all the streams ?
             // Fence is a lot cheaper it seems. Though if Gysela executes other
-            // GPU kernel while koliop works, this could slow things done.
+            // GPU kernel while koliop works, this could slow things down.
 
             // NOTE: This fence does not mean the user doesn't have to fence
             // after the operator returns. Indeed, the copies below may very

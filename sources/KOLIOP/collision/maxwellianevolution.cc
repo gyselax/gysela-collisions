@@ -141,11 +141,25 @@ namespace koliop {
                             const ComputeFloatType vp2_old = (vparg(ivpar) - Vpara) * (vparg(ivpar) - Vpara) / (2.0 * Ta);
                             const ComputeFloatType vp2_new = (vparg(ivpar) - Vpara) * (vparg(ivpar) - Vpara) / (2.0 * Ta_new);
 
-                            f5d_s(imu, ivpar, ir, itheta, iphi, ispeciesA) += coeff_new * Kokkos::exp(-bot_new * mug(imu) - vp2_new) -
-                                                                              coeff_old * Kokkos::exp(-bot_old * mug(imu) - vp2_old);
+                            // NOTE: on large values of mu, we have a very
+                            // "thin" density often close to
+                            // 1.000000000000000083E-30. Coupled to values like:
+                            // 6.312302637865660744E-11 and
+                            // 6.312302638024095558E-11
+                            // On double, 1.000000000000000083E-30 - 6.312302637865660744E-11 + 6.312302638024095558E-11 = 1.584348141071684242e-21
+                            // but the true values is 1.5843481409999999998 E-21
+                            // which represent a relative error of
+                            // 4.524525913525214280 E-11. We lost 4-5
+                            // significant digits. When compared to the Fortran
+                            // code we observe absolute error of 10^-25 and
+                            // relative error of 10^-4 !
+                            f5d_s(imu, ivpar, ir, itheta, iphi, ispeciesA) = f5d_s(imu, ivpar, ir, itheta, iphi, ispeciesA) -
+                                                                             coeff_old * Kokkos::exp(-bot_old * mug(imu) - vp2_old) +
+                                                                             coeff_new * Kokkos::exp(-bot_new * mug(imu) - vp2_new);
                         });
                 }
 
+                // Not sure we need that barrier.
                 a_team_handle.team_barrier();
 
                 Kokkos::single(

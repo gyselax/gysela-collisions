@@ -99,36 +99,36 @@
                               size_t             Npolmax,
                               size_t             index_max,
                               int64_t            pSpecies_id,
-                              int64_t            /* mu_id */,
-                              size_t             the_mu_extent,
-                              size_t             the_vpar_extent,
-                              size_t             the_r_extent,
-                              size_t             the_theta_extent,
-                              size_t             the_phi_extent,
-                              size_t             the_species_extent,
-                              size_t             the_global_domain_r_extent,
-                              size_t             the_global_domain_theta_extent,
-                              size_t             the_local_domain_r_offset,
-                              size_t             the_local_domain_theta_offset,
-                              double             R0,
-                              int8_t             collision_interspecies,
-                              int8_t             SOL,
-                              int8_t             LIM,
-                              int64_t            ir_SOL_separatrix,
-                              const double*      comb_mat,
-                              const double*      hat_As,
-                              const double*      hat_Zs,
-                              const double*      mug,
-                              const double*      vparg,
-                              const double*      coeff_intdmu,
-                              const double*      coeff_intdvpar,
-                              const double*      rg,
-                              const double*      nustar0_r,
-                              const double*      q_r,
-                              const double*      mask_buffer_r,
-                              const double*      mask_LIM,
-                              const double*      B_norm,
-                              const double*      Bstar_s) {
+                              int64_t /* mu_id */,
+                              size_t  the_mu_extent,
+                              size_t  the_vpar_extent,
+                              size_t  the_r_extent,
+                              size_t  the_theta_extent,
+                              size_t  the_phi_extent,
+                              size_t  the_species_extent,
+                              size_t  the_global_domain_r_extent,
+                              size_t  the_global_domain_theta_extent,
+                              size_t  the_local_domain_r_offset,
+                              size_t  the_local_domain_theta_offset,
+                              double  R0,
+                              int8_t  collision_interspecies,
+                              int8_t  SOL,
+                              int8_t  LIM,
+                              int64_t ir_SOL_separatrix,
+                              const double*,
+                              const double* hat_As,
+                              const double* hat_Zs,
+                              const double* mug,
+                              const double* vparg,
+                              const double* coeff_intdmu,
+                              const double* coeff_intdvpar,
+                              const double* rg,
+                              const double* nustar0_r,
+                              const double* q_r,
+                              const double* mask_buffer_r,
+                              const double* mask_LIM,
+                              const double* B_norm,
+                              const double* Bstar_s) {
     return koliop::error::FromException([&]() {
         if(!Kokkos::is_initialized()) {
             return KOLIOP_STATUS_INITIALIZATION_FAILURE;
@@ -140,7 +140,8 @@
            (index_max != 2 * (Npolmax - 1)) ||
            pSpecies_id < 0 ||
            ir_SOL_separatrix < 0 ||
-           comb_mat == nullptr ||
+           // We store a constant expression of the binomial coeffs. We do not need someone to given them to us.
+           // comb_mat == nullptr ||
            hat_As == nullptr ||
            hat_Zs == nullptr ||
            mug == nullptr ||
@@ -175,7 +176,6 @@
                                                static_cast<bool>(SOL),
                                                static_cast<bool>(LIM),
                                                static_cast<uint64_t>(ir_SOL_separatrix),
-                                               comb_mat,
                                                hat_As,
                                                hat_Zs,
                                                mug,

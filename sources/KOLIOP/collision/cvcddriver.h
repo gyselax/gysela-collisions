@@ -19,13 +19,13 @@ namespace koliop {
 
                 KOKKOS_INLINE_FUNCTION ComputeFloatType
                 DoComputeLaguerrePol(OrdinalType l, ComputeFloatType x) {
-                    // TODO(Etienne M): find a better way to compute that, based on l.
                     switch(l) {
                         case 0:
                             return 1.0;
                         case 1:
                             return 1.0 - x;
                         case 2:
+                            // return 0.5 * (x - 0.5857864376269049511983112758) * (x - 3.414213562373095048801688724);
                             return 1.0 + ((-2.0 + (1.0 / 2.0) * x) * x);
                         // case 3:
                         //     // Horner -> dependency            : 1 + (-3 + (1.5 - 1/6 * x) * x) * x
@@ -185,7 +185,11 @@ namespace koliop {
                                 // NOTE: This should be a no-op.
                                 the_rhs_value = the_rhs_value_reducer.reference();
 
-                                the_rhs(the_batch_index, ivpar, ipol, the_batch_element_index) = the_rhs_value;
+                                Kokkos::single(
+                                    Kokkos::PerTeam(a_team_handle),
+                                    [&]() {
+                                        the_rhs(the_batch_index, ivpar, ipol, the_batch_element_index) = the_rhs_value;
+                                    });
                             }
                         }
                     } else {
@@ -471,7 +475,6 @@ namespace koliop {
                        OrdinalType                                                the_vpar_extent,
                        OrdinalType                                                the_species_extent,
                        bool                                                       collision_interspecies,
-                       const Flo64*                                               comb_mat,
                        const koliop::utility::View::InternalInputL1<const Flo64>& hat_As,
                        const koliop::utility::View::InternalInputL1<const Flo64>& hat_Zs,
                        const koliop::utility::View::InternalInputL1<const Flo64>& vparg,
@@ -493,7 +496,7 @@ namespace koliop {
 
             Najl<CvCdDriver> the_najl_provider_;
 
-            koliop::utility::View::MDD<bool[kBlockExtentR][kBlockExtentTheta]> mask_coll_;
+            koliop::utility::View::MDL<bool[kBlockExtentR][kBlockExtentTheta]> mask_coll_;
 
             // NOTE: We know of an additional constant extent, the batch count
             // but we cannot exploit it due to kokkos enforcing that constant
@@ -528,7 +531,6 @@ namespace koliop {
                                             OrdinalType                                                the_vpar_extent,
                                             OrdinalType                                                the_species_extent,
                                             bool                                                       collision_interspecies,
-                                            const Flo64*                                               comb_mat,
                                             const koliop::utility::View::InternalInputL1<const Flo64>& hat_As,
                                             const koliop::utility::View::InternalInputL1<const Flo64>& hat_Zs,
                                             const koliop::utility::View::InternalInputL1<const Flo64>& vparg,
@@ -536,7 +538,6 @@ namespace koliop {
             : the_najl_provider_{pSpecies_id,
                                  the_vpar_extent, the_species_extent,
                                  collision_interspecies,
-                                 comb_mat,
                                  hat_As, hat_Zs, vparg}
             , mask_coll_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "mask_coll")}
             , the_Najl_{Kokkos::view_alloc(Kokkos::WithoutInitializing,
@@ -596,6 +597,13 @@ namespace koliop {
             const auto& n_s   = an_operator.n_s_;
             const auto& T_s   = an_operator.T_s_;
             const auto& nu_ab = an_operator.nu_ab_;
+
+            // TODO(Etienne M): Extent standardization:
+            // the_global_domain_[r|theta]_extent
+            // the_local_domain_[r|theta]_offset
+            // the_local_[mu|vpar|r|theta|phi|species]_extent
+            // the_block_[r|theta|phi]_offset
+            // the_block_[r|theta|phi]_extent
 
             // NOTE: If you have an issue with these assertions, checkout the
             // constant.h file and tune kBlockExtent[R|Theta|Phi].
