@@ -39,6 +39,8 @@ Where `<machine_file>` being one of the supported machines. For instance:
 $ cmake .. -G Ninja -DCMAKE_TOOLCHAIN_FILE=../toolchains/mi250.cce.adastra/toolchain.cmake
 ```
 
+Note that koliop expects that on GPU, the CMake variable `koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE` be either `ON` or `OFF` but on CPU, expects it to be `ON`.
+
 ### Testing
 
 Simply run the following command in the build directory (typically `build`).
