@@ -38,8 +38,18 @@ namespace koliop {
                     }
                 }
 
-                // a_host_visible_C_jl is zero initialized.
+                // a_host_visible_C_jl is zero initialized if C_jl is not on the
+                // host and will not be if C_jl is on the host (that would mean
+                // overwriting the content of C_jl). This asymmetry is somewhat
+                // dirty and requires a branch if one whishes not to do
+                // unnecessary zeroing. For instance, the code below is great on
+                // when the device is the CPU, but leads to a redundant memset
+                // when the device is the GPU.
                 auto a_host_visible_C_jl = Kokkos::create_mirror_view(C_jl);
+                if constexpr(Kokkos::is_always_assignable_v<std::remove_reference_t<decltype(C_jl)>,
+                                                            std::remove_reference_t<decltype(a_host_visible_C_jl)>>) {
+                    Kokkos::deep_copy(a_host_visible_C_jl, static_cast<ComputeFloatType>(0.0));
+                }
 
                 const auto CoreLoop = [&](auto j_tmp, auto l_tmp) {
                     for(OrdinalType i = 0; i <= (j_tmp + l_tmp); ++i) {
