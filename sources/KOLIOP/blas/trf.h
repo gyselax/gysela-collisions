@@ -117,7 +117,7 @@ namespace koliop {
         ///       of M contiguous blocks. On GPU we may also use SIMD in the
         ///       form of double2 or float2 etc. (SIMDception).
         ///     - An M block is referred as batch element.
-        ///     - The a matrix must a number of M block a multiple of
+        ///     - The number of M block must be a multiple of
         ///       BatchTraitsType::kBatchSize (you can add padding).
         ///
         template <typename BatchTraits,
