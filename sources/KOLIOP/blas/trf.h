@@ -79,14 +79,14 @@ namespace koliop {
         ///     View<value_type **cc>{A_matrix_extent / BatchTraitsType::kBatchSize, kBigBlockExtent, kSmallBlockExtent, BatchTraitsType::kBatchSize}
         ///
         /// NOTE:
-        /// In Gysela, kBigBlockExtent = Npar, kSmallBlockExtent = Npolmax and
+        /// In Gysela, kBigBlockExtent = Nvpar, kSmallBlockExtent = Npolmax and
         /// A_matrix_extent depends on the blocking realized on r, theta and
         /// phi.
         ///
         /// NOTE:
         /// - We do not use pivoting which, for numerical stability or simply
         /// validity (division by 0) of the solution, requires in practice that
-        /// the A, B and C blocks be diagonally dominant.
+        /// the M blocks be diagonally dominant.
         /// - It is the user's responsibility to wait (via fence or else) for
         /// the operation's completion.
         /// - We use a recursive LU decomposition very much similar to what is
