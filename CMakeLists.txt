@@ -8,8 +8,6 @@ include(CTest)
 
 if(koliop_TOOLCHAIN_NAME)
     message(STATUS "[koliop] Using Koliop toolchain: '${koliop_TOOLCHAIN_NAME}'.")
-else()
-    message(FATAL_ERROR "[koliop] koliop_TOOLCHAIN_NAME is not defined.")
 endif()
 
 
