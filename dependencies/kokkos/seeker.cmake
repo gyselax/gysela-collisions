@@ -76,13 +76,6 @@ endif()
 function(koliop_target_add_kokkos target_name)
     target_link_libraries("${target_name}"
                           PRIVATE Kokkos::kokkos)
-
-    if(koliop_TOOLCHAIN_NAME MATCHES "mi250.cce.adastra")
-        # WORKAROUND:
-        # https://gitlab.kitware.com/cmake/cmake/-/issues/24402
-        target_link_options("${target_name}"
-                            PUBLIC -fopenmp)
-    endif()
 endfunction()
 
 function(koliop_target_add_kokkos_kernels target_name)

@@ -24,13 +24,9 @@ option(koliop_BUILD_FORTRAN_INTERFACE "Enable the koliop::fortran_interface glue
 ### Dependencies
 ################################################################################
 
-file(GLOB dependencies "${CMAKE_CURRENT_SOURCE_DIR}/dependencies/*")
+include(${CMAKE_CURRENT_LIST_DIR}/dependencies/resolver.cmake)
 
-foreach(a_dependency ${dependencies})
-    if(IS_DIRECTORY "${a_dependency}")
-        include("${a_dependency}/seeker.cmake")
-    endif()
-endforeach()
+SPLBDependencyResolver("${CMAKE_CURRENT_SOURCE_DIR}/dependencies")
 
 
 ################################################################################
