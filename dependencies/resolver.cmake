@@ -86,8 +86,9 @@ function(_SPLBDependencyResolver_ResolveLibrary DEPENDENCY_NAME)
             list(POP_FRONT DEPENDENCY_PROVIDERS_SOURCE A_PROVIDER_SOURCE)
 
             # There is no simple CMake way to check if A_PROVIDER_SOURCE
-            # represents a path.
-            if(NOT "${A_PROVIDER_SOURCE}" MATCHES "https?:\/\/(www\.)?.*")
+            # represents a path. This is how it is done in
+            # ExternalProject.cmake.
+            if(NOT "${A_PROVIDER_SOURCE}" MATCHES "^[a-z]+://")
                 # We are probably dealing with a file system path.
                 if(NOT EXISTS "${A_PROVIDER_SOURCE}")
                     # Special warning because FetchContent does not send the correct
