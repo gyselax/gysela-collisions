@@ -1,13 +1,14 @@
 cmake_minimum_required(VERSION 3.25)
 
 # Provider kind.
-# OFF
-# SYSTEM / Already provided
-# GIT     (git URL)
-# ARCHIVE (disk URI)
-# ARCHIVE (online URL)
-# ARCHIVE (sub dir URI)
-# ARCHIVE (external dir URI)
+# Provider | Source | Use case
+# OFF      |        | To hell with this dependency, do not ask to resolve the dependency anymore.
+# SYSTEM   |        | Check if the dependency is already in the project's context, or if the system provides it.
+# GIT      | URL    | Online git
+# ARCHIVE  | URI    | Disk, say a targz or zip
+# ARCHIVE  | URL    | Online, say a targz or zip
+# ARCHIVE  | URI    | Sub directory containing a CMakeLists.txt
+# ARCHIVE  | URI    | External directory containing a CMakeLists.txt
 function(_SPLBDependencyResolver_Options DEPENDENCY_NAME)
     cmake_parse_arguments(PARSE_ARGV 1 DEPENDENCY "" "" "PROVIDERS;PROVIDERS_SOURCE")
 
@@ -59,8 +60,13 @@ function(_SPLBDependencyResolver_ResolveLibrary DEPENDENCY_NAME)
                     endif()
                 endforeach()
 
+                # If we get here, we found what we need, else we would have
+                # failed earlier.
+
                 return()
             endif()
+
+            # Fallthrough and continue.
         elseif("${A_PROVIDER}" STREQUAL "GIT")
             message(STATUS "[${CMAKE_PROJECT_NAME}] Dependency GIT: '${DEPENDENCY_NAME}'.")
 
@@ -80,9 +86,11 @@ function(_SPLBDependencyResolver_ResolveLibrary DEPENDENCY_NAME)
 
             FetchContent_MakeAvailable("${DEPENDENCY_NAME}")
 
-            # NOTE: It is implied that we found a library.
+            # If we get here, we found what we need, else we would have failed
+            # earlier.
 
-            # TODO(Etienne M): If it fails (timeout, fallback to the next).
+            # TODO(Etienne M): Find a way to "soft fail" so we can continue.
+            # Currently, FetchContent_MakeAvailable does not allow that.
 
             return()
         elseif("${A_PROVIDER}" STREQUAL "ARCHIVE")
@@ -95,12 +103,13 @@ function(_SPLBDependencyResolver_ResolveLibrary DEPENDENCY_NAME)
             # represents a path. This is how it is done in
             # ExternalProject.cmake.
             if(NOT "${A_PROVIDER_SOURCE}" MATCHES "^[a-z]+://")
-                # We are probably dealing with a file system path.
+                # We are probably dealing with a file path or directory.
                 if(NOT EXISTS "${A_PROVIDER_SOURCE}")
                     # Special warning because FetchContent does not send the correct
                     # signals. It says it expect archives only which is wrong, it
                     # can take directories too.
-                    message(FATAL_ERROR "[${CMAKE_PROJECT_NAME}] Could not find directory or file '${A_PROVIDER_SOURCE}'.")
+                    message(WARNING "[${CMAKE_PROJECT_NAME}] Could not find directory or file '${A_PROVIDER_SOURCE}'.")
+                    continue()
                 endif()
             endif()
 
@@ -120,9 +129,11 @@ function(_SPLBDependencyResolver_ResolveLibrary DEPENDENCY_NAME)
                                  )
             FetchContent_MakeAvailable("${DEPENDENCY_NAME}")
 
-            # NOTE: It is implied that we found a library.
+            # If we get here, we found what we need, else we would have failed
+            # earlier.
 
-            # TODO(Etienne M): If it fails (timeout, fallback to the next).
+            # TODO(Etienne M): Find a way to "soft fail" so we can continue.
+            # Currently, FetchContent_MakeAvailable does not allow that.
 
             return()
         else()
@@ -138,15 +149,15 @@ endfunction()
 #                                 VERSION          "4.1.0"
 #                                 COMPONENTS       Kokkos::kokkos
 #                                 PROVIDERS        ARCHIVE
-#                                                 GIT
-#                                                 ARCHIVE
-#                                                 ARCHIVE
-#                                                 SYSTEM
-#                                                 OFF
-#                                 PROVIDERS_SOURCE "/lus/home/BCINES/dci/malaboeuf/repository.backedup/gysela-gpu-porting/koliop/build/kokkos"
-#                                                 "https://github.com/kokkos/kokkos"
-#                                                 "https://github.com/kokkos/kokkos/archive/refs/tags/4.2.00.tar.gz"
-#                                                 "/lus/home/BCINES/dci/malaboeuf/repository.backedup/gysela-gpu-porting/koliop/4.2.00.tar.gz"
+#                                                  GIT
+#                                                  ARCHIVE
+#                                                  ARCHIVE
+#                                                  SYSTEM
+#                                                  OFF
+#                                 PROVIDERS_SOURCE "../kokkos"
+#                                                  "https://github.com/kokkos/kokkos"
+#                                                  "https://github.com/kokkos/kokkos/archive/refs/tags/4.2.00.tar.gz"
+#                                                  "../4.2.00.tar.gz"
 #                                 )
 function(_SPLBDependencyResolver_Resolve DEPENDENCY_NAME)
     cmake_parse_arguments(PARSE_ARGV 1 DEPENDENCY "" "VERSION" "COMPONENTS;OPTIONAL_COMPONENTS;PROVIDERS;PROVIDERS_SOURCE")
