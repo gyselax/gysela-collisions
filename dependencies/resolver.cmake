@@ -49,7 +49,13 @@ function(_SPLBDependencyResolver_ResolveLibrary DEPENDENCY_NAME)
                     # the package is not found. But this mean we need to ensure all
                     # needed components are presents.
                     if(NOT TARGET "${A_COMPONENT}")
-                        message(FATAL_ERROR "[${CMAKE_PROJECT_NAME}] Found '${DEPENDENCY_NAME}' but not all '${DEPENDENCY_COMPONENTS}' components are satisfied. Either fix the SYSTEM package or reconfigure without the SYSTEM provider.")
+                        # NOTE: We found the dependency but failed to satisfy
+                        # all required components. We have to hard error because
+                        # the state of the environment changed
+                        # ("${${DEPENDENCY_NAME}_FOUND}" is set). To continue we
+                        # would have to rollback the state. This is significant
+                        # issue IMO.
+                        message(FATAL_ERROR "[${CMAKE_PROJECT_NAME}] Found '${DEPENDENCY_NAME}' but at least '${A_COMPONENT}' was not satisfied. Either fix the SYSTEM package or reconfigure without the SYSTEM provider.")
                     endif()
                 endforeach()
 
@@ -129,19 +135,19 @@ endfunction()
 
 # Example:
 # _SPLBDependencyResolver_Resolve(Kokkos
-# VERSION          "4.1.0"
-# COMPONENTS       Kokkos::kokkos
-# PROVIDERS        ARCHIVE
-#                  GIT
-#                  ARCHIVE
-#                  ARCHIVE
-#                  SYSTEM
-#                  OFF
-# PROVIDERS_SOURCE "/lus/home/BCINES/dci/malaboeuf/repository.backedup/gysela-gpu-porting/koliop/build/kokkos"
-#                  "https://github.com/kokkos/kokkos"
-#                  "https://github.com/kokkos/kokkos/archive/refs/tags/4.2.00.tar.gz"
-#                  "/lus/home/BCINES/dci/malaboeuf/repository.backedup/gysela-gpu-porting/koliop/4.2.00.tar.gz"
-# )
+#                                 VERSION          "4.1.0"
+#                                 COMPONENTS       Kokkos::kokkos
+#                                 PROVIDERS        ARCHIVE
+#                                                 GIT
+#                                                 ARCHIVE
+#                                                 ARCHIVE
+#                                                 SYSTEM
+#                                                 OFF
+#                                 PROVIDERS_SOURCE "/lus/home/BCINES/dci/malaboeuf/repository.backedup/gysela-gpu-porting/koliop/build/kokkos"
+#                                                 "https://github.com/kokkos/kokkos"
+#                                                 "https://github.com/kokkos/kokkos/archive/refs/tags/4.2.00.tar.gz"
+#                                                 "/lus/home/BCINES/dci/malaboeuf/repository.backedup/gysela-gpu-porting/koliop/4.2.00.tar.gz"
+#                                 )
 function(_SPLBDependencyResolver_Resolve DEPENDENCY_NAME)
     cmake_parse_arguments(PARSE_ARGV 1 DEPENDENCY "" "VERSION" "COMPONENTS;OPTIONAL_COMPONENTS;PROVIDERS;PROVIDERS_SOURCE")
 

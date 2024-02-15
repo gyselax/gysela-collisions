@@ -15,9 +15,6 @@ set(Kokkos_ARCH_ZEN4 ON CACHE BOOL "Optimize for AMD Zen4 architecture (HOST).")
 
 set(koliop_TOOLCHAIN_NAME "genoa.amdclang.adastra")
 
-set(koliop_FENCE_ON_OPERATOR_EXIT OFF CACHE BOOL "")
-set(koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE ON CACHE BOOL "")
-
 # The rest is optional:
 
 set(koliop_FLAGS_BASE -Wall -Wextra -Wpedantic -Wcast-align -Wctor-dtor-privacy -Wdouble-promotion -Wformat=2 -Winit-self -Woverloaded-virtual -Wredundant-decls -Wsign-promo -Wstrict-aliasing -Wdisabled-optimization -Wsuggest-override -Wswitch-default -Wtautological-compare -Wpacked -Wunreachable-code -Wcast-qual -Wold-style-cast -Wswitch-enum -Wundef) # -Wconversion -Wmissing-include-dirs

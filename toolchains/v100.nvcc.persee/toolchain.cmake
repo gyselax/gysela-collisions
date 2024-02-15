@@ -19,7 +19,6 @@ set(Kokkos_ARCH_AVX2 ON CACHE BOOL "Optimize for AVX2 architecture (HOST).")
 
 set(koliop_TOOLCHAIN_NAME "v100.nvcc.persee")
 
-set(koliop_FENCE_ON_OPERATOR_EXIT OFF CACHE BOOL "")
 set(koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE OFF CACHE BOOL "")
 
 # The rest is optional:
