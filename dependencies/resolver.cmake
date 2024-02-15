@@ -9,43 +9,43 @@ cmake_minimum_required(VERSION 3.25)
 # ARCHIVE  | URL    | Online, say a targz or zip
 # ARCHIVE  | URI    | Sub directory containing a CMakeLists.txt
 # ARCHIVE  | URI    | External directory containing a CMakeLists.txt
-function(_SPLBDependencyResolver_Options DEPENDENCY_NAME)
-    cmake_parse_arguments(PARSE_ARGV 1 DEPENDENCY "" "" "PROVIDERS;PROVIDERS_SOURCE")
+function(DependencyResolver_Options _NAME)
+    cmake_parse_arguments(PARSE_ARGV 1 "" "" "" "PROVIDERS;PROVIDERS_SOURCE")
 
-    set(${CMAKE_PROJECT_NAME}_ENABLE_${DEPENDENCY_NAME} "${DEPENDENCY_PROVIDERS}"        CACHE STRING "Define a provider list for this dependency [OFF|SYSTEM|GIT|ARCHIVE]*. If in a parent project, a dependency is already pulled through whatever means, you can use SYSTEM to use it.")
-    set(${CMAKE_PROJECT_NAME}_SOURCE_${DEPENDENCY_NAME} "${DEPENDENCY_PROVIDERS_SOURCE}" CACHE STRING "If '${CMAKE_PROJECT_NAME}_ENABLE_${DEPENDENCY_NAME}' is set to [GIT|ARCHIVE], specify where to locate the resource. ARCHIVE mode accepts an URL or filesystem path towards a archive (say, a tarball) or a directory to sources (external or project subdirectory).")
+    set(${CMAKE_PROJECT_NAME}_ENABLE_${_NAME} "${_PROVIDERS}"        CACHE STRING "Define a provider list for this dependency [OFF|SYSTEM|GIT|ARCHIVE]*. If in a parent project, a dependency is already pulled through whatever means, you can use SYSTEM to use it.")
+    set(${CMAKE_PROJECT_NAME}_SOURCE_${_NAME} "${_PROVIDERS_SOURCE}" CACHE STRING "If '${CMAKE_PROJECT_NAME}_ENABLE_${_NAME}' is set to [GIT|ARCHIVE], specify where to locate the resource. ARCHIVE mode accepts an URL or filesystem path towards a archive (say, a tarball) or a directory to sources (external or project subdirectory).")
 endfunction()
 
-function(_SPLBDependencyResolver_ResolveLibrary DEPENDENCY_NAME)
-    cmake_parse_arguments(PARSE_ARGV 1 DEPENDENCY "" "VERSION" "COMPONENTS;OPTIONAL_COMPONENTS;PROVIDERS;PROVIDERS_SOURCE")
+function(DependencyResolver_ResolveLibrary _NAME)
+    cmake_parse_arguments(PARSE_ARGV 1 "" "" "VERSION" "COMPONENTS;OPTIONAL_COMPONENTS;PROVIDERS;PROVIDERS_SOURCE")
 
-    list(LENGTH DEPENDENCY_PROVIDERS PROVIDER_COUNT)
+    list(LENGTH _PROVIDERS PROVIDER_COUNT)
 
     while(PROVIDER_COUNT)
-        list(POP_FRONT DEPENDENCY_PROVIDERS A_PROVIDER)
-        list(LENGTH DEPENDENCY_PROVIDERS PROVIDER_COUNT)
+        list(POP_FRONT _PROVIDERS A_PROVIDER)
+        list(LENGTH _PROVIDERS PROVIDER_COUNT)
 
         if("${A_PROVIDER}" STREQUAL "OFF")
-            message(STATUS "[${CMAKE_PROJECT_NAME}] Dependency OFF:       '${DEPENDENCY_NAME}'.")
+            message(STATUS "[${CMAKE_PROJECT_NAME}] Dependency OFF:       '${_NAME}'.")
 
-            foreach(A_COMPONENT IN LISTS DEPENDENCY_COMPONENTS DEPENDENCY_OPTIONAL_COMPONENTS)
+            foreach(A_COMPONENT IN LISTS _COMPONENTS _OPTIONAL_COMPONENTS)
                 # Safeguard: if you asked fr no deps but still got something,
                 # potentially from a parent/prior dependency.
                 if(TARGET "${A_COMPONENT}")
-                    message(FATAL_ERROR "[${CMAKE_PROJECT_NAME}] Deactivating '${DEPENDENCY_NAME}' found '${A_COMPONENT}'. Conflicting signals are signs for problems. Either activate the dependency for project '${CMAKE_PROJECT_NAME}' or understand why '${A_COMPONENT}' is defined. If this is expected that someone else provide '${A_COMPONENT}', you may want to use a SYSTEM dependency in the '${CMAKE_PROJECT_NAME}' project.")
+                    message(FATAL_ERROR "[${CMAKE_PROJECT_NAME}] Deactivating '${_NAME}' found '${A_COMPONENT}'. Conflicting signals are signs for problems. Either activate the dependency for project '${CMAKE_PROJECT_NAME}' or understand why '${A_COMPONENT}' is defined. If this is expected that someone else provide '${A_COMPONENT}', you may want to use a SYSTEM dependency in the '${CMAKE_PROJECT_NAME}' project.")
                 endif()
             endforeach()
 
             return()
         elseif("${A_PROVIDER}" STREQUAL "SYSTEM")
-            message(STATUS "[${CMAKE_PROJECT_NAME}] Dependency SYSTEM:    '${DEPENDENCY_NAME}'.")
+            message(STATUS "[${CMAKE_PROJECT_NAME}] Dependency SYSTEM:    '${_NAME}'.")
 
-            list(APPEND DEPENDENCY_OPTIONAL_COMPONENTS "${DEPENDENCY_COMPONENTS}")
+            list(APPEND _OPTIONAL_COMPONENTS "${_COMPONENTS}")
 
-            find_package("${DEPENDENCY_NAME}" "${DEPENDENCY_VERSION}" OPTIONAL_COMPONENTS "${DEPENDENCY_OPTIONAL_COMPONENTS}")
+            find_package("${_NAME}" "${_VERSION}" OPTIONAL_COMPONENTS "${_OPTIONAL_COMPONENTS}")
 
-            if("${${DEPENDENCY_NAME}_FOUND}")
-                foreach(A_COMPONENT IN LISTS DEPENDENCY_COMPONENTS)
+            if("${${_NAME}_FOUND}")
+                foreach(A_COMPONENT IN LISTS _COMPONENTS)
                     # NOTE: We use OPTIONAL_COMPONENTS to avoid the hard error if
                     # the package is not found. But this mean we need to ensure all
                     # needed components are presents.
@@ -53,10 +53,10 @@ function(_SPLBDependencyResolver_ResolveLibrary DEPENDENCY_NAME)
                         # NOTE: We found the dependency but failed to satisfy
                         # all required components. We have to hard error because
                         # the state of the environment changed
-                        # ("${${DEPENDENCY_NAME}_FOUND}" is set). To continue we
+                        # ("${${_NAME}_FOUND}" is set). To continue we
                         # would have to rollback the state. This is significant
                         # issue IMO.
-                        message(FATAL_ERROR "[${CMAKE_PROJECT_NAME}] Found '${DEPENDENCY_NAME}' but at least '${A_COMPONENT}' was not satisfied. Either fix the SYSTEM package or reconfigure without the SYSTEM provider.")
+                        message(FATAL_ERROR "[${CMAKE_PROJECT_NAME}] Found '${_NAME}' but at least '${A_COMPONENT}' was not satisfied. Either fix the SYSTEM package or reconfigure without the SYSTEM provider.")
                     endif()
                 endforeach()
 
@@ -68,12 +68,12 @@ function(_SPLBDependencyResolver_ResolveLibrary DEPENDENCY_NAME)
 
             # Fallthrough and continue.
         elseif("${A_PROVIDER}" STREQUAL "GIT")
-            message(STATUS "[${CMAKE_PROJECT_NAME}] Dependency GIT: '${DEPENDENCY_NAME}'.")
+            message(STATUS "[${CMAKE_PROJECT_NAME}] Dependency GIT: '${_NAME}'.")
 
             # Each source is matched with its provider (SOA fashion).
-            list(POP_FRONT DEPENDENCY_PROVIDERS_SOURCE A_PROVIDER_SOURCE)
+            list(POP_FRONT _PROVIDERS_SOURCE A_PROVIDER_SOURCE)
 
-            FetchContent_Declare("${DEPENDENCY_NAME}"
+            FetchContent_Declare("${_NAME}"
                                  SYSTEM
                                  OVERRIDE_FIND_PACKAGE
                                  # TODO(Etienne M): We would benefit from a
@@ -84,7 +84,7 @@ function(_SPLBDependencyResolver_ResolveLibrary DEPENDENCY_NAME)
                                  INACTIVITY_TIMEOUT    10
                                  )
 
-            FetchContent_MakeAvailable("${DEPENDENCY_NAME}")
+            FetchContent_MakeAvailable("${_NAME}")
 
             # If we get here, we found what we need, else we would have failed
             # earlier.
@@ -94,10 +94,10 @@ function(_SPLBDependencyResolver_ResolveLibrary DEPENDENCY_NAME)
 
             return()
         elseif("${A_PROVIDER}" STREQUAL "ARCHIVE")
-            message(STATUS "[${CMAKE_PROJECT_NAME}] Dependency ARCHIVE: '${DEPENDENCY_NAME}'.")
+            message(STATUS "[${CMAKE_PROJECT_NAME}] Dependency ARCHIVE: '${_NAME}'.")
 
             # Each source is matched with its provider (SOA fashion).
-            list(POP_FRONT DEPENDENCY_PROVIDERS_SOURCE A_PROVIDER_SOURCE)
+            list(POP_FRONT _PROVIDERS_SOURCE A_PROVIDER_SOURCE)
 
             # There is no simple CMake way to check if A_PROVIDER_SOURCE
             # represents a path. This is how it is done in
@@ -113,7 +113,7 @@ function(_SPLBDependencyResolver_ResolveLibrary DEPENDENCY_NAME)
                 endif()
             endif()
 
-            FetchContent_Declare("${DEPENDENCY_NAME}"
+            FetchContent_Declare("${_NAME}"
                                  SYSTEM
                                  OVERRIDE_FIND_PACKAGE
                                  # TODO(Etienne M): We would benefit from a
@@ -127,7 +127,7 @@ function(_SPLBDependencyResolver_ResolveLibrary DEPENDENCY_NAME)
                                  TIMEOUT               10
                                  INACTIVITY_TIMEOUT    10
                                  )
-            FetchContent_MakeAvailable("${DEPENDENCY_NAME}")
+            FetchContent_MakeAvailable("${_NAME}")
 
             # If we get here, we found what we need, else we would have failed
             # earlier.
@@ -141,46 +141,45 @@ function(_SPLBDependencyResolver_ResolveLibrary DEPENDENCY_NAME)
         endif()
     endwhile()
 
-    message(FATAL_ERROR "[${CMAKE_PROJECT_NAME}] Dependency **not found**: '${DEPENDENCY_NAME}'.")
+    message(FATAL_ERROR "[${CMAKE_PROJECT_NAME}] Dependency **not found**: '${_NAME}'.")
 endfunction()
 
 # Example:
-# _SPLBDependencyResolver_Resolve(Kokkos
-#                                 VERSION          "4.1.0"
-#                                 COMPONENTS       Kokkos::kokkos
-#                                 PROVIDERS        ARCHIVE
-#                                                  GIT
-#                                                  ARCHIVE
-#                                                  ARCHIVE
-#                                                  SYSTEM
-#                                                  OFF
-#                                 PROVIDERS_SOURCE "../kokkos"
-#                                                  "https://github.com/kokkos/kokkos"
-#                                                  "https://github.com/kokkos/kokkos/archive/refs/tags/4.2.00.tar.gz"
-#                                                  "../4.2.00.tar.gz"
-#                                 )
-function(_SPLBDependencyResolver_Resolve DEPENDENCY_NAME)
-    cmake_parse_arguments(PARSE_ARGV 1 DEPENDENCY "" "VERSION" "COMPONENTS;OPTIONAL_COMPONENTS;PROVIDERS;PROVIDERS_SOURCE")
+# DependencyResolver_Resolve(Kokkos
+#                            VERSION          "4.1.0"
+#                            COMPONENTS       Kokkos::kokkos
+#                            PROVIDERS        ARCHIVE
+#                                             GIT
+#                                             ARCHIVE
+#                                             ARCHIVE
+#                                             SYSTEM
+#                                             OFF
+#                            PROVIDERS_SOURCE "../kokkos"
+#                                             "https://github.com/kokkos/kokkos"
+#                                             "https://github.com/kokkos/kokkos/archive/refs/tags/4.2.00.tar.gz"
+#                                             "../4.2.00.tar.gz"
+#                            )
+function(DependencyResolver_Resolve _NAME)
+    cmake_parse_arguments(PARSE_ARGV 1 "" "" "VERSION" "COMPONENTS;OPTIONAL_COMPONENTS;PROVIDERS;PROVIDERS_SOURCE")
 
     # Define default options (cached variables).
-    _SPLBDependencyResolver_Options("${DEPENDENCY_NAME}"
-                                    PROVIDERS        ${DEPENDENCY_PROVIDERS}
-                                    PROVIDERS_SOURCE ${DEPENDENCY_PROVIDERS_SOURCE}
+    DependencyResolver_Options("${_NAME}"
+                                    PROVIDERS        ${_PROVIDERS}
+                                    PROVIDERS_SOURCE ${_PROVIDERS_SOURCE}
                                     )
     # Now, forward the cached variables, not the one given as argument to
-    # _SPLBDependencyResolver_Resolve.
-    _SPLBDependencyResolver_ResolveLibrary("${DEPENDENCY_NAME}"
-                                           VERSION             "${DEPENDENCY_VERSION}"
-
-                                           COMPONENTS          ${DEPENDENCY_COMPONENTS}
-                                           OPTIONAL_COMPONENTS ${DEPENDENCY_OPTIONAL_COMPONENTS}
-                                           PROVIDERS           ${${CMAKE_PROJECT_NAME}_ENABLE_${DEPENDENCY_NAME}}
-                                           PROVIDERS_SOURCE    ${${CMAKE_PROJECT_NAME}_SOURCE_${DEPENDENCY_NAME}}
-                                           )
+    # DependencyResolver_Resolve.
+    DependencyResolver_ResolveLibrary("${_NAME}"
+                                      VERSION             "${_VERSION}"
+                                      COMPONENTS          ${_COMPONENTS}
+                                      OPTIONAL_COMPONENTS ${_OPTIONAL_COMPONENTS}
+                                      PROVIDERS           ${${CMAKE_PROJECT_NAME}_ENABLE_${_NAME}}
+                                      PROVIDERS_SOURCE    ${${CMAKE_PROJECT_NAME}_SOURCE_${_NAME}}
+                                      )
 endfunction()
 
-function(SPLBDependencyResolver DEPENDENCY_PATH)
-    file(GLOB THE_DEPENDENCIES "${DEPENDENCY_PATH}/*")
+function(SPLBDependencyResolver _PATH)
+    file(GLOB THE_DEPENDENCIES "${_PATH}/*")
 
     foreach(A_DEPENDENCY ${THE_DEPENDENCIES})
         if(IS_DIRECTORY "${A_DEPENDENCY}")
