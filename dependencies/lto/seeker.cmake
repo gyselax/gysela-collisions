@@ -1,16 +1,16 @@
 option(koliop_ENABLE_LTO "Use Link Time Optimizations (LTO)." ON)
 
 if(koliop_ENABLE_LTO)
-    message(STATUS "[koliop] Seeking LTO.")
+    message(STATUS "[koliop] Dependency seeing LTO.")
 
     include(CheckIPOSupported)
     check_ipo_supported(RESULT koliop_LTO_ENABLED)
 
     if(koliop_LTO_ENABLED)
-        message(STATUS "[koliop]     LTO found.")
+        message(STATUS "[koliop]     Dependency LTO found.")
     endif()
 else()
-    message(STATUS "[koliop] skipping LTO.")
+    message(STATUS "[koliop] Dependency skipping LTO.")
 endif()
 
 function(koliop_target_enable_lto target_name)

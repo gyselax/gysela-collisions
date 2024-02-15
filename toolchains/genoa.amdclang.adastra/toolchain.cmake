@@ -11,6 +11,12 @@ set(CMAKE_BUILD_TYPE Release) # Debug, Release, RelWithDebInfo and MinSizeRel
 set(Kokkos_ENABLE_OPENMP ON CACHE BOOL "Defined if the OpenMP execution space is enabled.")
 set(Kokkos_ARCH_ZEN4 ON CACHE BOOL "Optimize for AMD Zen4 architecture (HOST).")
 
+# Kokkos kernels options:
+
+set(KokkosKernels_ENABLE_ALL_COMPONENTS OFF CACHE BOOL "")
+set(KokkosKernels_ENABLE_COMPONENT_BATCHED ON CACHE BOOL "")
+set(KokkosKernels_ENABLE_COMPONENT_BLAS ON CACHE BOOL "")
+
 # Koliop options:
 
 set(koliop_TOOLCHAIN_NAME "genoa.amdclang.adastra")
