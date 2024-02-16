@@ -252,7 +252,7 @@ function(DependencyResolver_Resolve _NAME)
                                       )
 endfunction()
 
-function(SPLBDependencyResolver _PATH)
+function(DependencyResolver _PATH)
     file(GLOB THE_DEPENDENCIES "${_PATH}/*")
 
     foreach(A_DEPENDENCY ${THE_DEPENDENCIES})

@@ -26,7 +26,7 @@ option(koliop_BUILD_FORTRAN_INTERFACE "Enable the koliop::fortran_interface glue
 
 include(${CMAKE_CURRENT_LIST_DIR}/dependencies/resolver.cmake)
 
-SPLBDependencyResolver("${CMAKE_CURRENT_SOURCE_DIR}/dependencies")
+DependencyResolver("${CMAKE_CURRENT_SOURCE_DIR}/dependencies")
 
 
 ################################################################################
