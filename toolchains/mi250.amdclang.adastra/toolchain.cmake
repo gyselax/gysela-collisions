@@ -15,12 +15,17 @@ set(Kokkos_ARCH_VEGA90A ON CACHE BOOL "Enable support for AMD GPU MI200 series (
 set(Kokkos_ENABLE_OPENMP ON CACHE BOOL "Defined if the OpenMP execution space is enabled.")
 set(Kokkos_ARCH_ZEN3 ON CACHE BOOL "Optimize for AMD Zen3 architecture (HOST).")
 
+# Kokkos kernels options:
+
+set(KokkosKernels_ENABLE_ALL_COMPONENTS OFF CACHE BOOL "")
+set(KokkosKernels_ENABLE_COMPONENT_BATCHED ON CACHE BOOL "")
+set(KokkosKernels_ENABLE_COMPONENT_BLAS ON CACHE BOOL "")
+
 # Koliop options:
 
 set(koliop_TOOLCHAIN_NAME "mi250.amdclang.adastra")
 
-set(koliop_FENCE_ON_OPERATOR_EXIT OFF)
-set(koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE OFF)
+set(koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE OFF CACHE BOOL "")
 
 # The rest is optional:
 

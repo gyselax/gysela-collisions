@@ -1,16 +1,21 @@
-message(STATUS "[koliop] Seeking LTO support.")
+option(koliop_ENABLE_LTO "Use Link Time Optimizations (LTO)." ON)
 
-include(CheckIPOSupported)
-check_ipo_supported(RESULT koliop_IS_LTO_ENABLED)
+if(koliop_ENABLE_LTO)
+    message(STATUS "[koliop] Dependency seeing LTO.")
 
-if(koliop_IS_LTO_ENABLED)
-    message(STATUS "[koliop]     LTO support found.")
+    include(CheckIPOSupported)
+    check_ipo_supported(RESULT koliop_LTO_ENABLED)
+
+    if(koliop_LTO_ENABLED)
+        message(STATUS "[koliop]     Dependency LTO found.")
+    endif()
+else()
+    message(STATUS "[koliop] Dependency skipping LTO.")
 endif()
 
 function(koliop_target_enable_lto target_name)
-    if(koliop_IS_LTO_ENABLED AND
-       CMAKE_BUILD_TYPE MATCHES "Release" AND
-       NOT koliop_TOOLCHAIN_NAME MATCHES "mi250.cce.adastra")
+    if(koliop_LTO_ENABLED AND
+       CMAKE_BUILD_TYPE MATCHES "Release")
         # NOTE: We have had some issues with LTO and the Clang based compilers
         # on Adastra. Note that recent Clang offer the -foffload-lto, an LTO
         # pass that is device/target aware.

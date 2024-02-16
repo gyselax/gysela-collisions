@@ -79,14 +79,14 @@ namespace koliop {
         ///     View<value_type **cc>{A_matrix_extent / BatchTraitsType::kBatchSize, kBigBlockExtent, kSmallBlockExtent, BatchTraitsType::kBatchSize}
         ///
         /// NOTE:
-        /// In Gysela, kBigBlockExtent = Npar, kSmallBlockExtent = Npolmax and
+        /// In Gysela, kBigBlockExtent = Nvpar, kSmallBlockExtent = Npolmax and
         /// A_matrix_extent depends on the blocking realized on r, theta and
         /// phi.
         ///
         /// NOTE:
         /// - We do not use pivoting which, for numerical stability or simply
         /// validity (division by 0) of the solution, requires in practice that
-        /// the A, B and C blocks be diagonally dominant.
+        /// the M blocks be diagonally dominant.
         /// - It is the user's responsibility to wait (via fence or else) for
         /// the operation's completion.
         /// - We use a recursive LU decomposition very much similar to what is
@@ -117,7 +117,7 @@ namespace koliop {
         ///       of M contiguous blocks. On GPU we may also use SIMD in the
         ///       form of double2 or float2 etc. (SIMDception).
         ///     - An M block is referred as batch element.
-        ///     - The a matrix must a number of M block a multiple of
+        ///     - The number of M block must be a multiple of
         ///       BatchTraitsType::kBatchSize (you can add padding).
         ///
         template <typename BatchTraits,

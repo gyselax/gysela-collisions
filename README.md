@@ -26,17 +26,17 @@ If you use [ninja](https://ninja-build.org/), then, under different platforms on
 ```bash
 $ mkdir build && cd build
 # Using Ninja:
-$ cmake .. -G Ninja -DCMAKE_TOOLCHAIN_FILE=../toolchains/<machine_file>/toolchain.cmake
+$ cmake .. -GNinja --toolchain=../toolchains/<machine_file>/toolchain.cmake
 $ ninja
 # Using make:
-$ cmake .. -DCMAKE_TOOLCHAIN_FILE=../toolchains/<machine_file>/toolchain.cmake
+$ cmake .. --toolchain=../toolchains/<machine_file>/toolchain.cmake
 $ make
 ```
 
 Where `<machine_file>` being one of the supported machines. For instance:
 
 ```bash
-$ cmake .. -G Ninja -DCMAKE_TOOLCHAIN_FILE=../toolchains/mi250.cce.adastra/toolchain.cmake
+$ cmake .. -GNinja --toolchain=../toolchains/mi250.cce.adastra/toolchain.cmake
 ```
 
 Note that koliop expects that on GPU, the CMake variable `koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE` be either `ON` or `OFF` but on CPU, expects it to be `ON`.

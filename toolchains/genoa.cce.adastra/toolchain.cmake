@@ -8,19 +8,18 @@ set(CMAKE_BUILD_TYPE Release) # Debug, Release, RelWithDebInfo and MinSizeRel
 
 # Kokkos options:
 
-
-
-
 set(Kokkos_ENABLE_OPENMP ON CACHE BOOL "Defined if the OpenMP execution space is enabled.")
-# TODO(Etienne M): Zen4 (genoa)
-set(Kokkos_ARCH_ZEN3 ON CACHE BOOL "Optimize for AMD Zen3 architecture (HOST).")
+set(Kokkos_ARCH_ZEN4 ON CACHE BOOL "Optimize for AMD Zen4 architecture (HOST).")
+
+# Kokkos kernels options:
+
+set(KokkosKernels_ENABLE_ALL_COMPONENTS OFF CACHE BOOL "")
+set(KokkosKernels_ENABLE_COMPONENT_BATCHED ON CACHE BOOL "")
+set(KokkosKernels_ENABLE_COMPONENT_BLAS ON CACHE BOOL "")
 
 # Koliop options:
 
 set(koliop_TOOLCHAIN_NAME "genoa.cce.adastra")
-
-set(koliop_FENCE_ON_OPERATOR_EXIT OFF)
-set(koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE ON)
 
 # The rest is optional:
 

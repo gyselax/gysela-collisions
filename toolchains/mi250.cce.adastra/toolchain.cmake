@@ -15,12 +15,18 @@ set(Kokkos_ARCH_VEGA90A ON CACHE BOOL "Enable support for AMD GPU MI200 series (
 set(Kokkos_ENABLE_OPENMP ON CACHE BOOL "Defined if the OpenMP execution space is enabled.")
 set(Kokkos_ARCH_ZEN3 ON CACHE BOOL "Optimize for AMD Zen3 architecture (HOST).")
 
+# Kokkos kernels options:
+
+set(KokkosKernels_ENABLE_ALL_COMPONENTS OFF CACHE BOOL "")
+set(KokkosKernels_ENABLE_COMPONENT_BATCHED ON CACHE BOOL "")
+set(KokkosKernels_ENABLE_COMPONENT_BLAS ON CACHE BOOL "")
+
 # Koliop options:
 
 set(koliop_TOOLCHAIN_NAME "mi250.cce.adastra")
 
-set(koliop_FENCE_ON_OPERATOR_EXIT OFF)
-set(koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE OFF)
+set(koliop_ENABLE_LTO OFF CACHE BOOL "")
+set(koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE OFF CACHE BOOL "")
 
 # The rest is optional:
 
@@ -35,7 +41,7 @@ set(koliop_FLAGS_MINSIZEREL     -Os)
 set(koliop_FLAGS_RELEASE        -g -O3 "SHELL:-mllvm -amdgpu-early-inline-all=true" "SHELL:-mllvm -amdgpu-function-calls=false")
 set(koliop_FLAGS_RELWITHDEBINFO -g -O3 "SHELL:-mllvm -amdgpu-early-inline-all=true" "SHELL:-mllvm -amdgpu-function-calls=false" -fno-omit-frame-pointer -fno-optimize-sibling-calls)
 
-# set(koliop_LINKER_FLAGS_DEBUG          ${koliop_FLAGS_DEBUG})
-# set(koliop_LINKER_FLAGS_MINSIZEREL     ${koliop_FLAGS_MINSIZEREL})
-# set(koliop_LINKER_FLAGS_RELEASE        ${koliop_FLAGS_RELEASE})
-# set(koliop_LINKER_FLAGS_RELWITHDEBINFO ${koliop_FLAGS_RELWITHDEBINFO})
+set(koliop_LINKER_FLAGS_DEBUG          -fopenmp)
+set(koliop_LINKER_FLAGS_MINSIZEREL     -fopenmp)
+set(koliop_LINKER_FLAGS_RELEASE        -fopenmp)
+set(koliop_LINKER_FLAGS_RELWITHDEBINFO -fopenmp)

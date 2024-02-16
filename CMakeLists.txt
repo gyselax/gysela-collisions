@@ -8,8 +8,6 @@ include(CTest)
 
 if(koliop_TOOLCHAIN_NAME)
     message(STATUS "[koliop] Using Koliop toolchain: '${koliop_TOOLCHAIN_NAME}'.")
-else()
-    message(FATAL_ERROR "[koliop] koliop_TOOLCHAIN_NAME is not defined.")
 endif()
 
 
@@ -20,18 +18,15 @@ endif()
 option(koliop_ASSERT_ENABLED "Enable assertions. This enable/disable KOLIOP_ASSERT() but not C's assert()." ON)
 option(koliop_FENCE_ON_OPERATOR_EXIT "Fences before returning from an operator method." OFF)
 option(koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE "Should koliop assumes the input data can be read or else, intermediate copies are required." ON)
+option(koliop_BUILD_FORTRAN_INTERFACE "Enable the koliop::fortran_interface glue code needed to interface koliop from Fortran." OFF)
 
 ################################################################################
 ### Dependencies
 ################################################################################
 
-file(GLOB dependencies "${CMAKE_CURRENT_SOURCE_DIR}/dependencies/*")
+include(${CMAKE_CURRENT_LIST_DIR}/dependencies/resolver.cmake)
 
-foreach(a_dependency ${dependencies})
-    if(IS_DIRECTORY "${a_dependency}")
-        include("${a_dependency}/seeker.cmake")
-    endif()
-endforeach()
+DependencyResolver("${CMAKE_CURRENT_SOURCE_DIR}/dependencies")
 
 
 ################################################################################
@@ -119,8 +114,6 @@ target_include_directories(koliop
 target_include_directories(koliop
                            PUBLIC   "$<BUILD_INTERFACE:${koliop_INCLUDE_DIRECTORY}/>"
                                     "$<INSTALL_INTERFACE:include/>")
-
-option(koliop_BUILD_FORTRAN_INTERFACE "Enable the koliop::fortran_interface glue code needed to interface koliop from Fortran." OFF)
 
 if(koliop_BUILD_FORTRAN_INTERFACE)
     message(STATUS "[koliop] Enabling the Fortran interface.")
