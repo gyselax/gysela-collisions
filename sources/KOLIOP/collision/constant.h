@@ -45,7 +45,7 @@ namespace koliop {
 
 #if defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_CUDA)
             static inline constexpr OrdinalType kDisjointExecutionSpaceCount = 4;
-#elif defined(KOKKOS_ENABLE_OPENMP)
+#else
             static inline constexpr OrdinalType kDisjointExecutionSpaceCount = 1;
 #endif
             static inline constexpr OrdinalType kDefaultExecutionSpacePoolIndex = kDisjointExecutionSpaceCount - 1;
@@ -63,7 +63,6 @@ namespace koliop {
             // to 1) and lowering the block size can help reduce the memory
             // consumption.
 
-#if defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_OPENMP)
             static inline constexpr OrdinalType kPresetBlockExtent[][3] = {
                 {256, 128, 2},
                 {128, 256, 2},
@@ -91,9 +90,6 @@ namespace koliop {
                 // NOTE: Degraded operation performance is expected for 1x1x1
                 // blocks.
                 {1, 1, 1}};
-#else
-    #error "Unsupported architecture."
-#endif
 
             static inline constexpr std::size_t kPresetBlockExtentCount = sizeof(kPresetBlockExtent) /
                                                                           sizeof(kPresetBlockExtent[0]);
