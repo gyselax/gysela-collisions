@@ -38,22 +38,23 @@ cmake_minimum_required(VERSION 3.25)
 # endfunction()
 
 # Provider kind.
-# Provider | Source | Use case
-# OFF      |        | To hell with this dependency, do not ask to resolve the dependency anymore.
-# SYSTEM   |        | Check if the dependency is already in the project's context, or if the system provides it.
-# GIT      | URL    | Online git
-# ARCHIVE  | URI    | Disk, say a targz or zip
-# ARCHIVE  | URL    | Online, say a targz or zip
-# ARCHIVE  | URI    | Sub directory containing a CMakeLists.txt
-# ARCHIVE  | URI    | External directory containing a CMakeLists.txt
+# Provider     | Source | Use case
+# OFF          |        | To hell with this dependency, do not ask to resolve the dependency anymore.
+# SYSTEM       |        | Check if the dependency is already in the project's context, or if the system provides it. This does not work well with SUBDIRECTORY.
+# SUBDIRECTORY |        | Assumes the targets are ALREADY in the context, due to, say, a add_subdirectory. (This is considered bad practice).
+# GIT          | URL    | Online git
+# ARCHIVE      | URI    | Disk, say a targz or zip
+# ARCHIVE      | URL    | Online, say a targz or zip
+# ARCHIVE      | URI    | Sub directory containing a CMakeLists.txt
+# ARCHIVE      | URI    | External directory containing a CMakeLists.txt
 #
 # TODO(Etienne M): What happens if a find_package or add_subdirectory satisfying
 # a dependency is called before FetchContent_* is still unclear.
 function(DependencyResolver_Options _NAME)
     cmake_parse_arguments(PARSE_ARGV 1 "" "" "" "PROVIDERS;PROVIDERS_SOURCE")
 
-    set(${CMAKE_PROJECT_NAME}_ENABLE_${_NAME} "${_PROVIDERS}"        CACHE STRING "Define a provider list for this dependency [OFF|SYSTEM|GIT|ARCHIVE]*. If in a parent project, a dependency is already pulled through whatever means, you can use SYSTEM to use it.")
-    set(${CMAKE_PROJECT_NAME}_SOURCE_${_NAME} "${_PROVIDERS_SOURCE}" CACHE STRING "If '${CMAKE_PROJECT_NAME}_ENABLE_${_NAME}' is set to [GIT|ARCHIVE], specify where to locate the resource. ARCHIVE mode accepts an URL or filesystem path towards a archive (say, a tarball) or a directory to sources (external or project subdirectory).")
+    set(${PROJECT_NAME}_ENABLE_${_NAME} "${_PROVIDERS}"        CACHE STRING "Define a provider list for this dependency [OFF|SYSTEM|GIT|ARCHIVE]*. If in a parent project, a dependency is already pulled through whatever means, you can use SYSTEM to use it.")
+    set(${PROJECT_NAME}_SOURCE_${_NAME} "${_PROVIDERS_SOURCE}" CACHE STRING "If '${PROJECT_NAME}_ENABLE_${_NAME}' is set to [GIT|ARCHIVE], specify where to locate the resource. ARCHIVE mode accepts an URL or filesystem path towards a archive (say, a tarball) or a directory to sources (external or project subdirectory).")
 endfunction()
 
 function(DependencyResolver_ResolveLibrary _NAME)
@@ -65,20 +66,34 @@ function(DependencyResolver_ResolveLibrary _NAME)
         list(POP_FRONT _PROVIDERS A_PROVIDER)
 
         if("${A_PROVIDER}" STREQUAL "OFF")
-            message(STATUS "[${CMAKE_PROJECT_NAME}] Dependency OFF: '${_NAME}'.")
+            message(STATUS "[${PROJECT_NAME}] Dependency OFF: '${_NAME}'.")
 
             foreach(A_COMPONENT IN LISTS _COMPONENTS _OPTIONAL_COMPONENTS)
                 # Safeguard: if you asked for no dependency but we still got
                 # something, potentially from a parent/prior dependency.
                 if(TARGET "${A_COMPONENT}")
-                    message(FATAL_ERROR "[${CMAKE_PROJECT_NAME}] Deactivating '${_NAME}' found '${A_COMPONENT}'. Conflicting signals are signs for problems. Either activate the dependency for project '${CMAKE_PROJECT_NAME}' or understand why '${A_COMPONENT}' is defined. If this is expected that someone else provide '${A_COMPONENT}', you may want to use a SYSTEM dependency in the '${CMAKE_PROJECT_NAME}' project.")
+                    message(FATAL_ERROR "[${PROJECT_NAME}] Deactivating '${_NAME}' found '${A_COMPONENT}'. Conflicting signals are signs for problems. Either activate the dependency for project '${PROJECT_NAME}' or understand why '${A_COMPONENT}' is defined. If this is expected that someone else provide '${A_COMPONENT}', you may want to use a SYSTEM dependency in the '${PROJECT_NAME}' project.")
                 endif()
             endforeach()
 
             return()
+        elseif("${A_PROVIDER}" STREQUAL "SUBDIRECTORY")
+            message(STATUS "[${PROJECT_NAME}] Dependency SUBDIRECTORY: '${_NAME}'.")
+
+            foreach(A_COMPONENT IN LISTS _COMPONENTS)
+                # Ensure all required components are resolved.
+                if(NOT TARGET "${A_COMPONENT}")
+                    message(FATAL_ERROR "[${PROJECT_NAME}] You specified you used a subdirectory to expose the '${_NAME}' component but it was not found.")
+                endif()
+            endforeach()
+
+            # Unfortunately, we cant continue, because we have not way of
+            # knowing what was imported through add_subdirectory. We can only
+            # fail.
+            return()
         elseif("${A_PROVIDER}" MATCHES "SYSTEM|_MakeAvailable_SYSTEM_QUIET")
             if("${A_PROVIDER}" STREQUAL "SYSTEM")
-                message(STATUS "[${CMAKE_PROJECT_NAME}] Dependency SYSTEM: '${_NAME}'.")
+                message(STATUS "[${PROJECT_NAME}] Dependency SYSTEM: '${_NAME}'.")
             endif()
 
             list(APPEND _OPTIONAL_COMPONENTS "${_COMPONENTS}")
@@ -100,10 +115,10 @@ function(DependencyResolver_ResolveLibrary _NAME)
                         # would have to rollback the state. This is significant
                         # issue IMO.
                         if("${A_PROVIDER}" STREQUAL "SYSTEM")
-                            message(FATAL_ERROR "[${CMAKE_PROJECT_NAME}] Found '${_NAME}' but at least '${A_COMPONENT}' was not satisfied. Either fix the SYSTEM installation or reconfigure without the SYSTEM provider.")
+                            message(FATAL_ERROR "[${PROJECT_NAME}] Found '${_NAME}' but at least '${A_COMPONENT}' was not satisfied. Either fix the SYSTEM installation or reconfigure without the SYSTEM provider.")
                         else()
                             # We came from the fallthrough of GIT or ARCHIVE.
-                            message(FATAL_ERROR "[${CMAKE_PROJECT_NAME}] Found '${_NAME}' but at least '${A_COMPONENT}' was not satisfied. It is possible the dependency was not properly configured, we are expecting components it does not currently provides.")
+                            message(FATAL_ERROR "[${PROJECT_NAME}] Found '${_NAME}' but at least '${A_COMPONENT}' was not satisfied. It is possible the dependency was not properly configured, we are expecting components it does not currently provides.")
                         endif()
                     endif()
                 endforeach()
@@ -117,12 +132,12 @@ function(DependencyResolver_ResolveLibrary _NAME)
                 # FetchContent. We should never get here as
                 # FetchContent_MakeAvailable never fails to provide something,
                 # it crashes if it cant.
-                message(FATAL_ERROR "[${CMAKE_PROJECT_NAME}] Conflicting signals, we did not found '${_NAME}' but FetchContent_MakeAvailable said it did.")
+                message(FATAL_ERROR "[${PROJECT_NAME}] Conflicting signals, we did not found '${_NAME}' but FetchContent_MakeAvailable said it did.")
             endif()
 
             # Fallthrough and continue.
         elseif("${A_PROVIDER}" STREQUAL "GIT")
-            message(STATUS "[${CMAKE_PROJECT_NAME}] Dependency GIT: '${_NAME}'.")
+            message(STATUS "[${PROJECT_NAME}] Dependency GIT: '${_NAME}'.")
 
             # Each source is matched with its provider (SOA fashion).
             list(POP_FRONT _PROVIDERS_SOURCE A_PROVIDER_SOURCE)
@@ -161,7 +176,7 @@ function(DependencyResolver_ResolveLibrary _NAME)
                 # _MakeAvailable_SYSTEM_QUIET
             endif()
         elseif("${A_PROVIDER}" STREQUAL "ARCHIVE")
-            message(STATUS "[${CMAKE_PROJECT_NAME}] Dependency ARCHIVE: '${_NAME}'.")
+            message(STATUS "[${PROJECT_NAME}] Dependency ARCHIVE: '${_NAME}'.")
 
             # Each source is matched with its provider (SOA fashion).
             list(POP_FRONT _PROVIDERS_SOURCE A_PROVIDER_SOURCE)
@@ -175,7 +190,7 @@ function(DependencyResolver_ResolveLibrary _NAME)
                     # Special warning because FetchContent does not send the correct
                     # signals. It says it expect archives only which is wrong, it
                     # can take directories too.
-                    message(WARNING "[${CMAKE_PROJECT_NAME}] Could not find directory or file '${A_PROVIDER_SOURCE}'.")
+                    message(WARNING "[${PROJECT_NAME}] Could not find directory or file '${A_PROVIDER_SOURCE}'.")
                     continue()
                 endif()
             endif()
@@ -207,7 +222,7 @@ function(DependencyResolver_ResolveLibrary _NAME)
                 # Fallthrough and continue.
             endif()
         else()
-            message(FATAL_ERROR "[${CMAKE_PROJECT_NAME}] Unknown provider '${A_PROVIDER}'.")
+            message(FATAL_ERROR "[${PROJECT_NAME}] Unknown provider '${A_PROVIDER}'.")
         endif()
 
         # This needs to be at the end because we expect some provider to modify
@@ -215,7 +230,7 @@ function(DependencyResolver_ResolveLibrary _NAME)
         list(LENGTH _PROVIDERS PROVIDER_COUNT)
     endwhile()
 
-    message(FATAL_ERROR "[${CMAKE_PROJECT_NAME}] Dependency **not found**: '${_NAME}'.")
+    message(FATAL_ERROR "[${PROJECT_NAME}] Dependency **not found**: '${_NAME}'.")
 endfunction()
 
 # Example:
@@ -247,8 +262,8 @@ function(DependencyResolver_Resolve _NAME)
                                       VERSION             "${_VERSION}"
                                       COMPONENTS          ${_COMPONENTS}
                                       OPTIONAL_COMPONENTS ${_OPTIONAL_COMPONENTS}
-                                      PROVIDERS           ${${CMAKE_PROJECT_NAME}_ENABLE_${_NAME}}
-                                      PROVIDERS_SOURCE    ${${CMAKE_PROJECT_NAME}_SOURCE_${_NAME}}
+                                      PROVIDERS           ${${PROJECT_NAME}_ENABLE_${_NAME}}
+                                      PROVIDERS_SOURCE    ${${PROJECT_NAME}_SOURCE_${_NAME}}
                                       )
 endfunction()
 
