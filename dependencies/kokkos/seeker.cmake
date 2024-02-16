@@ -1,5 +1,5 @@
 DependencyResolver_Resolve(Kokkos
-                           VERSION          "4.2.1"
+                           VERSION          "4.1.0" # At least that.
                            COMPONENTS       Kokkos::kokkos
                            # Look at the system or if the dependency is already
                            # resolved by someone else. Else fallback to
@@ -10,7 +10,7 @@ DependencyResolver_Resolve(Kokkos
                            )
 
 DependencyResolver_Resolve(KokkosKernels
-                           VERSION          "4.2.1"
+                           VERSION          "4.1.0" # At least that.
                            COMPONENTS       Kokkos::kokkoskernels
                            # Look at the system or if the dependency is already
                            # resolved by someone else. Else fallback to
