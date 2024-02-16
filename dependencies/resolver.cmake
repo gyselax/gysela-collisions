@@ -23,22 +23,23 @@ function(DependencyResolver_ResolveLibrary _NAME)
 
     while(PROVIDER_COUNT)
         list(POP_FRONT _PROVIDERS A_PROVIDER)
-        list(LENGTH _PROVIDERS PROVIDER_COUNT)
 
         if("${A_PROVIDER}" STREQUAL "OFF")
-            message(STATUS "[${CMAKE_PROJECT_NAME}] Dependency OFF:       '${_NAME}'.")
+            message(STATUS "[${CMAKE_PROJECT_NAME}] Dependency OFF: '${_NAME}'.")
 
             foreach(A_COMPONENT IN LISTS _COMPONENTS _OPTIONAL_COMPONENTS)
-                # Safeguard: if you asked fr no deps but still got something,
-                # potentially from a parent/prior dependency.
+                # Safeguard: if you asked for no dependency but we still got
+                # something, potentially from a parent/prior dependency.
                 if(TARGET "${A_COMPONENT}")
                     message(FATAL_ERROR "[${CMAKE_PROJECT_NAME}] Deactivating '${_NAME}' found '${A_COMPONENT}'. Conflicting signals are signs for problems. Either activate the dependency for project '${CMAKE_PROJECT_NAME}' or understand why '${A_COMPONENT}' is defined. If this is expected that someone else provide '${A_COMPONENT}', you may want to use a SYSTEM dependency in the '${CMAKE_PROJECT_NAME}' project.")
                 endif()
             endforeach()
 
             return()
-        elseif("${A_PROVIDER}" STREQUAL "SYSTEM")
-            message(STATUS "[${CMAKE_PROJECT_NAME}] Dependency SYSTEM:    '${_NAME}'.")
+        elseif("${A_PROVIDER}" MATCHES "SYSTEM|_MakeAvailable_SYSTEM_QUIET")
+            if("${A_PROVIDER}" STREQUAL "SYSTEM")
+                message(STATUS "[${CMAKE_PROJECT_NAME}] Dependency SYSTEM: '${_NAME}'.")
+            endif()
 
             list(APPEND _OPTIONAL_COMPONENTS "${_COMPONENTS}")
 
@@ -56,7 +57,12 @@ function(DependencyResolver_ResolveLibrary _NAME)
                         # ("${${_NAME}_FOUND}" is set). To continue we
                         # would have to rollback the state. This is significant
                         # issue IMO.
-                        message(FATAL_ERROR "[${CMAKE_PROJECT_NAME}] Found '${_NAME}' but at least '${A_COMPONENT}' was not satisfied. Either fix the SYSTEM package or reconfigure without the SYSTEM provider.")
+                        if("${A_PROVIDER}" STREQUAL "SYSTEM")
+                            message(FATAL_ERROR "[${CMAKE_PROJECT_NAME}] Found '${_NAME}' but at least '${A_COMPONENT}' was not satisfied. Either fix the SYSTEM installation or reconfigure without the SYSTEM provider.")
+                        else()
+                            # We came from the fallthrough of GIT or ARCHIVE.
+                            message(FATAL_ERROR "[${CMAKE_PROJECT_NAME}] Found '${_NAME}' but at least '${A_COMPONENT}' was not satisfied. It is possible the dependency was not properly configured, we are expecting components it does not currently provides.")
+                        endif()
                     endif()
                 endforeach()
 
@@ -64,6 +70,12 @@ function(DependencyResolver_ResolveLibrary _NAME)
                 # failed earlier.
 
                 return()
+            elseif("${A_PROVIDER}" STREQUAL "_MakeAvailable_SYSTEM_QUIET")
+                # Not found but we came from an other provider which used
+                # FetchContent. We should never get here as
+                # FetchContent_MakeAvailable never fails to provide something,
+                # it crashes if it cant.
+                message(FATAL_ERROR "[${CMAKE_PROJECT_NAME}] Conflicting signals, we did not found '${_NAME}' but FetchContent_MakeAvailable said it did.")
             endif()
 
             # Fallthrough and continue.
@@ -86,13 +98,26 @@ function(DependencyResolver_ResolveLibrary _NAME)
 
             FetchContent_MakeAvailable("${_NAME}")
 
-            # If we get here, we found what we need, else we would have failed
-            # earlier.
-
-            # TODO(Etienne M): Find a way to "soft fail" so we can continue.
-            # Currently, FetchContent_MakeAvailable does not allow that.
-
-            return()
+            # TODO(Etienne M): If one day we get a way to check if
+            # FetchContent_MakeAvailable fails or succeeds, change this
+            # branch.
+            if(TRUE)
+                # NOTE: FetchContent_MakeAvailable alone does not define
+                # ${${_NAME}_FOUND}. We used OVERRIDE_FIND_PACKAGE so find_package
+                # is rerouted to FetchContent_MakeAvailable and basically does
+                # nothing more than defining ${${_NAME}_FOUND}. From the user
+                # perspective, it really looks as if it was found on the system.
+                # We could use something like the line below or just PREPEND a
+                # _MakeAvailable_SYSTEM_QUIET.
+                # find_package("${_NAME}" "${_VERSION}" OPTIONAL_COMPONENTS "${_OPTIONAL_COMPONENTS}")
+                list(PREPEND _PROVIDERS "_MakeAvailable_SYSTEM_QUIET")
+                # Fallthrough and continue to _MakeAvailable_SYSTEM_QUIET.
+            else()
+                # TODO(Etienne M): Find a way to "soft fail" so we can continue.
+                # Currently, FetchContent_MakeAvailable does not allow that.
+                # We would then have an implied continue() but without the
+                # _MakeAvailable_SYSTEM_QUIET
+            endif()
         elseif("${A_PROVIDER}" STREQUAL "ARCHIVE")
             message(STATUS "[${CMAKE_PROJECT_NAME}] Dependency ARCHIVE: '${_NAME}'.")
 
@@ -129,16 +154,22 @@ function(DependencyResolver_ResolveLibrary _NAME)
                                  )
             FetchContent_MakeAvailable("${_NAME}")
 
-            # If we get here, we found what we need, else we would have failed
-            # earlier.
-
-            # TODO(Etienne M): Find a way to "soft fail" so we can continue.
-            # Currently, FetchContent_MakeAvailable does not allow that.
-
-            return()
+            # TODO(Etienne M): If one day we get a way to check if
+            # FetchContent_MakeAvailable fails or succeeds, change this
+            # branch.
+            if(TRUE)
+                list(PREPEND _PROVIDERS "_MakeAvailable_SYSTEM_QUIET")
+                # Fallthrough and continue to _MakeAvailable_SYSTEM_QUIET.
+            else()
+                # Fallthrough and continue.
+            endif()
         else()
             message(FATAL_ERROR "[${CMAKE_PROJECT_NAME}] Unknown provider '${A_PROVIDER}'.")
         endif()
+
+        # This needs to be at the end because we expect some provider to modify
+        # the queue length.
+        list(LENGTH _PROVIDERS PROVIDER_COUNT)
     endwhile()
 
     message(FATAL_ERROR "[${CMAKE_PROJECT_NAME}] Dependency **not found**: '${_NAME}'.")
