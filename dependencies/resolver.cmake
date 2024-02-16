@@ -1,5 +1,42 @@
 cmake_minimum_required(VERSION 3.25)
 
+# print_target_properties was snatched from
+# https://stackoverflow.com/questions/32183975/how-to-print-all-the-properties-of-a-target-in-cmake
+
+# if(NOT _PROPERTY_LIST)
+#     execute_process(COMMAND cmake --help-property-list OUTPUT_VARIABLE _PROPERTY_LIST)
+
+#     # Convert command output into a CMake list
+#     string(REGEX REPLACE ";" "\\\\;" _PROPERTY_LIST "${_PROPERTY_LIST}")
+#     string(REGEX REPLACE "\n" ";" _PROPERTY_LIST "${_PROPERTY_LIST}")
+#     list(REMOVE_DUPLICATES _PROPERTY_LIST)
+# endif()
+
+# function(print_properties)
+#     message("_PROPERTY_LIST = ${_PROPERTY_LIST}")
+# endfunction()
+
+# function(print_target_properties target)
+#     if(NOT TARGET ${target})
+#       message(STATUS "There is no target named '${target}'")
+#       return()
+#     endif()
+
+#     foreach(property ${_PROPERTY_LIST})
+#         string(REPLACE "<CONFIG>" "${CMAKE_BUILD_TYPE}" property ${property})
+
+#         if(property STREQUAL "LOCATION" OR property MATCHES "^LOCATION_" OR property MATCHES "_LOCATION$")
+#             continue()
+#         endif()
+
+#         get_property(was_set TARGET ${target} PROPERTY ${property} SET)
+#         if(was_set)
+#             get_target_property(value ${target} ${property})
+#             message("${target} ${property} = ${value}")
+#         endif()
+#     endforeach()
+# endfunction()
+
 # Provider kind.
 # Provider | Source | Use case
 # OFF      |        | To hell with this dependency, do not ask to resolve the dependency anymore.
@@ -9,6 +46,9 @@ cmake_minimum_required(VERSION 3.25)
 # ARCHIVE  | URL    | Online, say a targz or zip
 # ARCHIVE  | URI    | Sub directory containing a CMakeLists.txt
 # ARCHIVE  | URI    | External directory containing a CMakeLists.txt
+#
+# TODO(Etienne M): What happens if a find_package or add_subdirectory satisfying
+# a dependency is called before FetchContent_* is still unclear.
 function(DependencyResolver_Options _NAME)
     cmake_parse_arguments(PARSE_ARGV 1 "" "" "" "PROVIDERS;PROVIDERS_SOURCE")
 
@@ -47,6 +87,8 @@ function(DependencyResolver_ResolveLibrary _NAME)
 
             if("${${_NAME}_FOUND}")
                 foreach(A_COMPONENT IN LISTS _COMPONENTS)
+                    # print_target_properties("${A_COMPONENT}")
+
                     # NOTE: We use OPTIONAL_COMPONENTS to avoid the hard error if
                     # the package is not found. But this mean we need to ensure all
                     # needed components are presents.
@@ -152,6 +194,7 @@ function(DependencyResolver_ResolveLibrary _NAME)
                                  TIMEOUT               10
                                  INACTIVITY_TIMEOUT    10
                                  )
+
             FetchContent_MakeAvailable("${_NAME}")
 
             # TODO(Etienne M): If one day we get a way to check if
