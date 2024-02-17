@@ -29,7 +29,7 @@ set(koliop_FLAGS_FP -fno-math-errno -fno-trapping-math -ffp-contract=fast)
 
 set(koliop_FLAGS_DEBUG          -g -Og -ggdb -fno-omit-frame-pointer -fno-optimize-sibling-calls)
 set(koliop_FLAGS_MINSIZEREL     -Os)
-set(koliop_FLAGS_RELEASE        -g -O3)
+set(koliop_FLAGS_RELEASE        -g -Ofast) # Ofast wins a lot by replacing std::exp with a SIMD avx implementation.
 set(koliop_FLAGS_RELWITHDEBINFO -g -O3 -fno-omit-frame-pointer -fno-optimize-sibling-calls)
 
 # set(koliop_LINKER_FLAGS_DEBUG          ${koliop_FLAGS_DEBUG})
