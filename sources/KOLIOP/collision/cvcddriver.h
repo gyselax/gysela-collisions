@@ -134,7 +134,7 @@ namespace koliop {
                     // NOTE: The thread block size and the Nmu benefit from being
                     // close. This is due to the TeamThreadMDRange which
                     // parallelizes only the left most index which is Nmu.
-                    koliop::utility::Select<ExecutionSpace>(Kokkos::AUTO, 64 /* 128 */, 32)};
+                    koliop::utility::Select<ExecutionSpace>(Kokkos::AUTO, Kokkos::AUTO, 64 /* 128 */, 32)};
 
                 const auto the_kernel = KOKKOS_LAMBDA(const typename PolicyType::member_type& a_team_handle) {
 
@@ -380,7 +380,7 @@ namespace koliop {
                     // NOTE: The thread block size and the Nmu benefit from being
                     // close. This is due to the TeamThreadMDRange which
                     // parallelizes only the left most index which is Nmu.
-                    koliop::utility::Select<ExecutionSpace>(Kokkos::AUTO, 64 /* 128 */, 32)};
+                    koliop::utility::Select<ExecutionSpace>(Kokkos::AUTO, Kokkos::AUTO, 64 /* 128 */, 32)};
 
                 const auto the_kernel = KOKKOS_LAMBDA(const typename PolicyType::member_type& a_team_handle) {
 
@@ -467,8 +467,8 @@ namespace koliop {
                                                                                               Constant::kMaximumLaguerrePolynomialDegree>;
 
         protected:
-            using MatrixSampler = MatrixSampler<typename MatrixKindType::ScalarType,
-                                                koliop::utility::View::InternalInputL1<const Flo64>>;
+            using MatrixSamplerType = MatrixSampler<typename MatrixKindType::ScalarType,
+                                                    koliop::utility::View::InternalInputL1<const Flo64>>;
 
         public:
             CvCdDriver(OrdinalType                                                pSpecies_id,
@@ -511,8 +511,8 @@ namespace koliop {
             koliop::blas::BatchedBlockTridiagonalByBlockTRSV<BatchTraitsType, Constant::kMaximumLaguerrePolynomialDegree>             the_solver_;
             koliop::blas::BatchedMatrixSamplingBlockTridiagonalByBlockMV<BatchTraitsType, Constant::kMaximumLaguerrePolynomialDegree> the_mv_;
 
-            MatrixSampler the_LHS_matrix_sampler_;
-            MatrixSampler the_RHS_matrix_sampler_;
+            MatrixSamplerType the_LHS_matrix_sampler_;
+            MatrixSamplerType the_RHS_matrix_sampler_;
         };
 
 

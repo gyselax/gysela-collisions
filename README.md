@@ -85,7 +85,7 @@ NOTE:
     - Assuming we GPUs for computation, the input buffer are expected to be on the CPU too! `koliop::utility::Copy::RawDataToView<koliop::utility::View::UHL6<Flo64>, koliop::utility::View::MDL6>` vs `koliop::utility::Copy::RawDataToView<koliop::utility::View::UDL6<Flo64>, koliop::utility::View::MDL6>`
 
 - Validation:
-    - Test KOKKOS_ENABLE_DEBUG_BOUNDS_CHECK/Kokkos_ENABLE_DEBUG_BOUNDS_CHECK Kokkos_ENABLE_DEBUG
+    - Test Kokkos_ENABLE_DEBUG_BOUNDS_CHECK Kokkos_ENABLE_DEBUG
 
 - Tuning:
     - Tune for CPU. NOTE: Should be limited to some layout left/right issues in views or iteration order;

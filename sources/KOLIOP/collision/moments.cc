@@ -80,7 +80,7 @@ namespace koliop {
                 // the cache hits. This is significant if you know for a fact
                 // that few of your kernels are need to reach peak memory
                 // throughput.
-                koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, 64 /* 128 */, 32)};
+                koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, Kokkos::AUTO, 64 /* 128 */, 32)};
 
             const auto the_kernel = KOKKOS_LAMBDA(const typename PolicyType::member_type& a_team_handle) {
 

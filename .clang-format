@@ -27,7 +27,6 @@ AllowShortIfStatementsOnASingleLine : false
 AllowShortLoopsOnASingleLine : false
 BinPackParameters : false
 IndentCaseLabels : true
-AllowAllParametersOfDeclarationOnNextLine : false
 AlignConsecutiveMacros : true
 IndentPPDirectives : BeforeHash
 AllowShortBlocksOnASingleLine : true
