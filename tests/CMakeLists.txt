@@ -31,4 +31,10 @@ endfunction()
 
 ############################## dummy test ######################################
 
-koliop_add_test("dummy" "dummy_test")
+if(koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE)
+    # The test's memory is initially on the host, we may have to push it to
+    # the GPU, thus the restriction.
+    message(WARNING "The 'dummy_test' test requires koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE=OFF.")
+else()
+    koliop_add_test("dummy" "dummy_test")
+endif()
