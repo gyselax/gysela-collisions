@@ -78,18 +78,21 @@ function(DependencyResolver_ResolveLibrary _NAME)
 
             return()
         elseif("${A_PROVIDER}" STREQUAL "SUBDIRECTORY")
-            message(STATUS "[${PROJECT_NAME}] Dependency SUBDIRECTORY: '${_NAME}'.")
+            message(WARNING "[${PROJECT_NAME}] Dependency SUBDIRECTORY: '${_NAME}'.")
+
+            # NOTE: Assume all the components are already in context.
 
             foreach(A_COMPONENT IN LISTS _COMPONENTS)
                 # Ensure all required components are resolved.
                 if(NOT TARGET "${A_COMPONENT}")
-                    message(FATAL_ERROR "[${PROJECT_NAME}] You specified you used a subdirectory to expose the '${_NAME}' component but it was not found.")
+                    message(FATAL_ERROR "[${PROJECT_NAME}] You specified that you rely on a subdirectory to expose the '${_NAME}' component but it was not found.")
                 endif()
             endforeach()
 
-            # Unfortunately, we cant continue, because we have not way of
-            # knowing what was imported through add_subdirectory. We can only
-            # fail.
+            # Unfortunately, if we fail to find our dependencies we can't
+            # continue because we have no way of knowing what was imported
+            # through add_subdirectory and can't rollback the add_subdirectory.
+            # We can only completely fail or succeed.
             return()
         elseif("${A_PROVIDER}" MATCHES "SYSTEM|_MakeAvailable_SYSTEM_QUIET")
             if("${A_PROVIDER}" STREQUAL "SYSTEM")
@@ -158,6 +161,7 @@ function(DependencyResolver_ResolveLibrary _NAME)
             # TODO(Etienne M): If one day we get a way to check if
             # FetchContent_MakeAvailable fails or succeeds, change this
             # branch.
+            # https://discourse.cmake.org/t/prevent-fatal-error-on-fetchcontent-declare/10091/2
             if(TRUE)
                 # NOTE: FetchContent_MakeAvailable alone does not define
                 # ${${_NAME}_FOUND}. We used OVERRIDE_FIND_PACKAGE so find_package
@@ -170,10 +174,7 @@ function(DependencyResolver_ResolveLibrary _NAME)
                 list(PREPEND _PROVIDERS "_MakeAvailable_SYSTEM_QUIET")
                 # Fallthrough and continue to _MakeAvailable_SYSTEM_QUIET.
             else()
-                # TODO(Etienne M): Find a way to "soft fail" so we can continue.
-                # Currently, FetchContent_MakeAvailable does not allow that.
-                # We would then have an implied continue() but without the
-                # _MakeAvailable_SYSTEM_QUIET
+                # Fallthrough and continue.
             endif()
         elseif("${A_PROVIDER}" STREQUAL "ARCHIVE")
             message(STATUS "[${PROJECT_NAME}] Dependency ARCHIVE: '${_NAME}'.")
@@ -215,6 +216,7 @@ function(DependencyResolver_ResolveLibrary _NAME)
             # TODO(Etienne M): If one day we get a way to check if
             # FetchContent_MakeAvailable fails or succeeds, change this
             # branch.
+            # https://discourse.cmake.org/t/prevent-fatal-error-on-fetchcontent-declare/10091/2
             if(TRUE)
                 list(PREPEND _PROVIDERS "_MakeAvailable_SYSTEM_QUIET")
                 # Fallthrough and continue to _MakeAvailable_SYSTEM_QUIET.
