@@ -112,8 +112,8 @@ target_include_directories(koliop
                            PRIVATE "${koliop_SOURCES_DIRECTORY}/")
 
 target_include_directories(koliop
-                           PUBLIC   "$<BUILD_INTERFACE:${koliop_INCLUDE_DIRECTORY}/>"
-                                    "$<INSTALL_INTERFACE:include/>")
+                           PUBLIC "$<BUILD_INTERFACE:${koliop_INCLUDE_DIRECTORY}/>"
+                                  "$<INSTALL_INTERFACE:include/>")
 
 if(koliop_BUILD_FORTRAN_INTERFACE)
     message(STATUS "[koliop] Enabling the Fortran interface.")
