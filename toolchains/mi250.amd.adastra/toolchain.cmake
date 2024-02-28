@@ -1,7 +1,7 @@
 set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/installation")
 
-set(CMAKE_CXX_COMPILER amdclang++)
-set(CMAKE_Fortran_COMPILER amdflang)
+set(CMAKE_CXX_COMPILER CC)
+set(CMAKE_Fortran_COMPILER ftn)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_BUILD_TYPE Release) # Debug, Release, RelWithDebInfo and MinSizeRel
@@ -23,7 +23,7 @@ set(KokkosKernels_ENABLE_COMPONENT_BLAS ON CACHE BOOL "")
 
 # Koliop options:
 
-set(koliop_TOOLCHAIN_NAME "mi250.amdclang.adastra")
+set(koliop_TOOLCHAIN_NAME "mi250.amd.adastra")
 
 set(koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE OFF CACHE BOOL "")
 
@@ -39,8 +39,3 @@ set(koliop_FLAGS_DEBUG          -g -Og -ggdb -fno-omit-frame-pointer -fno-optimi
 set(koliop_FLAGS_MINSIZEREL     -Os)
 set(koliop_FLAGS_RELEASE        -g -O3 "SHELL:-mllvm -amdgpu-early-inline-all=true" "SHELL:-mllvm -amdgpu-function-calls=false")
 set(koliop_FLAGS_RELWITHDEBINFO -g -O3 "SHELL:-mllvm -amdgpu-early-inline-all=true" "SHELL:-mllvm -amdgpu-function-calls=false" -fno-omit-frame-pointer -fno-optimize-sibling-calls)
-
-# set(koliop_LINKER_FLAGS_DEBUG          ${koliop_FLAGS_DEBUG})
-# set(koliop_LINKER_FLAGS_MINSIZEREL     ${koliop_FLAGS_MINSIZEREL})
-# set(koliop_LINKER_FLAGS_RELEASE        ${koliop_FLAGS_RELEASE})
-# set(koliop_LINKER_FLAGS_RELWITHDEBINFO ${koliop_FLAGS_RELWITHDEBINFO})
