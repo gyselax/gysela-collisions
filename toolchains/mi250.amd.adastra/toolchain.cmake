@@ -35,6 +35,9 @@ set(koliop_FLAGS_FP -fno-math-errno -fno-trapping-math -ffp-contract=fast)
 
 # Show spill, S/VGPR usage, scratch size and occupancy. -Rpass-analysis=kernel-resource-usage
 
+# FIXME: OpenMP + amdclang + craype has some issue. A cray ticket has been submitted
+set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -fopenmp -Xopenmp-target=amdgcn-amd-amdhsa -march=gfx90a)
+
 set(koliop_FLAGS_DEBUG          -g -Og -ggdb -fno-omit-frame-pointer -fno-optimize-sibling-calls)
 set(koliop_FLAGS_MINSIZEREL     -Os)
 set(koliop_FLAGS_RELEASE        -g -O3 "SHELL:-mllvm -amdgpu-early-inline-all=true" "SHELL:-mllvm -amdgpu-function-calls=false")
