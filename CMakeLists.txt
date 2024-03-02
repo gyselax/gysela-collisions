@@ -89,19 +89,7 @@ set(koliop_SOURCES_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/sources")
 set(koliop_INCLUDE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 configure_file("${koliop_INCLUDE_DIRECTORY}/KOLIOP/internal/buildspecificities.h.in"
-               "${koliop_INCLUDE_DIRECTORY}/KOLIOP/internal/buildspecificities.h")
-
-if(koliop_ASSERT_ENABLED)
-    target_compile_definitions(koliop PRIVATE KOLIOP_ASSERT_ENABLED)
-endif()
-
-if(koliop_FENCE_ON_OPERATOR_EXIT)
-    target_compile_definitions(koliop PRIVATE KOLIOP_FENCE_ON_OPERATOR_EXIT)
-endif()
-
-if(koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE)
-    target_compile_definitions(koliop PRIVATE KOLIOP_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE)
-endif()
+               "${koliop_INCLUDE_DIRECTORY}/KOLIOP/internal/buildspecificities.h" @ONLY)
 
 # NOTE: GLOBing file is not considered good practice. One could instead specify
 # the full, verbose list of headers and sources.
@@ -111,11 +99,11 @@ target_sources(koliop
                PRIVATE ${koliop_SOURCES_GLOB})
 
 target_include_directories(koliop
-                           PRIVATE "${koliop_SOURCES_DIRECTORY}/")
+                           PRIVATE "${koliop_SOURCES_DIRECTORY}")
 
 target_include_directories(koliop
-                           PUBLIC "$<BUILD_INTERFACE:${koliop_INCLUDE_DIRECTORY}/>"
-                                  "$<INSTALL_INTERFACE:include/>")
+                           PUBLIC "$<BUILD_INTERFACE:${koliop_INCLUDE_DIRECTORY}>"
+                                  "$<INSTALL_INTERFACE:include>")
 
 if(koliop_BUILD_FORTRAN_INTERFACE)
     message(STATUS "[koliop] Enabling the Fortran interface.")
@@ -147,7 +135,7 @@ if(koliop_BUILD_FORTRAN_INTERFACE)
 endif()
 
 ########################################
-### Compilation and linking
+### Dependency handling
 ########################################
 
 # Call the dependency defined functions on the target.
