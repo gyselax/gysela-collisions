@@ -32,7 +32,7 @@ DependencyResolver("${CMAKE_CURRENT_SOURCE_DIR}/dependencies")
 
 
 ################################################################################
-### Compiler flags
+### Compilation, link flags.
 ################################################################################
 
 if(CMAKE_BUILD_TYPE OR CMAKE_CONFIGURATION_TYPES)
@@ -43,9 +43,13 @@ endif()
 
 message(STATUS "[koliop] Assuming the compiler is '${CMAKE_CXX_COMPILER_ID}'.")
 
-# Specific build options, libraries with PUBLIC interface.
-# Does NOT link with private (internal) interfaces.
-# Basis used by the tests.
+########################################
+### Flags
+########################################
+
+# Specific build options for everything in this project (does not modify the
+# parent configuration).
+# Notably used by the tests and this project.
 function(koliop_dependent_target_build_options target_name)
     # Use the flags defined in the toolchain. If the
     # koliop_[FLAGS|LINKER_FLAGS]_* are not defined, they are ignored transparently.

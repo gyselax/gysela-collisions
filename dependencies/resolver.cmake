@@ -112,7 +112,8 @@ function(DependencyResolver_ResolveLibrary _NAME)
 
             list(APPEND _OPTIONAL_COMPONENTS "${_COMPONENTS}")
 
-            find_package("${_NAME}" "${_VERSION}" OPTIONAL_COMPONENTS "${_OPTIONAL_COMPONENTS}")
+            # Unquoted _VERSION so we can let the user specify no version.
+            find_package("${_NAME}" ${_VERSION} OPTIONAL_COMPONENTS "${_OPTIONAL_COMPONENTS}")
 
             if("${${_NAME}_FOUND}")
                 foreach(A_COMPONENT IN LISTS _COMPONENTS)
