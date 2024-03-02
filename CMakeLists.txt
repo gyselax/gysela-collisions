@@ -13,11 +13,12 @@ endif()
 ### Global options. Dependency specific options are defined in the dependencies.
 ################################################################################
 
-option(koliop_ASSERT_ENABLED "Enable assertions. This enable/disable KOLIOP_ASSERT() but not C's assert()." ON)
-option(koliop_FENCE_ON_OPERATOR_EXIT "Fences before returning from an operator method." OFF)
+option(koliop_ASSERT_ENABLED                             "Enable assertions. This enable/disable KOLIOP_ASSERT() but not C's assert()." ON)
+option(koliop_FENCE_ON_OPERATOR_EXIT                     "Fences before returning from an operator method." OFF)
 option(koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE "Should koliop assumes the input data can be read or else, intermediate copies are required." ON)
-option(koliop_BUILD_FORTRAN_INTERFACE "Enable the koliop::fortran_interface glue code needed to interface koliop from Fortran." OFF)
-option(koliop_BUILD_TESTING "Enable test compilation and ctest regardless of BUILD_TESTING's value." OFF)
+option(koliop_BUILD_FORTRAN_INTERFACE                    "Enable the koliop::fortran_interface glue code needed to interface koliop from Fortran." OFF)
+option(koliop_BUILD_TESTING                              "Enable test compilation and ctest regardless of BUILD_TESTING's value." "${BUILD_TESTING}")
+
 
 ################################################################################
 ### Dependencies & tooling
@@ -154,7 +155,7 @@ koliop_target_build_options(koliop)
 ### Tests
 ################################################################################
 
-if(BUILD_TESTING OR koliop_BUILD_TESTING)
+if(koliop_BUILD_TESTING)
     add_subdirectory("tests")
 endif()
 

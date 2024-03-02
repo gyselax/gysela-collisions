@@ -31,7 +31,8 @@ endfunction()
 
 ############################## dummy test ######################################
 
-if(koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE)
+# Dirty un-scalable check that does the trick.
+if(koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE AND NOT(Kokkos_ENABLE_OPENMP OR Kokkos_ENABLE_SERIAL))
     # The test's memory is initially on the host, we may have to push it to
     # the GPU, thus the restriction.
     message(WARNING "[${PROJECT_NAME}] The 'dummy_test' test requires koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE=OFF.")
