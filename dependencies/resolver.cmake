@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.25)
 
+include(FetchContent)
+
 # print_target_properties was snatched from
 # https://stackoverflow.com/questions/32183975/how-to-print-all-the-properties-of-a-target-in-cmake
 

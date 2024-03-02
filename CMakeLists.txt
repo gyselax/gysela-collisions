@@ -2,8 +2,6 @@ cmake_minimum_required(VERSION 3.20)
 
 project("koliop" VERSION 0.0.15 LANGUAGES CXX)
 
-include(CheckIPOSupported)
-include(FetchContent)
 include(CTest)
 
 if(koliop_TOOLCHAIN_NAME)
