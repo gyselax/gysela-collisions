@@ -1,3 +1,5 @@
+# NOTES: https://gist.github.com/mbinna/c61dbb39bca0e4fb7d1f73b0d66a4fd1
+
 cmake_minimum_required(VERSION 3.20)
 
 project("koliop" VERSION 0.0.15 LANGUAGES CXX)
@@ -33,7 +35,12 @@ DependencyResolver("${CMAKE_CURRENT_SOURCE_DIR}/dependencies")
 ### Compiler flags
 ################################################################################
 
-message(STATUS "[koliop] Build type is '${CMAKE_BUILD_TYPE}', configuration types are '${CMAKE_CONFIGURATION_TYPES}'.")
+if(CMAKE_BUILD_TYPE OR CMAKE_CONFIGURATION_TYPES)
+    message(STATUS "[koliop] Build type is '${CMAKE_BUILD_TYPE}', configuration types are '${CMAKE_CONFIGURATION_TYPES}'.")
+else()
+    message(WARNING "[koliop] No CMAKE_BUILD_TYPE and no CMAKE_CONFIGURATION_TYPES defined.")
+endif()
+
 message(STATUS "[koliop] Assuming the compiler is '${CMAKE_CXX_COMPILER_ID}'.")
 
 # Specific build options, libraries with PUBLIC interface.
