@@ -271,7 +271,9 @@ function(DependencyResolver_Resolve _NAME)
                                       )
 endfunction()
 
-function(DependencyResolver _PATH)
+# The needs to be a macro to propagate upward the variable defined by the
+# dependencies.
+macro(DependencyResolver _PATH)
     file(GLOB THE_DEPENDENCIES "${_PATH}/*")
 
     foreach(A_DEPENDENCY ${THE_DEPENDENCIES})
@@ -279,4 +281,4 @@ function(DependencyResolver _PATH)
             include("${A_DEPENDENCY}/seeker.cmake")
         endif()
     endforeach()
-endfunction()
+endmacro()

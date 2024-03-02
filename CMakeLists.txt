@@ -58,7 +58,7 @@ function(koliop_dependent_target_build_options target_name)
                         PRIVATE ${koliop_LINKER_FLAGS})
 
     # Call the dependency defined functions on the target.
-    koliop_target_enable_lto("${target_name}")
+    cmake_language(CALL "${PROJECT_NAME}_target_enable_lto" "${target_name}")
 endfunction()
 
 # Koliop specific build options for private interface, say, Kokkos.
