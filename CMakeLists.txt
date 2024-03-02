@@ -4,8 +4,8 @@ project("koliop" VERSION 0.0.15 LANGUAGES CXX)
 
 include(CTest)
 
-if(${PROJECT_NAME}_TOOLCHAIN_NAME)
-    message(STATUS "[${PROJECT_NAME}] Using toolchain: '${${PROJECT_NAME}_TOOLCHAIN_NAME}'.")
+if(koliop_TOOLCHAIN_NAME)
+    message(STATUS "[koliop] Using toolchain: '${koliop_TOOLCHAIN_NAME}'.")
 endif()
 
 
@@ -13,11 +13,11 @@ endif()
 ### Global options. Dependency specific options are defined in the dependencies.
 ################################################################################
 
-option(${PROJECT_NAME}_ASSERT_ENABLED "Enable assertions. This enable/disable KOLIOP_ASSERT() but not C's assert()." ON)
-option(${PROJECT_NAME}_FENCE_ON_OPERATOR_EXIT "Fences before returning from an operator method." OFF)
-option(${PROJECT_NAME}_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE "Should assumes the input data can be read or else, intermediate copies are required." ON)
-option(${PROJECT_NAME}_BUILD_FORTRAN_INTERFACE "Enable the koliop::fortran_interface glue code needed to interface Koliop from Fortran." OFF)
-
+option(koliop_ASSERT_ENABLED "Enable assertions. This enable/disable KOLIOP_ASSERT() but not C's assert()." ON)
+option(koliop_FENCE_ON_OPERATOR_EXIT "Fences before returning from an operator method." OFF)
+option(koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE "Should koliop assumes the input data can be read or else, intermediate copies are required." ON)
+option(koliop_BUILD_FORTRAN_INTERFACE "Enable the koliop::fortran_interface glue code needed to interface koliop from Fortran." OFF)
+option(koliop_BUILD_TESTING "Enable test compilation and ctest regardless of BUILD_TESTING's value." OFF)
 
 ################################################################################
 ### Dependencies & tooling
@@ -32,8 +32,8 @@ DependencyResolver("${CMAKE_CURRENT_SOURCE_DIR}/dependencies")
 ### Compiler flags
 ################################################################################
 
-message(STATUS "[${PROJECT_NAME}] Build type is '${CMAKE_BUILD_TYPE}', configuration types are '${CMAKE_CONFIGURATION_TYPES}'.")
-message(STATUS "[${PROJECT_NAME}] Assuming the compiler is '${CMAKE_CXX_COMPILER_ID}'.")
+message(STATUS "[koliop] Build type is '${CMAKE_BUILD_TYPE}', configuration types are '${CMAKE_CONFIGURATION_TYPES}'.")
+message(STATUS "[koliop] Assuming the compiler is '${CMAKE_CXX_COMPILER_ID}'.")
 
 # Basis used by the tests. Does not link with private (internal) interfaces like
 # Kokkos.
@@ -58,7 +58,7 @@ function(koliop_dependent_target_build_options target_name)
                         PRIVATE ${koliop_LINKER_FLAGS})
 
     # Call the dependency defined functions on the target.
-    cmake_language(CALL "${PROJECT_NAME}_target_enable_lto" "${target_name}")
+    cmake_language(CALL "koliop_target_enable_lto" "${target_name}")
 endfunction()
 
 # Specific build options for private interface, say, Kokkos.
@@ -66,8 +66,8 @@ function(koliop_target_build_options target_name)
     koliop_dependent_target_build_options("${target_name}")
 
     # Call the dependency defined functions on the target.
-    cmake_language(CALL "${PROJECT_NAME}_target_add_kokkos"         "${target_name}")
-    cmake_language(CALL "${PROJECT_NAME}_target_add_kokkos_kernels" "${target_name}")
+    cmake_language(CALL "koliop_target_add_kokkos"         "${target_name}")
+    cmake_language(CALL "koliop_target_add_kokkos_kernels" "${target_name}")
 endfunction()
 
 
@@ -115,7 +115,7 @@ target_include_directories(koliop
                                   "$<INSTALL_INTERFACE:include/>")
 
 if(koliop_BUILD_FORTRAN_INTERFACE)
-    message(STATUS "[${PROJECT_NAME}] Enabling the Fortran interface.")
+    message(STATUS "[koliop] Enabling the Fortran interface.")
 
     enable_language(C)
     enable_language(Fortran)
@@ -154,8 +154,7 @@ koliop_target_build_options(koliop)
 ### Tests
 ################################################################################
 
-# BUILD_TESTING is an implicit option added by CTest.
-if(BUILD_TESTING)
+if(BUILD_TESTING OR koliop_BUILD_TESTING)
     add_subdirectory("tests")
 endif()
 
