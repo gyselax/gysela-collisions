@@ -1,5 +1,3 @@
-include(CheckIPOSupported)
-
 option(koliop_ENABLE_LTO "Use Link Time Optimizations (LTO)." ON)
 
 if(koliop_ENABLE_LTO)

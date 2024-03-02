@@ -18,11 +18,12 @@ option(koliop_FENCE_ON_OPERATOR_EXIT "Fences before returning from an operator m
 option(koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE "Should koliop assumes the input data can be read or else, intermediate copies are required." ON)
 option(koliop_BUILD_FORTRAN_INTERFACE "Enable the koliop::fortran_interface glue code needed to interface koliop from Fortran." OFF)
 
+
 ################################################################################
-### Dependencies
+### Dependencies & tooling
 ################################################################################
 
-include(${CMAKE_CURRENT_LIST_DIR}/dependencies/resolver.cmake)
+include("${CMAKE_CURRENT_LIST_DIR}/dependencies/resolver.cmake")
 
 DependencyResolver("${CMAKE_CURRENT_SOURCE_DIR}/dependencies")
 
