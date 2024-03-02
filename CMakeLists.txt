@@ -38,7 +38,7 @@ DependencyResolver("${CMAKE_CURRENT_SOURCE_DIR}/dependencies")
 if(CMAKE_BUILD_TYPE OR CMAKE_CONFIGURATION_TYPES)
     message(STATUS "[koliop] Build type is '${CMAKE_BUILD_TYPE}', configuration types are '${CMAKE_CONFIGURATION_TYPES}'.")
 else()
-    message(WARNING "[koliop] No CMAKE_BUILD_TYPE and no CMAKE_CONFIGURATION_TYPES defined.")
+    message(WARNING "[koliop] Nor CMAKE_BUILD_TYPE or CMAKE_CONFIGURATION_TYPES are defined.")
 endif()
 
 message(STATUS "[koliop] Assuming the compiler is '${CMAKE_CXX_COMPILER_ID}'.")
@@ -141,8 +141,49 @@ endif()
 # Call the dependency defined functions on the target.
 koliop_target_add_kokkos(koliop)
 koliop_target_add_kokkos_kernels(koliop)
+
 koliop_dependent_target_build_options(koliop)
 
+# ########################################
+# ### Installation rules
+# ########################################
+
+# install(TARGETS koliop
+# 	    EXPORT KOLIOPTargets)
+
+# install(EXPORT KOLIOPTargets
+# 	    NAMESPACE koliop::
+# 	    DESTINATION lib/cmake/koliop)
+
+# install(DIRECTORY include/
+# 	    TYPE INCLUDE)
+
+# configure_package_config_file(koliopConfig.cmake.in
+# 	                          ${CMAKE_CURRENT_BINARY_DIR}/koliopConfig.cmake
+# 	                          INSTALL_DESTINATION lib/cmake/koliop)
+
+# install(FILES ${CMAKE_CURRENT_BINARY_DIR}/koliopConfig.cmake
+# 	    DESTINATION lib/cmake/koliop)
+
+# # With koliopConfig.cmake to something like that:
+
+# ```
+# @PACKAGE_INIT@
+
+# include(CMakeFindDependencyMacro)
+
+# # Not we have to ensure the kokkos we find is compatible with the one used by
+# # koliop. Namely the backend and exact options. Any deviation could be a
+# # source of sneaky bug.
+# find_dependency(Kokkos XXX REQUIRED COMPONENTS YY::ZZ)
+
+# # Import the project's components.
+# include("${CMAKE_CURRENT_LIST_DIR}/KOLIOPTargets.cmake")
+
+# # Ensure we have exposed the components
+# check_required_components("koliop")
+# check_required_components("koliop::koliop")
+# ```
 
 ################################################################################
 ### Tests
