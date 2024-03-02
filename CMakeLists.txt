@@ -36,21 +36,22 @@ DependencyResolver("${CMAKE_CURRENT_SOURCE_DIR}/dependencies")
 message(STATUS "[koliop] Build type is '${CMAKE_BUILD_TYPE}', configuration types are '${CMAKE_CONFIGURATION_TYPES}'.")
 message(STATUS "[koliop] Assuming the compiler is '${CMAKE_CXX_COMPILER_ID}'.")
 
-# Basis used by the tests. Does not link with private (internal) interfaces like
-# Kokkos.
+# Specific build options, libraries with PUBLIC interface.
+# Does NOT link with private (internal) interfaces.
+# Basis used by the tests.
 function(koliop_dependent_target_build_options target_name)
     # Use the flags defined in the toolchain. If the
     # koliop_[FLAGS|LINKER_FLAGS]_* are not defined, they are ignored transparently.
-    set(koliop_FLAGS                               ${koliop_FLAGS_BASE}
-                                 $<$<CONFIG:DEBUG>:${koliop_FLAGS_DEBUG}>
-                            $<$<CONFIG:MINSIZEREL>:${koliop_FLAGS_MINSIZEREL}>
-                               $<$<CONFIG:RELEASE>:${koliop_FLAGS_RELEASE}>
-                        $<$<CONFIG:RELWITHDEBINFO>:${koliop_FLAGS_RELWITHDEBINFO}>)
+    set(koliop_FLAGS                            ${koliop_FLAGS_BASE}
+                              $<$<CONFIG:DEBUG>:${koliop_FLAGS_DEBUG}>
+                         $<$<CONFIG:MINSIZEREL>:${koliop_FLAGS_MINSIZEREL}>
+                            $<$<CONFIG:RELEASE>:${koliop_FLAGS_RELEASE}>
+                     $<$<CONFIG:RELWITHDEBINFO>:${koliop_FLAGS_RELWITHDEBINFO}>)
 
-    set(koliop_LINKER_FLAGS              $<$<CONFIG:DEBUG>:${koliop_LINKER_FLAGS_DEBUG}>
-                                    $<$<CONFIG:MINSIZEREL>:${koliop_LINKER_FLAGS_MINSIZEREL}>
-                                       $<$<CONFIG:RELEASE>:${koliop_LINKER_FLAGS_RELEASE}>
-                                $<$<CONFIG:RELWITHDEBINFO>:${koliop_LINKER_FLAGS_RELWITHDEBINFO}>)
+    set(koliop_LINKER_FLAGS          $<$<CONFIG:DEBUG>:${koliop_LINKER_FLAGS_DEBUG}>
+                                $<$<CONFIG:MINSIZEREL>:${koliop_LINKER_FLAGS_MINSIZEREL}>
+                                   $<$<CONFIG:RELEASE>:${koliop_LINKER_FLAGS_RELEASE}>
+                            $<$<CONFIG:RELWITHDEBINFO>:${koliop_LINKER_FLAGS_RELWITHDEBINFO}>)
 
     target_compile_options("${target_name}"
                            PRIVATE ${koliop_FLAGS})
@@ -58,17 +59,7 @@ function(koliop_dependent_target_build_options target_name)
     target_link_options("${target_name}"
                         PRIVATE ${koliop_LINKER_FLAGS})
 
-    # Call the dependency defined functions on the target.
-    cmake_language(CALL "koliop_target_enable_lto" "${target_name}")
-endfunction()
-
-# Specific build options for private interface, say, Kokkos.
-function(koliop_target_build_options target_name)
-    koliop_dependent_target_build_options("${target_name}")
-
-    # Call the dependency defined functions on the target.
-    cmake_language(CALL "koliop_target_add_kokkos"         "${target_name}")
-    cmake_language(CALL "koliop_target_add_kokkos_kernels" "${target_name}")
+    koliop_target_enable_lto("${target_name}")
 endfunction()
 
 
@@ -141,14 +132,17 @@ if(koliop_BUILD_FORTRAN_INTERFACE)
                           # NOTE: I set it to PRIVATE, but this may cause
                           # issues:
                           # https://gitlab.kitware.com/cmake/cmake/-/issues/24402
-                          PRIVATE koliop)
+                          PRIVATE "koliop::koliop")
 endif()
 
 ########################################
 ### Compilation and linking
 ########################################
 
-koliop_target_build_options(koliop)
+# Call the dependency defined functions on the target.
+koliop_target_add_kokkos(koliop)
+koliop_target_add_kokkos_kernels(koliop)
+koliop_dependent_target_build_options(koliop)
 
 
 ################################################################################
