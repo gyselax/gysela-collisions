@@ -174,6 +174,13 @@ namespace koliop {
         void CvCdDriverScheduler::ScheduleExecution(const Operator&                                an_operator,
                                                     ComputeFloatType                               dt,
                                                     koliop::utility::View::InternalInputL6<Flo64>& f5d_s) {
+            // idea is that:
+            // if there is not device backend (say only serial or openmp)
+            // declare all the cdvd as working on SMALL blocks (like gysela)
+            // ensure that all the small block are processed in serial (pass Kokkos::Serial)
+            // use a parallel_for(range[0, the_cvcd_drivers_configurations_.size()])
+            //      using openmp or serial (best available)
+
             for(auto&& a_driver_configuration : the_cvcd_drivers_configurations_) {
                 a_driver_configuration.the_cvcd_driver_->Apply(an_operator,
                                                                a_driver_configuration.the_execution_space_,
