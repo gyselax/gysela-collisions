@@ -5,7 +5,7 @@
 function(koliop_add_test test_category test_name)
     set(target_name "test_${test_name}")
 
-    message(STATUS "[koliop] Adding test '${target_name}'.")
+    message(STATUS "[${PROJECT_NAME}] Adding test '${target_name}'.")
 
     add_executable("${target_name}"
                    "${CMAKE_CURRENT_SOURCE_DIR}/${test_category}/${test_name}.cc")
@@ -34,7 +34,7 @@ endfunction()
 if(koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE)
     # The test's memory is initially on the host, we may have to push it to
     # the GPU, thus the restriction.
-    message(WARNING "The 'dummy_test' test requires koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE=OFF.")
+    message(WARNING "[${PROJECT_NAME}] The 'dummy_test' test requires koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE=OFF.")
 else()
     koliop_add_test("dummy" "dummy_test")
 endif()
