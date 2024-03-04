@@ -2,39 +2,64 @@
 ### Helpers
 ################################################################################
 
-function(koliop_add_test test_category test_name)
-    set(target_name "test_${test_name}")
+option(${PROJECT_NAME}_RUN_DEMONSTRATION_AS_TEST "Run the demonstrations as a test (only checking the return value and if it does not crash)." ON)
 
-    message(STATUS "[koliop] Adding test '${target_name}'.")
+function(${PROJECT_NAME}_add_test build_options_function kind namespace test_name)
+    set(target_name "${kind}_${test_name}")
 
     add_executable("${target_name}"
-                   "${CMAKE_CURRENT_SOURCE_DIR}/${test_category}/${test_name}.cc")
+                   "${CMAKE_CURRENT_SOURCE_DIR}/${namespace}/${test_name}.cc")
 
-    target_link_libraries("${target_name}"
-                          PRIVATE "koliop::koliop")
+    cmake_language(CALL "${build_options_function}" "${target_name}")
 
-    koliop_dependent_target_build_options("${target_name}")
-
-    add_test(NAME "${target_name}"
-             WORKING_DIRECTORY "." # don't change CWD
-             COMMAND "${target_name}" "in_pipeline")
+    ########################################
+    ### Boiler plate
+    ########################################
 
     # "return" by writing to a variable named ${test_name}
     # Returns, the name of the created target
     set("${test_name}" "${target_name}"  PARENT_SCOPE)
+
+    if (kind STREQUAL "test")
+        message(STATUS "[${PROJECT_NAME}] Adding test '${target_name}'.")
+        add_test(NAME "${target_name}"
+                 # The ctest file is in the build tree's root folder but will call executable inside test
+                 # and forwarding it's own working directory to the process. If enable_testing was
+                 # in this file instead of the "main" cmake file, the ctest file would be in build/tests
+                 # and the tests would be broken because the tests rely on working directory to load files for instance.
+                 WORKING_DIRECTORY "." # don't change CWD
+                 COMMAND "${target_name}" "in_pipeline")
+    elseif(kind STREQUAL "demo")
+        message(STATUS "[${PROJECT_NAME}] Adding demonstration '${target_name}'.")
+        if(${PROJECT_NAME}_RUN_DEMONSTRATION_AS_TEST)
+            add_test(NAME "${target_name}"
+                     WORKING_DIRECTORY "."
+                     COMMAND "${target_name}" "in_pipeline")
+        endif()
+    else()
+        message(WARNING "Unknown test kind: '${kind}'.")
+    endif()
 endfunction()
 
 
 ################################################################################
-### Test definition
+### Test definitions
 ################################################################################
+
+function(koliop_tests_target_build_options target_name)
+    target_link_libraries("${target_name}"
+                          PRIVATE "koliop::koliop")
+
+    koliop_dependent_target_build_options("${target_name}")
+endfunction()
 
 ############################## dummy test ######################################
 
-if(koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE)
+# Dirty un-scalable check that does the trick.
+if(koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE AND NOT(Kokkos_ENABLE_OPENMP OR Kokkos_ENABLE_SERIAL))
     # The test's memory is initially on the host, we may have to push it to
     # the GPU, thus the restriction.
-    message(WARNING "The 'dummy_test' test requires koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE=OFF.")
+    message(WARNING "[${PROJECT_NAME}] The 'dummy_test' test requires koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE=OFF.")
 else()
-    koliop_add_test("dummy" "dummy_test")
+    koliop_add_test("koliop_tests_target_build_options" "demo" "dummy" "dummy_test")
 endif()

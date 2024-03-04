@@ -20,12 +20,12 @@ DependencyResolver_Resolve(KokkosKernels
                            PROVIDERS_SOURCE "https://github.com/kokkos/kokkos-kernels/archive/refs/tags/4.2.01.tar.gz"
                            )
 
-function(koliop_target_add_kokkos target_name)
+function(${PROJECT_NAME}_target_add_kokkos target_name)
     target_link_libraries("${target_name}"
                           PRIVATE Kokkos::kokkos)
 endfunction()
 
-function(koliop_target_add_kokkos_kernels target_name)
+function(${PROJECT_NAME}_target_add_kokkos_kernels target_name)
     target_link_libraries("${target_name}"
                           PRIVATE Kokkos::kokkoskernels)
 endfunction()

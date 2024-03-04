@@ -74,9 +74,18 @@ function(DependencyResolver_ResolveLibrary _NAME)
                 # Safeguard: if you asked for no dependency but we still got
                 # something, potentially from a parent/prior dependency.
                 if(TARGET "${A_COMPONENT}")
-                    message(FATAL_ERROR "[${PROJECT_NAME}] Deactivating '${_NAME}' found '${A_COMPONENT}'. Conflicting signals are signs for problems. Either activate the dependency for project '${PROJECT_NAME}' or understand why '${A_COMPONENT}' is defined. If this is expected that someone else provide '${A_COMPONENT}', you may want to use a SYSTEM dependency in the '${PROJECT_NAME}' project.")
+                    message(FATAL_ERROR "[${PROJECT_NAME}] Found '${A_COMPONENT}' for supposedly deactivated '${_NAME}'. Conflicting signals are signs for problems. Either activate the dependency for project '${PROJECT_NAME}' or understand why '${A_COMPONENT}' is defined. If it is expected that someone else provide '${A_COMPONENT}', you may want to use a SYSTEM dependency in the '${PROJECT_NAME}' project.")
                 endif()
             endforeach()
+
+            # If we end up failing, ensure the dependency is marked as OFF
+            # entirely instead of a potential list of provider. This way we have
+            # clean disabled dependency handling for codes relying on
+            # `if(${${PROJECT_NAME}_ENABLE_${_NAME}})` to know if they can
+            # assume the dependency is resolved (say for a
+            # target_link_libraries).
+
+            set(${PROJECT_NAME}_ENABLE_${_NAME} "OFF" CACHE STRING "" FORCE)
 
             return()
         elseif("${A_PROVIDER}" STREQUAL "SUBDIRECTORY")
@@ -103,7 +112,8 @@ function(DependencyResolver_ResolveLibrary _NAME)
 
             list(APPEND _OPTIONAL_COMPONENTS "${_COMPONENTS}")
 
-            find_package("${_NAME}" "${_VERSION}" OPTIONAL_COMPONENTS "${_OPTIONAL_COMPONENTS}")
+            # Unquoted _VERSION so we can let the user specify no version.
+            find_package("${_NAME}" ${_VERSION} OPTIONAL_COMPONENTS "${_OPTIONAL_COMPONENTS}")
 
             if("${${_NAME}_FOUND}")
                 foreach(A_COMPONENT IN LISTS _COMPONENTS)
@@ -271,7 +281,9 @@ function(DependencyResolver_Resolve _NAME)
                                       )
 endfunction()
 
-function(DependencyResolver _PATH)
+# The needs to be a macro to propagate upward the variable defined by the
+# dependencies.
+macro(DependencyResolver _PATH)
     file(GLOB THE_DEPENDENCIES "${_PATH}/*")
 
     foreach(A_DEPENDENCY ${THE_DEPENDENCIES})
@@ -279,4 +291,4 @@ function(DependencyResolver _PATH)
             include("${A_DEPENDENCY}/seeker.cmake")
         endif()
     endforeach()
-endfunction()
+endmacro()

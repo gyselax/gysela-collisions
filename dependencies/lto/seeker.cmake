@@ -1,30 +1,21 @@
-option(koliop_ENABLE_LTO "Use Link Time Optimizations (LTO)." ON)
+option(${PROJECT_NAME}_ENABLE_LTO "Use Link Time Optimizations (LTO)." ON)
 
-if(koliop_ENABLE_LTO)
-    message(STATUS "[koliop] Dependency seeing LTO.")
+if(${PROJECT_NAME}_ENABLE_LTO)
+    message(STATUS "[${PROJECT_NAME}] Dependency seeking LTO.")
 
     include(CheckIPOSupported)
-    check_ipo_supported(RESULT koliop_LTO_ENABLED)
+    check_ipo_supported(RESULT ${PROJECT_NAME}_LTO_FOUND)
 
-    if(koliop_LTO_ENABLED)
-        message(STATUS "[koliop]     Dependency LTO found.")
+    if(${PROJECT_NAME}_LTO_FOUND)
+        message(STATUS "[${PROJECT_NAME}]     Dependency LTO found.")
     endif()
 else()
-    message(STATUS "[koliop] Dependency skipping LTO.")
+    message(STATUS "[${PROJECT_NAME}] Dependency skipping LTO.")
 endif()
 
-function(koliop_target_enable_lto target_name)
-    if(koliop_LTO_ENABLED AND
+function(${PROJECT_NAME}_target_enable_lto target_name)
+    if(${PROJECT_NAME}_LTO_FOUND AND
        CMAKE_BUILD_TYPE MATCHES "Release")
-        # NOTE: We have had some issues with LTO and the Clang based compilers
-        # on Adastra. Note that recent Clang offer the -foffload-lto, an LTO
-        # pass that is device/target aware.
-        # NOTE: When using kokkos and a CUDA backend, make sure to use the
-        # nvcc_wrapper or else, you will confuse CMake into thinking there is
-        # LTO support where as in practice, it is not (you end up linking g++
-        # LTOed object files with nvcc non LTOed files.)
-        # NOTE: As much as I would like to use LTO, too many compilers just
-        # blatantly fail at making it work in production situation.
         set_target_properties("${target_name}" PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
     endif()
 endfunction()

@@ -1,3 +1,5 @@
+# NOTES: https://gist.github.com/mbinna/c61dbb39bca0e4fb7d1f73b0d66a4fd1
+
 cmake_minimum_required(VERSION 3.20)
 
 project("koliop" VERSION 0.0.15 LANGUAGES CXX)
@@ -5,7 +7,7 @@ project("koliop" VERSION 0.0.15 LANGUAGES CXX)
 include(CTest)
 
 if(koliop_TOOLCHAIN_NAME)
-    message(STATUS "[koliop] Using Koliop toolchain: '${koliop_TOOLCHAIN_NAME}'.")
+    message(STATUS "[koliop] Using toolchain: '${koliop_TOOLCHAIN_NAME}'.")
 endif()
 
 
@@ -13,10 +15,11 @@ endif()
 ### Global options. Dependency specific options are defined in the dependencies.
 ################################################################################
 
-option(koliop_ASSERT_ENABLED "Enable assertions. This enable/disable KOLIOP_ASSERT() but not C's assert()." ON)
-option(koliop_FENCE_ON_OPERATOR_EXIT "Fences before returning from an operator method." OFF)
+option(koliop_ASSERT_ENABLED                             "Enable assertions. This enable/disable KOLIOP_ASSERT() but not C's assert()." ON)
+option(koliop_FENCE_ON_OPERATOR_EXIT                     "Fences before returning from an operator method." OFF)
 option(koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE "Should koliop assumes the input data can be read or else, intermediate copies are required." ON)
-option(koliop_BUILD_FORTRAN_INTERFACE "Enable the koliop::fortran_interface glue code needed to interface koliop from Fortran." OFF)
+option(koliop_BUILD_FORTRAN_INTERFACE                    "Enable the koliop::fortran_interface glue code needed to interface koliop from Fortran." OFF)
+option(koliop_BUILD_TESTING                              "Enable test compilation and ctest regardless of BUILD_TESTING's value." "${BUILD_TESTING}")
 
 
 ################################################################################
@@ -29,27 +32,37 @@ DependencyResolver("${CMAKE_CURRENT_SOURCE_DIR}/dependencies")
 
 
 ################################################################################
-### Compiler flags
+### Compilation, link flags.
 ################################################################################
 
-message(STATUS "[koliop] Build type is '${CMAKE_BUILD_TYPE}', configuration types are '${CMAKE_CONFIGURATION_TYPES}'.")
+if(CMAKE_BUILD_TYPE OR CMAKE_CONFIGURATION_TYPES)
+    message(STATUS "[koliop] Build type is '${CMAKE_BUILD_TYPE}', configuration types are '${CMAKE_CONFIGURATION_TYPES}'.")
+else()
+    message(WARNING "[koliop] Nor CMAKE_BUILD_TYPE or CMAKE_CONFIGURATION_TYPES are defined.")
+endif()
+
 message(STATUS "[koliop] Assuming the compiler is '${CMAKE_CXX_COMPILER_ID}'.")
 
-# Basis used by the tests. Does not link with private (internal) interfaces like
-# Kokkos.
+########################################
+### Flags
+########################################
+
+# Specific build options for everything in this project (does not modify the
+# parent configuration).
+# Notably used by the tests and this project.
 function(koliop_dependent_target_build_options target_name)
     # Use the flags defined in the toolchain. If the
     # koliop_[FLAGS|LINKER_FLAGS]_* are not defined, they are ignored transparently.
-    set(koliop_FLAGS                               ${koliop_FLAGS_BASE}
-                                 $<$<CONFIG:DEBUG>:${koliop_FLAGS_DEBUG}>
-                            $<$<CONFIG:MINSIZEREL>:${koliop_FLAGS_MINSIZEREL}>
-                               $<$<CONFIG:RELEASE>:${koliop_FLAGS_RELEASE}>
-                        $<$<CONFIG:RELWITHDEBINFO>:${koliop_FLAGS_RELWITHDEBINFO}>)
+    set(koliop_FLAGS                            ${koliop_FLAGS_BASE}
+                              $<$<CONFIG:DEBUG>:${koliop_FLAGS_DEBUG}>
+                         $<$<CONFIG:MINSIZEREL>:${koliop_FLAGS_MINSIZEREL}>
+                            $<$<CONFIG:RELEASE>:${koliop_FLAGS_RELEASE}>
+                     $<$<CONFIG:RELWITHDEBINFO>:${koliop_FLAGS_RELWITHDEBINFO}>)
 
-    set(koliop_LINKER_FLAGS              $<$<CONFIG:DEBUG>:${koliop_LINKER_FLAGS_DEBUG}>
-                                    $<$<CONFIG:MINSIZEREL>:${koliop_LINKER_FLAGS_MINSIZEREL}>
-                                       $<$<CONFIG:RELEASE>:${koliop_LINKER_FLAGS_RELEASE}>
-                                $<$<CONFIG:RELWITHDEBINFO>:${koliop_LINKER_FLAGS_RELWITHDEBINFO}>)
+    set(koliop_LINKER_FLAGS          $<$<CONFIG:DEBUG>:${koliop_LINKER_FLAGS_DEBUG}>
+                                $<$<CONFIG:MINSIZEREL>:${koliop_LINKER_FLAGS_MINSIZEREL}>
+                                   $<$<CONFIG:RELEASE>:${koliop_LINKER_FLAGS_RELEASE}>
+                            $<$<CONFIG:RELWITHDEBINFO>:${koliop_LINKER_FLAGS_RELWITHDEBINFO}>)
 
     target_compile_options("${target_name}"
                            PRIVATE ${koliop_FLAGS})
@@ -57,17 +70,7 @@ function(koliop_dependent_target_build_options target_name)
     target_link_options("${target_name}"
                         PRIVATE ${koliop_LINKER_FLAGS})
 
-    # Call the dependency defined functions on the target.
     koliop_target_enable_lto("${target_name}")
-endfunction()
-
-# Koliop specific build options for private interface, say, Kokkos.
-function(koliop_target_build_options target_name)
-    koliop_dependent_target_build_options("${target_name}")
-
-    # Call the dependency defined functions on the target.
-    koliop_target_add_kokkos("${target_name}")
-    koliop_target_add_kokkos_kernels("${target_name}")
 endfunction()
 
 
@@ -86,19 +89,7 @@ set(koliop_SOURCES_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/sources")
 set(koliop_INCLUDE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 configure_file("${koliop_INCLUDE_DIRECTORY}/KOLIOP/internal/buildspecificities.h.in"
-               "${koliop_INCLUDE_DIRECTORY}/KOLIOP/internal/buildspecificities.h")
-
-if(koliop_ASSERT_ENABLED)
-    target_compile_definitions(koliop PRIVATE KOLIOP_ASSERT_ENABLED)
-endif()
-
-if(koliop_FENCE_ON_OPERATOR_EXIT)
-    target_compile_definitions(koliop PRIVATE KOLIOP_FENCE_ON_OPERATOR_EXIT)
-endif()
-
-if(koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE)
-    target_compile_definitions(koliop PRIVATE KOLIOP_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE)
-endif()
+               "${koliop_INCLUDE_DIRECTORY}/KOLIOP/internal/buildspecificities.h" @ONLY)
 
 # NOTE: GLOBing file is not considered good practice. One could instead specify
 # the full, verbose list of headers and sources.
@@ -108,11 +99,11 @@ target_sources(koliop
                PRIVATE ${koliop_SOURCES_GLOB})
 
 target_include_directories(koliop
-                           PRIVATE "${koliop_SOURCES_DIRECTORY}/")
+                           PRIVATE "${koliop_SOURCES_DIRECTORY}")
 
 target_include_directories(koliop
-                           PUBLIC "$<BUILD_INTERFACE:${koliop_INCLUDE_DIRECTORY}/>"
-                                  "$<INSTALL_INTERFACE:include/>")
+                           PUBLIC "$<BUILD_INTERFACE:${koliop_INCLUDE_DIRECTORY}>"
+                                  "$<INSTALL_INTERFACE:include>")
 
 if(koliop_BUILD_FORTRAN_INTERFACE)
     message(STATUS "[koliop] Enabling the Fortran interface.")
@@ -140,22 +131,65 @@ if(koliop_BUILD_FORTRAN_INTERFACE)
                           # NOTE: I set it to PRIVATE, but this may cause
                           # issues:
                           # https://gitlab.kitware.com/cmake/cmake/-/issues/24402
-                          PRIVATE koliop)
+                          PRIVATE "koliop::koliop")
 endif()
 
 ########################################
-### Compilation and linking
+### Dependency handling
 ########################################
 
-koliop_target_build_options(koliop)
+# Call the dependency defined functions on the target.
+koliop_target_add_kokkos(koliop)
+koliop_target_add_kokkos_kernels(koliop)
 
+koliop_dependent_target_build_options(koliop)
+
+# ########################################
+# ### Installation rules
+# ########################################
+
+# install(TARGETS koliop
+# 	    EXPORT KOLIOPTargets)
+
+# install(EXPORT KOLIOPTargets
+# 	    NAMESPACE koliop::
+# 	    DESTINATION lib/cmake/koliop)
+
+# install(DIRECTORY include/
+# 	    TYPE INCLUDE)
+
+# configure_package_config_file(koliopConfig.cmake.in
+# 	                          ${CMAKE_CURRENT_BINARY_DIR}/koliopConfig.cmake
+# 	                          INSTALL_DESTINATION lib/cmake/koliop)
+
+# install(FILES ${CMAKE_CURRENT_BINARY_DIR}/koliopConfig.cmake
+# 	    DESTINATION lib/cmake/koliop)
+
+# # With koliopConfig.cmake to something like that:
+
+# ```
+# @PACKAGE_INIT@
+
+# include(CMakeFindDependencyMacro)
+
+# # Not we have to ensure the kokkos we find is compatible with the one used by
+# # koliop. Namely the backend and exact options. Any deviation could be a
+# # source of sneaky bug.
+# find_dependency(Kokkos XXX REQUIRED COMPONENTS YY::ZZ)
+
+# # Import the project's components.
+# include("${CMAKE_CURRENT_LIST_DIR}/KOLIOPTargets.cmake")
+
+# # Ensure we have exposed the components
+# check_required_components("koliop")
+# check_required_components("koliop::koliop")
+# ```
 
 ################################################################################
 ### Tests
 ################################################################################
 
-# BUILD_TESTING is an implicit option added by CTest.
-if(BUILD_TESTING)
+if(koliop_BUILD_TESTING)
     add_subdirectory("tests")
 endif()
 
