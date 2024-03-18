@@ -201,6 +201,11 @@ namespace koliop {
             void ComputeUparTCorrection(ComputeFloatType dt,
                                         Flo64*           f5d_s) const;
 
+            void ComputeUparTCorrection(ComputeFloatType                                           dt,
+                                        OrdinalType                                                the_species_index,
+                                        const koliop::utility::View::MDL4<const ComputeFloatType>& input_U_par_s,
+                                        Flo64*                                                     f5d_s) const;
+
             void ExtractRaw(uint32_t the_value_identifier,
                             void*    an_output_buffer) const;
 
@@ -278,6 +283,7 @@ namespace koliop {
 
             koliop::utility::View::MDL4<ComputeFloatType> n_s_;
             koliop::utility::View::MDL4<ComputeFloatType> U_par_s_;
+            koliop::utility::View::MDL4<ComputeFloatType> U_par_s_input_;
             koliop::utility::View::MDL4<ComputeFloatType> T_s_;
             koliop::utility::View::MDL5<ComputeFloatType> nu_ab_;
             koliop::utility::View::MDL4<ComputeFloatType> q_par_on_nT_s_;

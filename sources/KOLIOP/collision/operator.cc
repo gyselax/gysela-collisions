@@ -174,8 +174,10 @@ namespace koliop {
 
             , n_s_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "n_s_"),
                    static_cast<std::size_t>(the_r_extent_), static_cast<std::size_t>(the_theta_extent_), static_cast<std::size_t>(the_phi_extent_), static_cast<std::size_t>(the_species_extent_)}
-            , U_par_s_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "U_par_s_"),
+            , U_par_s_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "U_par_s_0_"),
                        static_cast<std::size_t>(the_r_extent_), static_cast<std::size_t>(the_theta_extent_), static_cast<std::size_t>(the_phi_extent_), static_cast<std::size_t>(the_species_extent_)}
+            , U_par_s_input_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "U_par_s_1_"),
+                             static_cast<std::size_t>(the_r_extent_), static_cast<std::size_t>(the_theta_extent_), static_cast<std::size_t>(the_phi_extent_), static_cast<std::size_t>(the_species_extent_)}
             , T_s_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "T_s_"),
                    static_cast<std::size_t>(the_r_extent_), static_cast<std::size_t>(the_theta_extent_), static_cast<std::size_t>(the_phi_extent_), static_cast<std::size_t>(the_species_extent_)}
             , nu_ab_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "nu_ab_"),
@@ -270,6 +272,8 @@ namespace koliop {
             // NOTE: When applying the operator for all collision, some
             // computation optimization can be done. We try to avoid recomputing
             // and minimizing the overhead of the operator.
+            // NOTE: Each time we have a std::for_each, we could use a separate
+            // stream for all function call.
 
             // TODO(Etienne M): We shouldn't need that for the Gysela++, yet.
             const OrdinalType collstart = 0;
@@ -320,7 +324,14 @@ namespace koliop {
                     ComputeDensityCorrection(a_species_index, f5d_s);
                 });
 
-                ComputeUparTCorrection(dt, f5d_s);
+                // ComputeUparTCorrection reads U_par_s_input_ and outputs to
+                // U_par_s_. This is required if more than 1 species is used, we
+                // can not write in U_par_s_ while it is still being read (by
+                // other threads, species, thread block, etc.).
+                std::swap(U_par_s_, U_par_s_input_);
+                std::for_each(the_first_species, the_last_species, [&](OrdinalType a_species_index) {
+                    ComputeUparTCorrection(dt, a_species_index, U_par_s_input_, f5d_s);
+                });
 
                 if((the_species_extent_ > 1) && collision_interspecies_) {
                     ComputeMaxwellianEvolution(dt, f5d_s);

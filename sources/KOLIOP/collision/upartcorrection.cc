@@ -16,12 +16,15 @@ namespace koliop {
     namespace collision {
 
         template <typename View6D,
-                  typename View4D>
+                  typename View4D0,
+                  typename View4D1>
         static inline void
         DoComputeUparTCorrection(const Operator&  an_operator,
                                  ComputeFloatType dt,
+                                 OrdinalType      pSpecies_id,
+                                 View4D0&&        input_U_par_s,
                                  View6D&&         f5d_s,
-                                 View4D&&         U_par_s) {
+                                 View4D1&&        output_U_par_s) {
 
             const auto& the_mu_extent      = an_operator.the_mu_extent_;
             const auto& the_vpar_extent    = an_operator.the_vpar_extent_;
@@ -45,7 +48,6 @@ namespace koliop {
             const auto& nu_ab          = an_operator.nu_ab_;
             const auto& q_par_on_nT_s  = an_operator.q_par_on_nT_s_;
 
-            const auto& pSpecies_id            = an_operator.pSpecies_id_;
             const auto& collision_interspecies = an_operator.collision_interspecies_;
 
             const auto& the_execution_space_pool = an_operator.the_execution_space_pool_;
@@ -141,7 +143,7 @@ namespace koliop {
                 T_coll = the_T_coll_reducer.reference();
 
                 const ComputeFloatType hat_Aa      = hat_As(pSpecies_id);
-                const ComputeFloatType Vpara       = U_par_s(ir, itheta, iphi, pSpecies_id);
+                const ComputeFloatType Vpara       = input_U_par_s(ir, itheta, iphi, pSpecies_id);
                 ComputeFloatType       U_par_new   = Vpara;
                 const ComputeFloatType q_par_on_nT = q_par_on_nT_s(ir, itheta, iphi, pSpecies_id);
                 const ComputeFloatType T_new       = T_s(ir, itheta, iphi, pSpecies_id);
@@ -153,7 +155,7 @@ namespace koliop {
 
                     const ComputeFloatType hat_Ab         = hat_As(ispecies);
                     const ComputeFloatType Rat            = Kokkos::sqrt(hat_Aa / hat_Ab);
-                    const ComputeFloatType Vparb          = U_par_s(ir, itheta, iphi, ispecies);
+                    const ComputeFloatType Vparb          = input_U_par_s(ir, itheta, iphi, ispecies);
                     const ComputeFloatType q_parb_on_nbTb = q_par_on_nT_s(ir, itheta, iphi, ispecies);
 
                     const ComputeFloatType k_ab = 1.0 / (1.0 +
@@ -202,7 +204,7 @@ namespace koliop {
                         // NOTE: no need to barrier, we know that all the
                         // threads have a valid U_par_new. Putting this code
                         // before the parallel for requires an additional fence.
-                        U_par_s(ir, itheta, iphi, pSpecies_id) = U_par_new;
+                        output_U_par_s(ir, itheta, iphi, pSpecies_id) = U_par_new;
                     });
             };
 
@@ -210,8 +212,10 @@ namespace koliop {
                                  a_policy, the_kernel);
         }
 
-        void Operator::ComputeUparTCorrection(ComputeFloatType dt,
-                                              Flo64*           f5d_s) const {
+        void Operator::ComputeUparTCorrection(ComputeFloatType                                           dt,
+                                              OrdinalType                                                the_species_index,
+                                              const koliop::utility::View::MDL4<const ComputeFloatType>& input_U_par_s,
+                                              Flo64*                                                     f5d_s) const {
 
             auto a_device_visible_f5d_s = koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL6<Flo64>,
                                                                                koliop::utility::View::InternalInputL6>(the_execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],
@@ -220,7 +224,7 @@ namespace koliop {
                                                                                                                        the_r_extent_, the_theta_extent_, the_phi_extent_,
                                                                                                                        the_species_extent_);
 
-            DoComputeUparTCorrection(*this, dt, a_device_visible_f5d_s, U_par_s_);
+            DoComputeUparTCorrection(*this, dt, the_species_index, input_U_par_s, a_device_visible_f5d_s, U_par_s_);
 
             koliop::utility::Copy::ViewToRawData<koliop::utility::View::InternalInputL6<Flo64>,
                                                  koliop::utility::View::ExternalInputL6<Flo64>>(the_execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],
@@ -233,6 +237,11 @@ namespace koliop {
 #if defined(KOLIOP_FENCE_ON_OPERATOR_EXIT)
             Kokkos::fence();
 #endif
+        }
+
+        void Operator::ComputeUparTCorrection(ComputeFloatType dt,
+                                              Flo64*           f5d_s) const {
+            ComputeUparTCorrection(dt, pSpecies_id_, koliop::utility::View::MDL4<const ComputeFloatType>{U_par_s_}, f5d_s);
         }
 
     } // namespace collision
