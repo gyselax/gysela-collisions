@@ -333,6 +333,12 @@ namespace koliop {
                     ComputeUparTCorrection(dt, a_species_index, U_par_s_input_, f5d_s);
                 });
 
+                // TODO(Etienne M): We may have an issue:
+                // - ComputeMaxwellianEvolution reads U_par_s for all species;
+                // - We may write a new U_par_s for  all species in ComputeUparTCorrection;
+                // - In the past, only the pSpecies was modified in ComputeUparTCorrection;
+                //      - Did we miss a reduction over species ?
+
                 if((the_species_extent_ > 1) && collision_interspecies_) {
                     ComputeMaxwellianEvolution(dt, f5d_s);
                     PrecomputeNu();
