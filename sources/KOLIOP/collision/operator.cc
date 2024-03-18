@@ -298,7 +298,9 @@ namespace koliop {
                 });
 
                 // CvCd
-                Apply(dt, f5d_s);
+                std::for_each(the_first_species, the_last_species, [&](OrdinalType a_species_index) {
+                    Apply(dt, a_species_index, f5d_s);
+                });
 
                 // Computes Fa = Fa * FM0a
                 std::for_each(the_first_species, the_last_species, [&](OrdinalType a_species_index) {

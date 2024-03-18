@@ -12,6 +12,7 @@ namespace koliop {
     namespace collision {
 
         void Operator::Apply(ComputeFloatType dt,
+                             OrdinalType      the_species_index,
                              Flo64*           f5d_s) {
 
             auto a_device_visible_f5d_s = koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL6<Flo64>,
@@ -28,7 +29,7 @@ namespace koliop {
             Fence();
 
             {
-                the_cvcd_drivers_scheduler_.ScheduleExecution(*this, dt, a_device_visible_f5d_s);
+                the_cvcd_drivers_scheduler_.ScheduleExecution(*this, dt, the_species_index, a_device_visible_f5d_s);
             }
 
             // TODO(Etienne M): Do we full fence or wait for all the streams ?
@@ -55,6 +56,11 @@ namespace koliop {
 #if defined(KOLIOP_FENCE_ON_OPERATOR_EXIT)
             Kokkos::fence();
 #endif
+        }
+
+        void Operator::Apply(ComputeFloatType dt,
+                             Flo64*           f5d_s) {
+            ComputeCpar(dt, pSpecies_id_, f5d_s);
         }
 
     } // namespace collision

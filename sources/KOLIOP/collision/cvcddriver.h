@@ -99,6 +99,7 @@ namespace koliop {
                                      OrdinalType     the_block_first_r,
                                      OrdinalType     the_block_first_theta,
                                      OrdinalType     the_block_first_phi,
+                                     OrdinalType     pSpecies_id,
                                      const View2D&   mask_coll,
                                      const View6D&   f5d_s,
                                      View4D&&        the_rhs) {
@@ -113,8 +114,6 @@ namespace koliop {
                 const auto& coeff_intdmu = an_operator.coeff_intdmu_;
                 const auto& B_norm       = an_operator.B_norm_;
                 const auto& T_s          = an_operator.T_s_;
-
-                const auto& pSpecies_id = an_operator.pSpecies_id_;
 
                 // TODO(Etienne M): Make sure the accesses are sequential on
                 // CPU.
@@ -267,10 +266,11 @@ namespace koliop {
             static inline void
             DoComputeCvCdSource(const Operator&  an_operator,
                                 ExecutionSpace   an_execution_space,
-                                ComputeFloatType dt,
                                 OrdinalType      the_block_first_r,
                                 OrdinalType      the_block_first_theta,
                                 OrdinalType      the_block_first_phi,
+                                ComputeFloatType dt,
+                                OrdinalType      pSpecies_id,
                                 const View6D&    the_Najl,
                                 View4D&&         the_rhs) {
 
@@ -280,8 +280,6 @@ namespace koliop {
                 const auto& q_par_on_nT_s   = an_operator.q_par_on_nT_s_;
 
                 const auto& vparg = an_operator.vparg_;
-
-                const auto& pSpecies_id = an_operator.pSpecies_id_;
 
                 const auto the_kernel = KOKKOS_LAMBDA(OrdinalType ipol, OrdinalType ivpar, OrdinalType ir, OrdinalType itheta, OrdinalType iphi) {
 
@@ -346,6 +344,7 @@ namespace koliop {
                                     OrdinalType     the_block_first_r,
                                     OrdinalType     the_block_first_theta,
                                     OrdinalType     the_block_first_phi,
+                                    OrdinalType     pSpecies_id,
                                     const View2D&   mask_coll,
                                     const View4D&   the_rhs,
                                     View6D&&        f5d_s) {
@@ -359,8 +358,6 @@ namespace koliop {
                 const auto& mug    = an_operator.mug_;
                 const auto& B_norm = an_operator.B_norm_;
                 const auto& T_s    = an_operator.T_s_;
-
-                const auto& pSpecies_id = an_operator.pSpecies_id_;
 
                 // TODO(Etienne M): Make sure the accesses are sequential on
                 // CPU.
@@ -471,8 +468,7 @@ namespace koliop {
                                                     koliop::utility::View::InternalInputL1<const Flo64>>;
 
         public:
-            CvCdDriver(OrdinalType                                                pSpecies_id,
-                       OrdinalType                                                the_vpar_extent,
+            CvCdDriver(OrdinalType                                                the_vpar_extent,
                        OrdinalType                                                the_species_extent,
                        bool                                                       collision_interspecies,
                        const koliop::utility::View::InternalInputL1<const Flo64>& hat_As,
@@ -489,6 +485,7 @@ namespace koliop {
                        OrdinalType      the_block_first_theta,
                        OrdinalType      the_block_first_phi,
                        ComputeFloatType dt,
+                       OrdinalType      the_species_index,
                        View6D&&         f5d_s);
 
         protected:
@@ -527,16 +524,14 @@ namespace koliop {
         CvCdDriver<the_block_extent_r,
                    the_block_extent_theta,
                    the_block_extent_phi,
-                   BatchTraits>::CvCdDriver(OrdinalType                                                pSpecies_id,
-                                            OrdinalType                                                the_vpar_extent,
+                   BatchTraits>::CvCdDriver(OrdinalType                                                the_vpar_extent,
                                             OrdinalType                                                the_species_extent,
                                             bool                                                       collision_interspecies,
                                             const koliop::utility::View::InternalInputL1<const Flo64>& hat_As,
                                             const koliop::utility::View::InternalInputL1<const Flo64>& hat_Zs,
                                             const koliop::utility::View::InternalInputL1<const Flo64>& vparg,
                                             const koliop::utility::View::InternalInputL1<const Flo64>& coeff_intdvpar)
-            : the_najl_provider_{pSpecies_id,
-                                 the_vpar_extent, the_species_extent,
+            : the_najl_provider_{the_vpar_extent, the_species_extent,
                                  collision_interspecies,
                                  hat_As, hat_Zs, vparg}
             , mask_coll_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "mask_coll")}
@@ -578,6 +573,7 @@ namespace koliop {
                                             OrdinalType      the_block_first_theta,
                                             OrdinalType      the_block_first_phi,
                                             ComputeFloatType dt,
+                                            OrdinalType      the_species_index,
                                             View6D&&         f5d_s) {
 
             // try {
@@ -638,13 +634,14 @@ namespace koliop {
             {
                 detail::DoComputeAlphaProjection<CvCdDriver>(an_operator,
                                                              an_execution_space,
-                                                             the_block_first_r,
-                                                             the_block_first_theta, the_block_first_phi,
+                                                             the_block_first_r, the_block_first_theta, the_block_first_phi,
+                                                             the_species_index,
                                                              mask_coll_, f5d_s, the_alpha_coefficients_);
 
                 {
                     the_najl_provider_.Compute(an_execution_space,
                                                the_block_first_r, the_block_first_theta, the_block_first_phi,
+                                               the_species_index,
                                                n_s, T_s, nu_ab, the_Najl_);
 
                     {
@@ -684,8 +681,9 @@ namespace koliop {
                         // the_rhs = alpha~~
                         detail::DoComputeCvCdSource<CvCdDriver>(an_operator,
                                                                 an_execution_space,
-                                                                dt,
                                                                 the_block_first_r, the_block_first_theta, the_block_first_phi,
+                                                                dt,
+                                                                the_species_index,
                                                                 the_Najl_, the_alpha_coefficients_);
 
                         // the_rhs = (I + T * dt/4) * alpha~~
@@ -709,8 +707,8 @@ namespace koliop {
 
                 detail::DoComputeReconstruction<CvCdDriver>(an_operator,
                                                             an_execution_space,
-                                                            the_block_first_r,
-                                                            the_block_first_theta, the_block_first_phi,
+                                                            the_block_first_r, the_block_first_theta, the_block_first_phi,
+                                                            the_species_index,
                                                             mask_coll_, the_alpha_coefficients_, f5d_s);
             }
         }

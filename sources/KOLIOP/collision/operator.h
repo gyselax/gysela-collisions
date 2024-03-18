@@ -189,6 +189,10 @@ namespace koliop {
             void Apply(ComputeFloatType dt,
                        Flo64*           f5d_s);
 
+            void Apply(ComputeFloatType dt,
+                       OrdinalType      the_species_index,
+                       Flo64*           f5d_s);
+
             void ComputeDensityCorrection(Flo64* f5d_s) const;
 
             void ComputeUparTCorrection(ComputeFloatType dt,
