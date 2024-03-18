@@ -288,22 +288,28 @@ namespace koliop {
                 if(the_species_extent_ > 1) {
                     // Cpar operator
                     std::for_each(the_first_species, the_last_species, [&](OrdinalType a_species_index) {
-                        ComputeCpar(dt, f5d_s, a_species_index);
+                        ComputeCpar(dt, a_species_index, f5d_s);
                     });
                 }
 
                 // Computes Fa = Fa / FM0a
-                ComputeMaxwellianUnshiftedLoc(f5d_s, 4);
+                std::for_each(the_first_species, the_last_species, [&](OrdinalType a_species_index) {
+                    ComputeMaxwellianUnshiftedLoc(4, a_species_index, f5d_s);
+                });
 
                 // CvCd
                 Apply(dt, f5d_s);
 
                 // Computes Fa = Fa * FM0a
-                ComputeMaxwellianUnshiftedLoc(f5d_s, 3);
+                std::for_each(the_first_species, the_last_species, [&](OrdinalType a_species_index) {
+                    ComputeMaxwellianUnshiftedLoc(3, a_species_index, f5d_s);
+                });
 
                 if((the_species_extent_ > 1) && collision_interspecies_) {
                     // Cpar operator
-                    ComputeCpar(dt, f5d_s);
+                    std::for_each(the_first_species, the_last_species, [&](OrdinalType a_species_index) {
+                        ComputeCpar(dt, a_species_index, f5d_s);
+                    });
                 }
 
                 // Correction to enforce conservation of density and fluid

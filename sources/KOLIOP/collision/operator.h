@@ -176,11 +176,15 @@ namespace koliop {
                              Flo64*           f5d_s) const;
 
             void ComputeCpar(ComputeFloatType dt,
-                             Flo64*           f5d_s,
-                             OrdinalType      the_species_index) const;
+                             OrdinalType      the_species_index,
+                             Flo64*           f5d_s) const;
 
-            void ComputeMaxwellianUnshiftedLoc(Flo64*   f5d_s,
-                                               uint32_t choice) const;
+            void ComputeMaxwellianUnshiftedLoc(uint32_t choice,
+                                               Flo64*   f5d_s) const;
+
+            void ComputeMaxwellianUnshiftedLoc(uint32_t    choice,
+                                               OrdinalType the_species_index,
+                                               Flo64*      f5d_s) const;
 
             void Apply(ComputeFloatType dt,
                        Flo64*           f5d_s);

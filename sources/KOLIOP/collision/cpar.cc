@@ -142,8 +142,8 @@ namespace koliop {
         }
 
         void Operator::ComputeCpar(ComputeFloatType dt,
-                                   Flo64*           f5d_s,
-                                   OrdinalType      the_species_index) const {
+                                   OrdinalType      the_species_index,
+                                   Flo64*           f5d_s) const {
 
             auto a_device_visible_f5d_s = koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL6<Flo64>,
                                                                                koliop::utility::View::InternalInputL6>(the_execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],
@@ -169,7 +169,7 @@ namespace koliop {
 
         void Operator::ComputeCpar(ComputeFloatType dt,
                                    Flo64*           f5d_s) const {
-            ComputeCpar(dt, f5d_s, pSpecies_id_);
+            ComputeCpar(dt, pSpecies_id_, f5d_s);
         }
 
     } // namespace collision

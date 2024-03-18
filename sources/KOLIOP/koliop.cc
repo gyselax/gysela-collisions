@@ -335,7 +335,7 @@
             return KOLIOP_STATUS_INVALID_VALUE;
         }
 
-        reinterpret_cast<const koliop::collision::Operator*>(an_operator)->ComputeMaxwellianUnshiftedLoc(f5d_s, static_cast<uint32_t>(choice));
+        reinterpret_cast<const koliop::collision::Operator*>(an_operator)->ComputeMaxwellianUnshiftedLoc(static_cast<uint32_t>(choice), f5d_s);
 
         return KOLIOP_STATUS_SUCCESS;
     });
