@@ -347,8 +347,8 @@ namespace koliop {
                                     OrdinalType     the_block_first_theta,
                                     OrdinalType     the_block_first_phi,
                                     const View2D&   mask_coll,
-                                    View6D&&        f5d_s,
-                                    const View4D&   the_rhs) {
+                                    const View4D&   the_rhs,
+                                    View6D&&        f5d_s) {
 
                 const auto& the_mu_extent   = an_operator.the_mu_extent_;
                 const auto& the_vpar_extent = an_operator.the_vpar_extent_;
@@ -711,7 +711,7 @@ namespace koliop {
                                                             an_execution_space,
                                                             the_block_first_r,
                                                             the_block_first_theta, the_block_first_phi,
-                                                            mask_coll_, f5d_s, the_alpha_coefficients_);
+                                                            mask_coll_, the_alpha_coefficients_, f5d_s);
             }
         }
 

@@ -175,6 +175,10 @@ namespace koliop {
             void ComputeCpar(ComputeFloatType dt,
                              Flo64*           f5d_s) const;
 
+            void ComputeCpar(ComputeFloatType dt,
+                             Flo64*           f5d_s,
+                             OrdinalType      the_species_index) const;
+
             void ComputeMaxwellianUnshiftedLoc(Flo64*   f5d_s,
                                                uint32_t choice) const;
 
@@ -196,11 +200,22 @@ namespace koliop {
                            Flo64*           f5d_s);
 
             /// Compute the evolution of the distribution function due to
-            /// collisions. The collision are applied to all the species
-            /// (the_species_extent_).
+            /// collisions. The collision are applied to all the species in the
+            /// [0, the_species_extent_) range.
             ///
             void CollisionForAllSpecies(ComputeFloatType dt,
                                         Flo64*           f5d_s);
+
+        protected:
+            /// Compute the evolution of the distribution function due to
+            /// collisions. The collision are applied to all the species in the
+            /// [the_first_species, the_last_species) range.
+            ///
+            template <typename ForwardIterator>
+            void CollisionFor(ComputeFloatType dt,
+                              Flo64*           f5d_s,
+                              ForwardIterator  the_first_species,
+                              ForwardIterator  the_last_species);
 
         public:
             // Could be protected but we would have to use friend functions.

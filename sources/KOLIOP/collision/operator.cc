@@ -99,6 +99,11 @@ namespace koliop {
                                            nustar_coeff);
         }
 
+
+        ////////////////////////////////////////////////////////////////////////
+        // Operator methods definition
+        ////////////////////////////////////////////////////////////////////////
+
         Operator::Operator(uint64_t     pSpecies_id,
                            uint64_t     the_mu_extent,
                            uint64_t     the_vpar_extent,
@@ -238,55 +243,33 @@ namespace koliop {
 
         void Operator::Collision(ComputeFloatType dt,
                                  Flo64*           f5d_s) {
-
-            // TODO(Etienne M): We shouldn't need that for the Gysela++, yet.
-            const OrdinalType collstart = 0;
-
-            if(collstart != -1 /* TODO(Etienne M): Fortran index */) {
-                ComputeMoments(f5d_s);
-                PrecomputeNu();
-
-                if((the_species_extent_ > 1) && collision_interspecies_) {
-                    ComputeMaxwellianEvolution(dt, f5d_s);
-                    PrecomputeNu();
-                }
-
-                ComputeQparOnNT(f5d_s);
-
-                if(the_species_extent_ > 1) {
-                    // Cpar operator
-                    ComputeCpar(dt, f5d_s);
-                }
-
-                // Computes Fa = Fa / FM0a
-                ComputeMaxwellianUnshiftedLoc(f5d_s, 4);
-
-                // CvCd
-                Apply(dt, f5d_s);
-
-                // Computes Fa = Fa * FM0a
-                ComputeMaxwellianUnshiftedLoc(f5d_s, 3);
-
-                if((the_species_extent_ > 1) && collision_interspecies_) {
-                    // Cpar operator
-                    ComputeCpar(dt, f5d_s);
-                }
-
-                // Correction to enforce conservation of density and fluid
-                // moments
-                ComputeDensityCorrection(f5d_s);
-
-                ComputeUparTCorrection(dt, f5d_s);
-
-                if((the_species_extent_ > 1) && collision_interspecies_) {
-                    ComputeMaxwellianEvolution(dt, f5d_s);
-                    PrecomputeNu();
-                }
-            }
+            OrdinalType the_species[]{pSpecies_id_};
+            CollisionFor(dt, f5d_s,
+                         std::cbegin(the_species),
+                         std::cend(the_species));
         }
 
         void Operator::CollisionForAllSpecies(ComputeFloatType dt,
                                               Flo64*           f5d_s) {
+            std::vector<OrdinalType> the_species;
+            the_species.resize(the_species_extent_);
+            std::iota(std::begin(the_species), std::end(the_species), OrdinalType{});
+            CollisionFor(dt, f5d_s,
+                         std::cbegin(the_species),
+                         std::cend(the_species));
+        }
+
+        // NOTE: It is a bit sneaky to NOT put a template in the header when the
+        // template is part of the interface.
+        template <typename ForwardIterator>
+        void Operator::CollisionFor(ComputeFloatType dt,
+                                    Flo64*           f5d_s,
+                                    ForwardIterator  the_first_species,
+                                    ForwardIterator  the_last_species) {
+
+            // NOTE: When applying the operator for all collision, some
+            // computation optimization can be done. We try to avoid recomputing
+            // and minimizing the overhead of the operator.
 
             // TODO(Etienne M): We shouldn't need that for the Gysela++, yet.
             const OrdinalType collstart = 0;
@@ -304,7 +287,9 @@ namespace koliop {
 
                 if(the_species_extent_ > 1) {
                     // Cpar operator
-                    ComputeCpar(dt, f5d_s);
+                    std::for_each(the_first_species, the_last_species, [&](OrdinalType a_species_index) {
+                        ComputeCpar(dt, f5d_s, a_species_index);
+                    });
                 }
 
                 // Computes Fa = Fa / FM0a

@@ -19,6 +19,7 @@ namespace koliop {
         static inline void
         DoComputeCpar(const Operator&  an_operator,
                       ComputeFloatType dt,
+                      OrdinalType      pSpecies_id,
                       View6D&&         f5d_s) {
 
             const auto& the_mu_extent      = an_operator.the_mu_extent_;
@@ -44,7 +45,6 @@ namespace koliop {
             const auto& T_s           = an_operator.T_s_;
             const auto& q_par_on_nT_s = an_operator.q_par_on_nT_s_;
 
-            const auto&            pSpecies_id = an_operator.pSpecies_id_;
             const ComputeFloatType R0          = an_operator.R0_;
             const ComputeFloatType R0_inverse  = 1.0 / R0;
             const ComputeFloatType half_dt     = dt / 2.0;
@@ -142,7 +142,8 @@ namespace koliop {
         }
 
         void Operator::ComputeCpar(ComputeFloatType dt,
-                                   Flo64*           f5d_s) const {
+                                   Flo64*           f5d_s,
+                                   OrdinalType      the_species_index) const {
 
             auto a_device_visible_f5d_s = koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL6<Flo64>,
                                                                                koliop::utility::View::InternalInputL6>(the_execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],
@@ -151,7 +152,7 @@ namespace koliop {
                                                                                                                        the_r_extent_, the_theta_extent_, the_phi_extent_,
                                                                                                                        the_species_extent_);
 
-            DoComputeCpar(*this, dt, a_device_visible_f5d_s);
+            DoComputeCpar(*this, dt, the_species_index, a_device_visible_f5d_s);
 
             koliop::utility::Copy::ViewToRawData<koliop::utility::View::InternalInputL6<Flo64>,
                                                  koliop::utility::View::ExternalInputL6<Flo64>>(the_execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],
@@ -164,6 +165,11 @@ namespace koliop {
 #if defined(KOLIOP_FENCE_ON_OPERATOR_EXIT)
             Kokkos::fence();
 #endif
+        }
+
+        void Operator::ComputeCpar(ComputeFloatType dt,
+                                   Flo64*           f5d_s) const {
+            ComputeCpar(dt, f5d_s, pSpecies_id_);
         }
 
     } // namespace collision
