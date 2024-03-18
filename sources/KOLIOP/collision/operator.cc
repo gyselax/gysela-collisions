@@ -285,5 +285,54 @@ namespace koliop {
             }
         }
 
+        void Operator::CollisionForAllSpecies(ComputeFloatType dt,
+                                              Flo64*           f5d_s) {
+
+            // TODO(Etienne M): We shouldn't need that for the Gysela++, yet.
+            const OrdinalType collstart = 0;
+
+            if(collstart != -1 /* TODO(Etienne M): Fortran index */) {
+                ComputeMoments(f5d_s);
+                PrecomputeNu();
+
+                if((the_species_extent_ > 1) && collision_interspecies_) {
+                    ComputeMaxwellianEvolution(dt, f5d_s);
+                    PrecomputeNu();
+                }
+
+                ComputeQparOnNT(f5d_s);
+
+                if(the_species_extent_ > 1) {
+                    // Cpar operator
+                    ComputeCpar(dt, f5d_s);
+                }
+
+                // Computes Fa = Fa / FM0a
+                ComputeMaxwellianUnshiftedLoc(f5d_s, 4);
+
+                // CvCd
+                Apply(dt, f5d_s);
+
+                // Computes Fa = Fa * FM0a
+                ComputeMaxwellianUnshiftedLoc(f5d_s, 3);
+
+                if((the_species_extent_ > 1) && collision_interspecies_) {
+                    // Cpar operator
+                    ComputeCpar(dt, f5d_s);
+                }
+
+                // Correction to enforce conservation of density and fluid
+                // moments
+                ComputeDensityCorrection(f5d_s);
+
+                ComputeUparTCorrection(dt, f5d_s);
+
+                if((the_species_extent_ > 1) && collision_interspecies_) {
+                    ComputeMaxwellianEvolution(dt, f5d_s);
+                    PrecomputeNu();
+                }
+            }
+        }
+
     } // namespace collision
 } // namespace koliop

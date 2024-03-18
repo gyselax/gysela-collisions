@@ -137,7 +137,6 @@ namespace koliop {
                 }
             };
 
-
             Kokkos::parallel_for("DoComputeCpar",
                                  a_policy, the_kernel);
         }

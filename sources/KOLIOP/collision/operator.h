@@ -189,10 +189,18 @@ namespace koliop {
             void ExtractRaw(uint32_t the_value_identifier,
                             void*    an_output_buffer) const;
 
-            /// Compute the evolution of the distribution function due to collisions.
+            /// Compute the evolution of the distribution function due to
+            /// collisions. The collision are applied only to the pSpecies_id.
             ///
             void Collision(ComputeFloatType dt,
                            Flo64*           f5d_s);
+
+            /// Compute the evolution of the distribution function due to
+            /// collisions. The collision are applied to all the species
+            /// (the_species_extent_).
+            ///
+            void CollisionForAllSpecies(ComputeFloatType dt,
+                                        Flo64*           f5d_s);
 
         public:
             // Could be protected but we would have to use friend functions.
