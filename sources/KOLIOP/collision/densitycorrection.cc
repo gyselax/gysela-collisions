@@ -18,6 +18,7 @@ namespace koliop {
         template <typename View6D>
         static inline void
         DoComputeDensityCorrection(const Operator& an_operator,
+                                   OrdinalType     pSpecies_id,
                                    View6D&&        f5d_s) {
 
             const auto& the_mu_extent    = an_operator.the_mu_extent_;
@@ -32,8 +33,6 @@ namespace koliop {
             const auto& n_s            = an_operator.n_s_;
 
             const auto& the_execution_space_pool = an_operator.the_execution_space_pool_;
-
-            const auto& pSpecies_id = an_operator.pSpecies_id_;
 
             // TODO(Etienne M): Make sure the accesses are sequential on CPU.
 
@@ -108,7 +107,8 @@ namespace koliop {
                                  a_policy, the_kernel);
         }
 
-        void Operator::ComputeDensityCorrection(Flo64* f5d_s) const {
+        void Operator::ComputeDensityCorrection(OrdinalType the_species_index,
+                                                Flo64*      f5d_s) const {
 
             auto a_device_visible_f5d_s = koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL6<Flo64>,
                                                                                koliop::utility::View::InternalInputL6>(the_execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],
@@ -117,7 +117,7 @@ namespace koliop {
                                                                                                                        the_r_extent_, the_theta_extent_, the_phi_extent_,
                                                                                                                        the_species_extent_);
 
-            DoComputeDensityCorrection(*this, a_device_visible_f5d_s);
+            DoComputeDensityCorrection(*this, the_species_index, a_device_visible_f5d_s);
 
             koliop::utility::Copy::ViewToRawData<koliop::utility::View::InternalInputL6<Flo64>,
                                                  koliop::utility::View::ExternalInputL6<Flo64>>(the_execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],
@@ -130,6 +130,10 @@ namespace koliop {
 #if defined(KOLIOP_FENCE_ON_OPERATOR_EXIT)
             Kokkos::fence();
 #endif
+        }
+
+        void Operator::ComputeDensityCorrection(Flo64* f5d_s) const {
+            ComputeDensityCorrection(pSpecies_id_, f5d_s);
         }
 
     } // namespace collision

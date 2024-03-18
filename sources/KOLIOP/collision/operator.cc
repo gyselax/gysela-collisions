@@ -316,7 +316,9 @@ namespace koliop {
 
                 // Correction to enforce conservation of density and fluid
                 // moments
-                ComputeDensityCorrection(f5d_s);
+                std::for_each(the_first_species, the_last_species, [&](OrdinalType a_species_index) {
+                    ComputeDensityCorrection(a_species_index, f5d_s);
+                });
 
                 ComputeUparTCorrection(dt, f5d_s);
 
