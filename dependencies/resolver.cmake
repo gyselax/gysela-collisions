@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.25)
 
+include(FetchContent)
+
 # print_target_properties was snatched from
 # https://stackoverflow.com/questions/32183975/how-to-print-all-the-properties-of-a-target-in-cmake
 
@@ -72,24 +74,36 @@ function(DependencyResolver_ResolveLibrary _NAME)
                 # Safeguard: if you asked for no dependency but we still got
                 # something, potentially from a parent/prior dependency.
                 if(TARGET "${A_COMPONENT}")
-                    message(FATAL_ERROR "[${PROJECT_NAME}] Deactivating '${_NAME}' found '${A_COMPONENT}'. Conflicting signals are signs for problems. Either activate the dependency for project '${PROJECT_NAME}' or understand why '${A_COMPONENT}' is defined. If this is expected that someone else provide '${A_COMPONENT}', you may want to use a SYSTEM dependency in the '${PROJECT_NAME}' project.")
+                    message(FATAL_ERROR "[${PROJECT_NAME}] Found '${A_COMPONENT}' for supposedly deactivated '${_NAME}'. Conflicting signals are signs for problems. Either activate the dependency for project '${PROJECT_NAME}' or understand why '${A_COMPONENT}' is defined. If it is expected that someone else provide '${A_COMPONENT}', you may want to use a SYSTEM dependency in the '${PROJECT_NAME}' project.")
                 endif()
             endforeach()
 
+            # If we end up failing, ensure the dependency is marked as OFF
+            # entirely instead of a potential list of provider. This way we have
+            # clean disabled dependency handling for codes relying on
+            # `if(${${PROJECT_NAME}_ENABLE_${_NAME}})` to know if they can
+            # assume the dependency is resolved (say for a
+            # target_link_libraries).
+
+            set(${PROJECT_NAME}_ENABLE_${_NAME} "OFF" CACHE STRING "" FORCE)
+
             return()
         elseif("${A_PROVIDER}" STREQUAL "SUBDIRECTORY")
-            message(STATUS "[${PROJECT_NAME}] Dependency SUBDIRECTORY: '${_NAME}'.")
+            message(WARNING "[${PROJECT_NAME}] Dependency SUBDIRECTORY: '${_NAME}'.")
+
+            # NOTE: Assume all the components are already in context.
 
             foreach(A_COMPONENT IN LISTS _COMPONENTS)
                 # Ensure all required components are resolved.
                 if(NOT TARGET "${A_COMPONENT}")
-                    message(FATAL_ERROR "[${PROJECT_NAME}] You specified you used a subdirectory to expose the '${_NAME}' component but it was not found.")
+                    message(FATAL_ERROR "[${PROJECT_NAME}] You specified that you rely on a subdirectory to expose the '${_NAME}' component but it was not found.")
                 endif()
             endforeach()
 
-            # Unfortunately, we cant continue, because we have not way of
-            # knowing what was imported through add_subdirectory. We can only
-            # fail.
+            # Unfortunately, if we fail to find our dependencies we can't
+            # continue because we have no way of knowing what was imported
+            # through add_subdirectory and can't rollback the add_subdirectory.
+            # We can only completely fail or succeed.
             return()
         elseif("${A_PROVIDER}" MATCHES "SYSTEM|_MakeAvailable_SYSTEM_QUIET")
             if("${A_PROVIDER}" STREQUAL "SYSTEM")
@@ -98,7 +112,8 @@ function(DependencyResolver_ResolveLibrary _NAME)
 
             list(APPEND _OPTIONAL_COMPONENTS "${_COMPONENTS}")
 
-            find_package("${_NAME}" "${_VERSION}" OPTIONAL_COMPONENTS "${_OPTIONAL_COMPONENTS}")
+            # Unquoted _VERSION so we can let the user specify no version.
+            find_package("${_NAME}" ${_VERSION} OPTIONAL_COMPONENTS "${_OPTIONAL_COMPONENTS}")
 
             if("${${_NAME}_FOUND}")
                 foreach(A_COMPONENT IN LISTS _COMPONENTS)
@@ -158,6 +173,7 @@ function(DependencyResolver_ResolveLibrary _NAME)
             # TODO(Etienne M): If one day we get a way to check if
             # FetchContent_MakeAvailable fails or succeeds, change this
             # branch.
+            # https://discourse.cmake.org/t/prevent-fatal-error-on-fetchcontent-declare/10091/2
             if(TRUE)
                 # NOTE: FetchContent_MakeAvailable alone does not define
                 # ${${_NAME}_FOUND}. We used OVERRIDE_FIND_PACKAGE so find_package
@@ -170,10 +186,7 @@ function(DependencyResolver_ResolveLibrary _NAME)
                 list(PREPEND _PROVIDERS "_MakeAvailable_SYSTEM_QUIET")
                 # Fallthrough and continue to _MakeAvailable_SYSTEM_QUIET.
             else()
-                # TODO(Etienne M): Find a way to "soft fail" so we can continue.
-                # Currently, FetchContent_MakeAvailable does not allow that.
-                # We would then have an implied continue() but without the
-                # _MakeAvailable_SYSTEM_QUIET
+                # Fallthrough and continue.
             endif()
         elseif("${A_PROVIDER}" STREQUAL "ARCHIVE")
             message(STATUS "[${PROJECT_NAME}] Dependency ARCHIVE: '${_NAME}'.")
@@ -215,6 +228,7 @@ function(DependencyResolver_ResolveLibrary _NAME)
             # TODO(Etienne M): If one day we get a way to check if
             # FetchContent_MakeAvailable fails or succeeds, change this
             # branch.
+            # https://discourse.cmake.org/t/prevent-fatal-error-on-fetchcontent-declare/10091/2
             if(TRUE)
                 list(PREPEND _PROVIDERS "_MakeAvailable_SYSTEM_QUIET")
                 # Fallthrough and continue to _MakeAvailable_SYSTEM_QUIET.
@@ -267,7 +281,9 @@ function(DependencyResolver_Resolve _NAME)
                                       )
 endfunction()
 
-function(DependencyResolver _PATH)
+# The needs to be a macro to propagate upward the variable defined by the
+# dependencies.
+macro(DependencyResolver _PATH)
     file(GLOB THE_DEPENDENCIES "${_PATH}/*")
 
     foreach(A_DEPENDENCY ${THE_DEPENDENCIES})
@@ -275,4 +291,4 @@ function(DependencyResolver _PATH)
             include("${A_DEPENDENCY}/seeker.cmake")
         endif()
     endforeach()
-endfunction()
+endmacro()

@@ -99,10 +99,11 @@ namespace koliop {
         /// A21 A22  L21 L22  0   U22 where A = L U.
         /// We thus have:
         /// A11 = L11 * U11             # LU decomposition of a small block.
-        /// A12 = L11 * U12             # TRSM, solve L11 * U12=A12 for U12.
-        /// A21 = L21 * U11             # TRSM, solve L21 * U11=A21 for L21.
-        /// A22 = L21 * U12 + L22 * U22 # GEMM, A22 = L22 * U22=A22 - L21 * U12.
-        /// Then work on factorizing A22 = L22 * U22.
+        /// A12 = L11 * U12             # TRSM, solve for U12.
+        /// A21 = L21 * U11             # TRSM, solve for L21.
+        /// A22 = L21 * U12 + L22 * U22 # GEMM, solve for L22 * U22 which
+        ///                                     becomes the new A22.
+        /// Then recursively work on factorizing A22 = L22 * U22.
         ///
         /// So factorizing A can be done by doing a smaller LU factorization of
         /// A11 and then, doing two TRSM and a GEMM.

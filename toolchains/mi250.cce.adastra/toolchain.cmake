@@ -41,6 +41,7 @@ set(koliop_FLAGS_MINSIZEREL     -Os)
 set(koliop_FLAGS_RELEASE        -g -O3 "SHELL:-mllvm -amdgpu-early-inline-all=true" "SHELL:-mllvm -amdgpu-function-calls=false")
 set(koliop_FLAGS_RELWITHDEBINFO -g -O3 "SHELL:-mllvm -amdgpu-early-inline-all=true" "SHELL:-mllvm -amdgpu-function-calls=false" -fno-omit-frame-pointer -fno-optimize-sibling-calls)
 
+# FIXME: https://gitlab.kitware.com/cmake/cmake/-/issues/24402 https://gitlab.kitware.com/cmake/cmake/-/issues/25100
 set(koliop_LINKER_FLAGS_DEBUG          -fopenmp)
 set(koliop_LINKER_FLAGS_MINSIZEREL     -fopenmp)
 set(koliop_LINKER_FLAGS_RELEASE        -fopenmp)
