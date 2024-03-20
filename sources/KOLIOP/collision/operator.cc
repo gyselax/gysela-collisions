@@ -246,6 +246,10 @@ namespace koliop {
             for(auto&& an_execution_space : the_execution_space_pool_) {
                 an_execution_space.fence();
             }
+
+            // TODO(Etienne M): Do we full fence or wait for all the streams ?
+            // Fence is a lot cheaper it seems. Though if Gysela executes other
+            // GPU kernel while koliop works, this could slow things down.
         }
 
         void Operator::Collision(ComputeFloatType dt,

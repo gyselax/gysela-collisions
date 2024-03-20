@@ -151,19 +151,41 @@ namespace koliop {
                                                                                                                        the_r_extent_, the_theta_extent_, the_phi_extent_,
                                                                                                                        the_species_extent_);
 
+            // We have to wait for the computation of moment, nu,
+            // ComputeMaxwellianEvolution, nu, qparonnt and the potential memory
+            // copies).
+            // The work in Cpar is launched on potentially more than 1 stream.
+            // In such case, we need to enforce an "happen before" relation
+            // ship" of the flow in stream 0 and the other streams.
+            // All that is sequential in stream Constant::kDefaultExecutionSpacePoolIndex.
+            // Wait for stream Constant::kDefaultExecutionSpacePoolIndex.
+
+            Fence(Constant::kDefaultExecutionSpacePoolIndex);
+
             for(OrdinalType the_species_index = 0; the_species_index < the_species_extent_; ++the_species_index) {
-                DoComputeCpar(*this, the_execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],
+                // Assuming species I is treated by stream I, execute this
+                // operation on stream I. In a stream, execution is sequential,
+                // everything should be ready for this operation on stream UI
+                // when it starts.
+                DoComputeCpar(*this, the_execution_space_pool_[the_species_index],
                               dt, the_species_index,
                               a_device_visible_f5d_s);
             }
 
-            koliop::utility::Copy::ViewToRawData<koliop::utility::View::InternalInputL6<Flo64>,
-                                                 koliop::utility::View::ExternalInputL6<Flo64>>(the_execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],
-                                                                                                a_device_visible_f5d_s,
-                                                                                                f5d_s,
-                                                                                                the_mu_extent_, the_vpar_extent_,
-                                                                                                the_r_extent_, the_theta_extent_, the_phi_extent_,
-                                                                                                the_species_extent_);
+            if constexpr(koliop::utility::Copy::IsCopyRequired<koliop::utility::View::InternalInputL6<Flo64>,
+                                                               koliop::utility::View::ExternalInputL6<Flo64>>()) {
+                // The many streams used for the operation now need to be synced
+                // before we start copying.
+                FenceAll();
+
+                koliop::utility::Copy::ViewToRawData<koliop::utility::View::InternalInputL6<Flo64>,
+                                                     koliop::utility::View::ExternalInputL6<Flo64>>(the_execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],
+                                                                                                    a_device_visible_f5d_s,
+                                                                                                    f5d_s,
+                                                                                                    the_mu_extent_, the_vpar_extent_,
+                                                                                                    the_r_extent_, the_theta_extent_, the_phi_extent_,
+                                                                                                    the_species_extent_);
+            }
 
 #if defined(KOLIOP_FENCE_ON_OPERATOR_EXIT)
             Kokkos::fence();

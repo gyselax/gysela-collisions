@@ -31,18 +31,8 @@ namespace koliop {
                 the_cvcd_drivers_scheduler_.ScheduleExecution(*this, dt, the_species_index, a_device_visible_f5d_s);
             }
 
-            // TODO(Etienne M): Do we full fence or wait for all the streams ?
-            // Fence is a lot cheaper it seems. Though if Gysela executes other
-            // GPU kernel while koliop works, this could slow things down.
-
-            // NOTE: This fence does not mean the user doesn't have to fence
-            // after the operator returns. Indeed, the copies below may very
-            // well be async.
             Kokkos::fence();
-
-            // for(auto&& an_execution_space : the_execution_space_pool_) {
-            //     an_execution_space.fence();
-            // }
+            // FenceAll();
 
             koliop::utility::Copy::ViewToRawData<koliop::utility::View::InternalInputL6<Flo64>,
                                                  koliop::utility::View::ExternalInputL6<Flo64>>(the_execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],

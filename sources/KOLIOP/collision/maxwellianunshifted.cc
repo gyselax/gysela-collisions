@@ -8,6 +8,7 @@
 
 #include "KOLIOP/collision/constant.h"
 #include "KOLIOP/collision/operator.h"
+#include "KOLIOP/collision/scoped.h"
 #include "KOLIOP/internal/configuration.h"
 #include "KOLIOP/portability/cmath.h"
 #include "KOLIOP/utility/copy.h"
@@ -88,7 +89,7 @@ namespace koliop {
                                 const ComputeFloatType v2oTa = mug(imu) * BijoTa + vparg(ivpar) * vparg(ivpar) * f2oTa;
 
                                 f5d_s(imu, ivpar, ir, itheta, iphi, the_species_index) = Kokkos::max(0.0,
-                                                                                               coeff * Kokkos::exp(-v2oTa) * f5d_s(imu, ivpar, ir, itheta, iphi, the_species_index));
+                                                                                                     coeff * Kokkos::exp(-v2oTa) * f5d_s(imu, ivpar, ir, itheta, iphi, the_species_index));
                             });
                     };
 
@@ -122,8 +123,8 @@ namespace koliop {
                                 const ComputeFloatType v2oTa = mug(imu) * BijoTa + vparg(ivpar) * vparg(ivpar) * f2oTa;
 
                                 f5d_s(imu, ivpar, ir, itheta, iphi, the_species_index) = Kokkos::max(0.001,
-                                                                                               Kokkos::min(1000.0,
-                                                                                                           coeff * Kokkos::exp(v2oTa) * f5d_s(imu, ivpar, ir, itheta, iphi, the_species_index)));
+                                                                                                     Kokkos::min(1000.0,
+                                                                                                                 coeff * Kokkos::exp(v2oTa) * f5d_s(imu, ivpar, ir, itheta, iphi, the_species_index)));
                             });
                     };
 
@@ -137,9 +138,8 @@ namespace koliop {
             }
         }
 
-        void Operator::ComputeMaxwellianUnshiftedLoc(uint32_t    choice,
-                                                     Flo64*      f5d_s) const {
-
+        void Operator::ComputeMaxwellianUnshiftedLoc(uint32_t choice,
+                                                     Flo64*   f5d_s) const {
             auto a_device_visible_f5d_s = koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL6<Flo64>,
                                                                                koliop::utility::View::InternalInputL6>(the_execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],
                                                                                                                        f5d_s, "f5d_s",
@@ -147,10 +147,16 @@ namespace koliop {
                                                                                                                        the_r_extent_, the_theta_extent_, the_phi_extent_,
                                                                                                                        the_species_extent_);
 
-            for(OrdinalType the_species_index = 0; the_species_index < the_species_extent_; ++the_species_index) {
-                DoComputeMaxwellianUnshiftedLoc(*this, the_execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],
-                                                choice, the_species_index,
-                                                a_device_visible_f5d_s);
+            {
+                ScopedFenceHandler<koliop::utility::Copy::IsCopyRequired<koliop::utility::View::InternalInputL6<Flo64>,
+                                                                         koliop::utility::View::ExternalInputL6<Flo64>>()>
+                    a_scoped_fencer{this};
+
+                for(OrdinalType the_species_index = 0; the_species_index < the_species_extent_; ++the_species_index) {
+                    DoComputeMaxwellianUnshiftedLoc(*this, the_execution_space_pool_[the_species_index],
+                                                    choice, the_species_index,
+                                                    a_device_visible_f5d_s);
+                }
             }
 
             koliop::utility::Copy::ViewToRawData<koliop::utility::View::InternalInputL6<Flo64>,
