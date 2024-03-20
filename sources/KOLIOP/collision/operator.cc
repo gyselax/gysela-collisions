@@ -104,8 +104,7 @@ namespace koliop {
         // Operator methods definition
         ////////////////////////////////////////////////////////////////////////
 
-        Operator::Operator(uint64_t     pSpecies_id,
-                           uint64_t     the_mu_extent,
+        Operator::Operator(uint64_t     the_mu_extent,
                            uint64_t     the_vpar_extent,
                            uint64_t     the_r_extent,
                            uint64_t     the_theta_extent,
@@ -134,8 +133,7 @@ namespace koliop {
                            const Flo64* B_norm,
                            const Flo64* Bstar_s)
             // Constant, externally computed values
-            : pSpecies_id_{static_cast<OrdinalType>(pSpecies_id)}
-            , the_mu_extent_{static_cast<OrdinalType>(the_mu_extent)}
+            : the_mu_extent_{static_cast<OrdinalType>(the_mu_extent)}
             , the_vpar_extent_{static_cast<OrdinalType>(the_vpar_extent)}
             , the_r_extent_{static_cast<OrdinalType>(the_r_extent)}
             , the_theta_extent_{static_cast<OrdinalType>(the_theta_extent)}
@@ -240,40 +238,18 @@ namespace koliop {
         }
 
         void Operator::Fence(OrdinalType the_execution_space_index) const {
+            KOLIOP_ASSERT(the_execution_space_index < Constant::kDisjointExecutionSpaceCount);
             the_execution_space_pool_[the_execution_space_index].fence();
+        }
+
+        void Operator::FenceAll() const {
+            for(auto&& an_execution_space : the_execution_space_pool_) {
+                an_execution_space.fence();
+            }
         }
 
         void Operator::Collision(ComputeFloatType dt,
                                  Flo64*           f5d_s) {
-            OrdinalType the_species[]{pSpecies_id_};
-            CollisionFor(dt, f5d_s,
-                         std::cbegin(the_species),
-                         std::cend(the_species));
-        }
-
-        void Operator::CollisionForAllSpecies(ComputeFloatType dt,
-                                              Flo64*           f5d_s) {
-            std::vector<OrdinalType> the_species;
-            the_species.resize(the_species_extent_);
-            std::iota(std::begin(the_species), std::end(the_species), OrdinalType{});
-            CollisionFor(dt, f5d_s,
-                         std::cbegin(the_species),
-                         std::cend(the_species));
-        }
-
-        // NOTE: It is a bit sneaky to NOT put a template in the header when the
-        // template is part of the interface.
-        template <typename ForwardIterator>
-        void Operator::CollisionFor(ComputeFloatType dt,
-                                    Flo64*           f5d_s,
-                                    ForwardIterator  the_first_species,
-                                    ForwardIterator  the_last_species) {
-
-            // NOTE: When applying the operator for all collision, some
-            // computation optimization can be done. We try to avoid recomputing
-            // and minimizing the overhead of the operator.
-            // NOTE: Each time we have a std::for_each, we could use a separate
-            // stream for all function call.
 
             // TODO(Etienne M): We shouldn't need that for the Gysela++, yet.
             const OrdinalType collstart = 0;
@@ -291,53 +267,35 @@ namespace koliop {
 
                 if(the_species_extent_ > 1) {
                     // Cpar operator
-                    std::for_each(the_first_species, the_last_species, [&](OrdinalType a_species_index) {
-                        ComputeCpar(dt, a_species_index, f5d_s);
-                    });
+                    ComputeCpar(dt, f5d_s);
                 }
 
                 // Computes Fa = Fa / FM0a
-                std::for_each(the_first_species, the_last_species, [&](OrdinalType a_species_index) {
-                    ComputeMaxwellianUnshiftedLoc(4, a_species_index, f5d_s);
-                });
+                ComputeMaxwellianUnshiftedLoc(4, f5d_s);
 
                 // CvCd
-                std::for_each(the_first_species, the_last_species, [&](OrdinalType a_species_index) {
-                    Apply(dt, a_species_index, f5d_s);
-                });
+                Apply(dt, f5d_s);
 
                 // Computes Fa = Fa * FM0a
-                std::for_each(the_first_species, the_last_species, [&](OrdinalType a_species_index) {
-                    ComputeMaxwellianUnshiftedLoc(3, a_species_index, f5d_s);
-                });
+                ComputeMaxwellianUnshiftedLoc(3, f5d_s);
 
                 if((the_species_extent_ > 1) && collision_interspecies_) {
                     // Cpar operator
-                    std::for_each(the_first_species, the_last_species, [&](OrdinalType a_species_index) {
-                        ComputeCpar(dt, a_species_index, f5d_s);
-                    });
+                    ComputeCpar(dt, f5d_s);
                 }
 
                 // Correction to enforce conservation of density and fluid
                 // moments
-                std::for_each(the_first_species, the_last_species, [&](OrdinalType a_species_index) {
-                    ComputeDensityCorrection(a_species_index, f5d_s);
-                });
+                ComputeDensityCorrection(f5d_s);
 
-                // ComputeUparTCorrection reads U_par_s_input_ and outputs to
-                // U_par_s_. This is required if more than 1 species is used, we
-                // can not write in U_par_s_ while it is still being read (by
-                // other threads, species, thread block, etc.).
-                std::swap(U_par_s_, U_par_s_input_);
-                std::for_each(the_first_species, the_last_species, [&](OrdinalType a_species_index) {
-                    ComputeUparTCorrection(dt, a_species_index, U_par_s_input_, f5d_s);
-                });
+                ComputeUparTCorrection(dt, f5d_s);
 
-                // TODO(Etienne M): We may have an issue:
-                // - ComputeMaxwellianEvolution reads U_par_s for all species;
-                // - We may write a new U_par_s for  all species in ComputeUparTCorrection;
-                // - In the past, only the pSpecies was modified in ComputeUparTCorrection;
-                //      - Did we miss a reduction over species ?
+                // NOTE: ComputeMaxwellianEvolution reads the U_par_s for all
+                // species. Prior to ~~ 2024/03/01 there was a bug in Gysela
+                // fortran (master) and Gysela fortran's libcoll in which we
+                // used an incomplete U_par_s which contained the fresh U_par_s
+                // values only for pSpecies_id but the old, non updated by
+                // ComputeUparTCorrection values for all other species.
 
                 if((the_species_extent_ > 1) && collision_interspecies_) {
                     ComputeMaxwellianEvolution(dt, f5d_s);

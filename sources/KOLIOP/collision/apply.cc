@@ -12,7 +12,6 @@ namespace koliop {
     namespace collision {
 
         void Operator::Apply(ComputeFloatType dt,
-                             OrdinalType      the_species_index,
                              Flo64*           f5d_s) {
 
             auto a_device_visible_f5d_s = koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL6<Flo64>,
@@ -22,13 +21,13 @@ namespace koliop {
                                                                                                                        the_r_extent_, the_theta_extent_, the_phi_extent_,
                                                                                                                        the_species_extent_);
 
-            // NOTE: WE must fence as Apply may not work in the same queue than
-            // the other routines. We have to fence using the *general* fence
-            // routine which fences only on the default execution space used by
-            // all other kernel in the operator.
-            Fence();
+            // NOTE: We must fence because the scheduler does not handle stream
+            // using the same semantic than the rest of the methods. For the
+            // CvCd scheduler, we distribute blocks over the streams. For the
+            // other function, we distribute the species over the streams.
+            FenceAll();
 
-            {
+            for(OrdinalType the_species_index = 0; the_species_index < the_species_extent_; ++the_species_index) {
                 the_cvcd_drivers_scheduler_.ScheduleExecution(*this, dt, the_species_index, a_device_visible_f5d_s);
             }
 
@@ -41,7 +40,7 @@ namespace koliop {
             // well be async.
             Kokkos::fence();
 
-            // for(const auto& an_execution_space : the_execution_space_pool) {
+            // for(auto&& an_execution_space : the_execution_space_pool_) {
             //     an_execution_space.fence();
             // }
 
@@ -56,11 +55,6 @@ namespace koliop {
 #if defined(KOLIOP_FENCE_ON_OPERATOR_EXIT)
             Kokkos::fence();
 #endif
-        }
-
-        void Operator::Apply(ComputeFloatType dt,
-                             Flo64*           f5d_s) {
-            ComputeCpar(dt, pSpecies_id_, f5d_s);
         }
 
     } // namespace collision

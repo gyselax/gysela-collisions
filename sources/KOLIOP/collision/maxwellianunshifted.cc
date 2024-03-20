@@ -17,11 +17,13 @@
 namespace koliop {
     namespace collision {
 
-        template <typename View6D>
+        template <typename ExecutionSpace,
+                  typename View6D>
         static inline void
         DoComputeMaxwellianUnshiftedLoc(const Operator& an_operator,
+                                        ExecutionSpace  an_execution_space,
                                         uint32_t        choice,
-                                        OrdinalType     pSpecies_id,
+                                        OrdinalType     the_species_index,
                                         View6D&&        f5d_s) {
 
             const auto& the_mu_extent    = an_operator.the_mu_extent_;
@@ -39,8 +41,6 @@ namespace koliop {
             const auto& n_s    = an_operator.n_s_;
             const auto& T_s    = an_operator.T_s_;
 
-            const auto& the_execution_space_pool = an_operator.the_execution_space_pool_;
-
             const auto the_team_count = the_r_extent * the_theta_extent * the_phi_extent;
 
             // Due to the inherent Cuda/HIP thread block limit.
@@ -51,7 +51,7 @@ namespace koliop {
                 Constant::DeviceExecutionSpaceType>;
 
             const auto a_policy = PolicyType{
-                the_execution_space_pool[Constant::kDefaultExecutionSpacePoolIndex],
+                an_execution_space,
                 static_cast<int>(the_team_count),
                 // NOTE: The thread block size and the Nmu benefit from being
                 // close. This is due to the TeamThreadMDRange which
@@ -72,8 +72,8 @@ namespace koliop {
 
                         const ComputeFloatType Bij    = B_norm(the_local_domain_r_offset + ir,
                                                                the_local_domain_theta_offset + itheta);
-                        const ComputeFloatType na     = n_s(ir, itheta, iphi, pSpecies_id);
-                        const ComputeFloatType Ta     = T_s(ir, itheta, iphi, pSpecies_id);
+                        const ComputeFloatType na     = n_s(ir, itheta, iphi, the_species_index);
+                        const ComputeFloatType Ta     = T_s(ir, itheta, iphi, the_species_index);
                         const ComputeFloatType BijoTa = Bij / Ta;
                         const ComputeFloatType f2oTa  = 0.5 / Ta;
                         const ComputeFloatType coeff  = na / (koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta * Kokkos::sqrt(koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta));
@@ -87,8 +87,8 @@ namespace koliop {
                             [&](auto imu, auto ivpar) {
                                 const ComputeFloatType v2oTa = mug(imu) * BijoTa + vparg(ivpar) * vparg(ivpar) * f2oTa;
 
-                                f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id) = Kokkos::max(0.0,
-                                                                                               coeff * Kokkos::exp(-v2oTa) * f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id));
+                                f5d_s(imu, ivpar, ir, itheta, iphi, the_species_index) = Kokkos::max(0.0,
+                                                                                               coeff * Kokkos::exp(-v2oTa) * f5d_s(imu, ivpar, ir, itheta, iphi, the_species_index));
                             });
                     };
 
@@ -106,8 +106,8 @@ namespace koliop {
 
                         const ComputeFloatType Bij    = B_norm(the_local_domain_r_offset + ir,
                                                                the_local_domain_theta_offset + itheta);
-                        const ComputeFloatType na     = n_s(ir, itheta, iphi, pSpecies_id);
-                        const ComputeFloatType Ta     = T_s(ir, itheta, iphi, pSpecies_id);
+                        const ComputeFloatType na     = n_s(ir, itheta, iphi, the_species_index);
+                        const ComputeFloatType Ta     = T_s(ir, itheta, iphi, the_species_index);
                         const ComputeFloatType BijoTa = Bij / Ta;
                         const ComputeFloatType f2oTa  = 0.5 / Ta;
                         const ComputeFloatType coeff  = (koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta * Kokkos::sqrt(koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta)) / na;
@@ -121,9 +121,9 @@ namespace koliop {
                             [&](auto imu, auto ivpar) {
                                 const ComputeFloatType v2oTa = mug(imu) * BijoTa + vparg(ivpar) * vparg(ivpar) * f2oTa;
 
-                                f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id) = Kokkos::max(0.001,
+                                f5d_s(imu, ivpar, ir, itheta, iphi, the_species_index) = Kokkos::max(0.001,
                                                                                                Kokkos::min(1000.0,
-                                                                                                           coeff * Kokkos::exp(v2oTa) * f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id)));
+                                                                                                           coeff * Kokkos::exp(v2oTa) * f5d_s(imu, ivpar, ir, itheta, iphi, the_species_index)));
                             });
                     };
 
@@ -138,7 +138,6 @@ namespace koliop {
         }
 
         void Operator::ComputeMaxwellianUnshiftedLoc(uint32_t    choice,
-                                                     OrdinalType the_species_index,
                                                      Flo64*      f5d_s) const {
 
             auto a_device_visible_f5d_s = koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL6<Flo64>,
@@ -148,7 +147,11 @@ namespace koliop {
                                                                                                                        the_r_extent_, the_theta_extent_, the_phi_extent_,
                                                                                                                        the_species_extent_);
 
-            DoComputeMaxwellianUnshiftedLoc(*this, choice, the_species_index, a_device_visible_f5d_s);
+            for(OrdinalType the_species_index = 0; the_species_index < the_species_extent_; ++the_species_index) {
+                DoComputeMaxwellianUnshiftedLoc(*this, the_execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],
+                                                choice, the_species_index,
+                                                a_device_visible_f5d_s);
+            }
 
             koliop::utility::Copy::ViewToRawData<koliop::utility::View::InternalInputL6<Flo64>,
                                                  koliop::utility::View::ExternalInputL6<Flo64>>(the_execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],
@@ -161,11 +164,6 @@ namespace koliop {
 #if defined(KOLIOP_FENCE_ON_OPERATOR_EXIT)
             Kokkos::fence();
 #endif
-        }
-
-        void Operator::ComputeMaxwellianUnshiftedLoc(uint32_t choice,
-                                                     Flo64*   f5d_s) const {
-            ComputeMaxwellianUnshiftedLoc(choice, pSpecies_id_, f5d_s);
         }
 
     } // namespace collision

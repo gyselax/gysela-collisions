@@ -15,10 +15,12 @@
 namespace koliop {
     namespace collision {
 
-        template <typename View6D,
+        template <typename ExecutionSpace,
+                  typename View6D,
                   typename View4D>
         static inline void
         DoComputeQparOnNT(const Operator& an_operator,
+                          ExecutionSpace  an_execution_space,
                           const View6D&   f5d_s,
                           View4D&&        q_par_on_nT_s) {
 
@@ -42,8 +44,6 @@ namespace koliop {
             const auto& U_par_s        = an_operator.U_par_s_;
             const auto& T_s            = an_operator.T_s_;
 
-            const auto& the_execution_space_pool = an_operator.the_execution_space_pool_;
-
             // TODO(Etienne M): Make sure the accesses are sequential on CPU.
 
             const auto the_team_count = the_r_extent * the_theta_extent * the_phi_extent * the_species_extent;
@@ -56,7 +56,7 @@ namespace koliop {
                 Constant::DeviceExecutionSpaceType>;
 
             const auto a_policy = PolicyType{
-                the_execution_space_pool[Constant::kDefaultExecutionSpacePoolIndex],
+                an_execution_space,
                 static_cast<int>(the_team_count),
                 // NOTE: The thread block size and the Nmu benefit from being
                 // close. This is due to the TeamThreadMDRange which
@@ -141,7 +141,8 @@ namespace koliop {
                                                                                                                        the_r_extent_, the_theta_extent_, the_phi_extent_,
                                                                                                                        the_species_extent_);
 
-            DoComputeQparOnNT(*this, a_device_visible_f5d_s, q_par_on_nT_s_);
+            DoComputeQparOnNT(*this, the_execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],
+                              a_device_visible_f5d_s, q_par_on_nT_s_);
 
 #if defined(KOLIOP_FENCE_ON_OPERATOR_EXIT)
             Kokkos::fence();

@@ -103,7 +103,6 @@ namespace koliop {
         protected:
         public:
             /// @brief
-            /// @param pSpecies_id
             /// @param the_mu_extent
             /// @param the_vpar_extent
             /// @param the_r_extent
@@ -129,8 +128,7 @@ namespace koliop {
             /// @param mask_LIM
             /// @param B_norm
             /// @param Bstar_s
-            Operator(uint64_t     pSpecies_id,
-                     uint64_t     the_mu_extent,
+            Operator(uint64_t     the_mu_extent,
                      uint64_t     the_vpar_extent,
                      uint64_t     the_r_extent,
                      uint64_t     the_theta_extent,
@@ -161,7 +159,9 @@ namespace koliop {
 
             ~Operator();
 
-            void Fence(OrdinalType the_execution_space_index = Constant::kDefaultExecutionSpacePoolIndex) const;
+            void Fence(OrdinalType the_execution_space_index) const;
+
+            void FenceAll() const;
 
             void ComputeMoments(Flo64* f5d_s);
 
@@ -175,52 +175,26 @@ namespace koliop {
             void ComputeCpar(ComputeFloatType dt,
                              Flo64*           f5d_s) const;
 
-            void ComputeCpar(ComputeFloatType dt,
-                             OrdinalType      the_species_index,
-                             Flo64*           f5d_s) const;
-
             void ComputeMaxwellianUnshiftedLoc(uint32_t choice,
                                                Flo64*   f5d_s) const;
 
-            void ComputeMaxwellianUnshiftedLoc(uint32_t    choice,
-                                               OrdinalType the_species_index,
-                                               Flo64*      f5d_s) const;
-
             void Apply(ComputeFloatType dt,
-                       Flo64*           f5d_s);
-
-            void Apply(ComputeFloatType dt,
-                       OrdinalType      the_species_index,
                        Flo64*           f5d_s);
 
             void ComputeDensityCorrection(Flo64* f5d_s) const;
 
-            void ComputeDensityCorrection(OrdinalType the_species_index,
-                                          Flo64*      f5d_s) const;
-
             void ComputeUparTCorrection(ComputeFloatType dt,
-                                        Flo64*           f5d_s) const;
-
-            void ComputeUparTCorrection(ComputeFloatType                                           dt,
-                                        OrdinalType                                                the_species_index,
-                                        const koliop::utility::View::MDL4<const ComputeFloatType>& input_U_par_s,
-                                        Flo64*                                                     f5d_s) const;
+                                        Flo64*           f5d_s);
 
             void ExtractRaw(uint32_t the_value_identifier,
                             void*    an_output_buffer) const;
 
             /// Compute the evolution of the distribution function due to
-            /// collisions. The collision are applied only to the pSpecies_id.
-            ///
-            void Collision(ComputeFloatType dt,
-                           Flo64*           f5d_s);
-
-            /// Compute the evolution of the distribution function due to
             /// collisions. The collision are applied to all the species in the
             /// [0, the_species_extent_) range.
             ///
-            void CollisionForAllSpecies(ComputeFloatType dt,
-                                        Flo64*           f5d_s);
+            void Collision(ComputeFloatType dt,
+                           Flo64*           f5d_s);
 
         protected:
             /// Compute the evolution of the distribution function due to
@@ -239,7 +213,6 @@ namespace koliop {
 
             // Constant, externally computed values
 
-            OrdinalType      pSpecies_id_;
             OrdinalType      the_mu_extent_;
             OrdinalType      the_vpar_extent_;
             OrdinalType      the_r_extent_;

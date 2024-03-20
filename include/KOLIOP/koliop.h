@@ -206,10 +206,9 @@ koliop_Status koliop_ExtractRaw(koliop_Operator an_operator,
 //                                  double*         nu_ab);
 
 /// Compute the evolution of the distribution function due to collisions.
-///
-/// This is the main routine to apply the collision Operator. One can either
-/// call the above function in the appropriate order or call koliop_Collision
-/// to do the work for you (at the cost fo flexibility).
+/// It computes the collision of all species against all other species (if asked
+/// for through collision_interspecies and the_species_extent). It basically
+/// disregard pSpecies_id. This is mostly used for the Gyselalib++.
 ///
 koliop_Status koliop_Collision(koliop_Operator an_operator,
                                double          dt,

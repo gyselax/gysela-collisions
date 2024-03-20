@@ -37,9 +37,11 @@ namespace koliop {
 
         } // namespace
 
-        template <typename View5D>
+        template <typename ExecutionSpace,
+                  typename View5D>
         static inline void
         DoPrecomputeNu(const Operator& an_operator,
+                       ExecutionSpace  an_execution_space,
                        View5D&&        nu_ab) {
 
             const auto& the_r_extent       = an_operator.the_r_extent_;
@@ -60,8 +62,6 @@ namespace koliop {
             // global domain.
             const auto& ir_SOL_separatrix = an_operator.ir_SOL_separatrix_ - the_local_domain_r_offset;
 
-            const auto& the_execution_space_pool = an_operator.the_execution_space_pool_;
-
             const auto the_team_count = the_theta_extent * the_phi_extent * the_species_extent * the_species_extent;
 
             // Due to the inherent Cuda/HIP thread block limit.
@@ -74,7 +74,7 @@ namespace koliop {
             // TODO(Etienne M): TEAM hardcoded size, check for auto tuning
             // opportunities.
             const auto a_policy = PolicyType{
-                the_execution_space_pool[Constant::kDefaultExecutionSpacePoolIndex],
+                an_execution_space,
                 static_cast<int>(the_team_count),
                 koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, Kokkos::AUTO, 64, 32)};
 
@@ -118,7 +118,8 @@ namespace koliop {
 
         void Operator::PrecomputeNu() {
 
-            DoPrecomputeNu(*this, nu_ab_);
+            DoPrecomputeNu(*this, the_execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],
+                           nu_ab_);
 
 #if defined(KOLIOP_FENCE_ON_OPERATOR_EXIT)
             Kokkos::fence();

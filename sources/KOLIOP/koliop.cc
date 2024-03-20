@@ -139,6 +139,7 @@
            Npolmax != koliop::collision::Constant::kMaximumLaguerrePolynomialDegree ||
            (index_max != 2 * (Npolmax - 1)) ||
            pSpecies_id < 0 ||
+           static_cast<int64_t>(the_species_extent) <= pSpecies_id ||
            ir_SOL_separatrix < 0 ||
            // We store a constant expression of the binomial coeffs. We do not need someone to given them to us.
            // comb_mat == nullptr ||
@@ -160,8 +161,7 @@
 
         using Operator = koliop::collision::Operator;
 
-        auto* const an_operator = new Operator{static_cast<uint64_t>(pSpecies_id),
-                                               static_cast<uint64_t>(the_mu_extent),
+        auto* const an_operator = new Operator{static_cast<uint64_t>(the_mu_extent),
                                                static_cast<uint64_t>(the_vpar_extent),
                                                static_cast<uint64_t>(the_r_extent),
                                                static_cast<uint64_t>(the_theta_extent),
@@ -225,7 +225,7 @@
 
         // NOTE: Maybe we should offer to the user the possibility of choosing
         // which stream to use for computation and for fencing.
-        reinterpret_cast<const koliop::collision::Operator*>(an_operator)->Fence();
+        reinterpret_cast<const koliop::collision::Operator*>(an_operator)->FenceAll();
 
         return KOLIOP_STATUS_SUCCESS;
     });
