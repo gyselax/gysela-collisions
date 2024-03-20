@@ -1,8 +1,8 @@
 # NOTES: https://gist.github.com/mbinna/c61dbb39bca0e4fb7d1f73b0d66a4fd1
 
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.22.1)
 
-project("koliop" VERSION 0.0.15 LANGUAGES CXX)
+project("koliop" VERSION 0.0.16 LANGUAGES CXX)
 
 include(CTest)
 
