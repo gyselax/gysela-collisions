@@ -1,4 +1,5 @@
-cmake_minimum_required(VERSION 3.25)
+# For some features, we need 3.25, for other, we need 3.20.
+cmake_minimum_required(VERSION 3.22.1)
 
 include(FetchContent)
 
@@ -143,11 +144,17 @@ function(DependencyResolver_ResolveLibrary _NAME)
 
                 return()
             elseif("${A_PROVIDER}" STREQUAL "_MakeAvailable_SYSTEM_QUIET")
-                # Not found but we came from an other provider which used
-                # FetchContent. We should never get here as
-                # FetchContent_MakeAvailable never fails to provide something,
-                # it crashes if it cant.
-                message(FATAL_ERROR "[${PROJECT_NAME}] Conflicting signals, we did not found '${_NAME}' but FetchContent_MakeAvailable said it did.")
+                if(CMAKE_VERSION VERSION_LESS "3.24.0")
+                    message(WARNING "[${PROJECT_NAME}] Old CMake version detected. Emulating find_package behavior.")
+                    set("${_NAME}_FOUND" TRUE PARENT_SCOPE)
+                    return()
+                else()
+                    # Not found but we came from an other provider which used
+                    # FetchContent. We should never get here as
+                    # FetchContent_MakeAvailable never fails to provide something,
+                    # it crashes if it cant.
+                    message(FATAL_ERROR "[${PROJECT_NAME}] Conflicting signals, we did not found '${_NAME}' but FetchContent_MakeAvailable said it did.")
+                endif()
             endif()
 
             # Fallthrough and continue.
