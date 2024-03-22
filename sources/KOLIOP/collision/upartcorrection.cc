@@ -7,6 +7,7 @@
 
 #include "KOLIOP/collision/constant.h"
 #include "KOLIOP/collision/operator.h"
+#include "KOLIOP/collision/scoped.h"
 #include "KOLIOP/internal/configuration.h"
 #include "KOLIOP/portability/cmath.h"
 #include "KOLIOP/utility/copy.h"
@@ -25,7 +26,7 @@ namespace koliop {
                                  ExecutionSpace   an_execution_space,
                                  ComputeFloatType dt,
                                  OrdinalType      the_species_index,
-                                 View4D0&&        input_U_par_s,
+                                 const View4D0&   input_U_par_s,
                                  View6D&&         f5d_s,
                                  View4D1&&        output_U_par_s) {
 
@@ -223,16 +224,28 @@ namespace koliop {
                                                                                                                        the_r_extent_, the_theta_extent_, the_phi_extent_,
                                                                                                                        the_species_extent_);
 
-            // ComputeUparTCorrection reads U_par_s_input_ and outputs to
-            // U_par_s_. This is required if more than 1 species is used, we
-            // can not write in U_par_s_ while it is still being read (by
-            // other threads, species, thread block, etc.).
-            std::swap(U_par_s_, U_par_s_input_);
+            {
+                ScopedFenceHandler<koliop::utility::Copy::IsCopyRequired<koliop::utility::View::InternalInputL6<Flo64>,
+                                                                         koliop::utility::View::ExternalInputL6<Flo64>>()>
+                    a_scoped_fencer{this};
 
-            for(OrdinalType the_species_index = 0; the_species_index < the_species_extent_; ++the_species_index) {
-                DoComputeUparTCorrection(*this, the_execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],
-                                         dt, the_species_index,
-                                         U_par_s_input_, a_device_visible_f5d_s, U_par_s_);
+                // ComputeUparTCorrection reads U_par_s_input_ and outputs to
+                // U_par_s_. This is required if more than 1 species is used, we
+                // can not write in U_par_s_ while it is still being read (by
+                // other threads, species, thread block, etc.).
+
+                // We will not have a race when swapping the buffer just below
+                // because when a kernel is launched, and we have the guarantee
+                // that the previous are in queue their respective streams and
+                // that they carry their state which in this case, would be a
+                // copy of U_par_s_ before the swap.
+                std::swap(U_par_s_, U_par_s_input_);
+
+                for(OrdinalType the_species_index = 0; the_species_index < the_species_extent_; ++the_species_index) {
+                    DoComputeUparTCorrection(*this, the_execution_space_pool_[the_species_index],
+                                             dt, the_species_index,
+                                             U_par_s_input_, a_device_visible_f5d_s, U_par_s_);
+                }
             }
 
             koliop::utility::Copy::ViewToRawData<koliop::utility::View::InternalInputL6<Flo64>,

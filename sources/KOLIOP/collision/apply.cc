@@ -31,6 +31,8 @@ namespace koliop {
                 the_cvcd_drivers_scheduler_.ScheduleExecution(*this, dt, the_species_index, a_device_visible_f5d_s);
             }
 
+            // NOTE: Guarantees a FenceAll/Kokkos::fence() to ensure we sync all
+            // the streams for the computations that follow the CvCd.
             Kokkos::fence();
             // FenceAll();
 
