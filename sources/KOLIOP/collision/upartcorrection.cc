@@ -248,6 +248,10 @@ namespace koliop {
                 }
             }
 
+            // NOTE: Stream usage semantic change, we switch from a stream per
+            // species to a stream handling all species.
+            FenceAll();
+
             koliop::utility::Copy::ViewToRawData<koliop::utility::View::InternalInputL6<Flo64>,
                                                  koliop::utility::View::ExternalInputL6<Flo64>>(the_execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],
                                                                                                 a_device_visible_f5d_s,
