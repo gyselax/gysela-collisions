@@ -6,6 +6,7 @@
 
 #include "KOLIOP/collision/constant.h"
 #include "KOLIOP/collision/operator.h"
+#include "KOLIOP/collision/scoped.h"
 #include "KOLIOP/internal/configuration.h"
 #include "KOLIOP/portability/cmath.h"
 #include "KOLIOP/utility/copy.h"
