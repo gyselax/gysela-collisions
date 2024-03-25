@@ -204,28 +204,13 @@ namespace koliop {
 
             KOLIOP_ASSERT(the_execution_space_pool_.empty());
 
-#if defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_CUDA)
-            // The null stream.
-            the_execution_space_pool_.emplace_back(nullptr, true);
-#endif
-
-            if(Constant::kDisjointExecutionSpaceCount > the_execution_space_pool_.size()) {
-                // Then, we use the default execution space.
-                the_execution_space_pool_.emplace_back();
-            }
-
-            KOLIOP_ASSERT(!the_execution_space_pool_.empty());
-
-            // Then we fill in with new streams.
+            // We emplace the the default execution space.
+            Constant::DeviceExecutionSpaceType the_default_execution_space{};
 
             while(the_execution_space_pool_.size() != Constant::kDisjointExecutionSpaceCount) {
-                // NOTE: We do not want to *potentially* split the resource
-                // pool. Thus the repeated call to partition_space which creates
-                // execution space with all the same amount of hardware
-                // resources.
                 // TODO(Etienne M): See what hipStreamCreateWithPriority can get
-                // us.
-                the_execution_space_pool_.emplace_back(Kokkos::Experimental::partition_space(the_execution_space_pool_[0], 1)[0]);
+                // reduce the performance.
+                the_execution_space_pool_.emplace_back(Kokkos::Experimental::partition_space(the_default_execution_space, 1)[0]);
             }
 
             the_cvcd_drivers_scheduler_.Plan(*this,
@@ -254,57 +239,46 @@ namespace koliop {
 
         void Operator::Collision(ComputeFloatType dt,
                                  Flo64*           f5d_s) {
+            // Assume all our streams are empty.
 
-            // TODO(Etienne M): We shouldn't need that for the Gysela++, yet.
-            const OrdinalType collstart = 0;
+            ComputeMoments(f5d_s);
+            PrecomputeNu();
 
-            if(collstart != -1 /* TODO(Etienne M): Fortran index */) {
-                ComputeMoments(f5d_s);
+            if((the_species_extent_ > 1) && collision_interspecies_) {
+                ComputeMaxwellianEvolution(dt, f5d_s);
                 PrecomputeNu();
+            }
 
-                if((the_species_extent_ > 1) && collision_interspecies_) {
-                    ComputeMaxwellianEvolution(dt, f5d_s);
-                    PrecomputeNu();
-                }
+            ComputeQparOnNT(f5d_s);
 
-                ComputeQparOnNT(f5d_s);
+            if(the_species_extent_ > 1) {
+                // Cpar operator
+                ComputeCpar(dt, f5d_s);
+            }
 
-                if(the_species_extent_ > 1) {
-                    // Cpar operator
-                    ComputeCpar(dt, f5d_s);
-                }
+            // Computes Fa = Fa / FM0a
+            ComputeMaxwellianUnshiftedLoc(4, f5d_s);
 
-                // Computes Fa = Fa / FM0a
-                ComputeMaxwellianUnshiftedLoc(4, f5d_s);
+            // CvCd
+            Apply(dt, f5d_s);
 
-                // CvCd
-                Apply(dt, f5d_s);
+            // Computes Fa = Fa * FM0a
+            ComputeMaxwellianUnshiftedLoc(3, f5d_s);
 
-                // Computes Fa = Fa * FM0a
-                ComputeMaxwellianUnshiftedLoc(3, f5d_s);
+            if((the_species_extent_ > 1) && collision_interspecies_) {
+                // Cpar operator
+                ComputeCpar(dt, f5d_s);
+            }
 
-                if((the_species_extent_ > 1) && collision_interspecies_) {
-                    // Cpar operator
-                    ComputeCpar(dt, f5d_s);
-                }
+            // Correction to enforce conservation of density and fluid
+            // moments
+            ComputeDensityCorrection(f5d_s);
 
-                // Correction to enforce conservation of density and fluid
-                // moments
-                ComputeDensityCorrection(f5d_s);
+            ComputeUparTCorrection(dt, f5d_s);
 
-                ComputeUparTCorrection(dt, f5d_s);
-
-                // NOTE: ComputeMaxwellianEvolution reads the U_par_s for all
-                // species. Prior to ~~ 2024/03/01 there was a bug in Gysela
-                // fortran (master) and Gysela fortran's libcoll in which we
-                // used an incomplete U_par_s which contained the fresh U_par_s
-                // values only for pSpecies_id but the old, non updated by
-                // ComputeUparTCorrection values for all other species.
-
-                if((the_species_extent_ > 1) && collision_interspecies_) {
-                    ComputeMaxwellianEvolution(dt, f5d_s);
-                    PrecomputeNu();
-                }
+            if((the_species_extent_ > 1) && collision_interspecies_) {
+                ComputeMaxwellianEvolution(dt, f5d_s);
+                PrecomputeNu();
             }
         }
 

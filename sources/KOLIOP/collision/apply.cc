@@ -33,8 +33,7 @@ namespace koliop {
 
             // NOTE: Guarantees a FenceAll/Kokkos::fence() to ensure we sync all
             // the streams for the computations that follow the CvCd.
-            Kokkos::fence();
-            // FenceAll();
+            FenceAll();
 
             koliop::utility::Copy::ViewToRawData<koliop::utility::View::InternalInputL6<Flo64>,
                                                  koliop::utility::View::ExternalInputL6<Flo64>>(the_execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],
