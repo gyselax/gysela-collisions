@@ -99,7 +99,7 @@ namespace koliop {
                                      OrdinalType     the_block_first_r,
                                      OrdinalType     the_block_first_theta,
                                      OrdinalType     the_block_first_phi,
-                                     OrdinalType     pSpecies_id,
+                                     OrdinalType     the_species_index,
                                      const View2D&   mask_coll,
                                      const View6D&   f5d_s,
                                      View4D&&        the_rhs) {
@@ -159,7 +159,7 @@ namespace koliop {
 
                         const ComputeFloatType BoT = B_norm(the_local_domain_r_offset + ir,
                                                             the_local_domain_theta_offset + itheta) /
-                                                     T_s(ir, itheta, iphi, pSpecies_id);
+                                                     T_s(ir, itheta, iphi, the_species_index);
 
                         for(OrdinalType ivpar = 0; ivpar < the_vpar_extent; ++ivpar) {
                             for(OrdinalType ipol = 0; ipol < Constant::kMaximumLaguerrePolynomialDegree; ++ipol) {
@@ -176,7 +176,7 @@ namespace koliop {
                                         const ComputeFloatType coeff_tot = DoComputeLaguerrePol(ipol, muBoT) * BoT * coeff_intdmu(imu) * Kokkos::exp(-muBoT);
 
                                         the_rhs_value_reducer.join(the_rhs_value_reducer.reference(),
-                                                                   coeff_tot * f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id));
+                                                                   coeff_tot * f5d_s(imu, ivpar, ir, itheta, iphi, the_species_index));
                                     });
 
                                 a_team_handle.team_reduce(the_rhs_value_reducer);
@@ -270,7 +270,7 @@ namespace koliop {
                                 OrdinalType      the_block_first_theta,
                                 OrdinalType      the_block_first_phi,
                                 ComputeFloatType dt,
-                                OrdinalType      pSpecies_id,
+                                OrdinalType      the_species_index,
                                 const View6D&    the_Najl,
                                 View4D&&         the_rhs) {
 
@@ -297,9 +297,9 @@ namespace koliop {
                     const OrdinalType the_batch_index         = (the_flattened_index / (CvCdDriver::BatchTraitsType::kBatchSize)) /* % CvCdDriver::kBatchCount */;
 
                     const ComputeFloatType vpar_tmp       = vparg(ivpar);
-                    const ComputeFloatType Ta             = T_s(ir, itheta, iphi, pSpecies_id);
-                    const ComputeFloatType U_para         = U_par_s(ir, itheta, iphi, pSpecies_id);
-                    const ComputeFloatType q_para_on_naTa = q_par_on_nT_s(ir, itheta, iphi, pSpecies_id);
+                    const ComputeFloatType Ta             = T_s(ir, itheta, iphi, the_species_index);
+                    const ComputeFloatType U_para         = U_par_s(ir, itheta, iphi, the_species_index);
+                    const ComputeFloatType q_para_on_naTa = q_par_on_nT_s(ir, itheta, iphi, the_species_index);
 
                     // TODO(Etienne M): Can we simplify that ?
 
@@ -344,7 +344,7 @@ namespace koliop {
                                     OrdinalType     the_block_first_r,
                                     OrdinalType     the_block_first_theta,
                                     OrdinalType     the_block_first_phi,
-                                    OrdinalType     pSpecies_id,
+                                    OrdinalType     the_species_index,
                                     const View2D&   mask_coll,
                                     const View4D&   the_rhs,
                                     View6D&&        f5d_s) {
@@ -408,7 +408,7 @@ namespace koliop {
 
                     const ComputeFloatType BoT = B_norm(the_local_domain_r_offset + ir,
                                                         the_local_domain_theta_offset + itheta) /
-                                                 T_s(ir, itheta, iphi, pSpecies_id);
+                                                 T_s(ir, itheta, iphi, the_species_index);
 
                     Kokkos::parallel_for(
                         // NOTE: The explicit Left iteration direction may not benefit
@@ -425,7 +425,7 @@ namespace koliop {
                                                DoComputeLaguerrePol(ipol, muBoT);
                             }
 
-                            f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id) = f5d_s_value;
+                            f5d_s(imu, ivpar, ir, itheta, iphi, the_species_index) = f5d_s_value;
                         });
                 };
 
