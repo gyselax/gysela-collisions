@@ -12,6 +12,16 @@ namespace koliop {
         // ScopedFenceHandler definition
         ////////////////////////////////////////////////////////////////////////
 
+        /// This scope guard ensure that if should_fence is true, we fence on
+        /// kDefaultExecutionSpacePoolIndex during construction and on all
+        /// streams on destruction.
+        /// The use case is to ensure the data is correctly placed on the device
+        /// or host before enqueuing stream memcpy. As an example, the device is
+        /// the GPU and host the CPU, we need to wait before all the stream on
+        /// which we enqueued the processing are emptied before the data being
+        /// processed can be copied back to the device. This is a noop if
+        /// should_fence is false.
+        ///
         template <bool should_fence>
         class ScopedFenceHandler {
         public:
