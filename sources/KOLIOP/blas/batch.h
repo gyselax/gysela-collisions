@@ -14,6 +14,10 @@ namespace koliop {
         // BatchTraits definition
         ////////////////////////////////////////////////////////////////////////
 
+        /// TODO(Etienne M): While batching is required to produce efficient
+        /// memory access, maybe using double instead of the packed equivalent
+        /// (double2/double4) would be better at exposing concurrency.
+        ///
         template <typename Value,
                   typename ExecutionSpace>
         struct BatchTraits {

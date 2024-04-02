@@ -594,12 +594,18 @@ namespace koliop {
             const auto& T_s   = an_operator.T_s_;
             const auto& nu_ab = an_operator.nu_ab_;
 
-            // TODO(Etienne M): Extent standardization:
+            // TODO(Etienne M): Extent standardization global_domain, vs
+            // local_domain vs block:
             // the_global_domain_[r|theta]_extent
             // the_local_domain_[r|theta]_offset
             // the_local_[mu|vpar|r|theta|phi|species]_extent
             // the_block_[r|theta|phi]_offset
             // the_block_[r|theta|phi]_extent
+
+            // TODO(Etienne M): Currently, we allocate lot of memory to store
+            // the Najl coeff, the alpha coeff, the matrix etc. What if we could
+            // compute the Alpha coefs and overwrite the f5d_s with the
+            // matrix/alpha coef/najl ?
 
             // NOTE: If you have an issue with these assertions, checkout the
             // constant.h file and tune kBlockExtent[R|Theta|Phi].
