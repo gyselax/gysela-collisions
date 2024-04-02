@@ -14,10 +14,6 @@ namespace koliop {
         // BatchTraits definition
         ////////////////////////////////////////////////////////////////////////
 
-        /// TODO(Etienne M): While batching is required to produce efficient
-        /// memory access, maybe using double instead of the packed equivalent
-        /// (double2/double4) would be better at exposing concurrency.
-        ///
         template <typename Value,
                   typename ExecutionSpace>
         struct BatchTraits {
@@ -54,6 +50,12 @@ namespace koliop {
             /// float2, double4 etc. As of 2023, doubleN is not really a SIMD
             /// registers and serve more to do efficient loads. In the case of
             /// a GPU, kVectorSize may be == 4 regardless of kBatchSize.
+            ///
+            /// TODO(Etienne M): While batching is required to produce efficient
+            /// memory access, maybe using double instead of the packed
+            /// equivalent (double2/double4) would be better at exposing
+            /// concurrency.
+            ///
             static inline constexpr OrdinalType kVectorSize = KokkosBatched::DefaultInternalVectorLength<value_type,
                                                                                                          typename ExecutionSpaceType::memory_space>::value;
 
