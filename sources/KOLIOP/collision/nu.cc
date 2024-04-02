@@ -57,7 +57,9 @@ namespace koliop {
             const auto& T_s          = an_operator.T_s_;
 
             // Ensure the ir_SOL_separatrix_ is always only processed by the
-            // rank processing the most outer torus region (in R).
+            // rank processing the most outer torus region (in R). If there is
+            // a rank with the_local_domain_r_offset > ir_SOL_separatrix_ we
+            // break the contract.
             KOLIOP_ASSERT(the_local_domain_r_offset <= an_operator.ir_SOL_separatrix_);
 
             // Here we make sure ir_SOL_separatrix is in the rank's domain, not

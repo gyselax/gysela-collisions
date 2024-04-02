@@ -80,7 +80,7 @@ typedef struct koliop_OpaqueOperator_* koliop_Operator;
 /// @param collision_interspecies Boolean as type int8_t (0 = false, else true) describing if a species collision with itself.
 /// @param SOL Boolean as type int8_t (0 = false, else true) used in the Nu* computation.
 /// @param LIM Boolean as type int8_t (0 = false, else true) set to true to tell the operator to apply a limiter mask.
-/// @param ir_SOL_separatrix Fix the collisionality past ir_SOL_separatrix to the value at ir_SOL_separatrix. Must respect the following constraint: 0 <= ir_SOL_separatrix < the_global_domain_r_extent. In Gysela fortran, ir_SOL_separatrix must respect the following constraint: MAX_R_START <= ir_SOL_separatrix <= the_global_domain_r_extent where MAX_R_START is the the the_local_domain_r_offset of a rank processing the most outer subdomain in R. Used in the Nu computation.
+/// @param ir_SOL_separatrix Fix the collisionality past ir_SOL_separatrix to the value at ir_SOL_separatrix. Must respect the following constraint: 0 <= ir_SOL_separatrix < the_global_domain_r_extent. In Gysela fortran, ir_SOL_separatrix must respect the following constraint: MAX_R_START <= ir_SOL_separatrix <= the_global_domain_r_extent where MAX_R_START is the the_local_domain_r_offset of a rank processing the most outer subdomain in R. Used in the Nu computation.
 /// @param comb_mat Now internally computed, should be a NULL.
 /// @param hat_As An array of double with extents ([0, the_species_extent) ).
 /// @param hat_Zs An array of double with extents ([0, the_species_extent) ).

@@ -140,7 +140,7 @@
            (index_max != 2 * (Npolmax - 1)) ||
            pSpecies_id < 0 ||
            static_cast<int64_t>(the_species_extent) <= pSpecies_id ||
-           !(0 <= ir_SOL_separatrix && ir_SOL_separatrix < the_global_domain_r_extent) ||
+           !(0 <= ir_SOL_separatrix && static_cast<size_t>(ir_SOL_separatrix) <= the_global_domain_r_extent) ||
            // We store a constant expression of the binomial coeffs. We do not need someone to given them to us.
            // comb_mat == nullptr ||
            hat_As == nullptr ||
