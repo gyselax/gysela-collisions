@@ -154,7 +154,7 @@ namespace koliop {
                     a_scoped_fencer{this};
 
                 for(OrdinalType the_species_index = 0; the_species_index < the_species_extent_; ++the_species_index) {
-                    DoComputeMaxwellianUnshiftedLoc(*this, the_execution_space_pool_[the_species_index],
+                    DoComputeMaxwellianUnshiftedLoc(*this, the_execution_space_pool_[the_species_index % Constant::kDisjointExecutionSpaceCount],
                                                     choice, the_species_index,
                                                     a_device_visible_f5d_s);
                 }

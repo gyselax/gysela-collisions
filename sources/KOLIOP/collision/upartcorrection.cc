@@ -242,7 +242,7 @@ namespace koliop {
                 std::swap(U_par_s_, U_par_s_input_);
 
                 for(OrdinalType the_species_index = 0; the_species_index < the_species_extent_; ++the_species_index) {
-                    DoComputeUparTCorrection(*this, the_execution_space_pool_[the_species_index],
+                    DoComputeUparTCorrection(*this, the_execution_space_pool_[the_species_index % Constant::kDisjointExecutionSpaceCount],
                                              dt, the_species_index,
                                              U_par_s_input_, a_device_visible_f5d_s, U_par_s_);
                 }

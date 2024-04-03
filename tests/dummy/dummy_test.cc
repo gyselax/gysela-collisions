@@ -1,269 +1,9 @@
 #include <KOLIOP/koliop.h>
 
+#include <chrono>
 #include <cstdlib>
 #include <iostream>
 #include <vector>
-
-template <typename T>
-bool ValidateAbsoluteError(const T* a_reference,
-                           T*       an_array,
-                           uint64_t the_length,
-                           T        the_tolerance = 1E-16) {
-    for(uint64_t i = 0; i < the_length; ++i) {
-        const auto the_absolute_error = std::abs(a_reference[i] - an_array[i]);
-        const auto the_relative_error = the_absolute_error / std::abs(a_reference[i]);
-        if(the_relative_error >= the_tolerance) {
-            std::cout << "Validation failed absolute error: |" << a_reference[i] << " - " << an_array[i] << "| = " << the_absolute_error << "\n";
-            std::cout << "Relative error: " << the_relative_error << "\n";
-            return false;
-        }
-        // What about nans or +-inf ?
-    }
-    return true;
-}
-
-int Test0() {
-    std::cout << "Initialized()\n";
-
-    ::koliop_Operator an_operator;
-
-    static constexpr size_t   Npolmax                = 3;
-    static constexpr size_t   index_max              = 4;
-    static constexpr uint64_t Nmu                    = 47;
-    static constexpr uint64_t Nvpar                  = 127;
-    static constexpr uint64_t Nspecies               = 1;
-    static constexpr int64_t  pSpecies_id            = 0;
-    static constexpr int64_t  mu_id                  = 4;  // [0, nrank)
-    static constexpr uint64_t istart                 = 0;  // r (radius)
-    static constexpr uint64_t iend                   = 31; // r (radius)
-    static constexpr uint64_t jstart                 = 0;  // Theta (poloidal)
-    static constexpr uint64_t jend                   = 31; // Theta (poloidal)
-    static constexpr int64_t  collstart              = 0;  // Phi (toroidal) [0, nrank)
-    static constexpr int64_t  collend                = 0;  // Phi (toroidal) [0, nrank)
-    static constexpr double   R0                     = 320.0;
-    static constexpr int8_t   collision_interspecies = true;
-    static constexpr int8_t   SOL                    = false;
-    static constexpr int8_t   LIM                    = false;
-    static constexpr int64_t  ir_SOL_separatrix      = 32;
-    static constexpr double   dt                     = 50.0;
-
-    static constexpr size_t the_mu_extent      = Nmu + 1;
-    static constexpr size_t the_vpar_extent    = Nvpar + 1;
-    static constexpr size_t the_r_extent       = (iend + 1) - istart;
-    static constexpr size_t the_theta_extent   = (jend + 1) - jstart;
-    static constexpr size_t the_phi_extent     = static_cast<size_t>((collend + 1) - collstart);
-    static constexpr size_t the_species_extent = Nspecies;
-
-    static constexpr size_t the_global_domain_r_extent     = the_r_extent;
-    static constexpr size_t the_global_domain_theta_extent = the_theta_extent + 1;
-    static constexpr size_t the_global_domain_r_offset     = 0;
-    static constexpr size_t the_global_domain_theta_offset = 0;
-
-    // lbound(comb_mat,1) = 0;
-    // ubound(comb_mat,1) = 5;
-    // size(comb_mat,1) = 6;
-    // lbound(comb_mat,2) = 0;
-    // ubound(comb_mat,2) = 5;
-    // size(comb_mat,2) = 6;
-    static constexpr double comb_mat[((index_max + 1) + 1) - 0][((index_max + 1) + 1) - 0] = {{1.0, 0.0, 0.0, 0.0, 0.0, 0.0},
-                                                                                              {1.0, 1.0, 4.0, 4.0, 4.0, 4.0},
-                                                                                              {1.0, 2.0, 1.0, 0.0, 0.0, 0.0},
-                                                                                              {1.0, 3.0, 3.0, 1.0, 0.0, 0.0},
-                                                                                              {1.0, 4.0, 6.0, 4.0, 1.0, 0.0},
-                                                                                              {1.0, 5.0, 10.0, 10.0, 5.0, 1.0}};
-    // static constexpr uint64_t comb_mat_extent_0 = ((index_max + 1) + 1) - 0;
-    // static constexpr uint64_t comb_mat_extent_1 = ((index_max + 1) + 1) - 0;
-
-    // lbound(hat_As,1) = 0;
-    // ubound(hat_As,1) = 2;
-    // size(hat_As,1) = 3;
-    static constexpr double hat_As[the_species_extent] = {1.0};
-    // static constexpr uint64_t hat_As_extent_0 = the_species_extent;
-
-    // lbound(hat_Zs,1) = 0;
-    // ubound(hat_Zs,1) = 2;
-    // size(hat_Zs,1) = 3;
-    static constexpr double hat_Zs[the_species_extent] = {1.0};
-    // static constexpr uint64_t hat_Zs_extent_0 = the_species_extent;
-
-    // lbound(mug,1) = 0;
-    // ubound(mug,1) = 47;
-    // size(mug,1) = 48;
-    static constexpr double mug[the_mu_extent] = {0., 9.05387052965142894E-3, 3.62154821186057158E-2, 8.1484834766862857E-2, 0.14486192847442286, 0.22634676324128572, 0.32593933906745143, 0.44363965595291999, 0.57944771389769145, 0.73336351290176582, 0.90538705296514288, 1.0955183340878227, 1.3037573562698057, 1.5301041195110916, 1.7745586238116799, 2.0371208691715714, 2.3177908555907658, 2.6165685830692631, 2.9334540516070633, 3.2684472612041655, 3.6215482118605715, 3.9927569035762804, 4.3820733363512909, 4.7894975101856057, 5.2150294250792228, 5.6586690810321434, 6.1204164780443664, 6.600271616115891, 7.0982344952467198, 7.614305115436852, 8.1484834766862857, 8.7007695789950237, 9.2711634223630632, 9.8596650067904044, 10.466274332277052, 11.090991398823, 11.733816206428253, 12.394748755092806, 13.073789044816662, 13.770937075599825, 14.486192847442286, 15.21955636034405, 15.971027614305122, 16.740606609325489, 17.528293345405164, 18.334087822544145, 19.157990040742423, 20.000000000000007};
-    // static constexpr uint64_t mug_extent_0 = the_mu_extent;
-
-    // lbound(vparg,1) = 0;
-    // ubound(vparg,1) = 127;
-    // size(vparg,1) = 128;
-    static constexpr double vparg[the_vpar_extent] = {-12., -11.811023622047244, -11.622047244094489, -11.433070866141732, -11.244094488188976, -11.05511811023622, -10.866141732283465, -10.677165354330709, -10.488188976377952, -10.299212598425196, -10.110236220472441, -9.9212598425196852, -9.7322834645669296, -9.543307086614174, -9.3543307086614167, -9.1653543307086611, -8.9763779527559056, -8.78740157480315, -8.5984251968503944, -8.4094488188976371, -8.2204724409448815, -8.0314960629921259, -7.8425196850393704, -7.6535433070866139, -7.4645669291338583, -7.2755905511811028, -7.0866141732283463, -6.8976377952755907, -6.7086614173228352, -6.5196850393700787, -6.3307086614173231, -6.1417322834645667, -5.9527559055118111, -5.7637795275590555, -5.5748031496062991, -5.3858267716535435, -5.1968503937007871, -5.0078740157480315, -4.8188976377952759, -4.6299212598425195, -4.4409448818897639, -4.2519685039370083, -4.0629921259842519, -3.8740157480314963, -3.6850393700787403, -3.4960629921259843, -3.3070866141732287, -3.1181102362204727, -2.9291338582677167, -2.7401574803149606, -2.5511811023622046, -2.3622047244094491, -2.173228346456693, -1.984251968503937, -1.7952755905511812, -1.6062992125984255, -1.4173228346456694, -1.2283464566929134, -1.0393700787401576, -0.85039370078740173, -0.66141732283464583, -0.47244094488188992, -0.28346456692913402, -9.4488188976378118E-2, 9.44881889763777849E-2, 0.28346456692913369, 0.47244094488188959, 0.66141732283464549, 0.8503937007874014, 1.0393700787401574, 1.2283464566929132, 1.417322834645669, 1.606299212598425, 1.795275590551181, 1.9842519685039368, 2.1732283464566926, 2.3622047244094486, 2.5511811023622046, 2.7401574803149602, 2.9291338582677162, 3.1181102362204722, 3.3070866141732282, 3.4960629921259843, 3.6850393700787398, 3.8740157480314958, 4.0629921259842519, 4.2519685039370074, 4.4409448818897639, 4.6299212598425195, 4.818897637795275, 5.0078740157480315, 5.1968503937007871, 5.3858267716535426, 5.5748031496062991, 5.7637795275590546, 5.9527559055118111, 6.1417322834645667, 6.3307086614173222, 6.5196850393700787, 6.7086614173228343, 6.8976377952755907, 7.0866141732283463, 7.2755905511811019, 7.4645669291338583, 7.6535433070866139, 7.8425196850393695, 8.0314960629921259, 8.2204724409448815, 8.4094488188976371, 8.5984251968503926, 8.78740157480315, 8.9763779527559056, 9.1653543307086611, 9.3543307086614167, 9.5433070866141723, 9.7322834645669296, 9.9212598425196852, 10.110236220472441, 10.299212598425196, 10.488188976377952, 10.677165354330707, 10.866141732283465, 11.05511811023622, 11.244094488188976, 11.433070866141732, 11.622047244094487, 11.811023622047244, 12.};
-    // static constexpr uint64_t vparg_extent_0 = the_vpar_extent;
-
-    // lbound(coeff_intdmu,1) = 0;
-    // ubound(coeff_intdmu,1) = 47;
-    // size(coeff_intdmu,1) = 48;
-    static constexpr double coeff_intdmu[the_mu_extent] = {0., 2.41436547457371427E-2, 2.41436547457371427E-2, 7.24309642372114315E-2, 4.82873094914742854E-2, 0.12071827372868571, 7.24309642372114315E-2, 0.16900558322015999, 9.65746189829485707E-2, 0.21729289271163429, 0.12071827372868571, 0.26558020220310852, 0.14486192847442286, 0.31386751169458288, 0.16900558322015999, 0.36215482118605713, 0.19314923796589714, 0.41044213067753144, 0.21729289271163429, 0.45872944016900569, 0.24143654745737142, 0.50701674966048005, 0.26558020220310852, 0.55530405915195424, 0.28972385694884573, 0.60359136864342855, 0.31386751169458288, 0.65187867813490286, 0.33801116644031998, 0.70016598762637716, 0.36215482118605713, 0.74845329711785147, 0.38629847593179428, 0.79674060660932566, 0.41044213067753144, 0.84502791610079997, 0.43458578542326859, 0.89331522559227428, 0.45872944016900569, 0.94160253508374858, 0.48287309491474284, 0.98988984457522278, 0.50701674966048005, 1.0381771540666971, 0.53116040440621703, 1.0864644635581715, 0.55530405915195424, 0.28368794326241142};
-    // static constexpr uint64_t coeff_intdmu_extent_0 = the_mu_extent;
-
-    // lbound(coeff_intdvpar,1) = 0;
-    // ubound(coeff_intdvpar,1) = 127;
-    // size(coeff_intdvpar,1) = 128;
-    static constexpr double coeff_intdvpar[the_vpar_extent] = {0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559, 0.1889763779527559};
-    // static constexpr uint64_t coeff_intdvpar_extent_0 = the_vpar_extent;
-
-    // rg lbound 1 0
-    // rg size   1 32
-    // rg ubound 1 31
-    static constexpr double rg[the_r_extent] = {1.1111111111111109, 3.333333333333333, 5.5555555555555554, 7.7777777777777777, 10., 12.222222222222223, 14.444444444444445, 16.666666666666668, 18.888888888888889, 21.111111111111111, 23.333333333333336, 25.555555555555557, 27.777777777777779, 30., 32.222222222222221, 34.444444444444443, 36.666666666666671, 38.888888888888893, 41.111111111111114, 43.333333333333336, 45.555555555555557, 47.777777777777779, 50., 52.222222222222221, 54.44444444444445, 56.666666666666671, 58.888888888888893, 61.111111111111114, 63.333333333333336, 65.555555555555557, 67.777777777777786, 70.};
-
-    // nustar0_r lbound 1 0
-    // nustar0_r size   1 32
-    // nustar0_r ubound 1 31
-    static constexpr double nustar0_r[the_r_extent] = {184.14192532377947, 35.438257627946825, 16.470573095840162, 9.9436384303559215, 6.8216922873912118, 5.0499247210943716, 3.9323757140844435, 3.1749322066681667, 2.6341170601726076, 2.2324656348072947, 1.9248612708562103, 1.683433142690395, 1.4901327942584295, 1.3328121864064699, 1.2030268309153078, 1.0947441177054502, 1.0035521961829219, 0.92615821431536416, 0.86006031915208092, 0.80332750744392956, 0.7544483832704707, 0.71222508278551266, 0.67569748768476301, 0.64408816936750446, 0.61676178578755858, 0.59319472388759353, 0.57295211649546463, 0.55567024149265165, 0.54104289974809217, 0.52881076911912361, 0.51875300886823839, 0.51068058303590491};
-
-    // nustar0_r lbound 1 0
-    // nustar0_r size   1 32
-    // nustar0_r ubound 1 31
-    static constexpr double q_r[the_r_extent] = {1.2000000674762548, 1.200004387445524, 1.2000305658857675, 1.2001097800745295, 1.2002852807746429, 1.2006115657747147, 1.2011538137443118, 1.2019874570570905, 1.2031978410301916, 1.2048799419166174, 1.2071381273067248, 1.2100859484960278, 1.213845957754154, 1.2185495455007442, 1.224336793733066, 1.231356342953307, 1.2397652704742095, 1.2497289784350696, 1.2614210901940766, 1.2750233540142315, 1.2907255531525996, 1.3087254216125657, 1.3292285649371665, 1.3524483855162783, 1.3786060119570753, 1.4079302321297891, 1.4406574295524956, 1.4770315228216333, 1.517303907831018, 1.5617334025525744, 1.610586194177877, 1.6641357884417383};
-
-    // nustar0_r lbound 1 0
-    // nustar0_r size   1 32
-    // nustar0_r ubound 1 31
-    static constexpr double mask_buffer_r[the_r_extent] = {0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 2.81000711525697389E-3, 9.85588964179064941E-2, 0.80923908090803054, 0.99396116715554794};
-
-    // NOTE: May not always be allocated.
-    // static constexpr double mask_LIM[the_theta_extent][the_r_extent]{};
-
-    // mom B_norm lbound 1   1
-    // mom B_norm lbound 2   1
-    // mom B_norm size   1   32
-    // mom B_norm size   2   33
-    // mom B_norm ubound 1   32
-    // mom B_norm ubound 2   33
-    static constexpr double B_norm[the_global_domain_theta_extent][the_global_domain_r_extent]{};
-
-    // mom Bstar_s lbound 1   1
-    // mom Bstar_s lbound 2   1
-    // mom Bstar_s lbound 3   1
-    // mom Bstar_s lbound 4   1
-    // mom Bstar_s size   1   128
-    // mom Bstar_s size   2   32
-    // mom Bstar_s size   3   32
-    // mom Bstar_s size   4   1
-    // mom Bstar_s ubound 1   128
-    // mom Bstar_s ubound 2   32
-    // mom Bstar_s ubound 3   32
-    // mom Bstar_s ubound 4   1
-    static constexpr double Bstar_s[the_species_extent][the_theta_extent][the_r_extent][the_vpar_extent]{};
-
-    if(::koliop_Create(&an_operator,
-                       Npolmax,
-                       index_max,
-                       pSpecies_id,
-                       mu_id,
-                       the_mu_extent,
-                       the_vpar_extent,
-                       the_r_extent,
-                       the_theta_extent,
-                       the_phi_extent,
-                       the_species_extent,
-                       the_global_domain_r_extent,
-                       the_global_domain_theta_extent,
-                       the_global_domain_r_offset,
-                       the_global_domain_theta_offset,
-                       R0,
-                       collision_interspecies,
-                       SOL,
-                       LIM,
-                       ir_SOL_separatrix,
-                       &comb_mat[0][0],
-                       &hat_As[0],
-                       &hat_Zs[0],
-                       &mug[0],
-                       &vparg[0],
-                       &coeff_intdmu[0],
-                       &coeff_intdvpar[0],
-                       &rg[0],
-                       &nustar0_r[0],
-                       &q_r[0],
-                       &mask_buffer_r[0],
-                       nullptr, // &mask_LIM[0][0],
-                       &B_norm[0][0],
-                       &Bstar_s[0][0][0][0]) != KOLIOP_STATUS_SUCCESS) {
-        std::cout << "::koliop_Create() failed\n";
-        return -1;
-    }
-
-    std::cout << an_operator << "\n";
-
-    // mom f5d_s lbound 1   1
-    // mom f5d_s lbound 2   1
-    // mom f5d_s lbound 3   1
-    // mom f5d_s lbound 4   1
-    // mom f5d_s lbound 5   1
-    // mom f5d_s lbound 6   1
-    // mom f5d_s size   1   48
-    // mom f5d_s size   2   128
-    // mom f5d_s size   3   32
-    // mom f5d_s size   4   32
-    // mom f5d_s size   5   1
-    // mom f5d_s size   6   1
-    // mom f5d_s ubound 1   48
-    // mom f5d_s ubound 2   128
-    // mom f5d_s ubound 3   32
-    // mom f5d_s ubound 4   32
-    // mom f5d_s ubound 5   1
-    // mom f5d_s ubound 6   1
-    double f5d_s[the_species_extent][the_phi_extent][the_theta_extent][the_r_extent][the_vpar_extent][the_mu_extent]{};
-
-    ::koliop_ComputeMoments(an_operator,
-                            &f5d_s[0][0][0][0][0][0]);
-
-    ::koliop_PrecomputeNu(an_operator);
-
-    ::koliop_ComputeMaxwellianEvolution(an_operator,
-                                        dt,
-                                        &f5d_s[0][0][0][0][0][0]);
-
-    ::koliop_ComputeQparOnNT(an_operator,
-                             &f5d_s[0][0][0][0][0][0]);
-
-    ::koliop_ComputeCpar(an_operator,
-                         dt,
-                         &f5d_s[0][0][0][0][0][0]);
-
-    static constexpr int32_t choice = 4;
-
-    ::koliop_ComputeMaxwellianUnshiftedLoc(an_operator,
-                                           &f5d_s[0][0][0][0][0][0],
-                                           choice);
-
-    ::koliop_Apply(an_operator,
-                   dt,
-                   &f5d_s[0][0][0][0][0][0]);
-
-    ::koliop_Fence(an_operator);
-
-    ::koliop_ComputeDensityCorrection(an_operator,
-                                      &f5d_s[0][0][0][0][0][0]);
-
-    ::koliop_ComputeUparTCorrection(an_operator,
-                                    dt,
-                                    &f5d_s[0][0][0][0][0][0]);
-
-    double n_s[the_species_extent][the_phi_extent][the_theta_extent][the_r_extent]{{{{42.0}}}};
-
-    ::koliop_ExtractRaw(an_operator,
-                        KOLIOP_EXTRACTION_IDENTIFIER_n_s,
-                        &n_s[0][0][0]);
-
-    ::koliop_Fence(an_operator);
-
-    if(::koliop_Release(an_operator) != KOLIOP_STATUS_SUCCESS) {
-        std::cout << "::koliop_Release() failed\n";
-    }
-
-    return 0;
-}
 
 int Test1() {
     // NOTE: This function is used to test the GPU code. We pass the operator
@@ -427,8 +167,8 @@ int Test2() {
     static constexpr size_t the_vpar_extent    = 128;
     static constexpr size_t the_r_extent       = 64;
     static constexpr size_t the_theta_extent   = 128;
-    static constexpr size_t the_phi_extent     = 1;
-    static constexpr size_t the_species_extent = 1;
+    static constexpr size_t the_phi_extent     = 32;
+    static constexpr size_t the_species_extent = 2;
 
     static constexpr size_t the_global_domain_r_extent     = the_r_extent;
     static constexpr size_t the_global_domain_theta_extent = the_theta_extent + 1;
@@ -500,6 +240,20 @@ int Test2() {
         return -1;
     }
 
+    for(int i = 0; i < 10; ++i) {
+        const auto time_point = std::chrono::steady_clock::now();
+
+        if(::koliop_Collision(an_operator,
+                              dt,
+                              a_big_dummy_f5d_s.data()) != KOLIOP_STATUS_SUCCESS) {
+            std::cout << "::koliop_Collision() failed\n";
+            return -1;
+        }
+
+        const auto duration = std::chrono::steady_clock::now() - time_point;
+        std::cout << (duration.count() / 1'000'000) << " ms\n";
+    }
+
     if(::koliop_Release(an_operator) != KOLIOP_STATUS_SUCCESS) {
         std::cout << "::koliop_Release() failed\n";
     }
@@ -513,25 +267,19 @@ int main(int, char**) {
         return -1;
     }
 
-    if(Test0() < 0) {
+    // NOTE: Makes sure the kernel are on the device. Indeed the initial kernel
+    // launch has a huge latency due to the kernel needing to be copied to the
+    // GPU's memory.
+    if(Test1() < 0) {
         return -1;
     }
 
-    {
-        // NOTE: Makes sure the kernel are on the device. Indeed the initial kernel
-        // launch has a huge latency due to the kernel needing to be copied to the
-        // GPU's memory.
-        if(Test1() < 0) {
-            return -1;
-        }
+    if(Test1() < 0) {
+        return -1;
+    }
 
-        if(Test1() < 0) {
-            return -1;
-        }
-
-        if(Test2() < 0) {
-            return -1;
-        }
+    if(Test2() < 0) {
+        return -1;
     }
 
     if(::koliop_Deinitialize(KOLIOP_TRUE) != KOLIOP_STATUS_SUCCESS) {
