@@ -15,10 +15,12 @@
 namespace koliop {
     namespace collision {
 
-        template <typename View6D,
+        template <typename ExecutionSpace,
+                  typename View6D,
                   typename View4D>
         static inline void
         DoComputeMaxwellianEvolution(const Operator&  an_operator,
+                                     ExecutionSpace   an_execution_space,
                                      ComputeFloatType dt,
                                      View6D&&         f5d_s,
                                      View4D&&         T_s) {
@@ -40,8 +42,6 @@ namespace koliop {
             const auto& n_s     = an_operator.n_s_;
             const auto& U_par_s = an_operator.U_par_s_;
             const auto& nu_ab   = an_operator.nu_ab_;
-
-            const auto& the_execution_space_pool = an_operator.the_execution_space_pool_;
 
             const ComputeFloatType half_dt = dt / 2.0;
 
@@ -65,7 +65,7 @@ namespace koliop {
                 Constant::DeviceExecutionSpaceType>;
 
             auto a_policy = PolicyType{
-                the_execution_space_pool[Constant::kDefaultExecutionSpacePoolIndex],
+                an_execution_space,
                 static_cast<int>(the_team_count),
                 // NOTE: The thread block size and the Nmu benefit from being
                 // close. This is due to the TeamThreadMDRange which
@@ -185,7 +185,9 @@ namespace koliop {
                                                                                                                        the_r_extent_, the_theta_extent_, the_phi_extent_,
                                                                                                                        the_species_extent_);
 
-            DoComputeMaxwellianEvolution(*this, dt, a_device_visible_f5d_s, T_s_);
+            DoComputeMaxwellianEvolution(*this, the_execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],
+                                         dt,
+                                         a_device_visible_f5d_s, T_s_);
 
             koliop::utility::Copy::ViewToRawData<koliop::utility::View::InternalInputL6<Flo64>,
                                                  koliop::utility::View::ExternalInputL6<Flo64>>(the_execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],

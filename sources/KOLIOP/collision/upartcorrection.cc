@@ -3,9 +3,11 @@
 #include <Kokkos_Core.hpp>
 #include <limits>
 #include <type_traits>
+#include <utility>
 
 #include "KOLIOP/collision/constant.h"
 #include "KOLIOP/collision/operator.h"
+#include "KOLIOP/collision/scoped.h"
 #include "KOLIOP/internal/configuration.h"
 #include "KOLIOP/portability/cmath.h"
 #include "KOLIOP/utility/copy.h"
@@ -15,13 +17,18 @@
 namespace koliop {
     namespace collision {
 
-        template <typename View6D,
-                  typename View4D>
+        template <typename ExecutionSpace,
+                  typename View6D,
+                  typename View4D0,
+                  typename View4D1>
         static inline void
         DoComputeUparTCorrection(const Operator&  an_operator,
+                                 ExecutionSpace   an_execution_space,
                                  ComputeFloatType dt,
+                                 OrdinalType      the_species_index,
+                                 const View4D0&   input_U_par_s,
                                  View6D&&         f5d_s,
-                                 View4D&&         U_par_s) {
+                                 View4D1&&        output_U_par_s) {
 
             const auto& the_mu_extent      = an_operator.the_mu_extent_;
             const auto& the_vpar_extent    = an_operator.the_vpar_extent_;
@@ -45,10 +52,7 @@ namespace koliop {
             const auto& nu_ab          = an_operator.nu_ab_;
             const auto& q_par_on_nT_s  = an_operator.q_par_on_nT_s_;
 
-            const auto& pSpecies_id            = an_operator.pSpecies_id_;
             const auto& collision_interspecies = an_operator.collision_interspecies_;
-
-            const auto& the_execution_space_pool = an_operator.the_execution_space_pool_;
 
             // TODO(Etienne M): Make sure the accesses are sequential on CPU.
 
@@ -62,7 +66,7 @@ namespace koliop {
                 Constant::DeviceExecutionSpaceType>;
 
             const auto a_policy = PolicyType{
-                the_execution_space_pool[Constant::kDefaultExecutionSpacePoolIndex],
+                an_execution_space,
                 static_cast<int>(the_team_count),
                 // NOTE: The thread block size and the Nmu benefit from being
                 // close. This is due to the TeamThreadMDRange which
@@ -89,7 +93,7 @@ namespace koliop {
 
                 const ComputeFloatType Bij = B_norm(the_local_domain_r_offset + ir,
                                                     the_local_domain_theta_offset + itheta);
-                const ComputeFloatType na  = n_s(ir, itheta, iphi, pSpecies_id);
+                const ComputeFloatType na  = n_s(ir, itheta, iphi, the_species_index);
 
                 // TODO(Etienne M): Is parallel_for + TeamThreadMDRange +
                 // explicit the_na_reducer followed by team_reduce, a valid
@@ -99,14 +103,14 @@ namespace koliop {
                     an_intra_team_policy,
                     [&](auto imu, auto ivpar) {
                         const ComputeFloatType jacob_vel = koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi *
-                                                           Bstar_s(ivpar, ir, itheta, pSpecies_id);
+                                                           Bstar_s(ivpar, ir, itheta, the_species_index);
 
                         the_impulsion_coll_reducer.join(the_impulsion_coll_reducer.reference(),
                                                         coeff_intdvpar(ivpar) *
                                                             coeff_intdmu(imu) *
                                                             jacob_vel *
                                                             vparg(ivpar) *
-                                                            f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id));
+                                                            f5d_s(imu, ivpar, ir, itheta, iphi, the_species_index));
                     });
 
                 a_team_handle.team_reduce(the_impulsion_coll_reducer);
@@ -124,7 +128,7 @@ namespace koliop {
                     an_intra_team_policy,
                     [&](auto imu, auto ivpar) {
                         const ComputeFloatType jacob_vel = (koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi / na) *
-                                                           Bstar_s(ivpar, ir, itheta, pSpecies_id);
+                                                           Bstar_s(ivpar, ir, itheta, the_species_index);
 
                         the_T_coll_reducer.join(the_T_coll_reducer.reference(),
                                                 coeff_intdvpar(ivpar) *
@@ -132,7 +136,7 @@ namespace koliop {
                                                     (jacob_vel / 3.0) *
                                                     ((vparg(ivpar) - U_par_coll) * (vparg(ivpar) - U_par_coll) +
                                                      2.0 * mug(imu) * Bij) *
-                                                    f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id));
+                                                    f5d_s(imu, ivpar, ir, itheta, iphi, the_species_index));
                     });
 
                 a_team_handle.team_reduce(the_T_coll_reducer);
@@ -140,30 +144,30 @@ namespace koliop {
                 // NOTE: This should be a no-op.
                 T_coll = the_T_coll_reducer.reference();
 
-                const ComputeFloatType hat_Aa      = hat_As(pSpecies_id);
-                const ComputeFloatType Vpara       = U_par_s(ir, itheta, iphi, pSpecies_id);
+                const ComputeFloatType hat_Aa      = hat_As(the_species_index);
+                const ComputeFloatType Vpara       = input_U_par_s(ir, itheta, iphi, the_species_index);
                 ComputeFloatType       U_par_new   = Vpara;
-                const ComputeFloatType q_par_on_nT = q_par_on_nT_s(ir, itheta, iphi, pSpecies_id);
-                const ComputeFloatType T_new       = T_s(ir, itheta, iphi, pSpecies_id);
+                const ComputeFloatType q_par_on_nT = q_par_on_nT_s(ir, itheta, iphi, the_species_index);
+                const ComputeFloatType T_new       = T_s(ir, itheta, iphi, the_species_index);
 
                 for(OrdinalType ispecies = 0; ispecies < the_species_extent; ++ispecies) {
-                    if((ispecies == pSpecies_id) || !collision_interspecies) {
+                    if((ispecies == the_species_index) || !collision_interspecies) {
                         continue;
                     }
 
                     const ComputeFloatType hat_Ab         = hat_As(ispecies);
                     const ComputeFloatType Rat            = Kokkos::sqrt(hat_Aa / hat_Ab);
-                    const ComputeFloatType Vparb          = U_par_s(ir, itheta, iphi, ispecies);
+                    const ComputeFloatType Vparb          = input_U_par_s(ir, itheta, iphi, ispecies);
                     const ComputeFloatType q_parb_on_nbTb = q_par_on_nT_s(ir, itheta, iphi, ispecies);
 
                     const ComputeFloatType k_ab = 1.0 / (1.0 +
                                                          hat_Aa * T_s(ir, itheta, iphi, ispecies) /
-                                                             (hat_Ab * T_s(ir, itheta, iphi, pSpecies_id)));
+                                                             (hat_Ab * T_s(ir, itheta, iphi, the_species_index)));
                     const ComputeFloatType k_ba = 1.0 / (1.0 +
-                                                         hat_Ab * T_s(ir, itheta, iphi, pSpecies_id) /
+                                                         hat_Ab * T_s(ir, itheta, iphi, the_species_index) /
                                                              (hat_Aa * T_s(ir, itheta, iphi, ispecies)));
 
-                    const ComputeFloatType nu = nu_ab(ir, itheta, iphi, pSpecies_id, ispecies);
+                    const ComputeFloatType nu = nu_ab(ir, itheta, iphi, the_species_index, ispecies);
 
                     const ComputeFloatType R_ab = -nu * (Vpara -
                                                          Rat * Vparb -
@@ -193,7 +197,7 @@ namespace koliop {
                                                                                       (vparg(ivpar) - U_par_new) *
                                                                                           (vparg(ivpar) - U_par_new) / (2 * T_new));
 
-                        f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id) += FMa_new - FMa_coll;
+                        f5d_s(imu, ivpar, ir, itheta, iphi, the_species_index) += FMa_new - FMa_coll;
                     });
 
                 Kokkos::single(
@@ -202,7 +206,7 @@ namespace koliop {
                         // NOTE: no need to barrier, we know that all the
                         // threads have a valid U_par_new. Putting this code
                         // before the parallel for requires an additional fence.
-                        U_par_s(ir, itheta, iphi, pSpecies_id) = U_par_new;
+                        output_U_par_s(ir, itheta, iphi, the_species_index) = U_par_new;
                     });
             };
 
@@ -211,7 +215,7 @@ namespace koliop {
         }
 
         void Operator::ComputeUparTCorrection(ComputeFloatType dt,
-                                              Flo64*           f5d_s) const {
+                                              Flo64*           f5d_s) {
 
             auto a_device_visible_f5d_s = koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL6<Flo64>,
                                                                                koliop::utility::View::InternalInputL6>(the_execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],
@@ -220,7 +224,33 @@ namespace koliop {
                                                                                                                        the_r_extent_, the_theta_extent_, the_phi_extent_,
                                                                                                                        the_species_extent_);
 
-            DoComputeUparTCorrection(*this, dt, a_device_visible_f5d_s, U_par_s_);
+            {
+                ScopedFenceHandler<koliop::utility::Copy::IsCopyRequired<koliop::utility::View::InternalInputL6<Flo64>,
+                                                                         koliop::utility::View::ExternalInputL6<Flo64>>()>
+                    a_scoped_fencer{this};
+
+                // ComputeUparTCorrection reads U_par_s_input_ and outputs to
+                // U_par_s_. This is required if more than 1 species is used, we
+                // can not write in U_par_s_ while it is still being read (by
+                // other threads, species, thread block, etc.).
+
+                // We will not have a race when swapping the buffer just below
+                // because when a kernel is launched, and we have the guarantee
+                // that the previous are in queue their respective streams and
+                // that they carry their state which in this case, would be a
+                // copy of U_par_s_ before the swap.
+                std::swap(U_par_s_, U_par_s_input_);
+
+                for(OrdinalType the_species_index = 0; the_species_index < the_species_extent_; ++the_species_index) {
+                    DoComputeUparTCorrection(*this, the_execution_space_pool_[the_species_index % Constant::kDisjointExecutionSpaceCount],
+                                             dt, the_species_index,
+                                             U_par_s_input_, a_device_visible_f5d_s, U_par_s_);
+                }
+            }
+
+            // NOTE: Stream usage semantic change, we switch from a stream per
+            // species to a stream handling all species.
+            FenceAll();
 
             koliop::utility::Copy::ViewToRawData<koliop::utility::View::InternalInputL6<Flo64>,
                                                  koliop::utility::View::ExternalInputL6<Flo64>>(the_execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],

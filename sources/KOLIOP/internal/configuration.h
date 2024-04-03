@@ -172,7 +172,10 @@ namespace koliop {
 } // namespace koliop
 
 #if defined(KOLIOP_ASSERT_ENABLED)
-    #define KOLIOP_ASSERT(an_expression) KOLIOP_UNUSED((an_expression) || (koliop::error::AssertionFailure(#an_expression " in " __FILE__ ":" KOLIOP_UTILITY_STRINGIFY(__LINE__)), false))
+    #define KOLIOP_ASSERT(an_expression)                                                                                                                       \
+        do {                                                                                                                                                   \
+            KOLIOP_UNUSED((an_expression) || (koliop::error::AssertionFailure(#an_expression " in " __FILE__ ":" KOLIOP_UTILITY_STRINGIFY(__LINE__)), false)); \
+        } while(false)
 #else
     #define KOLIOP_ASSERT(an_expression)
 #endif

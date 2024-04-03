@@ -290,7 +290,7 @@ namespace koliop {
                           typename Array2D>
                 KOKKOS_INLINE_FUNCTION void
                 DoComputeL(OrdinalType    the_species_extent,
-                           OrdinalType    pSpecies_id,
+                           OrdinalType    the_species_index,
                            bool           collision_interspecies,
                            const View1D0& hat_As,
                            const View1D0& hat_Zs,
@@ -300,14 +300,14 @@ namespace koliop {
                            ValueType      vpar2_on_Ta,
                            Array2D        L_mat) {
 
-                    const ValueType hat_Aa = hat_As(pSpecies_id);
-                    const ValueType hat_Za = hat_Zs(pSpecies_id);
+                    const ValueType hat_Aa = hat_As(the_species_index);
+                    const ValueType hat_Za = hat_Zs(the_species_index);
 
                     // Assumes L_mat is zeroed.
                     // L_mat(:,:) = 0.0;
 
                     for(OrdinalType ispeciesB = 0; ispeciesB < the_species_extent; ++ispeciesB) {
-                        if(!(collision_interspecies || (pSpecies_id == ispeciesB))) {
+                        if(!(collision_interspecies || (the_species_index == ispeciesB))) {
                             continue;
                         }
 
@@ -315,9 +315,9 @@ namespace koliop {
                         const ValueType hat_Zb = hat_Zs(ispeciesB);
 
                         const ValueType coeff_L = (0.75 * koliop::portability::MathematicalConstant<ValueType>::kSqrtPi * koliop::portability::MathematicalConstant<ValueType>::kSqrt2) *
-                                                  nu * (hat_Zb * hat_Zb * local_n_s(ispeciesB)) / (hat_Za * hat_Za * local_n_s(pSpecies_id));
+                                                  nu * (hat_Zb * hat_Zb * local_n_s(ispeciesB)) / (hat_Za * hat_Za * local_n_s(the_species_index));
 
-                        const ValueType vTb_on_vta_2 = (hat_Aa * local_T_s(ispeciesB)) / (hat_Ab * local_T_s(pSpecies_id));
+                        const ValueType vTb_on_vta_2 = (hat_Aa * local_T_s(ispeciesB)) / (hat_Ab * local_T_s(the_species_index));
 
                         {
                             const ValueType Xtr         = vpar2_on_Ta * 0.5 + vTb_on_vta_2 * (9.0 * koliop::portability::MathematicalConstant<ValueType>::kPi / 16.0);
@@ -392,6 +392,7 @@ namespace koliop {
                           OrdinalType    the_block_first_r,
                           OrdinalType    the_block_first_theta,
                           OrdinalType    the_block_first_phi,
+                          OrdinalType    the_species_index,
                           const View4D&  n_s,
                           const View4D&  T_s,
                           const View5D&  nu_ab,
@@ -412,7 +413,6 @@ namespace koliop {
 
                 const auto& C_jl = the_najl_provider.C_jl_;
 
-                const auto& pSpecies_id            = the_najl_provider.pSpecies_id_;
                 const auto& collision_interspecies = the_najl_provider.collision_interspecies_;
 
                 const auto the_kernel = KOKKOS_LAMBDA(OrdinalType ivpar, OrdinalType ir, OrdinalType itheta, OrdinalType iphi) {
@@ -467,7 +467,7 @@ namespace koliop {
                                                            iphi,
                                                            Kokkos::ALL());
 
-                    const ValueType vpar2_on_Ta = vparg(ivpar) * vparg(ivpar) / local_T_s(pSpecies_id);
+                    const ValueType vpar2_on_Ta = vparg(ivpar) * vparg(ivpar) / local_T_s(the_species_index);
 
                     // NOTE: We could reduce the size of L_mat by using some
                     // condition. For instance:
@@ -478,11 +478,11 @@ namespace koliop {
                     ValueType L_mat[5][Constant::kIndexMax + 1 + 1]{};
 
                     DoComputeL<ValueType>(the_species_extent,
-                                          pSpecies_id,
+                                          the_species_index,
                                           collision_interspecies,
                                           hat_As, hat_Zs,
                                           local_n_s, local_T_s,
-                                          nu_ab(ir, itheta, iphi, pSpecies_id, pSpecies_id),
+                                          nu_ab(ir, itheta, iphi, the_species_index, the_species_index),
                                           vpar2_on_Ta,
                                           L_mat);
 
@@ -535,8 +535,8 @@ namespace koliop {
                             }
                         }
 
-                        N_coeff = local_T_s(pSpecies_id) * (L_mat[0][ind_i] +
-                                                            L_mat[2][ind_i] * vpar2_on_Ta * 0.5);
+                        N_coeff = local_T_s(the_species_index) * (L_mat[0][ind_i] +
+                                                                  L_mat[2][ind_i] * vpar2_on_Ta * 0.5);
 
                         for(OrdinalType l = 0; l < Constant::kMaximumLaguerrePolynomialDegree; ++l) {
                             for(OrdinalType j = 0; j < Constant::kMaximumLaguerrePolynomialDegree; ++j) {
@@ -598,8 +598,7 @@ namespace koliop {
             using MatrixKindType = typename CvCdDriverType::MatrixKindType;
 
         public:
-            Najl(OrdinalType                                                pSpecies_id,
-                 OrdinalType                                                the_vpar_extent,
+            Najl(OrdinalType                                                the_vpar_extent,
                  OrdinalType                                                the_species_extent,
                  bool                                                       collision_interspecies,
                  const koliop::utility::View::InternalInputL1<const Flo64>& hat_As,
@@ -611,6 +610,7 @@ namespace koliop {
                          OrdinalType                                          the_block_first_r,
                          OrdinalType                                          the_block_first_theta,
                          OrdinalType                                          the_block_first_phi,
+                         OrdinalType                                          the_species_index,
                          const koliop::utility::View::MDL4<ComputeFloatType>& n_s,
                          const koliop::utility::View::MDL4<ComputeFloatType>& T_s,
                          const koliop::utility::View::MDL5<ComputeFloatType>& nu_ab,
@@ -622,7 +622,6 @@ namespace koliop {
 
             // Constant, externally computed values
 
-            OrdinalType pSpecies_id_;
             OrdinalType the_vpar_extent_;
             OrdinalType the_species_extent_;
             bool        collision_interspecies_;
@@ -641,19 +640,17 @@ namespace koliop {
 
 
         ////////////////////////////////////////////////////////////////////////
-        // CvCdDriver definition
+        // Najl methods definition
         ////////////////////////////////////////////////////////////////////////
 
         template <typename CvCdDriver>
-        Najl<CvCdDriver>::Najl(OrdinalType                                                pSpecies_id,
-                               OrdinalType                                                the_vpar_extent,
+        Najl<CvCdDriver>::Najl(OrdinalType                                                the_vpar_extent,
                                OrdinalType                                                the_species_extent,
                                bool                                                       collision_interspecies,
                                const koliop::utility::View::InternalInputL1<const Flo64>& hat_As,
                                const koliop::utility::View::InternalInputL1<const Flo64>& hat_Zs,
                                const koliop::utility::View::InternalInputL1<const Flo64>& vparg)
-            : pSpecies_id_{pSpecies_id}
-            , the_vpar_extent_{the_vpar_extent}
+            : the_vpar_extent_{the_vpar_extent}
             , the_species_extent_{the_species_extent}
             , collision_interspecies_{collision_interspecies}
             , hat_As_{hat_As}
@@ -673,6 +670,7 @@ namespace koliop {
                                        OrdinalType                                          the_block_first_r,
                                        OrdinalType                                          the_block_first_theta,
                                        OrdinalType                                          the_block_first_phi,
+                                       OrdinalType                                          the_species_index,
                                        const koliop::utility::View::MDL4<ComputeFloatType>& n_s,
                                        const koliop::utility::View::MDL4<ComputeFloatType>& T_s,
                                        const koliop::utility::View::MDL5<ComputeFloatType>& nu_ab,
@@ -702,6 +700,7 @@ namespace koliop {
                                   the_block_first_r,
                                   the_block_first_theta,
                                   the_block_first_phi,
+                                  the_species_index,
                                   n_s,
                                   T_s,
                                   nu_ab,

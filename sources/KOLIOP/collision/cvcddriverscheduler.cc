@@ -173,6 +173,7 @@ namespace koliop {
 
         void CvCdDriverScheduler::ScheduleExecution(const Operator&                                an_operator,
                                                     ComputeFloatType                               dt,
+                                                    OrdinalType                                    the_species_index,
                                                     koliop::utility::View::InternalInputL6<Flo64>& f5d_s) {
             for(auto&& a_driver_configuration : the_cvcd_drivers_configurations_) {
                 a_driver_configuration.the_cvcd_driver_->Apply(an_operator,
@@ -181,6 +182,7 @@ namespace koliop {
                                                                a_driver_configuration.the_block_first_theta_,
                                                                a_driver_configuration.the_block_first_phi_,
                                                                dt,
+                                                               the_species_index,
                                                                f5d_s);
             }
         }

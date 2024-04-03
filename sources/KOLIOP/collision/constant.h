@@ -38,13 +38,13 @@ namespace koliop {
             // TODO(Etienne M): Depending on the hardware, GPU/CPU, and between
             // GPUs, this value could be increased or reduced. Using future
             // GPUs, we could benefit from a higher value.
-            // Bigger blocking needs less streams ad inversely.
+            // Bigger blocking needs less streams.
             // NOTE: It may be that the block size is too small to use the whole
             // GPU's resources on every kernels. By using streams we can fill
             // the gapes left by the small kernels.
 
 #if defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_CUDA)
-            static inline constexpr OrdinalType kDisjointExecutionSpaceCount = 4;
+            static inline constexpr OrdinalType kDisjointExecutionSpaceCount = 2;
 #else
             static inline constexpr OrdinalType kDisjointExecutionSpaceCount = 1;
 #endif
@@ -64,29 +64,37 @@ namespace koliop {
             // consumption.
 
             static inline constexpr OrdinalType kPresetBlockExtent[][3] = {
-                {256, 128, 2},
-                {128, 256, 2},
-                {256, 128, 1},
-                {128, 256, 1},
-                {128, 128, 2},
-                {128, 128, 1},
-                {128, 64, 2},
-                {128, 32, 4},
-                {64, 128, 2},
+                // Nspace = 65536
+                // {256, 128, 2},
+                // {128, 256, 2},
+                // Nspace = 32768
+                // {256, 128, 1},
+                // {128, 256, 1},
+                // {128, 128, 2},
+                // Nspace = 16384
+                // {128, 128, 1},
+                // {128, 64, 2},
+                // {128, 32, 4},
+                // {64, 128, 2},
+                // Nspace = 8192
                 {128, 64, 1},
                 {128, 32, 2},
                 {64, 128, 1},
                 {64, 64, 2},
                 {32, 128, 2},
+                // Nspace = 4096
                 {128, 32, 1},
                 {64, 64, 1},
                 {64, 32, 2},
                 {32, 128, 1},
                 {32, 64, 2},
+                // Nspace = 2048
                 {64, 32, 1},
                 {32, 64, 1},
                 {32, 32, 2},
+                // Nspace = 1024
                 {32, 32, 1},
+                // Nspace = 1
                 // NOTE: Degraded operation performance is expected for 1x1x1
                 // blocks.
                 {1, 1, 1}};

@@ -6,6 +6,7 @@
 
 #include "KOLIOP/collision/constant.h"
 #include "KOLIOP/collision/operator.h"
+#include "KOLIOP/collision/scoped.h"
 #include "KOLIOP/internal/configuration.h"
 #include "KOLIOP/portability/cmath.h"
 #include "KOLIOP/utility/copy.h"
@@ -15,10 +16,13 @@
 namespace koliop {
     namespace collision {
 
-        template <typename View6D>
+        template <typename ExecutionSpace,
+                  typename View6D>
         static inline void
         DoComputeCpar(const Operator&  an_operator,
+                      ExecutionSpace   an_execution_space,
                       ComputeFloatType dt,
+                      OrdinalType      the_species_index,
                       View6D&&         f5d_s) {
 
             const auto& the_mu_extent      = an_operator.the_mu_extent_;
@@ -44,12 +48,9 @@ namespace koliop {
             const auto& T_s           = an_operator.T_s_;
             const auto& q_par_on_nT_s = an_operator.q_par_on_nT_s_;
 
-            const auto&            pSpecies_id = an_operator.pSpecies_id_;
-            const ComputeFloatType R0          = an_operator.R0_;
-            const ComputeFloatType R0_inverse  = 1.0 / R0;
-            const ComputeFloatType half_dt     = dt / 2.0;
-
-            const auto& the_execution_space_pool = an_operator.the_execution_space_pool_;
+            const ComputeFloatType R0         = an_operator.R0_;
+            const ComputeFloatType R0_inverse = 1.0 / R0;
+            const ComputeFloatType half_dt    = dt / 2.0;
 
             // TODO(Etienne M): Make sure the accesses are sequential on CPU.
 
@@ -63,7 +64,7 @@ namespace koliop {
                 Constant::DeviceExecutionSpaceType>;
 
             const auto a_policy = PolicyType{
-                the_execution_space_pool[Constant::kDefaultExecutionSpacePoolIndex],
+                an_execution_space,
                 static_cast<int>(the_team_count),
                 // NOTE: The thread block size and the Nmu benefit from being
                 // close. This is due to the TeamThreadMDRange which
@@ -78,18 +79,18 @@ namespace koliop {
                 const OrdinalType itheta = (the_team_index / (the_r_extent)) % the_theta_extent;
                 const OrdinalType iphi   = (the_team_index / (the_r_extent * the_theta_extent)) /* % the_phi_extent */;
 
-                const ComputeFloatType hat_Aa     = hat_As(pSpecies_id);
-                const ComputeFloatType hat_Za     = hat_Zs(pSpecies_id);
+                const ComputeFloatType hat_Aa     = hat_As(the_species_index);
+                const ComputeFloatType hat_Za     = hat_Zs(the_species_index);
                 const ComputeFloatType inv_hat_Aa = 1.0 / hat_Aa;
 
                 const ComputeFloatType smcsfqri = q_r(the_local_domain_r_offset + ir);
                 const ComputeFloatType Bij      = B_norm(the_local_domain_r_offset + ir,
                                                          the_local_domain_theta_offset + itheta);
 
-                const ComputeFloatType na          = n_s(ir, itheta, iphi, pSpecies_id);
-                const ComputeFloatType Vpara       = U_par_s(ir, itheta, iphi, pSpecies_id);
-                const ComputeFloatType Ta          = T_s(ir, itheta, iphi, pSpecies_id);
-                const ComputeFloatType q_par_on_nT = q_par_on_nT_s(ir, itheta, iphi, pSpecies_id);
+                const ComputeFloatType na          = n_s(ir, itheta, iphi, the_species_index);
+                const ComputeFloatType Vpara       = U_par_s(ir, itheta, iphi, the_species_index);
+                const ComputeFloatType Ta          = T_s(ir, itheta, iphi, the_species_index);
+                const ComputeFloatType q_par_on_nT = q_par_on_nT_s(ir, itheta, iphi, the_species_index);
 
                 const ComputeFloatType nustaR0_i = nustar0_r(the_local_domain_r_offset + ir);
                 const ComputeFloatType epstemp   = rg(the_local_domain_r_offset + ir) * R0_inverse;
@@ -132,11 +133,10 @@ namespace koliop {
                                                                         1.0;
                             const ComputeFloatType nu_sab         = (AD * hat_Za * hat_Za * hat_Zb * hat_Zb * nb) * inv_hat_Aa * (inv_hat_Aa + inv_hat_Ab) * Theta_func_tmp / (vTb * vTb * vTb);
 
-                            f5d_s(imu, ivpar, ir, itheta, iphi, pSpecies_id) += half_dt * FM0a * nu_sab * coeff5 * (Rat * Vparb - Vpara + q_par_on_nT * (1.0 - 2.0 * xa * xa * 0.2) - coeff4);
+                            f5d_s(imu, ivpar, ir, itheta, iphi, the_species_index) += half_dt * FM0a * nu_sab * coeff5 * (Rat * Vparb - Vpara + q_par_on_nT * (1.0 - 2.0 * xa * xa * 0.2) - coeff4);
                         });
                 }
             };
-
 
             Kokkos::parallel_for("DoComputeCpar",
                                  a_policy, the_kernel);
@@ -152,7 +152,17 @@ namespace koliop {
                                                                                                                        the_r_extent_, the_theta_extent_, the_phi_extent_,
                                                                                                                        the_species_extent_);
 
-            DoComputeCpar(*this, dt, a_device_visible_f5d_s);
+            {
+                ScopedFenceHandler<koliop::utility::Copy::IsCopyRequired<koliop::utility::View::InternalInputL6<Flo64>,
+                                                                         koliop::utility::View::ExternalInputL6<Flo64>>()>
+                    a_scoped_fencer{this};
+
+                for(OrdinalType the_species_index = 0; the_species_index < the_species_extent_; ++the_species_index) {
+                    DoComputeCpar(*this, the_execution_space_pool_[the_species_index % Constant::kDisjointExecutionSpaceCount],
+                                  dt, the_species_index,
+                                  a_device_visible_f5d_s);
+                }
+            }
 
             koliop::utility::Copy::ViewToRawData<koliop::utility::View::InternalInputL6<Flo64>,
                                                  koliop::utility::View::ExternalInputL6<Flo64>>(the_execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],

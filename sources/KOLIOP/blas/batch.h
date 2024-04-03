@@ -50,6 +50,12 @@ namespace koliop {
             /// float2, double4 etc. As of 2023, doubleN is not really a SIMD
             /// registers and serve more to do efficient loads. In the case of
             /// a GPU, kVectorSize may be == 4 regardless of kBatchSize.
+            ///
+            /// NOTE: While batching is required to produce efficient memory
+            /// access on GPUs, using single double instead of double4/double2
+            /// exposes more concurrency. We are a bit faster, on MI250X, when
+            /// using kVectorSize = 1, instead of the default which is 4.
+            ///
             static inline constexpr OrdinalType kVectorSize = KokkosBatched::DefaultInternalVectorLength<value_type,
                                                                                                          typename ExecutionSpaceType::memory_space>::value;
 
