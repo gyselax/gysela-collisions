@@ -602,10 +602,9 @@ namespace koliop {
             // the_block_[r|theta|phi]_offset
             // the_block_[r|theta|phi]_extent
 
-            // TODO(Etienne M): Currently, we allocate lot of memory to store
-            // the Najl coeff, the alpha coeff, the matrix etc. What if we could
-            // compute the Alpha coefs and overwrite the f5d_s with the
-            // matrix/alpha coef/najl ?
+            // NOTE: Currently, we allocate memory to store the Najl coeff, the
+            // alpha coeff, the matrix etc. What if we could compute the Alpha
+            // coefs and overwrite the f5d_s with the matrix/alpha coef/najl ?
 
             // NOTE: If you have an issue with these assertions, checkout the
             // constant.h file and tune kBlockExtent[R|Theta|Phi].
