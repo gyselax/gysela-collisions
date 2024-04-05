@@ -21,16 +21,14 @@ namespace koliop {
                                                                                                                        the_r_extent_, the_theta_extent_, the_phi_extent_,
                                                                                                                        the_species_extent_);
 
-            // NOTE: Stream usage semantic change, we switch from a stream per
-            // species to a stream handling a set of block.
-            FenceAll();
+            // NOTE: Stream usage semantic change
+            Fence(Constant::kDefaultExecutionSpacePoolIndex);
 
             for(OrdinalType the_species_index = 0; the_species_index < the_species_extent_; ++the_species_index) {
                 the_cvcd_drivers_scheduler_.ScheduleExecution(*this, dt, the_species_index, a_device_visible_f5d_s);
             }
 
-            // NOTE: Stream usage semantic change, we switch from a stream
-            // handling a set of block to a stream per species.
+            // NOTE: Stream usage semantic change
             FenceAll();
 
             koliop::utility::Copy::ViewToRawData<koliop::utility::View::InternalInputL6<Flo64>,
