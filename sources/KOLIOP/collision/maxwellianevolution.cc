@@ -159,9 +159,6 @@ namespace koliop {
                         });
                 }
 
-                // Not sure we need that barrier.
-                a_team_handle.team_barrier();
-
                 Kokkos::single(
                     Kokkos::PerTeam(a_team_handle),
                     [&]() {

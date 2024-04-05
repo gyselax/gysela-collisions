@@ -6,7 +6,6 @@
 
 #include "KOLIOP/collision/constant.h"
 #include "KOLIOP/collision/operator.h"
-#include "KOLIOP/collision/scoped.h"
 #include "KOLIOP/internal/configuration.h"
 #include "KOLIOP/portability/cmath.h"
 #include "KOLIOP/utility/copy.h"
@@ -22,7 +21,6 @@ namespace koliop {
         DoComputeCpar(const Operator&  an_operator,
                       ExecutionSpace   an_execution_space,
                       ComputeFloatType dt,
-                      OrdinalType      the_species_index,
                       View6D&&         f5d_s) {
 
             const auto& the_mu_extent      = an_operator.the_mu_extent_;
@@ -54,7 +52,7 @@ namespace koliop {
 
             // TODO(Etienne M): Make sure the accesses are sequential on CPU.
 
-            const auto the_team_count = the_r_extent * the_theta_extent * the_phi_extent;
+            const auto the_team_count = the_r_extent * the_theta_extent * the_phi_extent * the_species_extent;
 
             // Due to the inherent Cuda/HIP thread block limit.
             KOLIOP_ASSERT(the_team_count <= std::numeric_limits<int>::max());
@@ -75,22 +73,23 @@ namespace koliop {
 
                 const OrdinalType the_team_index = a_team_handle.league_rank();
 
-                const OrdinalType ir     = (the_team_index) % the_r_extent;
-                const OrdinalType itheta = (the_team_index / (the_r_extent)) % the_theta_extent;
-                const OrdinalType iphi   = (the_team_index / (the_r_extent * the_theta_extent)) /* % the_phi_extent */;
+                const OrdinalType ir        = (the_team_index) % the_r_extent;
+                const OrdinalType itheta    = (the_team_index / (the_r_extent)) % the_theta_extent;
+                const OrdinalType iphi      = (the_team_index / (the_r_extent * the_theta_extent)) % the_phi_extent;
+                const OrdinalType ispeciesA = (the_team_index / (the_r_extent * the_theta_extent * the_phi_extent)) /* % the_species_extent */;
 
-                const ComputeFloatType hat_Aa     = hat_As(the_species_index);
-                const ComputeFloatType hat_Za     = hat_Zs(the_species_index);
+                const ComputeFloatType hat_Aa     = hat_As(ispeciesA);
+                const ComputeFloatType hat_Za     = hat_Zs(ispeciesA);
                 const ComputeFloatType inv_hat_Aa = 1.0 / hat_Aa;
 
                 const ComputeFloatType smcsfqri = q_r(the_local_domain_r_offset + ir);
                 const ComputeFloatType Bij      = B_norm(the_local_domain_r_offset + ir,
                                                          the_local_domain_theta_offset + itheta);
 
-                const ComputeFloatType na          = n_s(ir, itheta, iphi, the_species_index);
-                const ComputeFloatType Vpara       = U_par_s(ir, itheta, iphi, the_species_index);
-                const ComputeFloatType Ta          = T_s(ir, itheta, iphi, the_species_index);
-                const ComputeFloatType q_par_on_nT = q_par_on_nT_s(ir, itheta, iphi, the_species_index);
+                const ComputeFloatType na          = n_s(ir, itheta, iphi, ispeciesA);
+                const ComputeFloatType Vpara       = U_par_s(ir, itheta, iphi, ispeciesA);
+                const ComputeFloatType Ta          = T_s(ir, itheta, iphi, ispeciesA);
+                const ComputeFloatType q_par_on_nT = q_par_on_nT_s(ir, itheta, iphi, ispeciesA);
 
                 const ComputeFloatType nustaR0_i = nustar0_r(the_local_domain_r_offset + ir);
                 const ComputeFloatType epstemp   = rg(the_local_domain_r_offset + ir) * R0_inverse;
@@ -99,18 +98,18 @@ namespace koliop {
                 const ComputeFloatType coeff3    = na / (koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta * Kokkos::sqrt(koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta));
                 const ComputeFloatType AD        = nustaR0_i * koliop::portability::MathematicalConstant<ComputeFloatType>::kSqrt2 * epstemp * Kokkos::sqrt(epstemp) / (R0 * (smcsfqri != koliop::portability::GyselaConstant<ComputeFloatType>::kInfinity ? smcsfqri : 1.0));
 
-                for(OrdinalType ispecies = 0; ispecies < the_species_extent; ++ispecies) {
+                for(OrdinalType ispeciesB = 0; ispeciesB < the_species_extent; ++ispeciesB) {
                     // NOTE: We do very large jump in memory, but all the
                     // threads of a team gets to load this value so in practice
                     // we observe only one access.
 
-                    const ComputeFloatType hat_Ab         = hat_As(ispecies);
+                    const ComputeFloatType hat_Ab         = hat_As(ispeciesB);
                     const ComputeFloatType inv_hat_Ab     = 1.0 / hat_Ab;
-                    const ComputeFloatType hat_Zb         = hat_Zs(ispecies);
-                    const ComputeFloatType nb             = n_s(ir, itheta, iphi, ispecies);
-                    const ComputeFloatType Vparb          = U_par_s(ir, itheta, iphi, ispecies);
-                    const ComputeFloatType Tb             = T_s(ir, itheta, iphi, ispecies);
-                    const ComputeFloatType q_parb_on_nbTb = q_par_on_nT_s(ir, itheta, iphi, ispecies);
+                    const ComputeFloatType hat_Zb         = hat_Zs(ispeciesB);
+                    const ComputeFloatType nb             = n_s(ir, itheta, iphi, ispeciesB);
+                    const ComputeFloatType Vparb          = U_par_s(ir, itheta, iphi, ispeciesB);
+                    const ComputeFloatType Tb             = T_s(ir, itheta, iphi, ispeciesB);
+                    const ComputeFloatType q_parb_on_nbTb = q_par_on_nT_s(ir, itheta, iphi, ispeciesB);
 
                     const ComputeFloatType Rat    = Kokkos::sqrt(hat_Aa / hat_Ab);
                     const ComputeFloatType vTb    = Kokkos::sqrt(Tb / hat_Ab);
@@ -133,7 +132,7 @@ namespace koliop {
                                                                         1.0;
                             const ComputeFloatType nu_sab         = (AD * hat_Za * hat_Za * hat_Zb * hat_Zb * nb) * inv_hat_Aa * (inv_hat_Aa + inv_hat_Ab) * Theta_func_tmp / (vTb * vTb * vTb);
 
-                            f5d_s(imu, ivpar, ir, itheta, iphi, the_species_index) += half_dt * FM0a * nu_sab * coeff5 * (Rat * Vparb - Vpara + q_par_on_nT * (1.0 - 2.0 * xa * xa * 0.2) - coeff4);
+                            f5d_s(imu, ivpar, ir, itheta, iphi, ispeciesA) += half_dt * FM0a * nu_sab * coeff5 * (Rat * Vparb - Vpara + q_par_on_nT * (1.0 - 2.0 * xa * xa * 0.2) - coeff4);
                         });
                 }
             };
@@ -153,15 +152,8 @@ namespace koliop {
                                                                                                                        the_species_extent_);
 
             {
-                ScopedFenceHandler<koliop::utility::Copy::IsCopyRequired<koliop::utility::View::InternalInputL6<Flo64>,
-                                                                         koliop::utility::View::ExternalInputL6<Flo64>>()>
-                    a_scoped_fencer{this};
-
-                for(OrdinalType the_species_index = 0; the_species_index < the_species_extent_; ++the_species_index) {
-                    DoComputeCpar(*this, the_execution_space_pool_[the_species_index % Constant::kDisjointExecutionSpaceCount],
-                                  dt, the_species_index,
-                                  a_device_visible_f5d_s);
-                }
+                DoComputeCpar(*this, the_execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],
+                              dt, a_device_visible_f5d_s);
             }
 
             koliop::utility::Copy::ViewToRawData<koliop::utility::View::InternalInputL6<Flo64>,
