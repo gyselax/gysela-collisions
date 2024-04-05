@@ -144,10 +144,6 @@ namespace koliop {
             DoComputeQparOnNT(*this, the_execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],
                               a_device_visible_f5d_s, q_par_on_nT_s_);
 
-            // NOTE: Stream usage semantic change, we switch a stream handling
-            // all species to a stream per species.
-            Fence(Constant::kDefaultExecutionSpacePoolIndex);
-
 #if defined(KOLIOP_FENCE_ON_OPERATOR_EXIT)
             Kokkos::fence();
 #endif

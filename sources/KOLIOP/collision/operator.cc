@@ -251,8 +251,6 @@ namespace koliop {
 
             ComputeQparOnNT(f5d_s);
 
-            // Implied Fence(Constant::kDefaultExecutionSpacePoolIndex);
-
             if(the_species_extent_ > 1) {
                 // Cpar operator
                 ComputeCpar(dt, f5d_s);
@@ -261,7 +259,7 @@ namespace koliop {
             // Computes Fa = Fa / FM0a
             ComputeMaxwellianUnshiftedLoc(4, f5d_s);
 
-            // Implied FenceAll();
+            // Implied Fence(Constant::kDefaultExecutionSpacePoolIndex);
 
             // CvCd
             Apply(dt, f5d_s);
@@ -282,14 +280,12 @@ namespace koliop {
 
             ComputeUparTCorrection(dt, f5d_s);
 
-            // Implied FenceAll();
-
             if((the_species_extent_ > 1) && collision_interspecies_) {
                 ComputeMaxwellianEvolution(dt, f5d_s);
                 PrecomputeNu();
             }
 
-            // Implied user Fence(Constant::kDefaultExecutionSpacePoolIndex);
+            // Necessary user Fence(Constant::kDefaultExecutionSpacePoolIndex);
         }
 
     } // namespace collision

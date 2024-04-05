@@ -176,10 +176,10 @@ namespace koliop {
         template <typename SourceView,
                   typename DestinationView>
         constexpr bool Copy::IsCopyRequired() {
-            return std::is_same_v<typename std::remove_reference_t<SourceView>::array_layout,
-                                  typename std::remove_reference_t<DestinationView>::array_layout> &&
-                   std::is_same_v<typename std::remove_reference_t<SourceView>::memory_space,
-                                  typename std::remove_reference_t<DestinationView>::memory_space>;
+            return !(std::is_same_v<typename std::remove_reference_t<SourceView>::array_layout,
+                                    typename std::remove_reference_t<DestinationView>::array_layout> &&
+                     std::is_same_v<typename std::remove_reference_t<SourceView>::memory_space,
+                                    typename std::remove_reference_t<DestinationView>::memory_space>);
         }
 
         template <typename UnmanagedView,
@@ -201,14 +201,6 @@ namespace koliop {
             using DestinationView = DestinationViewTemplate<std::remove_const_t<typename UnmanagedView::value_type>>;
 
             if constexpr(IsCopyRequired<UnmanagedView, DestinationView>()) {
-                static_assert(Kokkos::SpaceAccessibility<typename std::remove_reference_t<DestinationView>::memory_space,
-                                                         typename std::remove_reference_t<UnmanagedView>::memory_space>::accessible,
-                              "");
-                // We can not return an unmanaged DestinationView as it may not
-                // be const.
-                return UnmanagedView{the_raw_data,
-                                     static_cast<std::size_t>(the_indicies)...};
-            } else {
                 // KOLIOP_ASSERT(!Kokkos::SpaceAccessibility<typename std::remove_reference_t<DestinationView>::memory_space,
                 //                                           typename std::remove_reference_t<UnmanagedView>::memory_space>::accessible);
                 return Deep(an_execution_space,
@@ -217,6 +209,14 @@ namespace koliop {
                             DestinationView{Kokkos::view_alloc(Kokkos::WithoutInitializing,
                                                                std::string{the_view_label}),
                                             static_cast<std::size_t>(the_indicies)...});
+            } else {
+                static_assert(Kokkos::SpaceAccessibility<typename std::remove_reference_t<DestinationView>::memory_space,
+                                                         typename std::remove_reference_t<UnmanagedView>::memory_space>::accessible,
+                              "");
+                // We can not return an unmanaged DestinationView as it may not
+                // be const.
+                return UnmanagedView{the_raw_data,
+                                     static_cast<std::size_t>(the_indicies)...};
             }
         }
 
@@ -235,14 +235,6 @@ namespace koliop {
             // It would lead to silent errors where the user thinks a shallow
             // copy is done when if fact a deep copy is realized.
             if constexpr(IsCopyRequired<SourceView, UnmanagedView>()) {
-                static_assert(Kokkos::SpaceAccessibility<typename std::remove_reference_t<UnmanagedView>::memory_space,
-                                                         typename std::remove_reference_t<SourceView>::memory_space>::accessible,
-                              "");
-
-                KOLIOP_ASSERT(a_source_view.data() == the_raw_data);
-
-                return the_raw_data;
-            } else {
                 // KOLIOP_ASSERT(!Kokkos::SpaceAccessibility<typename std::remove_reference_t<UnmanagedView>::memory_space,
                 //                                           typename std::remove_reference_t<SourceView>::memory_space>::accessible);
                 return Deep(an_execution_space,
@@ -250,6 +242,14 @@ namespace koliop {
                             UnmanagedView{the_raw_data,
                                           static_cast<std::size_t>(the_indicies)...})
                     .data();
+            } else {
+                static_assert(Kokkos::SpaceAccessibility<typename std::remove_reference_t<UnmanagedView>::memory_space,
+                                                         typename std::remove_reference_t<SourceView>::memory_space>::accessible,
+                              "");
+
+                KOLIOP_ASSERT(a_source_view.data() == the_raw_data);
+
+                return the_raw_data;
             }
         }
 

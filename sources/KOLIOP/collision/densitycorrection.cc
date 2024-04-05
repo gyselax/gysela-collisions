@@ -6,7 +6,6 @@
 
 #include "KOLIOP/collision/constant.h"
 #include "KOLIOP/collision/operator.h"
-#include "KOLIOP/collision/scoped.h"
 #include "KOLIOP/internal/configuration.h"
 #include "KOLIOP/portability/cmath.h"
 #include "KOLIOP/utility/copy.h"
@@ -21,14 +20,14 @@ namespace koliop {
         static inline void
         DoComputeDensityCorrection(const Operator& an_operator,
                                    ExecutionSpace  an_execution_space,
-                                   OrdinalType     the_species_index,
                                    View6D&&        f5d_s) {
 
-            const auto& the_mu_extent    = an_operator.the_mu_extent_;
-            const auto& the_vpar_extent  = an_operator.the_vpar_extent_;
-            const auto& the_r_extent     = an_operator.the_r_extent_;
-            const auto& the_theta_extent = an_operator.the_theta_extent_;
-            const auto& the_phi_extent   = an_operator.the_phi_extent_;
+            const auto& the_mu_extent      = an_operator.the_mu_extent_;
+            const auto& the_vpar_extent    = an_operator.the_vpar_extent_;
+            const auto& the_r_extent       = an_operator.the_r_extent_;
+            const auto& the_theta_extent   = an_operator.the_theta_extent_;
+            const auto& the_phi_extent     = an_operator.the_phi_extent_;
+            const auto& the_species_extent = an_operator.the_species_extent_;
 
             const auto& coeff_intdmu   = an_operator.coeff_intdmu_;
             const auto& coeff_intdvpar = an_operator.coeff_intdvpar_;
@@ -37,7 +36,7 @@ namespace koliop {
 
             // TODO(Etienne M): Make sure the accesses are sequential on CPU.
 
-            const auto the_team_count = the_r_extent * the_theta_extent * the_phi_extent;
+            const auto the_team_count = the_r_extent * the_theta_extent * the_phi_extent * the_species_extent;
 
             // Due to the inherent Cuda/HIP thread block limit.
             KOLIOP_ASSERT(the_team_count <= std::numeric_limits<int>::max());
@@ -58,9 +57,10 @@ namespace koliop {
 
                 const OrdinalType the_team_index = a_team_handle.league_rank();
 
-                const OrdinalType ir     = (the_team_index) % the_r_extent;
-                const OrdinalType itheta = (the_team_index / (the_r_extent)) % the_theta_extent;
-                const OrdinalType iphi   = (the_team_index / (the_r_extent * the_theta_extent)) /* % the_phi_extent */;
+                const OrdinalType ir        = (the_team_index) % the_r_extent;
+                const OrdinalType itheta    = (the_team_index / (the_r_extent)) % the_theta_extent;
+                const OrdinalType iphi      = (the_team_index / (the_r_extent * the_theta_extent)) % the_phi_extent;
+                const OrdinalType ispeciesA = (the_team_index / (the_r_extent * the_theta_extent * the_phi_extent)) /* % the_species_extent */;
 
                 // NOTE: The explicit Left iteration direction may not benefit
                 // the CPUs depending on how that is implemented.
@@ -80,14 +80,14 @@ namespace koliop {
                     an_intra_team_policy,
                     [&](auto imu, auto ivpar) {
                         const ComputeFloatType jacob_vel = koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi *
-                                                           Bstar_s(ivpar, ir, itheta, the_species_index);
-                        const ComputeFloatType ftmp = Kokkos::max(f5d_s(imu, ivpar, ir, itheta, iphi, the_species_index),
+                                                           Bstar_s(ivpar, ir, itheta, ispeciesA);
+                        const ComputeFloatType ftmp = Kokkos::max(f5d_s(imu, ivpar, ir, itheta, iphi, ispeciesA),
                                                                   0.0);
 
                         the_na_reducer.join(the_na_reducer.reference(),
                                             jacob_vel * coeff_intdmu(imu) * coeff_intdvpar(ivpar) * ftmp);
 
-                        f5d_s(imu, ivpar, ir, itheta, iphi, the_species_index) = ftmp;
+                        f5d_s(imu, ivpar, ir, itheta, iphi, ispeciesA) = ftmp;
                     });
 
                 a_team_handle.team_reduce(the_na_reducer);
@@ -100,7 +100,7 @@ namespace koliop {
                 Kokkos::parallel_for(
                     an_intra_team_policy,
                     [&](auto imu, auto ivpar) {
-                        f5d_s(imu, ivpar, ir, itheta, iphi, the_species_index) *= n_s(ir, itheta, iphi, the_species_index) * na_inverse;
+                        f5d_s(imu, ivpar, ir, itheta, iphi, ispeciesA) *= n_s(ir, itheta, iphi, ispeciesA) * na_inverse;
                     });
             };
 
@@ -118,15 +118,8 @@ namespace koliop {
                                                                                                                        the_species_extent_);
 
             {
-                ScopedFenceHandler<koliop::utility::Copy::IsCopyRequired<koliop::utility::View::InternalInputL6<Flo64>,
-                                                                         koliop::utility::View::ExternalInputL6<Flo64>>()>
-                    a_scoped_fencer{this};
-
-                for(OrdinalType the_species_index = 0; the_species_index < the_species_extent_; ++the_species_index) {
-                    DoComputeDensityCorrection(*this, the_execution_space_pool_[the_species_index % Constant::kDisjointExecutionSpaceCount],
-                                               the_species_index,
-                                               a_device_visible_f5d_s);
-                }
+                DoComputeDensityCorrection(*this, the_execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],
+                                           a_device_visible_f5d_s);
             }
 
             koliop::utility::Copy::ViewToRawData<koliop::utility::View::InternalInputL6<Flo64>,
