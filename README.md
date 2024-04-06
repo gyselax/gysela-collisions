@@ -1,6 +1,6 @@
 # Koliop
 
-A KOkkos based colLIsion OPerator (KoLiOp) for Gysela that computes the evolution of the distribution function due to collisions
+A KOkkos based colLIsion OPerator (KoLiOp) for Gysela that computes the evolution of the distribution function due to collisions. Some documents can be found in `/documents`.
 
 <!-- koliop (kokkos, Collision, Operator)
 gcokos (Gysela, Collision, Kokkos) -->
