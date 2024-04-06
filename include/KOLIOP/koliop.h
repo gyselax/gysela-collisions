@@ -132,7 +132,7 @@ koliop_Status koliop_Create(koliop_Operator* an_operator_handle,
                             const double*    Bstar_s);
 
 /// @brief Does an implied koliop_Fence and release the memory associated to the
-// § operator instance.
+/// operator instance.
 /// @return KOLIOP_STATUS_SUCCESS on success.
 koliop_Status koliop_Release(koliop_Operator an_operator);
 
@@ -146,11 +146,17 @@ koliop_Status koliop_Fence(koliop_Operator an_operator);
 ///   Vpara = (1/na) * int 2 * Pi * Bstar * dmu * dvpar * vpar * Fa
 ///   Ta = (1/(3*na)) * int 2 * Pi * Bstar * dmu * dvpar * Fa * &
 ///        (2 * mu *B + (vpar-Vpara)^2)
+/// WARNING: Either koliop_Fence after this call or chain with other koliop_*
+/// operator's operations. You still may hve to fence after the last operation.
 /// @param f5d_s An array of double with extents ([0, the_mu_extent), [0, the_vpar_extent), [0, the_r_extent), [0, the_theta_extent), [0, the_phi_extent), [0, the_species_extent) ).
 /// @return KOLIOP_STATUS_SUCCESS on success.
 koliop_Status koliop_ComputeMoments(koliop_Operator an_operator,
                                     double*         f5d_s);
 
+/// @brief
+/// WARNING: Either koliop_Fence after this call or chain with other koliop_*
+/// operator's operations. You still may hve to fence after the last operation.
+/// @return KOLIOP_STATUS_SUCCESS on success.
 koliop_Status koliop_PrecomputeNu(koliop_Operator an_operator);
 
 /// @brief Make the Maxwellian evolve:
@@ -161,6 +167,8 @@ koliop_Status koliop_PrecomputeNu(koliop_Operator an_operator);
 /// Evolution of the temperatures via the term C0:
 ///   Ta = Ta + deltat*sum_b nu_ab * (2*hat_Aa/(hat_Aa + hat_Ab)*(Tb -Ta) +
 ///     (2/3) * Vpara *(Vpara - Vparb))
+/// WARNING: Either koliop_Fence after this call or chain with other koliop_*
+/// operator's operations. You still may hve to fence after the last operation.
 /// @param dt The collision dt (it may be larger than the simulation's dt).
 /// @param f5d_s An array of double with extents ([0, the_mu_extent), [0, the_vpar_extent), [0, the_r_extent), [0, the_theta_extent), [0, the_phi_extent), [0, the_species_extent) ).
 /// @return KOLIOP_STATUS_SUCCESS on success.
@@ -172,6 +180,8 @@ koliop_Status koliop_ComputeMaxwellianEvolution(koliop_Operator an_operator,
 ///   q_par_on_nT = 0.5*int (2 * Pi * Bstar) *  dmu * dvpar * &
 ///       (vpar-Vpara) * ((vpar-Vpara)^2 + vperp^2) * (Fa - FMa)
 ///  Indeed  q_par_on_nT = 0 for a Maxwellian distribution function
+/// WARNING: Either koliop_Fence after this call or chain with other koliop_*
+/// operator's operations. You still may hve to fence after the last operation.
 /// @param f5d_s An array of double with extents ([0, the_mu_extent), [0, the_vpar_extent), [0, the_r_extent), [0, the_theta_extent), [0, the_phi_extent), [0, the_species_extent) ).
 /// @return KOLIOP_STATUS_SUCCESS on success.
 koliop_Status koliop_ComputeQparOnNT(koliop_Operator an_operator,
@@ -184,6 +194,8 @@ koliop_Status koliop_ComputeQparOnNT(koliop_Operator an_operator,
 ///  with Rat = sqrt(hat_Aa/hat_Ab)
 ///   xa = v /(sqrt(2*Ta)) = sqrt(2*mu*B + vpar*vpar)/(sqrt(2*Ta))
 ///   xb = xa * vTa / vTb
+/// WARNING: Either koliop_Fence after this call or chain with other koliop_*
+/// operator's operations. You still may hve to fence after the last operation.
 /// @param dt The collision dt (it may be larger than the simulation's dt).
 /// @param f5d_s An array of double with extents ([0, the_mu_extent), [0, the_vpar_extent), [0, the_r_extent), [0, the_theta_extent), [0, the_phi_extent), [0, the_species_extent) ).
 /// @return KOLIOP_STATUS_SUCCESS on success.
@@ -195,6 +207,8 @@ koliop_Status koliop_ComputeCpar(koliop_Operator an_operator,
 /// distribution function:
 ///  - choice 3 : Fa = Fa * FM0a
 ///  - choice 4 : Fa = Fa / FM0a
+/// WARNING: Either koliop_Fence after this call or chain with other koliop_*
+/// operator's operations. You still may hve to fence after the last operation.
 /// @param f5d_s An array of double with extents ([0, the_mu_extent), [0, the_vpar_extent), [0, the_r_extent), [0, the_theta_extent), [0, the_phi_extent), [0, the_species_extent) ).
 /// @param choice [3, 4]
 /// @return KOLIOP_STATUS_SUCCESS on success.
@@ -203,6 +217,8 @@ koliop_Status koliop_ComputeMaxwellianUnshiftedLoc(koliop_Operator an_operator,
                                                    int32_t         choice);
 
 /// @brief Compute alpha, make alpha evolve and reconstruct Fa.
+/// WARNING: Either koliop_Fence after this call or chain with other koliop_*
+/// operator's operations. You still may hve to fence after the last operation.
 /// @param dt The collision dt (it may be larger than the simulation's dt).
 /// @param f5d_s An array of double with extents ([0, the_mu_extent), [0, the_vpar_extent), [0, the_r_extent), [0, the_theta_extent), [0, the_phi_extent), [0, the_species_extent) ).
 /// @return KOLIOP_STATUS_SUCCESS on success.
@@ -211,12 +227,16 @@ koliop_Status koliop_Apply(koliop_Operator an_operator,
                            double*         f5d_s);
 
 /// @brief
+/// WARNING: Either koliop_Fence after this call or chain with other koliop_*
+/// operator's operations. You still may hve to fence after the last operation.
 /// @param f5d_s An array of double with extents ([0, the_mu_extent), [0, the_vpar_extent), [0, the_r_extent), [0, the_theta_extent), [0, the_phi_extent), [0, the_species_extent) ).
 /// @return KOLIOP_STATUS_SUCCESS on success.
 koliop_Status koliop_ComputeDensityCorrection(koliop_Operator an_operator,
                                               double*         f5d_s);
 
 /// @brief
+/// WARNING: Either koliop_Fence after this call or chain with other koliop_*
+/// operator's operations. You still may hve to fence after the last operation.
 /// @param dt The collision dt (it may be larger than the simulation's dt).
 /// @param f5d_s An array of double with extents ([0, the_mu_extent), [0, the_vpar_extent), [0, the_r_extent), [0, the_theta_extent), [0, the_phi_extent), [0, the_species_extent) ).
 /// @return KOLIOP_STATUS_SUCCESS on success.
@@ -234,6 +254,8 @@ koliop_Status koliop_ComputeUparTCorrection(koliop_Operator an_operator,
 /// @brief Extract an internal buffer into the_output_buffer. The buffer in
 /// question is specified using the_value_identifier and the
 /// KOLIOP_EXTRACTION_IDENTIFIER_* preprocessor definition.
+/// WARNING: Either koliop_Fence after this call or chain with other koliop_*
+/// operator's operations. You still may hve to fence after the last operation.
 /// @param the_value_identifier A KOLIOP_EXTRACTION_IDENTIFIER_* preprocessor
 /// definition.
 /// @param the_output_buffer A correctly sized buffer.
@@ -257,6 +279,10 @@ koliop_Status koliop_ExtractRaw(koliop_Operator an_operator,
 /// It computes the collision of all species against all other species (if asked
 /// for through collision_interspecies and the_species_extent). It basically
 /// disregard pSpecies_id. This is mostly used for the Gyselalib++.
+///
+/// WARNING: The user has to koliop_Fence() to ensure the result of the operator
+/// are visible for next operation.
+///
 /// @param dt The collision dt (it may be larger than the simulation's dt).
 /// @param f5d_s An array of double with extents ([0, the_mu_extent), [0, the_vpar_extent), [0, the_r_extent), [0, the_theta_extent), [0, the_phi_extent), [0, the_species_extent) ).
 /// @return KOLIOP_STATUS_SUCCESS on success.
