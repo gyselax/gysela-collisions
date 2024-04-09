@@ -59,7 +59,7 @@ endfunction()
 if(koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE AND NOT(Kokkos_ENABLE_OPENMP OR Kokkos_ENABLE_SERIAL))
     # The test's memory is initially on the host, we may have to push it to
     # the GPU, thus the restriction.
-    message(WARNING "[${PROJECT_NAME}] The 'dummy_test' test requires koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE=OFF.")
+    message(WARNING "[${PROJECT_NAME}] The 'dummy_integration' test requires koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE=OFF.")
 else()
-    koliop_add_test("koliop_tests_target_build_options" "demo" "dummy" "dummy_test")
+    koliop_add_test("koliop_tests_target_build_options" "demo" "dummy" "dummy_integration")
 endif()

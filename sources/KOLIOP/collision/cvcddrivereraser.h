@@ -30,6 +30,7 @@ namespace koliop {
                                    OrdinalType                                    the_block_first_theta,
                                    OrdinalType                                    the_block_first_phi,
                                    ComputeFloatType                               dt,
+                                   OrdinalType                                    the_species_index,
                                    koliop::utility::View::InternalInputL6<Flo64>& f5d_s) = 0;
                 virtual ~InterfaceType()                                                 = default;
 
@@ -54,6 +55,7 @@ namespace koliop {
                            OrdinalType                                    the_block_first_theta,
                            OrdinalType                                    the_block_first_phi,
                            ComputeFloatType                               dt,
+                           OrdinalType                                    the_species_index,
                            koliop::utility::View::InternalInputL6<Flo64>& f5d_s) override {
                     the_value_.Apply(an_operator,
                                      an_execution_space,
@@ -61,6 +63,7 @@ namespace koliop {
                                      the_block_first_theta,
                                      the_block_first_phi,
                                      dt,
+                                     the_species_index,
                                      f5d_s);
                 }
 

@@ -40,6 +40,7 @@ namespace koliop {
 
             void ScheduleExecution(const Operator&                                an_operator,
                                    ComputeFloatType                               dt,
+                                   OrdinalType                                    the_species_index,
                                    koliop::utility::View::InternalInputL6<Flo64>& f5d_s);
 
         protected:

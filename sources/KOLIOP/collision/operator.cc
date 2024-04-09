@@ -99,8 +99,12 @@ namespace koliop {
                                            nustar_coeff);
         }
 
-        Operator::Operator(uint64_t     pSpecies_id,
-                           uint64_t     the_mu_extent,
+
+        ////////////////////////////////////////////////////////////////////////
+        // Operator methods definition
+        ////////////////////////////////////////////////////////////////////////
+
+        Operator::Operator(uint64_t     the_mu_extent,
                            uint64_t     the_vpar_extent,
                            uint64_t     the_r_extent,
                            uint64_t     the_theta_extent,
@@ -129,8 +133,7 @@ namespace koliop {
                            const Flo64* B_norm,
                            const Flo64* Bstar_s)
             // Constant, externally computed values
-            : pSpecies_id_{static_cast<OrdinalType>(pSpecies_id)}
-            , the_mu_extent_{static_cast<OrdinalType>(the_mu_extent)}
+            : the_mu_extent_{static_cast<OrdinalType>(the_mu_extent)}
             , the_vpar_extent_{static_cast<OrdinalType>(the_vpar_extent)}
             , the_r_extent_{static_cast<OrdinalType>(the_r_extent)}
             , the_theta_extent_{static_cast<OrdinalType>(the_theta_extent)}
@@ -169,8 +172,10 @@ namespace koliop {
 
             , n_s_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "n_s_"),
                    static_cast<std::size_t>(the_r_extent_), static_cast<std::size_t>(the_theta_extent_), static_cast<std::size_t>(the_phi_extent_), static_cast<std::size_t>(the_species_extent_)}
-            , U_par_s_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "U_par_s_"),
+            , U_par_s_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "U_par_s_0_"),
                        static_cast<std::size_t>(the_r_extent_), static_cast<std::size_t>(the_theta_extent_), static_cast<std::size_t>(the_phi_extent_), static_cast<std::size_t>(the_species_extent_)}
+            , U_par_s_input_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "U_par_s_1_"),
+                             static_cast<std::size_t>(the_r_extent_), static_cast<std::size_t>(the_theta_extent_), static_cast<std::size_t>(the_phi_extent_), static_cast<std::size_t>(the_species_extent_)}
             , T_s_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "T_s_"),
                    static_cast<std::size_t>(the_r_extent_), static_cast<std::size_t>(the_theta_extent_), static_cast<std::size_t>(the_phi_extent_), static_cast<std::size_t>(the_species_extent_)}
             , nu_ab_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "nu_ab_"),
@@ -199,28 +204,13 @@ namespace koliop {
 
             KOLIOP_ASSERT(the_execution_space_pool_.empty());
 
-#if defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_CUDA)
-            // The null stream.
-            the_execution_space_pool_.emplace_back(nullptr, true);
-#endif
-
-            if(Constant::kDisjointExecutionSpaceCount > the_execution_space_pool_.size()) {
-                // Then, we use the default execution space.
-                the_execution_space_pool_.emplace_back();
-            }
-
-            KOLIOP_ASSERT(!the_execution_space_pool_.empty());
-
-            // Then we fill in with new streams.
+            // We emplace the the default execution space.
+            Constant::DeviceExecutionSpaceType the_default_execution_space{};
 
             while(the_execution_space_pool_.size() != Constant::kDisjointExecutionSpaceCount) {
-                // NOTE: We do not want to *potentially* split the resource
-                // pool. Thus the repeated call to partition_space which creates
-                // execution space with all the same amount of hardware
-                // resources.
                 // TODO(Etienne M): See what hipStreamCreateWithPriority can get
-                // us.
-                the_execution_space_pool_.emplace_back(Kokkos::Experimental::partition_space(the_execution_space_pool_[0], 1)[0]);
+                // reduce the performance.
+                the_execution_space_pool_.emplace_back(Kokkos::Experimental::partition_space(the_default_execution_space, 1)[0]);
             }
 
             the_cvcd_drivers_scheduler_.Plan(*this,
@@ -233,56 +223,69 @@ namespace koliop {
         }
 
         void Operator::Fence(OrdinalType the_execution_space_index) const {
+            KOLIOP_ASSERT(the_execution_space_index < Constant::kDisjointExecutionSpaceCount);
             the_execution_space_pool_[the_execution_space_index].fence();
+        }
+
+        void Operator::FenceAll() const {
+            for(auto&& an_execution_space : the_execution_space_pool_) {
+                an_execution_space.fence();
+            }
+
+            // TODO(Etienne M): Do we full fence or wait for all the streams ?
+            // Fence is a lot cheaper it seems. Though if Gysela executes other
+            // GPU kernel while koliop works, this could slow things down.
         }
 
         void Operator::Collision(ComputeFloatType dt,
                                  Flo64*           f5d_s) {
+            // Assume all our streams are empty.
 
-            // TODO(Etienne M): We shouldn't need that for the Gysela++, yet.
-            const OrdinalType collstart = 0;
+            ComputeMoments(f5d_s);
+            PrecomputeNu();
 
-            if(collstart != -1 /* TODO(Etienne M): Fortran index */) {
-                ComputeMoments(f5d_s);
+            if((the_species_extent_ > 1) && collision_interspecies_) {
+                ComputeMaxwellianEvolution(dt, f5d_s);
                 PrecomputeNu();
-
-                if((the_species_extent_ > 1) && collision_interspecies_) {
-                    ComputeMaxwellianEvolution(dt, f5d_s);
-                    PrecomputeNu();
-                }
-
-                ComputeQparOnNT(f5d_s);
-
-                if(the_species_extent_ > 1) {
-                    // Cpar operator
-                    ComputeCpar(dt, f5d_s);
-                }
-
-                // Computes Fa = Fa / FM0a
-                ComputeMaxwellianUnshiftedLoc(f5d_s, 4);
-
-                // CvCd
-                Apply(dt, f5d_s);
-
-                // Computes Fa = Fa * FM0a
-                ComputeMaxwellianUnshiftedLoc(f5d_s, 3);
-
-                if((the_species_extent_ > 1) && collision_interspecies_) {
-                    // Cpar operator
-                    ComputeCpar(dt, f5d_s);
-                }
-
-                // Correction to enforce conservation of density and fluid
-                // moments
-                ComputeDensityCorrection(f5d_s);
-
-                ComputeUparTCorrection(dt, f5d_s);
-
-                if((the_species_extent_ > 1) && collision_interspecies_) {
-                    ComputeMaxwellianEvolution(dt, f5d_s);
-                    PrecomputeNu();
-                }
             }
+
+            ComputeQparOnNT(f5d_s);
+
+            if(the_species_extent_ > 1) {
+                // Cpar operator
+                ComputeCpar(dt, f5d_s);
+            }
+
+            // Computes Fa = Fa / FM0a
+            ComputeMaxwellianUnshiftedLoc(4, f5d_s);
+
+            // Implied Fence(Constant::kDefaultExecutionSpacePoolIndex);
+
+            // CvCd
+            Apply(dt, f5d_s);
+
+            // Implied FenceAll();
+
+            // Computes Fa = Fa * FM0a
+            ComputeMaxwellianUnshiftedLoc(3, f5d_s);
+
+            if((the_species_extent_ > 1) && collision_interspecies_) {
+                // Cpar operator
+                ComputeCpar(dt, f5d_s);
+            }
+
+            // Correction to enforce conservation of density and fluid
+            // moments
+            ComputeDensityCorrection(f5d_s);
+
+            ComputeUparTCorrection(dt, f5d_s);
+
+            if((the_species_extent_ > 1) && collision_interspecies_) {
+                ComputeMaxwellianEvolution(dt, f5d_s);
+                PrecomputeNu();
+            }
+
+            // Necessary user Fence(Constant::kDefaultExecutionSpacePoolIndex);
         }
 
     } // namespace collision

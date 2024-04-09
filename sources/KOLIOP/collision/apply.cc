@@ -21,28 +21,15 @@ namespace koliop {
                                                                                                                        the_r_extent_, the_theta_extent_, the_phi_extent_,
                                                                                                                        the_species_extent_);
 
-            // NOTE: WE must fence as Apply may not work in the same queue than
-            // the other routines. We have to fence using the *general* fence
-            // routine which fences only on the default execution space used by
-            // all other kernel in the operator.
-            Fence();
+            // NOTE: Stream usage semantic change
+            Fence(Constant::kDefaultExecutionSpacePoolIndex);
 
-            {
-                the_cvcd_drivers_scheduler_.ScheduleExecution(*this, dt, a_device_visible_f5d_s);
+            for(OrdinalType the_species_index = 0; the_species_index < the_species_extent_; ++the_species_index) {
+                the_cvcd_drivers_scheduler_.ScheduleExecution(*this, dt, the_species_index, a_device_visible_f5d_s);
             }
 
-            // TODO(Etienne M): Do we full fence or wait for all the streams ?
-            // Fence is a lot cheaper it seems. Though if Gysela executes other
-            // GPU kernel while koliop works, this could slow things down.
-
-            // NOTE: This fence does not mean the user doesn't have to fence
-            // after the operator returns. Indeed, the copies below may very
-            // well be async.
-            Kokkos::fence();
-
-            // for(const auto& an_execution_space : the_execution_space_pool) {
-            //     an_execution_space.fence();
-            // }
+            // NOTE: Stream usage semantic change
+            FenceAll();
 
             koliop::utility::Copy::ViewToRawData<koliop::utility::View::InternalInputL6<Flo64>,
                                                  koliop::utility::View::ExternalInputL6<Flo64>>(the_execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],
