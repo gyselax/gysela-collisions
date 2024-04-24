@@ -1,0 +1,12 @@
+#!/bin/bash
+
+module purge
+
+module load cmake/3.25.2 ninja/1.10.0
+module load nvidia-compilers/21.3
+module load cuda/11.2
+
+# module load openmpi/4.1.1-cuda
+# module load hdf5/1.12.0-mpi-cuda
+
+module list
