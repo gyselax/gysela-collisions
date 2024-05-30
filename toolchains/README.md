@@ -35,6 +35,5 @@ $ source ../toolchains/mi250.hipcc.adastra.spack/prepare.sh
 
 - The environment and preparation script should be **working directory agnostic**;
 - Ideally, if producing files (such as the installation of a dependency), placing them in the appropriate location such as the WORK file system area often found on HPC machines;
-- A way to test if you newly created toolchain is viable, is should be seamlessly integrated in the `prepare.gyselalibxx.sh` script;
 - HPC machines evolves, are notoriously unstable and buggy, you should document issues and workarounds explored as part of the code of the toolchain.
 - If the library (say this one) is used by an other project (using `add_subdirectory` or `FetchContent_Declare`), one can not use the library's toolchain as shown above. In this case, it is recommended to modify the parent project so that it contains the appropriate settings present in the library's toolchain file.
