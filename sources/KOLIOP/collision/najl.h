@@ -84,202 +84,253 @@ namespace koliop {
                 // NOTE: I use an unamed namespace because it is unknown to me if
                 // adding static prior KOKKOS_INLINE_FUNCTION is legal.
 
+                /// Computation of I(n, i, Xtr) = int from 0 to infinity of
+                ///   dU U^i exp(-U) / (U+Xtr)^(n+0.5)
+                ///  using the recursive computation of
+                ///   J(k, X_tr) = \int_sqrt(X_tr)^\infty 2 v^(2k) exp(-v**2) dv
+                /// where k is between -1 and index_max+1 (in the code, the
+                /// index k in J_vec is shifted to start from 0).
+                /// When Xtr > 5 (n+1/2) (index_max_+2), the 3rd order
+                /// asymptotic approximation
+                ///   I(n, i, Xtr) = i! / Xtr**(n+1/2) *
+                ///     ( 1 - (n+1/2)(i+1)/Xtr * (1 - (1/2)(n+3/2)(i+2)/Xtr ) )
+                /// is used instead.
+                /// Since Xtr might contain both values above and below this
+                /// threshold, the code separates the values belonging to either
+                /// category, computes I for the 2 groups and finally build a
+                /// common result array (if necessary).
+                ///
                 template <typename ValueType,
                           typename Array1D>
                 KOKKOS_INLINE_FUNCTION void
-                DoComputeI(OffsetType offset,
+                DoComputeI(OffsetType offset_k,
                            ValueType  Xtr,
                            ValueType  sqrtXtr,
                            ValueType  sqrtXtr_inv,
                            Array1D    I_mat) {
 
-                    // NOTE: Numerical accuracy of this whole function isn't
-                    // good!
-                    // The error comes from the fact that the contraction of
-                    // floating point operations into FMA changes the
-                    // accuracy of the computation. Coupled with the different
-                    // behavior of the exp and erfc function (GPU vs GLibC), we
-                    // get a very significant error (up to ~1E-5 relative).
-                    // Initially the error is not large (~1E-14 relative,
-                    // measured out of erfc) but the whole Najl coefficient
-                    // computation is extraordinarily powerful when it copy to
-                    // spreading and amplifying errors.
-                    // Also, by setting Xtr, sqrtXtr, sqrtXtr_inv to constant
-                    // and similar value say 2.0,3.0,4.0 on the Fortran and C++
-                    // version of the operator, we observe below 10^-10 abs and
-                    // relative errors which is good but weird.
-                    // Finally, note the comment below regarding the changes to
-                    // the computation of I_mat and the error that we then get.
-                    // To mitigate that divergence from the reference CrayFTN
-                    // Gysela, two facts, use:
-                    // - #pragma clang fp contract(on) : instead of the fast or
-                    // fast-honor-pragmas which is the default for GPU on Clang.
-                    // - Use more accurate transcendental function
-                    // implementation (relative to GLibC).
-                    // NOTE: theses error would also obviously manifest
-                    // themselve if we changed the compiler from gfortran to
-                    // ifort or crayftn and as such, trying to be bit-perfect
-                    // with the CrayFTN reference is but an illusion (and incurs
-                    // a performance penalty).
-
                     static constexpr OrdinalType the_Xtr_pows_size = Constant::kIndexMax + 1 + 1;
-                    static constexpr OrdinalType the_J_vec_size    = Constant::kIndexMax + 2 + 1;
 
-                    // Precompute kCombMat(n, k): n! /(k! * (n-k)!)
-                    // AKA: binomial coeff/pascal's triangle
-                    // n are the ind_i
-                    // k are the ind_k
-                    // clang-format off
-                    static constexpr ValueType kCombMat[the_Xtr_pows_size][the_Xtr_pows_size] =
-                        {{1.0, 0.0, 0.0, 0.0, 0.0, 0.0},
-                         {1.0, 1.0, 0.0, 0.0, 0.0, 0.0},
-                         {1.0, 2.0, 1.0, 0.0, 0.0, 0.0},
-                         {1.0, 3.0, 3.0, 1.0, 0.0, 0.0},
-                         {1.0, 4.0, 6.0, 4.0, 1.0, 0.0},
-                         {1.0, 5.0, 10.0, 10.0, 5.0, 1.0}};
-                    // clang-format on
+                    if(Xtr > ((offset_k + 0.5) * (5 * the_Xtr_pows_size))) {
+                        // Xtr is less than (15 or 45).
+                        // NOTE: This nasty branch is a followup on the work
+                        // done by Peter and Kevin regarding a bug when Xtr
+                        // becomes too large.
+                        // See Gysela fortran commit 175f2f4c
+                        // This approximation is a lot less costly than the
+                        // above method, and often, we can use it, reducing the
+                        // compute load.
+                        //
+                        // We need: int(U^d exp(-U)/(U+Xtr)^(offset_k+0.5), dU, 0 to infty)
+                        // With approx valid for
+                        //      Xtr > 200
+                        // we have:
+                        //      I(offset_k, i, Xtr) = i! * Kokkos::pow(Xtr, -offset_k - 0.5)
+                        //
+                        // With a 3rd order approx valid for
+                        //      Xtr > ((offset_k + 0.5) * (5 * (kIndexMax + 2)))
+                        // we have:
+                        //      I(offset_k, i, Xtr) = i! * Kokkos::pow(Xtr, -offset_k - 0.5) *
+                        //                     ( 1 -       (offset_k+0.5)*(i+1)/Xtr *
+                        //                      (1 - (0.5)*(offset_k+1.5)*(i+2)/Xtr ) );
+                        //
+                        static constexpr ValueType kFactorial[the_Xtr_pows_size] = {1, 1, 2, 6, 24, 120};
 
-                    ValueType Xtr_pows[the_Xtr_pows_size]; // std::pow(-Xtr, i);
-                    ValueType J_vec[the_J_vec_size];
+                        for(OrdinalType ind_i = 0; ind_i < the_Xtr_pows_size; ++ind_i) {
+                            // clang-format off
+                            I_mat[ind_i] = (kFactorial[ind_i] * Kokkos::pow(Xtr, -offset_k - 0.5)) *
+                                           ( 1.0 - ((offset_k + 0.5) * (ind_i + 1)) / Xtr *
+                                            (1.0 - ((offset_k + 1.5) * (ind_i + 2)) / Xtr * 0.5));
+                            // clang-format on
+                        }
+                    } else {
+                        // NOTE: Numerical accuracy of this whole branch's computation
+                        // isn't good!
+                        // The error comes from the fact that the contraction of
+                        // floating point operations into FMA changes the
+                        // accuracy of the computation. Coupled with the different
+                        // behavior of the exp and erfc function (GPU vs GLibC), we
+                        // get a very significant error (up to ~1E-5 relative).
+                        // Initially the error is not large (~1E-14 relative,
+                        // measured out of erfc) but the whole Najl coefficient
+                        // computation is extraordinarily powerful when it copy to
+                        // spreading and amplifying errors.
+                        // Also, by setting Xtr, sqrtXtr, sqrtXtr_inv to constant
+                        // and similar value say 2.0,3.0,4.0 on the Fortran and C++
+                        // version of the operator, we observe below 10^-10 abs and
+                        // relative errors which is good but weird.
+                        // Finally, note the comment below regarding the changes to
+                        // the computation of I_mat and the error that we then get.
+                        // To mitigate that divergence from the reference CrayFTN
+                        // Gysela, two facts, use:
+                        // - #pragma clang fp contract(on) : instead of the fast or
+                        // fast-honor-pragmas which is the default for GPU on Clang.
+                        // - Use more accurate transcendental function
+                        // implementation (relative to GLibC).
+                        // NOTE: theses error would also obviously manifest
+                        // themselve if we changed the compiler from gfortran to
+                        // ifort or crayftn and as such, trying to be bit-perfect
+                        // with the CrayFTN reference is but an illusion (and incurs
+                        // a performance penalty).
 
-                    // for(OrdinalType ind_i = 0; ind_i < the_Xtr_pows_size; ++ind_i) {
-                    //     Xtr_pows[ind_i] = Kokkos::pow(-Xtr, static_cast<ValueType>(ind_i));
-                    // }
+                        static constexpr OrdinalType the_J_vec_size = Constant::kIndexMax + 2 + 1;
 
-                    Xtr_pows[0] = 1.0;
+                        // Precompute kCombMat(n, k): n! /(k! * (n-k)!)
+                        // AKA: binomial coeff/pascal's triangle
+                        // n are the ind_i
+                        // k are the ind_k
+                        // clang-format off
+                        static constexpr ValueType kCombMat[the_Xtr_pows_size][the_Xtr_pows_size] =
+                            {{1.0, 0.0, 0.0, 0.0, 0.0, 0.0},
+                             {1.0, 1.0, 0.0, 0.0, 0.0, 0.0},
+                             {1.0, 2.0, 1.0, 0.0, 0.0, 0.0},
+                             {1.0, 3.0, 3.0, 1.0, 0.0, 0.0},
+                             {1.0, 4.0, 6.0, 4.0, 1.0, 0.0},
+                             {1.0, 5.0, 10.0, 10.0, 5.0, 1.0}};
+                        // clang-format on
 
-                    for(OrdinalType ind_i = 1; ind_i < the_Xtr_pows_size; ++ind_i) {
-                        Xtr_pows[ind_i] = -Xtr * Xtr_pows[ind_i - 1];
-                    }
+                        ValueType Xtr_pows[the_Xtr_pows_size]; // std::pow(-Xtr, i);
+                        ValueType J_vec[the_J_vec_size];
 
-                    const ValueType the_exp_Xtr                = Kokkos::exp(Xtr);
-                    const ValueType the_sqrtXtr_inv_on_exp_Xtr = sqrtXtr_inv / the_exp_Xtr;
-                    const ValueType the_erfc_sqrt_Xtr          = Kokkos::erfc(sqrtXtr);
+                        // for(OrdinalType ind_i = 0; ind_i < the_Xtr_pows_size; ++ind_i) {
+                        //     Xtr_pows[ind_i] = Kokkos::pow(-Xtr, static_cast<ValueType>(ind_i));
+                        // }
 
-                    J_vec[1] = koliop::portability::MathematicalConstant<ValueType>::kSqrtPi * the_erfc_sqrt_Xtr;
-                    J_vec[0] = 2.0 * (the_sqrtXtr_inv_on_exp_Xtr - J_vec[1]);
+                        Xtr_pows[0] = 1.0;
 
-                    for(OrdinalType ind_k = 2; ind_k < the_J_vec_size; ++ind_k) {
-                        J_vec[ind_k] = the_sqrtXtr_inv_on_exp_Xtr * Kokkos::abs(Xtr_pows[ind_k - 1]);
-                    }
+                        for(OrdinalType ind_i = 1; ind_i < the_Xtr_pows_size; ++ind_i) {
+                            Xtr_pows[ind_i] = -Xtr * Xtr_pows[ind_i - 1];
+                        }
 
-                    for(OrdinalType ind_k = 2; ind_k < the_J_vec_size; ++ind_k) {
-                        J_vec[ind_k] += J_vec[ind_k - 1] * (static_cast<ValueType>(ind_k) - 1.5);
-                    }
+                        const ValueType the_exp_Xtr                = Kokkos::exp(Xtr);
+                        const ValueType the_sqrtXtr_inv_on_exp_Xtr = sqrtXtr_inv / the_exp_Xtr;
+                        const ValueType the_erfc_sqrt_Xtr          = Kokkos::erfc(sqrtXtr);
 
-                    // Assumes I_mat is zeroed.
-                    // I_mat(:) = 0.0;
+                        J_vec[1] = koliop::portability::MathematicalConstant<ValueType>::kSqrtPi * the_erfc_sqrt_Xtr;
+                        J_vec[0] = 2.0 * (the_sqrtXtr_inv_on_exp_Xtr - J_vec[1]);
 
-                    for(OrdinalType ind_i = 0; ind_i < the_Xtr_pows_size; ++ind_i) {
-                        for(OrdinalType ind_k = 0; ind_k <= ind_i; ++ind_k) {
-                            // The numbers below represent:
-                            // NORM2(a - r) / NORM2(r)
-                            // MAXVAL(ABS(a - r))
-                            // MAXVAL(ABS(a - r) / ABS(r))
-                            // With a and r being approximation and reference.
-                            // the reference is the Fortran code.
-                            // Below we see multiple error report depending on
-                            // the computation leading to the I_mat values. For
-                            // each measurement, the same code transformation
-                            // was applied to the fortran code so in theory we
-                            // should have the same results. This is not the
-                            // case as show and add even more mystery to what
-                            // was reported in the comment at the tome of this
-                            // function.
-                            //
-                            //
-                            // GOOD:
-                            // 9.0055254553295181E-16
-                            // 6.39488462184090167E-14
-                            // 1.66911273006078298E-12
-                            // I_mat[ind_i] = I_mat[ind_i] * kCombMat[ind_i][ind_k];
-                            //
-                            // GOOD:
-                            // 9.22848380287682281E-16
-                            // 7.46069872548105195E-14
-                            // 7.23852371101561738E-13
-                            // I_mat[ind_i] = I_mat[ind_i] * J_vec[ind_k + offset];
-                            //
-                            // GOOD:
-                            // 4.58332122622586803E-15
-                            // 3120562176.
-                            // 1.930299460045218E-12
-                            // I_mat[ind_i] = I_mat[ind_i] * Xtr_pows[ind_i - ind_k];
-                            //
-                            // GOOD:
-                            // 1.4048455258283236E-13
-                            // 4.85505554119331165E+134
-                            // 4.77752425883472662E-13
-                            // I_mat[ind_i] = I_mat[ind_i] + the_exp_Xtr;
-                            //
-                            // GOOD:
-                            // 9.26019275821356788E-16
-                            // 7.10542735760100186E-14
-                            // 7.23852371101561738E-13
-                            // I_mat[ind_i] = I_mat[ind_i] *
-                            //                kCombMat[ind_i][ind_k] * J_vec[ind_k + offset];
-                            //
-                            // MEH:
-                            // +
-                            // 2.39600218077008314E-15
-                            // 4.17232513427734375E-7
-                            // 1.32255877974644926E-11
-                            // *
-                            // 4.5951505930168964E-15
-                            // 309237645312.
-                            // 1.93029924759351626E-12
-                            // I_mat[ind_i] = I_mat[ind_i] *
-                            //                kCombMat[ind_i][ind_k] * Xtr_pows[ind_i - ind_k];
-                            //
-                            // MEH:
-                            // 1.39915089874609498E-13
-                            // 3.7122720000644766E+134
-                            // 1.2319135169780248E-11
-                            // I_mat[ind_i] = I_mat[ind_i] +
-                            //                kCombMat[ind_i][ind_k] * the_exp_Xtr;
-                            //
-                            // GOOD:
-                            // 9.27452285782984381E-16
-                            // 7.10542735760100186E-14
-                            // 7.67019556279941316E-13
-                            // I_mat[ind_i] = I_mat[ind_i] +
-                            //                J_vec[ind_k + offset] * Xtr_pows[ind_i - ind_k];
-                            //
-                            // BAD:
-                            // 1.90019131286443E-11
-                            // 7.09558662492781878E-7
-                            // 5.82693268469331832E-7
-                            // I_mat[ind_i] = I_mat[ind_i] +
-                            //                J_vec[ind_k + offset] *
-                            //                    Xtr_pows[ind_i - ind_k] * the_exp_Xtr;
-                            //
-                            // MEH:
-                            // 1.39915089874609498E-13
-                            // 3.7122720000644766E+134
-                            // 1.2319135169780248E-11
-                            // I_mat[ind_i] = I_mat[ind_i] +
-                            //                kCombMat[ind_i][ind_k] * the_exp_Xtr;
-                            //
-                            // GOOD:
-                            // 9.24565888941454475E-16
-                            // 6.75015598972095177E-14
-                            // 6.51097853232258926E-13
-                            // I_mat[ind_i] = I_mat[ind_i] +
-                            //                kCombMat[ind_i][ind_k] * J_vec[ind_k + offset] *
-                            //                    Xtr_pows[ind_i - ind_k];
-                            //
-                            // BAD:
-                            // 7.08135327836351362E-9
-                            // 7.12772024513697033E-7
-                            // 4.18202253096459523E-8
-                            // I_mat[ind_i] = I_mat[ind_i] +
-                            //                kCombMat[ind_i][ind_k] * J_vec[ind_k + offset] *
-                            //                    Xtr_pows[ind_i - ind_k] * the_exp_Xtr;
+                        for(OrdinalType ind_k = 2; ind_k < the_J_vec_size; ++ind_k) {
+                            J_vec[ind_k] = the_sqrtXtr_inv_on_exp_Xtr * Kokkos::abs(Xtr_pows[ind_k - 1]);
+                        }
 
-                            // ind_i in [0, Constant::kIndexMax + 2 + 1)
-                            I_mat[ind_i] = I_mat[ind_i] +
-                                           kCombMat[ind_i][ind_k] * J_vec[ind_k + offset] *
-                                               Xtr_pows[ind_i - ind_k] * the_exp_Xtr;
+                        for(OrdinalType ind_k = 2; ind_k < the_J_vec_size; ++ind_k) {
+                            J_vec[ind_k] += J_vec[ind_k - 1] * (static_cast<ValueType>(ind_k) - 1.5);
+                        }
+
+                        // Assumes I_mat is zeroed.
+                        // I_mat(:) = 0.0;
+
+                        for(OrdinalType ind_i = 0; ind_i < the_Xtr_pows_size; ++ind_i) {
+                            for(OrdinalType ind_k = 0; ind_k <= ind_i; ++ind_k) {
+                                // The numbers below represent:
+                                // NORM2(a - r) / NORM2(r)
+                                // MAXVAL(ABS(a - r))
+                                // MAXVAL(ABS(a - r) / ABS(r))
+                                // With a and r being approximation and reference.
+                                // the reference is the Fortran code.
+                                // Below we see multiple error report depending on
+                                // the computation leading to the I_mat values. For
+                                // each measurement, the same code transformation
+                                // was applied to the fortran code so in theory we
+                                // should have the same results. This is not the
+                                // case as show and add even more mystery to what
+                                // was reported in the comment at the tome of this
+                                // function.
+                                //
+                                //
+                                // GOOD:
+                                // 9.0055254553295181E-16
+                                // 6.39488462184090167E-14
+                                // 1.66911273006078298E-12
+                                // I_mat[ind_i] = I_mat[ind_i] * kCombMat[ind_i][ind_k];
+                                //
+                                // GOOD:
+                                // 9.22848380287682281E-16
+                                // 7.46069872548105195E-14
+                                // 7.23852371101561738E-13
+                                // I_mat[ind_i] = I_mat[ind_i] * J_vec[ind_k + (-offset_k + 1)];
+                                //
+                                // GOOD:
+                                // 4.58332122622586803E-15
+                                // 3120562176.
+                                // 1.930299460045218E-12
+                                // I_mat[ind_i] = I_mat[ind_i] * Xtr_pows[ind_i - ind_k];
+                                //
+                                // GOOD:
+                                // 1.4048455258283236E-13
+                                // 4.85505554119331165E+134
+                                // 4.77752425883472662E-13
+                                // I_mat[ind_i] = I_mat[ind_i] + the_exp_Xtr;
+                                //
+                                // GOOD:
+                                // 9.26019275821356788E-16
+                                // 7.10542735760100186E-14
+                                // 7.23852371101561738E-13
+                                // I_mat[ind_i] = I_mat[ind_i] *
+                                //                kCombMat[ind_i][ind_k] * J_vec[ind_k + (-offset_k + 1)];
+                                //
+                                // MEH:
+                                // +
+                                // 2.39600218077008314E-15
+                                // 4.17232513427734375E-7
+                                // 1.32255877974644926E-11
+                                // *
+                                // 4.5951505930168964E-15
+                                // 309237645312.
+                                // 1.93029924759351626E-12
+                                // I_mat[ind_i] = I_mat[ind_i] *
+                                //                kCombMat[ind_i][ind_k] * Xtr_pows[ind_i - ind_k];
+                                //
+                                // MEH:
+                                // 1.39915089874609498E-13
+                                // 3.7122720000644766E+134
+                                // 1.2319135169780248E-11
+                                // I_mat[ind_i] = I_mat[ind_i] +
+                                //                kCombMat[ind_i][ind_k] * the_exp_Xtr;
+                                //
+                                // GOOD:
+                                // 9.27452285782984381E-16
+                                // 7.10542735760100186E-14
+                                // 7.67019556279941316E-13
+                                // I_mat[ind_i] = I_mat[ind_i] +
+                                //                J_vec[ind_k + (-offset_k + 1)] * Xtr_pows[ind_i - ind_k];
+                                //
+                                // BAD:
+                                // 1.90019131286443E-11
+                                // 7.09558662492781878E-7
+                                // 5.82693268469331832E-7
+                                // I_mat[ind_i] = I_mat[ind_i] +
+                                //                J_vec[ind_k + (-offset_k + 1)] *
+                                //                    Xtr_pows[ind_i - ind_k] * the_exp_Xtr;
+                                //
+                                // MEH:
+                                // 1.39915089874609498E-13
+                                // 3.7122720000644766E+134
+                                // 1.2319135169780248E-11
+                                // I_mat[ind_i] = I_mat[ind_i] +
+                                //                kCombMat[ind_i][ind_k] * the_exp_Xtr;
+                                //
+                                // GOOD:
+                                // 9.24565888941454475E-16
+                                // 6.75015598972095177E-14
+                                // 6.51097853232258926E-13
+                                // I_mat[ind_i] = I_mat[ind_i] +
+                                //                kCombMat[ind_i][ind_k] * J_vec[ind_k + (-offset_k + 1)] *
+                                //                    Xtr_pows[ind_i - ind_k];
+                                //
+                                // BAD:
+                                // 7.08135327836351362E-9
+                                // 7.12772024513697033E-7
+                                // 4.18202253096459523E-8
+                                // I_mat[ind_i] = I_mat[ind_i] +
+                                //                kCombMat[ind_i][ind_k] * J_vec[ind_k + (-offset_k + 1)] *
+                                //                    Xtr_pows[ind_i - ind_k] * the_exp_Xtr;
+
+                                // ind_i in [0, Constant::kIndexMax + 2 + 1)
+                                I_mat[ind_i] = I_mat[ind_i] +
+                                               kCombMat[ind_i][ind_k] * J_vec[ind_k + (-offset_k + 1)] *
+                                                   Xtr_pows[ind_i - ind_k] * the_exp_Xtr;
+                            }
                         }
                     }
                 }
@@ -326,7 +377,7 @@ namespace koliop {
 
                             ValueType I_mat[Constant::kIndexMax + 1 + 1]{};
 
-                            DoComputeI(1, Xtr, sqrtXtr, sqrtXtr_inv, I_mat);
+                            DoComputeI(0, Xtr, sqrtXtr, sqrtXtr_inv, I_mat);
 
                             for(OrdinalType ind_i = 0; ind_i <= Constant::kIndexMax; ++ind_i) {
                                 L_mat[0][ind_i] += coeff_L * I_mat[ind_i];
@@ -341,7 +392,7 @@ namespace koliop {
 
                             ValueType I_mat[Constant::kIndexMax + 1 + 1]{};
 
-                            DoComputeI(0, Xtr, sqrtXtr, sqrtXtr_inv, I_mat);
+                            DoComputeI(1, Xtr, sqrtXtr, sqrtXtr_inv, I_mat);
 
                             for(OrdinalType ind_i = 0; ind_i <= Constant::kIndexMax; ++ind_i) {
                                 L_mat[2][ind_i] -= coeff_L * I_mat[ind_i];
