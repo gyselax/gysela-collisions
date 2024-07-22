@@ -145,6 +145,9 @@ int Test1() {
 }
 
 int Test2() {
+    // Takes 1.89 sec on MI250X.
+    //       0.78 sec on MI300A.
+
     // NOTE: This function is used to test the GPU code. We pass the operator
     // dummy arrays that get copied to the GPU anyway (assuming
     // koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE=OFF) thus being

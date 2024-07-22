@@ -48,8 +48,9 @@ namespace koliop {
             /// contained in a SIMD register's lane. On GPU though, there is the
             /// concept of *interlane* SIMD which comes in the form of
             /// float2, double4 etc. As of 2023, doubleN is not really a SIMD
-            /// registers and serve more to do efficient loads. In the case of
-            /// a GPU, kVectorSize may be == 4 regardless of kBatchSize.
+            /// registers and serve more to do efficient loads and in some case,
+            /// do operations at higher rates (say, CDNA 2's float2). In the
+            /// case of a GPU, kVectorSize may be == 4 regardless of kBatchSize.
             ///
             /// NOTE: While batching is required to produce efficient memory
             /// access on GPUs, using single double instead of double4/double2
@@ -60,10 +61,13 @@ namespace koliop {
                                                                                                          typename ExecutionSpaceType::memory_space>::value;
 
             /// On AMD GPUs,    its 16 / 4 (double4) = 4
-            //     Nvidia GPUs, its  8 / 2 (double2) = 4
+            ///    Nvidia GPUs, its  8 / 2 (double2) = 4
             ///    AVX256,      its  4 / 4 (double)  = 1
             static inline constexpr OrdinalType kVectorPerBatch = kBatchSize / kVectorSize;
 
+            /// Represents float2/double2/double4 etc. on GPUs and SIMd
+            /// registers on CPUs.
+            ///
             using ThreadVectorType = KokkosBatched::Vector<KokkosBatched::SIMD<value_type>,
                                                            kVectorSize>;
 

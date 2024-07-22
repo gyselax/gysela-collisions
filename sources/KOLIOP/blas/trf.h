@@ -34,10 +34,10 @@ namespace koliop {
         /// kSmallBlockExtent instead of scalars. Except for A, B and C
         /// everything is assumed zero. We have 0 <= n < kBigBlockExtent.
         /// kBigBlockExtent is the number of block of size kSmallBlockExtent x
-        /// kSmallBlockExtent.
+        /// kSmallBlockExtent that forms the width and height of the M matrix.
         /// A_0 and C_n are expected to be zero.
         ///
-        /// We propose LU tooling for this kind of matrix:
+        /// We propose LU factorization tooling for this kind of matrix:
         ///
         /// A =
         /// M_0       0
@@ -53,7 +53,7 @@ namespace koliop {
         /// second represents the columns so that:
         /// ScalarMatrixType{}(5, 4, 2, 2, 1, 0)
         /// represents the first (0) batch element of the second (1) column of
-        /// the third (2) row of the upper (2) diagonal block at the fifth row
+        /// the third (2) row of the C (2) diagonal block at the fifth row
         /// (4) of the sixth batch (5).
         ///
         /// The matrix should be in layout right and we justify that due to a
