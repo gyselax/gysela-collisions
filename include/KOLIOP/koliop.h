@@ -62,10 +62,6 @@ typedef struct koliop_OpaqueOperator_* koliop_Operator;
 /// The values given below are expected NOT to change during the lifetime
 /// of the operator.
 /// @param an_operator_handle A pointer to a koliop_Operator. This handle represents the operator as an opaque pointer.
-/// @param Npolmax Must be 3
-/// @param index_max Must be 4
-/// @param pSpecies_id When used in Gysela fortran pre 2024/03/01, represents the species processed by a rank. After this date and on both the C++ and Fortran version, the values is meaningless as a rank contains all the species for a given global simulation space sub volume.
-/// @param mu_id Which Mu the rank is processing. Historical error, the collision operator does not care which values it takes. Can be set to any value.
 /// @param the_mu_extent The rank's Mu domain extent in grid point.
 /// @param the_vpar_extent The rank's Vpar domain extent in grid point.
 /// @param the_r_extent The rank's R domain extent in grid point.
@@ -97,10 +93,6 @@ typedef struct koliop_OpaqueOperator_* koliop_Operator;
 /// @param Bstar_s An array of double with extents ([0, the_vpar_extent), [0, the_r_extent), [0, the_theta_extent), [0, the_species_extent) ).
 /// @return KOLIOP_STATUS_SUCCESS on success.
 koliop_Status koliop_Create(koliop_Operator* an_operator_handle,
-                            size_t           Npolmax,
-                            size_t           index_max,
-                            int64_t          pSpecies_id,
-                            int64_t          mu_id,
                             size_t           the_mu_extent,
                             size_t           the_vpar_extent,
                             size_t           the_r_extent,

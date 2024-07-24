@@ -115,10 +115,6 @@ MODULE koliop
       END FUNCTION
 
       ! koliop_Status koliop_Create(koliop_Operator* an_operator_handle,
-      !                             size_t           Npolmax,
-      !                             size_t           index_max,
-      !                             int64_t          pSpecies_id,
-      !                             int64_t          mu_id,
       !                             size_t           the_mu_extent,
       !                             size_t           the_vpar_extent,
       !                             size_t           the_r_extent,
@@ -150,10 +146,6 @@ MODULE koliop
       !                             const double*    Bstar_s);
       INTEGER(koliop_Status) FUNCTION koliop_Create_c( &
          an_operator_handle, &
-         Npolmax, &
-         index_max, &
-         pSpecies_id, &
-         mu_id, &
          the_mu_extent, &
          the_vpar_extent, &
          the_r_extent, &
@@ -197,10 +189,6 @@ MODULE koliop
          ! NOTE: the C code expects a pointer to a pointer for
          ! an_operator_handle
          TYPE(C_PTR), INTENT(INOUT) :: an_operator_handle
-         INTEGER(C_SIZE_T), VALUE, INTENT(IN) :: Npolmax
-         INTEGER(C_SIZE_T), VALUE, INTENT(IN) :: index_max
-         INTEGER(C_INT64_T), VALUE, INTENT(IN) :: pSpecies_id
-         INTEGER(C_INT64_T), VALUE, INTENT(IN) :: mu_id
          INTEGER(C_SIZE_T), VALUE, INTENT(IN) :: the_mu_extent
          INTEGER(C_SIZE_T), VALUE, INTENT(IN) :: the_vpar_extent
          INTEGER(C_SIZE_T), VALUE, INTENT(IN) :: the_r_extent
@@ -472,10 +460,6 @@ CONTAINS
 
    SUBROUTINE koliop_Create_fp(&
       an_operator_handle, &
-      Npolmax, &
-      index_max, &
-      pSpecies_id, &
-      mu_id, &
       the_mu_extent, &
       the_vpar_extent, &
       the_r_extent, &
@@ -510,10 +494,6 @@ CONTAINS
       IMPLICIT NONE
 
       TYPE(C_PTR), INTENT(INOUT) :: an_operator_handle
-      INTEGER, INTENT(IN) :: Npolmax
-      INTEGER, INTENT(IN) :: index_max
-      INTEGER, INTENT(IN) :: pSpecies_id
-      INTEGER, INTENT(IN) :: mu_id
       INTEGER, INTENT(IN) :: the_mu_extent
       INTEGER, INTENT(IN) :: the_vpar_extent
       INTEGER, INTENT(IN) :: the_r_extent
@@ -583,10 +563,6 @@ CONTAINS
 
       an_error_code = koliop_Create_c( &
          an_operator_handle, &
-         INT(Npolmax, C_SIZE_T), &
-         INT(index_max, C_SIZE_T), &
-         INT(pSpecies_id, C_INT64_T), &
-         INT(mu_id, C_INT64_T), &
          INT(the_mu_extent, C_SIZE_T), &
          INT(the_vpar_extent, C_SIZE_T), &
          INT(the_r_extent, C_SIZE_T), &
@@ -870,10 +846,6 @@ CONTAINS
 
    SUBROUTINE koliop_Create_f(&
       an_operator_handle, &
-      Npolmax, &
-      index_max, &
-      pSpecies_id, &
-      mu_id, &
       the_mu_extent, &
       the_vpar_extent, &
       the_r_extent, &
@@ -908,10 +880,6 @@ CONTAINS
       IMPLICIT NONE
 
       TYPE(C_PTR), INTENT(INOUT) :: an_operator_handle
-      INTEGER, INTENT(IN) :: Npolmax
-      INTEGER, INTENT(IN) :: index_max
-      INTEGER, INTENT(IN) :: pSpecies_id
-      INTEGER, INTENT(IN) :: mu_id
       INTEGER, INTENT(IN) :: the_mu_extent
       INTEGER, INTENT(IN) :: the_vpar_extent
       INTEGER, INTENT(IN) :: the_r_extent
@@ -945,10 +913,6 @@ CONTAINS
 
       call koliop_Create_fp( &
          an_operator_handle, &
-         Npolmax, &
-         index_max, &
-         pSpecies_id, &
-         mu_id, &
          the_mu_extent, &
          the_vpar_extent, &
          the_r_extent, &
@@ -1233,10 +1197,6 @@ END MODULE
 !       INTEGER :: a_device_index = 0
 !       LOGICAL :: with_verbose_initialization = .TRUE.
 
-!       INTEGER :: Npolmax = 3
-!       INTEGER :: index_max = 4
-!       INTEGER :: pSpecies_id = 0
-!       INTEGER :: mu_id = 4
 !       INTEGER :: the_mu_extent = 48
 !       INTEGER :: the_vpar_extent = 128
 !       INTEGER :: the_r_extent = 32
@@ -1321,8 +1281,6 @@ END MODULE
 !       print *, "koliop_Initialize_f:an_error_code", an_error_code
 
 !       call koliop_Create_f(an_operator, &
-!          Npolmax, index_max, &
-!          pSpecies_id, mu_id, &
 !          the_mu_extent, the_vpar_extent, the_r_extent, &
 !          the_theta_extent, the_phi_extent, the_species_extent, &
 !          the_global_domain_r_extent, the_global_domain_theta_extent, &

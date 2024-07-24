@@ -96,10 +96,6 @@
 }
 
 ::koliop_Status koliop_Create(::koliop_Operator* an_operator_handle,
-                              size_t             Npolmax,
-                              size_t             index_max,
-                              int64_t            pSpecies_id,
-                              int64_t /* mu_id */,
                               size_t  the_mu_extent,
                               size_t  the_vpar_extent,
                               size_t  the_r_extent,
@@ -135,11 +131,6 @@
         }
 
         if(an_operator_handle == nullptr ||
-           // We expect Npolmax to be constant.
-           Npolmax != koliop::collision::Constant::kMaximumLaguerrePolynomialDegree ||
-           (index_max != 2 * (Npolmax - 1)) ||
-           pSpecies_id < 0 ||
-           static_cast<int64_t>(the_species_extent) <= pSpecies_id ||
            !(0 <= ir_SOL_separatrix && static_cast<size_t>(ir_SOL_separatrix) <= the_global_domain_r_extent) ||
            // We store a constant expression of the binomial coeffs. We do not need someone to given them to us.
            // comb_mat == nullptr ||

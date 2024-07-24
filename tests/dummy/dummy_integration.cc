@@ -13,10 +13,6 @@ int Test1() {
 
     ::koliop_Operator an_operator;
 
-    static constexpr size_t  Npolmax                = 3;
-    static constexpr size_t  index_max              = 4;
-    static constexpr int64_t pSpecies_id            = 0;
-    static constexpr int64_t mu_id                  = 0; // [0, nrank)
     static constexpr double  R0                     = 320.0;
     static constexpr int8_t  collision_interspecies = true;
     static constexpr int8_t  SOL                    = false;
@@ -55,10 +51,6 @@ int Test1() {
                              1.0);
 
     if(::koliop_Create(&an_operator,
-                       Npolmax,
-                       index_max,
-                       pSpecies_id,
-                       mu_id,
                        the_mu_extent,
                        the_vpar_extent,
                        the_r_extent,
@@ -155,10 +147,6 @@ int Test2() {
 
     ::koliop_Operator an_operator;
 
-    static constexpr size_t  Npolmax                = 3;
-    static constexpr size_t  index_max              = 4;
-    static constexpr int64_t pSpecies_id            = 0;
-    static constexpr int64_t mu_id                  = 0; // [0, nrank)
     static constexpr double  R0                     = 320.0;
     static constexpr int8_t  collision_interspecies = true;
     static constexpr int8_t  SOL                    = false;
@@ -197,10 +185,6 @@ int Test2() {
                              1.0);
 
     if(::koliop_Create(&an_operator,
-                       Npolmax,
-                       index_max,
-                       pSpecies_id,
-                       mu_id,
                        the_mu_extent,
                        the_vpar_extent,
                        the_r_extent,
