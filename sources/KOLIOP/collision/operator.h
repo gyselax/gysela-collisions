@@ -109,7 +109,6 @@ namespace koliop {
             /// @param the_theta_extent
             /// @param the_phi_extent
             /// @param the_species_extent
-            /// @param R0
             /// @param collision_interspecies
             /// @param SOL
             /// @param LIM
@@ -121,9 +120,7 @@ namespace koliop {
             /// @param vparg
             /// @param coeff_intdmu
             /// @param coeff_intdvpar
-            /// @param rg
-            /// @param nustar0_r
-            /// @param q_r
+            /// @param coeff_AD_r
             /// @param mask_buffer_r
             /// @param mask_LIM
             /// @param B_norm
@@ -136,9 +133,8 @@ namespace koliop {
                      uint64_t     the_species_extent,
                      uint64_t     the_global_domain_r_extent,
                      uint64_t     the_global_domain_theta_extent,
-                     uint64_t     the_global_domain_r_offset,
-                     uint64_t     the_global_domain_theta_offset,
-                     Flo64        R0,
+                     uint64_t     the_local_domain_r_offset,
+                     uint64_t     the_local_domain_theta_offset,
                      bool         collision_interspecies,
                      bool         SOL,
                      bool         LIM,
@@ -149,9 +145,7 @@ namespace koliop {
                      const Flo64* vparg,
                      const Flo64* coeff_intdmu,
                      const Flo64* coeff_intdvpar,
-                     const Flo64* rg,
-                     const Flo64* nustar0_r,
-                     const Flo64* q_r,
+                     const Flo64* coeff_AD_r,
                      const Flo64* mask_buffer_r,
                      const Flo64* mask_LIM,
                      const Flo64* B_norm,
@@ -223,7 +217,6 @@ namespace koliop {
             OrdinalType      the_global_domain_theta_extent_;
             OrdinalType      the_local_domain_r_offset_;
             OrdinalType      the_local_domain_theta_offset_;
-            ComputeFloatType R0_;
             bool             collision_interspecies_;
             bool             SOL_;
             bool             LIM_;
@@ -240,9 +233,7 @@ namespace koliop {
             koliop::utility::View::InternalInputL1<const Flo64> vparg_;
             koliop::utility::View::InternalInputL1<const Flo64> coeff_intdmu_;
             koliop::utility::View::InternalInputL1<const Flo64> coeff_intdvpar_;
-            koliop::utility::View::InternalInputL1<const Flo64> rg_;
-            koliop::utility::View::InternalInputL1<const Flo64> nustar0_r_;
-            koliop::utility::View::InternalInputL1<const Flo64> q_r_;
+            koliop::utility::View::InternalInputL1<const Flo64> coeff_AD_r_;
             koliop::utility::View::InternalInputL1<const Flo64> mask_buffer_r_;
             koliop::utility::View::InternalInputL2<const Flo64> mask_LIM_;
             koliop::utility::View::InternalInputL2<const Flo64> B_norm_;

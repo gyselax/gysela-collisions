@@ -13,7 +13,6 @@ int Test1() {
 
     ::koliop_Operator an_operator;
 
-    static constexpr double  R0                     = 320.0;
     static constexpr int8_t  collision_interspecies = true;
     static constexpr int8_t  SOL                    = false;
     static constexpr int8_t  LIM                    = false;
@@ -61,14 +60,10 @@ int Test1() {
                        the_global_domain_theta_extent,
                        the_global_domain_r_offset,
                        the_global_domain_theta_offset,
-                       R0,
                        collision_interspecies,
                        SOL,
                        LIM,
                        ir_SOL_separatrix,
-                       a_big_dummy_array.data(),
-                       a_big_dummy_array.data(),
-                       a_big_dummy_array.data(),
                        a_big_dummy_array.data(),
                        a_big_dummy_array.data(),
                        a_big_dummy_array.data(),
@@ -147,7 +142,6 @@ int Test2() {
 
     ::koliop_Operator an_operator;
 
-    static constexpr double  R0                     = 320.0;
     static constexpr int8_t  collision_interspecies = true;
     static constexpr int8_t  SOL                    = false;
     static constexpr int8_t  LIM                    = false;
@@ -195,14 +189,10 @@ int Test2() {
                        the_global_domain_theta_extent,
                        the_global_domain_r_offset,
                        the_global_domain_theta_offset,
-                       R0,
                        collision_interspecies,
                        SOL,
                        LIM,
                        ir_SOL_separatrix,
-                       a_big_dummy_array.data(),
-                       a_big_dummy_array.data(),
-                       a_big_dummy_array.data(),
                        a_big_dummy_array.data(),
                        a_big_dummy_array.data(),
                        a_big_dummy_array.data(),

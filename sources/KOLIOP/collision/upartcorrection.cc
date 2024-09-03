@@ -191,10 +191,10 @@ namespace koliop {
 
                         const ComputeFloatType FMa_coll = coeff_Max_coll * Kokkos::exp(-u_coll -
                                                                                        (vparg(ivpar) - U_par_coll) *
-                                                                                           (vparg(ivpar) - U_par_coll) / (2 * T_coll));
+                                                                                           (vparg(ivpar) - U_par_coll) / (2.0 * T_coll));
                         const ComputeFloatType FMa_new  = coeff_Max_new * Kokkos::exp(-u_new -
                                                                                       (vparg(ivpar) - U_par_new) *
-                                                                                          (vparg(ivpar) - U_par_new) / (2 * T_new));
+                                                                                          (vparg(ivpar) - U_par_new) / (2.0 * T_new));
 
                         f5d_s(imu, ivpar, ir, itheta, iphi, ispeciesA) += FMa_new - FMa_coll;
                     });
