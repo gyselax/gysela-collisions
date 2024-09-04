@@ -75,7 +75,7 @@ typedef struct koliop_OpaqueOperator_* koliop_Operator;
 /// @param collision_interspecies Boolean as type int8_t (0 = false, else true) describing if a species collision with itself.
 /// @param SOL Boolean as type int8_t (0 = false, else true) used in the Nu* computation.
 /// @param LIM Boolean as type int8_t (0 = false, else true) set to true to tell the operator to apply a limiter mask.
-/// @param ir_SOL_separatrix Fix the collisionality past ir_SOL_separatrix to the value at ir_SOL_separatrix. Must respect the following constraint: 0 <= ir_SOL_separatrix < the_global_domain_r_extent. In Gysela fortran, ir_SOL_separatrix must respect the following constraint: MAX_R_START <= ir_SOL_separatrix <= the_global_domain_r_extent where MAX_R_START is the the_local_domain_r_offset of a rank processing the most outer subdomain in R. Used in the Nu computation.
+/// @param ir_SOL_separatrix Fix the collisionality past ir_SOL_separatrix to the value at ir_SOL_separatrix. Must respect the following constraint: 0 <= ir_SOL_separatrix < the_global_domain_r_extent. In Gysela fortran, ir_SOL_separatrix must respect the following constraint: MAX_R_START <= ir_SOL_separatrix <= the_global_domain_r_extent where MAX_R_START is the the_local_domain_r_offset of a rank processing the most outer subdomain in R. Used in the Nu computation. Used for a specific treatment of the SOL.
 /// @param hat_As An array of double with extents ([0, the_species_extent) ).
 /// @param hat_Zs An array of double with extents ([0, the_species_extent) ).
 /// @param mug An array of double with extents ([0, the_mu_extent) ) representing the coordinate of the Mu grid points.
@@ -269,10 +269,26 @@ koliop_Status koliop_ExtractRaw(koliop_Operator an_operator,
 // koliop_Status koliop_ExtractNuab(koliop_Operator an_operator,
 //                                  double*         nu_ab);
 
-/// @brief Compute the evolution of the distribution function due to collisions.
-/// It computes the collision of all species against all other species (if asked
-/// for through collision_interspecies and the_species_extent). It basically
-/// disregard pSpecies_id. This is mostly used for the Gyselalib++.
+/// @brief Computes the evolution of the distribution function due to
+/// collisions. It computes the collision of all species against all other
+/// species (if asked for through collision_interspecies and
+/// the_species_extent). This "do it all method" is mostly used for the
+/// Gyselalib++.
+/// The operation, in order, are:
+/// - Compute fluid moments n, Vpar, T, q_par (koliop_ComputeMoments);
+/// - Make the Maxwellian evolve (koliop_ComputeMaxwellianEvolution);
+/// - Compute the normalized function distribution Fa = Fa / FM0a (koliop_ComputeMaxwellianUnshiftedLoc);
+/// - Begin loops on r, theta, phi:
+///     - Make Fa evolve via collvparmu_general_Cpar (koliop_ComputeCpar);
+///     - Compute alpha via collvparmu_general_alphaprojection (koliop_Apply);
+///     - Make alpha evolve via collvparmu_general_C0 (koliop_Apply);
+///     - Make alpha evolve via collvparmu_general_CvCd (koliop_Apply);
+///     - Make alpha evolve via collvparmu_general_C0 (koliop_Apply);
+///     - Reconstruct Fa via collvparmu_general_reconstruction (koliop_Apply);
+///     - Make Fa evolve via collvparmu_general_Cpar (koliop_ComputeCpar);
+/// - End loops
+/// - Compute the real function distribution Fa = Fa * FM0a (koliop_ComputeMaxwellianUnshiftedLoc);
+/// - Make the Maxwellian evolve via collvparmu_evolution_Maxwellian (koliop_ComputeMaxwellianEvolution).
 ///
 /// WARNING: The user has to koliop_Fence() to ensure the result of the operator
 /// are visible for next operation.

@@ -205,7 +205,9 @@ namespace koliop {
             // Could be protected but we would have to use friend functions.
             // protected:
 
+            //
             // Constant, externally computed values
+            //
 
             OrdinalType      the_mu_extent_;
             OrdinalType      the_vpar_extent_;
@@ -239,11 +241,15 @@ namespace koliop {
             koliop::utility::View::InternalInputL2<const Flo64> B_norm_;
             koliop::utility::View::InternalInputL4<const Flo64> Bstar_s_;
 
+            //
             // Constant, internally computed values
+            //
 
             koliop::utility::View::MDL3<ComputeFloatType> nustar_coeff_;
 
+            //
             // Variable, internally computed values
+            //
 
             koliop::utility::View::MDL4<ComputeFloatType> n_s_;
             koliop::utility::View::MDL4<ComputeFloatType> U_par_s_;
@@ -252,11 +258,15 @@ namespace koliop {
             koliop::utility::View::MDL5<ComputeFloatType> nu_ab_;
             koliop::utility::View::MDL4<ComputeFloatType> q_par_on_nT_s_;
 
+            //
             // Miscellaneous tooling
+            //
 
             std::vector<Constant::DeviceExecutionSpaceType> the_execution_space_pool_;
 
+            //
             // Miscellaneous numerical tooling
+            //
 
             CvCdDriverScheduler the_cvcd_drivers_scheduler_;
         };

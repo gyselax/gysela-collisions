@@ -44,7 +44,7 @@ namespace koliop {
             const auto& T_s           = an_operator.T_s_;
             const auto& q_par_on_nT_s = an_operator.q_par_on_nT_s_;
 
-            const ComputeFloatType half_dt    = dt / 2.0;
+            const ComputeFloatType half_dt = dt / 2.0;
 
             // TODO(Etienne M): Make sure the accesses are sequential on CPU.
 
@@ -120,9 +120,19 @@ namespace koliop {
                             const ComputeFloatType xa             = Kokkos::sqrt(coeff1 * (2.0 * mug(imu) * Bij + vparg(ivpar) * vparg(ivpar)));
                             const ComputeFloatType xb             = xa * coeff2;
                             const ComputeFloatType FM0a           = coeff3 * Kokkos::exp(-xa * xa);
+
+                            // Compute the function:
+                            //    Theta(x) = 3*sqrt(pi)/2 *G(x)/x
+                            //      with G(x) = (phi(x) - x phi'(x)) / (2 x^2)
+                            //      and  x = vTa_on_vTb * sqrt(E) / sqrt_Ta
+                            //      note: phi(x) = 2/sqrt(pi) int_0^x exp(-y^2) dy is computed using ERF()
                             const ComputeFloatType Theta_func_tmp = xb > 1E-15 ?
                                                                         koliop::portability::GyselaConstant<ComputeFloatType>::kConst_theta * ((Kokkos::erf(xb) - xb * (koliop::portability::GyselaConstant<ComputeFloatType>::kCst_phiprime * Kokkos::exp(-xb * xb))) / (2.0 * xb * xb)) / xb :
                                                                         1.0;
+
+                            // Compute collision frequency nu_sab
+                            //  nu_sab(xb) = (AD * hat_Za^2 * hat_Zb^2 * Nb) * (1/hat_Aa) * &
+                            //               (1/hat_Aa + 1/hat_Ab)*Theta(xb) / vTb^3
                             const ComputeFloatType nu_sab         = (AD * hat_Za * hat_Za * hat_Zb * hat_Zb * nb) * inv_hat_Aa * (inv_hat_Aa + inv_hat_Ab) * Theta_func_tmp / (vTb * vTb * vTb);
 
                             f5d_s(imu, ivpar, ir, itheta, iphi, ispeciesA) += half_dt * FM0a * nu_sab * coeff5 * (Rat * Vparb - Vpara + q_par_on_nT * (1.0 - 2.0 * xa * xa * 0.2) - coeff4);

@@ -117,6 +117,7 @@ namespace koliop {
                 // NOTE: This should be a no-op.
                 impulsion_coll = the_impulsion_coll_reducer.reference();
 
+                // Computation of Vpar after collision.
                 const ComputeFloatType U_par_coll = impulsion_coll / na;
 
                 ComputeFloatType              T_coll;
@@ -140,6 +141,7 @@ namespace koliop {
 
                 a_team_handle.team_reduce(the_T_coll_reducer);
 
+                // Computation of T after collision.
                 // NOTE: This should be a no-op.
                 T_coll = the_T_coll_reducer.reference();
 
@@ -148,6 +150,8 @@ namespace koliop {
                 ComputeFloatType       U_par_new   = Vpara;
                 const ComputeFloatType q_par_on_nT = q_par_on_nT_s(ir, itheta, iphi, ispeciesA);
                 const ComputeFloatType T_new       = T_s(ir, itheta, iphi, ispeciesA);
+
+                // We correct the parallel velocity and temperature.
 
                 for(OrdinalType ispecies = 0; ispecies < the_species_extent; ++ispecies) {
                     if((ispecies == ispeciesA) || !collision_interspecies) {
@@ -182,6 +186,8 @@ namespace koliop {
                 const ComputeFloatType coeff_Max_new = na / (koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi *
                                                              T_new *
                                                              Kokkos::sqrt(koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * T_new));
+
+                // We remove the old Maxwellian and add the new one.
 
                 Kokkos::parallel_for(
                     an_intra_team_policy,

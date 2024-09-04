@@ -44,7 +44,17 @@ namespace koliop {
                                                        (static_cast<ComputeFloatType>(1.0) / hat_Aa + static_cast<ComputeFloatType>(1.0) / hat_Ab);
 
                     for(OrdinalType ir = 0; ir < the_r_extent; ++ir) {
+                        // AD(r) = sqrt(2)*eps^(3/2)/(q R0_)*nustaR0_(r) which
+                        // is independent on the species considered
+                        // (eps = r/R0_).
+                        // AD comprises a mask in r direction to avoid to *
+                        // compute collision in the scrape-off layer.
                         const ComputeFloatType AD = a_host_visible_coeff_AD_r(the_local_domain_r_offset + ir);
+
+                        // Computation of nu_ab =
+                        //  (AD * hat_Za^2 * hat_Zb^2 * Nb) /
+                        //  (vTa^2 + vTb^2)^(3/2) *
+                        //  (1/hat_Aa) * (1/hat_Aa + 1/hat_Ab)
                         a_host_visible_nustar_coeff(ispeciesA, ispeciesB, ir) = AD * AD_factor;
                     }
                 }
