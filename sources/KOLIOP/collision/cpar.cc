@@ -37,18 +37,14 @@ namespace koliop {
             const auto& hat_Zs        = an_operator.hat_Zs_;
             const auto& mug           = an_operator.mug_;
             const auto& vparg         = an_operator.vparg_;
-            const auto& rg            = an_operator.rg_;
-            const auto& nustar0_r     = an_operator.nustar0_r_;
-            const auto& q_r           = an_operator.q_r_;
+            const auto& coeff_AD_r    = an_operator.coeff_AD_r_;
             const auto& B_norm        = an_operator.B_norm_;
             const auto& n_s           = an_operator.n_s_;
             const auto& U_par_s       = an_operator.U_par_s_;
             const auto& T_s           = an_operator.T_s_;
             const auto& q_par_on_nT_s = an_operator.q_par_on_nT_s_;
 
-            const ComputeFloatType R0         = an_operator.R0_;
-            const ComputeFloatType R0_inverse = 1.0 / R0;
-            const ComputeFloatType half_dt    = dt / 2.0;
+            const ComputeFloatType half_dt = dt / 2.0;
 
             // TODO(Etienne M): Make sure the accesses are sequential on CPU.
 
@@ -82,7 +78,6 @@ namespace koliop {
                 const ComputeFloatType hat_Za     = hat_Zs(ispeciesA);
                 const ComputeFloatType inv_hat_Aa = 1.0 / hat_Aa;
 
-                const ComputeFloatType smcsfqri = q_r(the_local_domain_r_offset + ir);
                 const ComputeFloatType Bij      = B_norm(the_local_domain_r_offset + ir,
                                                          the_local_domain_theta_offset + itheta);
 
@@ -91,12 +86,10 @@ namespace koliop {
                 const ComputeFloatType Ta          = T_s(ir, itheta, iphi, ispeciesA);
                 const ComputeFloatType q_par_on_nT = q_par_on_nT_s(ir, itheta, iphi, ispeciesA);
 
-                const ComputeFloatType nustaR0_i = nustar0_r(the_local_domain_r_offset + ir);
-                const ComputeFloatType epstemp   = rg(the_local_domain_r_offset + ir) * R0_inverse;
-                const ComputeFloatType vTa       = Kokkos::sqrt(Ta * inv_hat_Aa);
-                const ComputeFloatType coeff1    = 1.0 / (2.0 * Ta);
-                const ComputeFloatType coeff3    = na / (koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta * Kokkos::sqrt(koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta));
-                const ComputeFloatType AD        = nustaR0_i * koliop::portability::MathematicalConstant<ComputeFloatType>::kSqrt2 * epstemp * Kokkos::sqrt(epstemp) / (R0 * (smcsfqri != koliop::portability::GyselaConstant<ComputeFloatType>::kInfinity ? smcsfqri : 1.0));
+                const ComputeFloatType vTa    = Kokkos::sqrt(Ta * inv_hat_Aa);
+                const ComputeFloatType coeff1 = 1.0 / (2.0 * Ta);
+                const ComputeFloatType coeff3 = na / (koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta * Kokkos::sqrt(koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta));
+                const ComputeFloatType AD     = coeff_AD_r(the_local_domain_r_offset + ir);
 
                 for(OrdinalType ispeciesB = 0; ispeciesB < the_species_extent; ++ispeciesB) {
                     // NOTE: We do very large jump in memory, but all the
@@ -127,9 +120,19 @@ namespace koliop {
                             const ComputeFloatType xa             = Kokkos::sqrt(coeff1 * (2.0 * mug(imu) * Bij + vparg(ivpar) * vparg(ivpar)));
                             const ComputeFloatType xb             = xa * coeff2;
                             const ComputeFloatType FM0a           = coeff3 * Kokkos::exp(-xa * xa);
+
+                            // Compute the function:
+                            //    Theta(x) = 3*sqrt(pi)/2 *G(x)/x
+                            //      with G(x) = (phi(x) - x phi'(x)) / (2 x^2)
+                            //      and  x = vTa_on_vTb * sqrt(E) / sqrt_Ta
+                            //      note: phi(x) = 2/sqrt(pi) int_0^x exp(-y^2) dy is computed using ERF()
                             const ComputeFloatType Theta_func_tmp = xb > 1E-15 ?
                                                                         koliop::portability::GyselaConstant<ComputeFloatType>::kConst_theta * ((Kokkos::erf(xb) - xb * (koliop::portability::GyselaConstant<ComputeFloatType>::kCst_phiprime * Kokkos::exp(-xb * xb))) / (2.0 * xb * xb)) / xb :
                                                                         1.0;
+
+                            // Compute collision frequency nu_sab
+                            //  nu_sab(xb) = (AD * hat_Za^2 * hat_Zb^2 * Nb) * (1/hat_Aa) * &
+                            //               (1/hat_Aa + 1/hat_Ab)*Theta(xb) / vTb^3
                             const ComputeFloatType nu_sab         = (AD * hat_Za * hat_Za * hat_Zb * hat_Zb * nb) * inv_hat_Aa * (inv_hat_Aa + inv_hat_Ab) * Theta_func_tmp / (vTb * vTb * vTb);
 
                             f5d_s(imu, ivpar, ir, itheta, iphi, ispeciesA) += half_dt * FM0a * nu_sab * coeff5 * (Rat * Vparb - Vpara + q_par_on_nT * (1.0 - 2.0 * xa * xa * 0.2) - coeff4);

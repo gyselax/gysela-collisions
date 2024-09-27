@@ -109,7 +109,6 @@ namespace koliop {
             /// @param the_theta_extent
             /// @param the_phi_extent
             /// @param the_species_extent
-            /// @param R0
             /// @param collision_interspecies
             /// @param SOL
             /// @param LIM
@@ -121,9 +120,7 @@ namespace koliop {
             /// @param vparg
             /// @param coeff_intdmu
             /// @param coeff_intdvpar
-            /// @param rg
-            /// @param nustar0_r
-            /// @param q_r
+            /// @param coeff_AD_r
             /// @param mask_buffer_r
             /// @param mask_LIM
             /// @param B_norm
@@ -136,9 +133,8 @@ namespace koliop {
                      uint64_t     the_species_extent,
                      uint64_t     the_global_domain_r_extent,
                      uint64_t     the_global_domain_theta_extent,
-                     uint64_t     the_global_domain_r_offset,
-                     uint64_t     the_global_domain_theta_offset,
-                     Flo64        R0,
+                     uint64_t     the_local_domain_r_offset,
+                     uint64_t     the_local_domain_theta_offset,
                      bool         collision_interspecies,
                      bool         SOL,
                      bool         LIM,
@@ -149,9 +145,7 @@ namespace koliop {
                      const Flo64* vparg,
                      const Flo64* coeff_intdmu,
                      const Flo64* coeff_intdvpar,
-                     const Flo64* rg,
-                     const Flo64* nustar0_r,
-                     const Flo64* q_r,
+                     const Flo64* coeff_AD_r,
                      const Flo64* mask_buffer_r,
                      const Flo64* mask_LIM,
                      const Flo64* B_norm,
@@ -211,7 +205,9 @@ namespace koliop {
             // Could be protected but we would have to use friend functions.
             // protected:
 
+            //
             // Constant, externally computed values
+            //
 
             OrdinalType      the_mu_extent_;
             OrdinalType      the_vpar_extent_;
@@ -223,7 +219,6 @@ namespace koliop {
             OrdinalType      the_global_domain_theta_extent_;
             OrdinalType      the_local_domain_r_offset_;
             OrdinalType      the_local_domain_theta_offset_;
-            ComputeFloatType R0_;
             bool             collision_interspecies_;
             bool             SOL_;
             bool             LIM_;
@@ -240,19 +235,21 @@ namespace koliop {
             koliop::utility::View::InternalInputL1<const Flo64> vparg_;
             koliop::utility::View::InternalInputL1<const Flo64> coeff_intdmu_;
             koliop::utility::View::InternalInputL1<const Flo64> coeff_intdvpar_;
-            koliop::utility::View::InternalInputL1<const Flo64> rg_;
-            koliop::utility::View::InternalInputL1<const Flo64> nustar0_r_;
-            koliop::utility::View::InternalInputL1<const Flo64> q_r_;
+            koliop::utility::View::InternalInputL1<const Flo64> coeff_AD_r_;
             koliop::utility::View::InternalInputL1<const Flo64> mask_buffer_r_;
             koliop::utility::View::InternalInputL2<const Flo64> mask_LIM_;
             koliop::utility::View::InternalInputL2<const Flo64> B_norm_;
             koliop::utility::View::InternalInputL4<const Flo64> Bstar_s_;
 
+            //
             // Constant, internally computed values
+            //
 
             koliop::utility::View::MDL3<ComputeFloatType> nustar_coeff_;
 
+            //
             // Variable, internally computed values
+            //
 
             koliop::utility::View::MDL4<ComputeFloatType> n_s_;
             koliop::utility::View::MDL4<ComputeFloatType> U_par_s_;
@@ -261,11 +258,15 @@ namespace koliop {
             koliop::utility::View::MDL5<ComputeFloatType> nu_ab_;
             koliop::utility::View::MDL4<ComputeFloatType> q_par_on_nT_s_;
 
+            //
             // Miscellaneous tooling
+            //
 
             std::vector<Constant::DeviceExecutionSpaceType> the_execution_space_pool_;
 
+            //
             // Miscellaneous numerical tooling
+            //
 
             CvCdDriverScheduler the_cvcd_drivers_scheduler_;
         };

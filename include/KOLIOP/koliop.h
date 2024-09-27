@@ -62,10 +62,6 @@ typedef struct koliop_OpaqueOperator_* koliop_Operator;
 /// The values given below are expected NOT to change during the lifetime
 /// of the operator.
 /// @param an_operator_handle A pointer to a koliop_Operator. This handle represents the operator as an opaque pointer.
-/// @param Npolmax Must be 3
-/// @param index_max Must be 4
-/// @param pSpecies_id When used in Gysela fortran pre 2024/03/01, represents the species processed by a rank. After this date and on both the C++ and Fortran version, the values is meaningless as a rank contains all the species for a given global simulation space sub volume.
-/// @param mu_id Which Mu the rank is processing. Historical error, the collision operator does not care which values it takes. Can be set to any value.
 /// @param the_mu_extent The rank's Mu domain extent in grid point.
 /// @param the_vpar_extent The rank's Vpar domain extent in grid point.
 /// @param the_r_extent The rank's R domain extent in grid point.
@@ -76,31 +72,23 @@ typedef struct koliop_OpaqueOperator_* koliop_Operator;
 /// @param the_global_domain_theta_extent The simulation's Theta domain extent in grid point.
 /// @param the_local_domain_r_offset The rank's R offset in the simulation's domain.
 /// @param the_local_domain_theta_offset The rank's R offset in the simulation's domain.
-/// @param R0 A scalar of type double. Used in the Cpar computation.
 /// @param collision_interspecies Boolean as type int8_t (0 = false, else true) describing if a species collision with itself.
 /// @param SOL Boolean as type int8_t (0 = false, else true) used in the Nu* computation.
 /// @param LIM Boolean as type int8_t (0 = false, else true) set to true to tell the operator to apply a limiter mask.
-/// @param ir_SOL_separatrix Fix the collisionality past ir_SOL_separatrix to the value at ir_SOL_separatrix. Must respect the following constraint: 0 <= ir_SOL_separatrix < the_global_domain_r_extent. In Gysela fortran, ir_SOL_separatrix must respect the following constraint: MAX_R_START <= ir_SOL_separatrix <= the_global_domain_r_extent where MAX_R_START is the the_local_domain_r_offset of a rank processing the most outer subdomain in R. Used in the Nu computation.
-/// @param comb_mat Now internally computed, should be a NULL.
+/// @param ir_SOL_separatrix Fix the collisionality past ir_SOL_separatrix to the value at ir_SOL_separatrix. Must respect the following constraint: 0 <= ir_SOL_separatrix < the_global_domain_r_extent. In Gysela fortran, ir_SOL_separatrix must respect the following constraint: MAX_R_START <= ir_SOL_separatrix <= the_global_domain_r_extent where MAX_R_START is the the_local_domain_r_offset of a rank processing the most outer subdomain in R. Used in the Nu computation. Used for a specific treatment of the SOL.
 /// @param hat_As An array of double with extents ([0, the_species_extent) ).
 /// @param hat_Zs An array of double with extents ([0, the_species_extent) ).
 /// @param mug An array of double with extents ([0, the_mu_extent) ) representing the coordinate of the Mu grid points.
 /// @param vparg An array of double with extents ([0, the_vpar_extent) ) representing the coordinate of the Vpar grid points.
 /// @param coeff_intdmu An array of double with extents ([0, the_mu_extent) ) representing the coefficients for the integral of the coordinates in Mu.
 /// @param coeff_intdvpar An array of double with extents ([0, the_vpar_extent) ) representing the coefficients for the integral of the coordinates in Vpar (generally using the simpson).
-/// @param rg An array of double with extents ([0, the_r_extent) ) representing the coordinate of the R grid points.
-/// @param nustar0_r An array of double with extents ([0, the_global_domain_r_extent) ).
-/// @param q_r An array of double with extents ([0, the_global_domain_r_extent) ).
+/// @param coeff_AD_r An array of double with extents ([0, the_r_extent) ) representing the AD coefficients.
 /// @param mask_buffer_r An array of double with extents ([0, the_global_domain_r_extent) ) representing an operator mask in R.
 /// @param mask_LIM An array of double with extents ([0, the_global_domain_r_extent), [0, the_global_domain_theta_extent) ) representing an operator's limiter mask. Must be set if LIM is true else, it may be a NULL.
 /// @param B_norm An array of double with extents ([0, the_global_domain_r_extent), [0, the_global_domain_theta_extent) ).
 /// @param Bstar_s An array of double with extents ([0, the_vpar_extent), [0, the_r_extent), [0, the_theta_extent), [0, the_species_extent) ).
 /// @return KOLIOP_STATUS_SUCCESS on success.
 koliop_Status koliop_Create(koliop_Operator* an_operator_handle,
-                            size_t           Npolmax,
-                            size_t           index_max,
-                            int64_t          pSpecies_id,
-                            int64_t          mu_id,
                             size_t           the_mu_extent,
                             size_t           the_vpar_extent,
                             size_t           the_r_extent,
@@ -111,21 +99,17 @@ koliop_Status koliop_Create(koliop_Operator* an_operator_handle,
                             size_t           the_global_domain_theta_extent,
                             size_t           the_local_domain_r_offset,
                             size_t           the_local_domain_theta_offset,
-                            double           R0,
                             int8_t           collision_interspecies,
                             int8_t           SOL,
                             int8_t           LIM,
                             int64_t          ir_SOL_separatrix,
-                            const double*    comb_mat,
                             const double*    hat_As,
                             const double*    hat_Zs,
                             const double*    mug,
                             const double*    vparg,
                             const double*    coeff_intdmu,
                             const double*    coeff_intdvpar,
-                            const double*    rg,
-                            const double*    nustar0_r,
-                            const double*    q_r,
+                            const double*    coeff_AD_r,
                             const double*    mask_buffer_r,
                             const double*    mask_LIM,
                             const double*    B_norm,
@@ -285,10 +269,26 @@ koliop_Status koliop_ExtractRaw(koliop_Operator an_operator,
 // koliop_Status koliop_ExtractNuab(koliop_Operator an_operator,
 //                                  double*         nu_ab);
 
-/// @brief Compute the evolution of the distribution function due to collisions.
-/// It computes the collision of all species against all other species (if asked
-/// for through collision_interspecies and the_species_extent). It basically
-/// disregard pSpecies_id. This is mostly used for the Gyselalib++.
+/// @brief Computes the evolution of the distribution function due to
+/// collisions. It computes the collision of all species against all other
+/// species (if asked for through collision_interspecies and
+/// the_species_extent). This "do it all method" is mostly used for the
+/// Gyselalib++.
+/// The operation, in order, are:
+/// - Compute fluid moments n, Vpar, T, q_par (koliop_ComputeMoments);
+/// - Make the Maxwellian evolve (koliop_ComputeMaxwellianEvolution);
+/// - Compute the normalized function distribution Fa = Fa / FM0a (koliop_ComputeMaxwellianUnshiftedLoc);
+/// - Begin loops on r, theta, phi:
+///     - Make Fa evolve via collvparmu_general_Cpar (koliop_ComputeCpar);
+///     - Compute alpha via collvparmu_general_alphaprojection (koliop_Apply);
+///     - Make alpha evolve via collvparmu_general_C0 (koliop_Apply);
+///     - Make alpha evolve via collvparmu_general_CvCd (koliop_Apply);
+///     - Make alpha evolve via collvparmu_general_C0 (koliop_Apply);
+///     - Reconstruct Fa via collvparmu_general_reconstruction (koliop_Apply);
+///     - Make Fa evolve via collvparmu_general_Cpar (koliop_ComputeCpar);
+/// - End loops
+/// - Compute the real function distribution Fa = Fa * FM0a (koliop_ComputeMaxwellianUnshiftedLoc);
+/// - Make the Maxwellian evolve via collvparmu_evolution_Maxwellian (koliop_ComputeMaxwellianEvolution).
 ///
 /// WARNING: The user has to koliop_Fence() to ensure the result of the operator
 /// are visible for next operation.

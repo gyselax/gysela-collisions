@@ -96,10 +96,6 @@
 }
 
 ::koliop_Status koliop_Create(::koliop_Operator* an_operator_handle,
-                              size_t             Npolmax,
-                              size_t             index_max,
-                              int64_t            pSpecies_id,
-                              int64_t /* mu_id */,
                               size_t  the_mu_extent,
                               size_t  the_vpar_extent,
                               size_t  the_r_extent,
@@ -110,21 +106,17 @@
                               size_t  the_global_domain_theta_extent,
                               size_t  the_local_domain_r_offset,
                               size_t  the_local_domain_theta_offset,
-                              double  R0,
                               int8_t  collision_interspecies,
                               int8_t  SOL,
                               int8_t  LIM,
                               int64_t ir_SOL_separatrix,
-                              const double*,
                               const double* hat_As,
                               const double* hat_Zs,
                               const double* mug,
                               const double* vparg,
                               const double* coeff_intdmu,
                               const double* coeff_intdvpar,
-                              const double* rg,
-                              const double* nustar0_r,
-                              const double* q_r,
+                              const double* coeff_AD_r,
                               const double* mask_buffer_r,
                               const double* mask_LIM,
                               const double* B_norm,
@@ -135,23 +127,14 @@
         }
 
         if(an_operator_handle == nullptr ||
-           // We expect Npolmax to be constant.
-           Npolmax != koliop::collision::Constant::kMaximumLaguerrePolynomialDegree ||
-           (index_max != 2 * (Npolmax - 1)) ||
-           pSpecies_id < 0 ||
-           static_cast<int64_t>(the_species_extent) <= pSpecies_id ||
            !(0 <= ir_SOL_separatrix && static_cast<size_t>(ir_SOL_separatrix) <= the_global_domain_r_extent) ||
-           // We store a constant expression of the binomial coeffs. We do not need someone to given them to us.
-           // comb_mat == nullptr ||
            hat_As == nullptr ||
            hat_Zs == nullptr ||
            mug == nullptr ||
            vparg == nullptr ||
            coeff_intdmu == nullptr ||
            coeff_intdvpar == nullptr ||
-           rg == nullptr ||
-           nustar0_r == nullptr ||
-           q_r == nullptr ||
+           coeff_AD_r == nullptr ||
            mask_buffer_r == nullptr ||
            (static_cast<bool>(LIM) && (mask_LIM == nullptr)) ||
            B_norm == nullptr ||
@@ -171,7 +154,6 @@
                                                static_cast<uint64_t>(the_global_domain_theta_extent),
                                                static_cast<uint64_t>(the_local_domain_r_offset),
                                                static_cast<uint64_t>(the_local_domain_theta_offset),
-                                               R0,
                                                static_cast<bool>(collision_interspecies),
                                                static_cast<bool>(SOL),
                                                static_cast<bool>(LIM),
@@ -182,9 +164,7 @@
                                                vparg,
                                                coeff_intdmu,
                                                coeff_intdvpar,
-                                               rg,
-                                               nustar0_r,
-                                               q_r,
+                                               coeff_AD_r,
                                                mask_buffer_r,
                                                mask_LIM,
                                                B_norm,
