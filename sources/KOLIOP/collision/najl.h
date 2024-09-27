@@ -12,6 +12,11 @@ namespace koliop {
     namespace collision {
         namespace detail {
 
+            /// Computation of the coefficient C(i,j,l) corresponding to
+            /// PjPl = sum_i C(i,j,l) u^i
+            /// C(i,j,l) = sum_alpha sum_beta Cj(alpha) Cl(beta) delta(alpha +beta -i)
+            /// where Cj and Cl correspond respectively to the coefficient associated
+            /// to Pj and Pl.
             template <typename View3D>
             static inline void
             DoPrepareCjl(View3D& C_jl) {
@@ -335,6 +340,14 @@ namespace koliop {
                     }
                 }
 
+                /// Computation of L(n,i, sp_a, sp_b) with
+                ///   L(0,i, sp_a, sp_b) = <D_dab / vTa**2 | u^i>
+                ///   L(1,i, sp_a, sp_b) = <1/v d(D_dab)/dv | u^i>
+                ///   L(2,i, sp_a, sp_b) = <nu_vab - nu_dab | u^i>
+                ///   L(3,i, sp_a, sp_b) = <0.5 * v * d(nu_vab - nu_dab)/dv | u^i>
+                ///   L(4,i, sp_a, sp_b) = <1 / v * d(nu_vab - nu_dab)/dv | u^i>
+                /// Output: L_mat(0:4, 0:index_max_+1, 0:Nvpar_, 0:Nspecies_-1)
+                ///
                 template <typename ValueType,
                           typename View1D0,
                           typename View1D1,
@@ -432,6 +445,8 @@ namespace koliop {
 
             } // namespace
 
+            /// Computation of the N_i,a ^ jl = sum_b M_i,ab ^ jl
+            ///
             template <typename Najl,
                       typename ExecutionSpace,
                       typename View6D,

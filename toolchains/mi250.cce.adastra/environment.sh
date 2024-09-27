@@ -1,5 +1,7 @@
 module purge
 
+module load cmake
+
 module load cpe/23.12
 module load craype-x86-trento craype-accel-amd-gfx90a
 module load PrgEnv-cray

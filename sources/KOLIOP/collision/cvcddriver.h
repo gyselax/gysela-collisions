@@ -637,6 +637,7 @@ namespace koliop {
             // }
 
             {
+                // Projection of f on Laguerre Polynomials.
                 detail::DoComputeAlphaProjection<CvCdDriver>(an_operator,
                                                              an_execution_space,
                                                              the_block_first_r, the_block_first_theta, the_block_first_phi,
@@ -644,11 +645,13 @@ namespace koliop {
                                                              mask_coll_, f5d_s, the_alpha_coefficients_);
 
                 {
+                    // Computation of the N_i,a ^ jl = sum_b M_i,ab ^ jl.
                     the_najl_provider_.Compute(an_execution_space,
                                                the_block_first_r, the_block_first_theta, the_block_first_phi,
                                                the_species_index,
                                                n_s, T_s, nu_ab, the_Najl_);
 
+                    // Computation of the RHS vector RHS_vec = (I + dt * T/4) * alpha
                     {
                         detail::DoPrepareMatrix<CvCdDriver>(an_operator,
                                                             an_execution_space,
@@ -675,6 +678,7 @@ namespace koliop {
                     }
 
                     {
+                        // Solve the problem (I - dt * T /4)*X = RHS_vec.
                         // the_rhs = alpha~
                         the_solver_.Solve(an_execution_space,
                                           the_matrix_.data(),
@@ -683,6 +687,7 @@ namespace koliop {
 
                         std::swap(the_rhs_, the_alpha_coefficients_);
 
+                        // Add the source term RHS = RHS + dt * S.
                         // the_rhs = alpha~~
                         detail::DoComputeCvCdSource<CvCdDriver>(an_operator,
                                                                 an_execution_space,
@@ -700,6 +705,7 @@ namespace koliop {
                                       0.0,
                                       the_rhs_.data());
 
+                        // (I - dt * T /4)*X = RHS_vec
                         // the_rhs = alpha(n+1)
                         the_solver_.Solve(an_execution_space,
                                           the_matrix_.data(),
@@ -710,6 +716,7 @@ namespace koliop {
                     }
                 }
 
+                // Reconstruct the normalized function distribution.
                 detail::DoComputeReconstruction<CvCdDriver>(an_operator,
                                                             an_execution_space,
                                                             the_block_first_r, the_block_first_theta, the_block_first_phi,

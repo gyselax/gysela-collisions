@@ -32,6 +32,11 @@ namespace koliop {
                 //               Ta * hat_As_speciesB) /
                 //                  (hat_As_speciesA * hat_As_speciesB),
                 //              -3.0 / 2.0);
+
+                // nu_ab = (AD * hat_Za^2 * hat_Zb^2 * Nb) /
+                //         (vTa^2 + vTb^2)^(3/2) *
+                //         (1/hat_Aa) *
+                //         (1/hat_Aa + 1/hat_Ab)
                 return (nustar_coeff * nb) / ((vTa + vTb) * Kokkos::sqrt(vTa + vTb));
             }
 
