@@ -4,7 +4,6 @@ set(CMAKE_CXX_COMPILER CC)
 set(CMAKE_Fortran_COMPILER ftn)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_EXTENSIONS OFF)
-set(CMAKE_BUILD_TYPE Release) # Debug, Release, RelWithDebInfo and MinSizeRel
 
 # Kokkos options:
 

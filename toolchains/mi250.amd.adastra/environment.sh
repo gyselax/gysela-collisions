@@ -1,11 +1,10 @@
 module purge
 
-module load cmake
-
-module load cpe/23.12
-module load craype-accel-amd-gfx90a
-module load craype-x86-trento
+module load cpe/24.07
+module load craype-x86-trento craype-accel-amd-gfx90a
 module load PrgEnv-amd
-module load amd/5.7.1
+module load amd/6.1.2
+
+module load cmake
 
 module list

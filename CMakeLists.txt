@@ -2,6 +2,21 @@
 
 cmake_minimum_required(VERSION 3.22.1)
 
+################################################################################
+### Default build type.
+################################################################################
+
+if(CMAKE_BUILD_TYPE OR CMAKE_CONFIGURATION_TYPES)
+    message(STATUS "[libkoliop] Build type is '${CMAKE_BUILD_TYPE}', configuration types are '${CMAKE_CONFIGURATION_TYPES}'.")
+else()
+    message(WARNING "[libkoliop] Nor CMAKE_BUILD_TYPE or CMAKE_CONFIGURATION_TYPES are defined.")
+    if (NOT (CMAKE_BUILD_TYPE OR CONFIGURATION_TYPES))
+        set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose build type." FORCE)
+        set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
+        message(STATUS "[libkoliop] No build type was defined, so we defaulted to '${CMAKE_BUILD_TYPE}'.")
+    endif()
+endif()
+
 project("koliop" VERSION 0.0.20 LANGUAGES CXX)
 
 include(CTest)

@@ -8,7 +8,7 @@ Prepare the environment, source the environment and use the environment to build
 $ mkdir -p build && cd build
 $ ../toolchains/mi250.hipcc.adastra/prepare.sh
 $ source ../toolchains/mi250.hipcc.adastra/environment.sh
-$ cmake .. --toolchain=../toolchains/mi250.hipcc.adastra/toolchain.cmake
+$ cmake .. -DCMAKE_BUILD_TYPE=Release --toolchain=../toolchains/mi250.hipcc.adastra/toolchain.cmake
 ```
 
 ## Toolchains
@@ -19,8 +19,10 @@ One can use the toolchains like so:
 
 ```
 $ mkdir -p build && cd build
-$ cmake .. --toolchain=../toolchains/mi250.hipcc.adastra/toolchain.cmake
+$ cmake .. -DCMAKE_BUILD_TYPE=Release --toolchain=../toolchains/mi250.hipcc.adastra/toolchain.cmake
 ```
+
+Note that you should not put `CMAKE_BUILD_TYPE` in a toolchain: https://gitlab.kitware.com/cmake/cmake/-/issues/26412
 
 ## Environments
 
