@@ -209,20 +209,20 @@ namespace koliop {
             // Constant, externally computed values
             //
 
-            OrdinalType      the_mu_extent_;
-            OrdinalType      the_vpar_extent_;
-            OrdinalType      the_r_extent_;
-            OrdinalType      the_theta_extent_;
-            OrdinalType      the_phi_extent_;
-            OrdinalType      the_species_extent_;
-            OrdinalType      the_global_domain_r_extent_;
-            OrdinalType      the_global_domain_theta_extent_;
-            OrdinalType      the_local_domain_r_offset_;
-            OrdinalType      the_local_domain_theta_offset_;
-            bool             collision_interspecies_;
-            bool             SOL_;
-            bool             LIM_;
-            OrdinalType      ir_SOL_separatrix_;
+            OrdinalType the_mu_extent_;
+            OrdinalType the_vpar_extent_;
+            OrdinalType the_r_extent_;
+            OrdinalType the_theta_extent_;
+            OrdinalType the_phi_extent_;
+            OrdinalType the_species_extent_;
+            OrdinalType the_global_domain_r_extent_;
+            OrdinalType the_global_domain_theta_extent_;
+            OrdinalType the_local_domain_r_offset_;
+            OrdinalType the_local_domain_theta_offset_;
+            bool        collision_interspecies_;
+            bool        SOL_;
+            bool        LIM_;
+            OrdinalType ir_SOL_separatrix_;
 
             // TODO(Etienne M): we store Flo64 but it should be
             // ComputeFloatType. To achieve this, we would need to handle
