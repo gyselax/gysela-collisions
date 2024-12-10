@@ -84,7 +84,7 @@ namespace koliop {
                         const ComputeFloatType Ta     = T_s(ir, itheta, iphi, ispeciesA);
                         const ComputeFloatType BijoTa = Bij / Ta;
                         const ComputeFloatType f2oTa  = 0.5 / Ta;
-                        const ComputeFloatType coeff  = na / (k2Pi * Ta * k2Pi * Ta));
+                        const ComputeFloatType coeff  = na / (k2Pi * Ta * Kokkos::sqrt(k2Pi * Ta));
 
                         Kokkos::parallel_for(
                             // NOTE: The explicit Left iteration direction may not benefit
