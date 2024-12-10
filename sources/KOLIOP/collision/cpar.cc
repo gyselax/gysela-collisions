@@ -86,8 +86,8 @@ namespace koliop {
                 const ComputeFloatType hat_Za     = hat_Zs(ispeciesA);
                 const ComputeFloatType inv_hat_Aa = 1.0 / hat_Aa;
 
-                const ComputeFloatType Bij      = B_norm(the_local_domain_r_offset + ir,
-                                                         the_local_domain_theta_offset + itheta);
+                const ComputeFloatType Bij = B_norm(the_local_domain_r_offset + ir,
+                                                    the_local_domain_theta_offset + itheta);
 
                 const ComputeFloatType na          = n_s(ir, itheta, iphi, ispeciesA);
                 const ComputeFloatType Vpara       = U_par_s(ir, itheta, iphi, ispeciesA);
@@ -126,10 +126,10 @@ namespace koliop {
                                                   std::remove_reference_t<decltype(a_team_handle)>>(a_team_handle,
                                                                                                     the_mu_extent, the_vpar_extent),
                         [&](auto imu, auto ivpar) {
-                            const ComputeFloatType coeff5         = vparg(ivpar) / Ta;
-                            const ComputeFloatType xa             = Kokkos::sqrt(coeff1 * (2.0 * mug(imu) * Bij + vparg(ivpar) * vparg(ivpar)));
-                            const ComputeFloatType xb             = xa * coeff2;
-                            const ComputeFloatType FM0a           = coeff3 * Kokkos::exp(-xa * xa);
+                            const ComputeFloatType coeff5 = vparg(ivpar) / Ta;
+                            const ComputeFloatType xa     = Kokkos::sqrt(coeff1 * (2.0 * mug(imu) * Bij + vparg(ivpar) * vparg(ivpar)));
+                            const ComputeFloatType xb     = xa * coeff2;
+                            const ComputeFloatType FM0a   = coeff3 * Kokkos::exp(-xa * xa);
 
                             // Compute the function:
                             //    Theta(x) = 3*sqrt(pi)/2 *G(x)/x
@@ -143,7 +143,7 @@ namespace koliop {
                             // Compute collision frequency nu_sab
                             //  nu_sab(xb) = (AD * hat_Za^2 * hat_Zb^2 * Nb) * (1/hat_Aa) * &
                             //               (1/hat_Aa + 1/hat_Ab)*Theta(xb) / vTb^3
-                            const ComputeFloatType nu_sab         = (AD * hat_Za * hat_Za * hat_Zb * hat_Zb * nb) * inv_hat_Aa * (inv_hat_Aa + inv_hat_Ab) * Theta_func_tmp / (vTb * vTb * vTb);
+                            const ComputeFloatType nu_sab = (AD * hat_Za * hat_Za * hat_Zb * hat_Zb * nb) * inv_hat_Aa * (inv_hat_Aa + inv_hat_Ab) * Theta_func_tmp / (vTb * vTb * vTb);
 
                             f5d_s(imu, ivpar, ir, itheta, iphi, ispeciesA) += half_dt * FM0a * nu_sab * coeff5 * (Rat * Vparb - Vpara + q_par_on_nT * (1.0 - 2.0 * xa * xa * 0.2) - coeff4);
                         });

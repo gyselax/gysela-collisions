@@ -4,7 +4,6 @@ set(CMAKE_CXX_COMPILER amdclang++)
 set(CMAKE_Fortran_COMPILER amdflang)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_EXTENSIONS OFF)
-set(CMAKE_BUILD_TYPE Release) # Debug, Release, RelWithDebInfo and MinSizeRel
 
 # Kokkos options:
 
@@ -25,11 +24,9 @@ set(koliop_TOOLCHAIN_NAME "genoa.amdclang.adastra")
 
 set(koliop_FLAGS_BASE -Wall -Wextra -Wpedantic -Wcast-align -Wctor-dtor-privacy -Wdouble-promotion -Wformat=2 -Winit-self -Woverloaded-virtual -Wredundant-decls -Wsign-promo -Wstrict-aliasing -Wdisabled-optimization -Wsuggest-override -Wswitch-default -Wtautological-compare -Wpacked -Wunreachable-code -Wcast-qual -Wold-style-cast -Wswitch-enum -Wundef) # -Wconversion -Wmissing-include-dirs
 
-set(koliop_FLAGS_FP -fno-math-errno -fno-trapping-math -ffp-contract=fast)
-
 set(koliop_FLAGS_DEBUG          -g -Og -ggdb -fno-omit-frame-pointer -fno-optimize-sibling-calls)
 set(koliop_FLAGS_MINSIZEREL     -Os)
-set(koliop_FLAGS_RELEASE        -g -Ofast) # Ofast wins a lot by replacing std::exp with a SIMD avx implementation.
+set(koliop_FLAGS_RELEASE        -g -O3 -fno-math-errno -fno-trapping-math -ffp-contract=fast) # -ffast-math allows the compiler to use SIMD implementation of some functions.
 set(koliop_FLAGS_RELWITHDEBINFO -g -O3 -fno-omit-frame-pointer -fno-optimize-sibling-calls)
 
 # set(koliop_LINKER_FLAGS_DEBUG          ${koliop_FLAGS_DEBUG})

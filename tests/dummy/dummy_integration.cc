@@ -145,7 +145,6 @@ int Test2() {
     static constexpr int8_t  collision_interspecies = true;
     static constexpr int8_t  SOL                    = false;
     static constexpr int8_t  LIM                    = false;
-    static constexpr int64_t ir_SOL_separatrix      = 32;
     static constexpr double  dt                     = 50.0;
 
     static constexpr size_t the_mu_extent      = 64;
@@ -159,6 +158,8 @@ int Test2() {
     static constexpr size_t the_global_domain_theta_extent = the_theta_extent + 1;
     static constexpr size_t the_global_domain_r_offset     = 0;
     static constexpr size_t the_global_domain_theta_offset = 0;
+
+    static constexpr int64_t ir_SOL_separatrix = the_global_domain_r_extent;
 
     std::vector<double> a_big_dummy_array{};
     a_big_dummy_array.resize(the_mu_extent *
@@ -228,7 +229,7 @@ int Test2() {
         }
 
         const auto duration = std::chrono::steady_clock::now() - time_point;
-        std::cout << (duration.count() / 1'000'000) << " ms\n";
+        std::cout << (duration.count() / 1'000'000) << " ms\n" << std::flush;
     }
 
     if(::koliop_Release(an_operator) != KOLIOP_STATUS_SUCCESS) {
