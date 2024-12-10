@@ -139,7 +139,7 @@ koliop_Status koliop_Fence(koliop_Operator an_operator);
 koliop_Status koliop_ComputeMoments(koliop_Operator an_operator,
                                     double*         f5d_s);
 
-/// @brief Collisionarity
+/// @brief Collisionality
 ///
 /// WARNING: Either call koliop_Fence after this call or chain with other
 /// koliop_* operator's operations. You still may have to fence after the last
