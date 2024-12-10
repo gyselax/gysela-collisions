@@ -115,16 +115,16 @@ MODULE koliop
       END FUNCTION
 
       ! koliop_Status koliop_Create(koliop_Operator* an_operator_handle,
-      !                             size_t           the_mu_extent,
-      !                             size_t           the_vpar_extent,
-      !                             size_t           the_r_extent,
-      !                             size_t           the_theta_extent,
-      !                             size_t           the_phi_extent,
-      !                             size_t           the_species_extent,
-      !                             size_t           the_global_domain_r_extent,
-      !                             size_t           the_global_domain_theta_extent,
-      !                             size_t           the_local_domain_r_offset,
-      !                             size_t           the_local_domain_theta_offset,
+      !                             size_t           mu_extent,
+      !                             size_t           vpar_extent,
+      !                             size_t           r_extent,
+      !                             size_t           theta_extent,
+      !                             size_t           phi_extent,
+      !                             size_t           species_extent,
+      !                             size_t           global_domain_r_extent,
+      !                             size_t           global_domain_theta_extent,
+      !                             size_t           local_domain_r_offset,
+      !                             size_t           local_domain_theta_offset,
       !                             int8_t           collision_interspecies,
       !                             int8_t           SOL,
       !                             int8_t           LIM,
@@ -142,16 +142,16 @@ MODULE koliop
       !                             const double*    Bstar_s);
       INTEGER(koliop_Status) FUNCTION koliop_Create_c( &
          an_operator_handle, &
-         the_mu_extent, &
-         the_vpar_extent, &
-         the_r_extent, &
-         the_theta_extent, &
-         the_phi_extent, &
-         the_species_extent, &
-         the_global_domain_r_extent, &
-         the_global_domain_theta_extent, &
-         the_local_domain_r_offset, &
-         the_local_domain_theta_offset, &
+         mu_extent, &
+         vpar_extent, &
+         r_extent, &
+         theta_extent, &
+         phi_extent, &
+         species_extent, &
+         global_domain_r_extent, &
+         global_domain_theta_extent, &
+         local_domain_r_offset, &
+         local_domain_theta_offset, &
          collision_interspecies, &
          SOL, &
          LIM, &
@@ -181,16 +181,16 @@ MODULE koliop
          ! NOTE: the C code expects a pointer to a pointer for
          ! an_operator_handle
          TYPE(C_PTR), INTENT(INOUT) :: an_operator_handle
-         INTEGER(C_SIZE_T), VALUE, INTENT(IN) :: the_mu_extent
-         INTEGER(C_SIZE_T), VALUE, INTENT(IN) :: the_vpar_extent
-         INTEGER(C_SIZE_T), VALUE, INTENT(IN) :: the_r_extent
-         INTEGER(C_SIZE_T), VALUE, INTENT(IN) :: the_theta_extent
-         INTEGER(C_SIZE_T), VALUE, INTENT(IN) :: the_phi_extent
-         INTEGER(C_SIZE_T), VALUE, INTENT(IN) :: the_species_extent
-         INTEGER(C_SIZE_T), VALUE, INTENT(IN) :: the_global_domain_r_extent
-         INTEGER(C_SIZE_T), VALUE, INTENT(IN) :: the_global_domain_theta_extent
-         INTEGER(C_SIZE_T), VALUE, INTENT(IN) :: the_local_domain_r_offset
-         INTEGER(C_SIZE_T), VALUE, INTENT(IN) :: the_local_domain_theta_offset
+         INTEGER(C_SIZE_T), VALUE, INTENT(IN) :: mu_extent
+         INTEGER(C_SIZE_T), VALUE, INTENT(IN) :: vpar_extent
+         INTEGER(C_SIZE_T), VALUE, INTENT(IN) :: r_extent
+         INTEGER(C_SIZE_T), VALUE, INTENT(IN) :: theta_extent
+         INTEGER(C_SIZE_T), VALUE, INTENT(IN) :: phi_extent
+         INTEGER(C_SIZE_T), VALUE, INTENT(IN) :: species_extent
+         INTEGER(C_SIZE_T), VALUE, INTENT(IN) :: global_domain_r_extent
+         INTEGER(C_SIZE_T), VALUE, INTENT(IN) :: global_domain_theta_extent
+         INTEGER(C_SIZE_T), VALUE, INTENT(IN) :: local_domain_r_offset
+         INTEGER(C_SIZE_T), VALUE, INTENT(IN) :: local_domain_theta_offset
          INTEGER(C_INT8_T), VALUE, INTENT(IN) :: collision_interspecies
          INTEGER(C_INT8_T), VALUE, INTENT(IN) :: SOL
          INTEGER(C_INT8_T), VALUE, INTENT(IN) :: LIM
@@ -393,11 +393,11 @@ MODULE koliop
       END FUNCTION
 
       ! koliop_Status koliop_ExtractRaw(koliop_Operator an_operator,
-      !                                 int32_t         the_value_identifier,
+      !                                 int32_t         value_identifier,
       !                                 void*           an_output_buffer);
       INTEGER(koliop_Status) FUNCTION koliop_ExtractRaw_c( &
          an_operator, &
-         the_value_identifier, &
+         value_identifier, &
          an_output_buffer) &
          BIND(C, NAME='koliop_ExtractRaw')
 
@@ -408,7 +408,7 @@ MODULE koliop
          IMPLICIT NONE
 
          TYPE(C_PTR), VALUE, INTENT(IN) :: an_operator
-         INTEGER(C_INT32_T), VALUE, INTENT(IN) :: the_value_identifier
+         INTEGER(C_INT32_T), VALUE, INTENT(IN) :: value_identifier
          TYPE(C_PTR), VALUE, INTENT(IN) :: an_output_buffer
       END FUNCTION
 
@@ -448,16 +448,16 @@ CONTAINS
 
    SUBROUTINE koliop_Create_fp(&
       an_operator_handle, &
-      the_mu_extent, &
-      the_vpar_extent, &
-      the_r_extent, &
-      the_theta_extent, &
-      the_phi_extent, &
-      the_species_extent, &
-      the_global_domain_r_extent, &
-      the_global_domain_theta_extent, &
-      the_local_domain_r_offset, &
-      the_local_domain_theta_offset, &
+      mu_extent, &
+      vpar_extent, &
+      r_extent, &
+      theta_extent, &
+      phi_extent, &
+      species_extent, &
+      global_domain_r_extent, &
+      global_domain_theta_extent, &
+      local_domain_r_offset, &
+      local_domain_theta_offset, &
       collision_interspecies, &
       SOL, &
       LIM, &
@@ -478,16 +478,16 @@ CONTAINS
       IMPLICIT NONE
 
       TYPE(C_PTR), INTENT(INOUT) :: an_operator_handle
-      INTEGER, INTENT(IN) :: the_mu_extent
-      INTEGER, INTENT(IN) :: the_vpar_extent
-      INTEGER, INTENT(IN) :: the_r_extent
-      INTEGER, INTENT(IN) :: the_theta_extent
-      INTEGER, INTENT(IN) :: the_phi_extent
-      INTEGER, INTENT(IN) :: the_species_extent
-      INTEGER, INTENT(IN) :: the_global_domain_r_extent
-      INTEGER, INTENT(IN) :: the_global_domain_theta_extent
-      INTEGER, INTENT(IN) :: the_local_domain_r_offset
-      INTEGER, INTENT(IN) :: the_local_domain_theta_offset
+      INTEGER, INTENT(IN) :: mu_extent
+      INTEGER, INTENT(IN) :: vpar_extent
+      INTEGER, INTENT(IN) :: r_extent
+      INTEGER, INTENT(IN) :: theta_extent
+      INTEGER, INTENT(IN) :: phi_extent
+      INTEGER, INTENT(IN) :: species_extent
+      INTEGER, INTENT(IN) :: global_domain_r_extent
+      INTEGER, INTENT(IN) :: global_domain_theta_extent
+      INTEGER, INTENT(IN) :: local_domain_r_offset
+      INTEGER, INTENT(IN) :: local_domain_theta_offset
       LOGICAL, INTENT(IN) :: collision_interspecies
       LOGICAL, INTENT(IN) :: SOL
       LOGICAL, INTENT(IN) :: LIM
@@ -540,16 +540,16 @@ CONTAINS
 
       an_error_code = koliop_Create_c( &
          an_operator_handle, &
-         INT(the_mu_extent, C_SIZE_T), &
-         INT(the_vpar_extent, C_SIZE_T), &
-         INT(the_r_extent, C_SIZE_T), &
-         INT(the_theta_extent, C_SIZE_T), &
-         INT(the_phi_extent, C_SIZE_T), &
-         INT(the_species_extent, C_SIZE_T), &
-         INT(the_global_domain_r_extent, C_SIZE_T), &
-         INT(the_global_domain_theta_extent, C_SIZE_T), &
-         INT(the_local_domain_r_offset, C_SIZE_T), &
-         INT(the_local_domain_theta_offset, C_SIZE_T), &
+         INT(mu_extent, C_SIZE_T), &
+         INT(vpar_extent, C_SIZE_T), &
+         INT(r_extent, C_SIZE_T), &
+         INT(theta_extent, C_SIZE_T), &
+         INT(phi_extent, C_SIZE_T), &
+         INT(species_extent, C_SIZE_T), &
+         INT(global_domain_r_extent, C_SIZE_T), &
+         INT(global_domain_theta_extent, C_SIZE_T), &
+         INT(local_domain_r_offset, C_SIZE_T), &
+         INT(local_domain_theta_offset, C_SIZE_T), &
          collision_interspecies_cast, &
          SOL_cast, &
          LIM_cast, &
@@ -720,21 +720,21 @@ CONTAINS
 
    SUBROUTINE koliop_ExtractRaw_fp( &
       an_operator_handle, &
-      the_value_identifier, &
+      value_identifier, &
       an_output_buffer, &
       an_error_code)
 
       IMPLICIT NONE
 
       TYPE(C_PTR), INTENT(IN) :: an_operator_handle
-      INTEGER, INTENT(IN) :: the_value_identifier
+      INTEGER, INTENT(IN) :: value_identifier
       ! REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(INOUT) :: an_output_buffer
       TYPE(C_PTR), INTENT(IN) :: an_output_buffer
       INTEGER(koliop_Status), INTENT(OUT) :: an_error_code
 
       an_error_code = koliop_ExtractRaw_c( &
          an_operator_handle, &
-         INT(the_value_identifier, C_INT32_T), &
+         INT(value_identifier, C_INT32_T), &
          an_output_buffer)
    END SUBROUTINE
 
@@ -819,16 +819,16 @@ CONTAINS
 
    SUBROUTINE koliop_Create_f(&
       an_operator_handle, &
-      the_mu_extent, &
-      the_vpar_extent, &
-      the_r_extent, &
-      the_theta_extent, &
-      the_phi_extent, &
-      the_species_extent, &
-      the_global_domain_r_extent, &
-      the_global_domain_theta_extent, &
-      the_local_domain_r_offset, &
-      the_local_domain_theta_offset, &
+      mu_extent, &
+      vpar_extent, &
+      r_extent, &
+      theta_extent, &
+      phi_extent, &
+      species_extent, &
+      global_domain_r_extent, &
+      global_domain_theta_extent, &
+      local_domain_r_offset, &
+      local_domain_theta_offset, &
       collision_interspecies, &
       SOL, &
       LIM, &
@@ -849,16 +849,16 @@ CONTAINS
       IMPLICIT NONE
 
       TYPE(C_PTR), INTENT(INOUT) :: an_operator_handle
-      INTEGER, INTENT(IN) :: the_mu_extent
-      INTEGER, INTENT(IN) :: the_vpar_extent
-      INTEGER, INTENT(IN) :: the_r_extent
-      INTEGER, INTENT(IN) :: the_theta_extent
-      INTEGER, INTENT(IN) :: the_phi_extent
-      INTEGER, INTENT(IN) :: the_species_extent
-      INTEGER, INTENT(IN) :: the_global_domain_r_extent
-      INTEGER, INTENT(IN) :: the_global_domain_theta_extent
-      INTEGER, INTENT(IN) :: the_local_domain_r_offset
-      INTEGER, INTENT(IN) :: the_local_domain_theta_offset
+      INTEGER, INTENT(IN) :: mu_extent
+      INTEGER, INTENT(IN) :: vpar_extent
+      INTEGER, INTENT(IN) :: r_extent
+      INTEGER, INTENT(IN) :: theta_extent
+      INTEGER, INTENT(IN) :: phi_extent
+      INTEGER, INTENT(IN) :: species_extent
+      INTEGER, INTENT(IN) :: global_domain_r_extent
+      INTEGER, INTENT(IN) :: global_domain_theta_extent
+      INTEGER, INTENT(IN) :: local_domain_r_offset
+      INTEGER, INTENT(IN) :: local_domain_theta_offset
       LOGICAL, INTENT(IN) :: collision_interspecies
       LOGICAL, INTENT(IN) :: SOL
       LOGICAL, INTENT(IN) :: LIM
@@ -878,16 +878,16 @@ CONTAINS
 
       call koliop_Create_fp( &
          an_operator_handle, &
-         the_mu_extent, &
-         the_vpar_extent, &
-         the_r_extent, &
-         the_theta_extent, &
-         the_phi_extent, &
-         the_species_extent, &
-         the_global_domain_r_extent, &
-         the_global_domain_theta_extent, &
-         the_local_domain_r_offset, &
-         the_local_domain_theta_offset, &
+         mu_extent, &
+         vpar_extent, &
+         r_extent, &
+         theta_extent, &
+         phi_extent, &
+         species_extent, &
+         global_domain_r_extent, &
+         global_domain_theta_extent, &
+         local_domain_r_offset, &
+         local_domain_theta_offset, &
          collision_interspecies, &
          SOL, &
          LIM, &
@@ -1096,20 +1096,20 @@ CONTAINS
 
    SUBROUTINE koliop_ExtractRaw_f( &
       an_operator_handle, &
-      the_value_identifier, &
+      value_identifier, &
       an_output_buffer, &
       an_error_code)
 
       IMPLICIT NONE
 
       TYPE(C_PTR), INTENT(IN) :: an_operator_handle
-      INTEGER, INTENT(IN) :: the_value_identifier
+      INTEGER, INTENT(IN) :: value_identifier
       REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(INOUT) :: an_output_buffer
       INTEGER(koliop_Status), INTENT(OUT) :: an_error_code
 
       call koliop_ExtractRaw_fp( &
          an_operator_handle, &
-         the_value_identifier, &
+         value_identifier, &
          C_LOC(an_output_buffer), &
          an_error_code)
    END SUBROUTINE
@@ -1158,16 +1158,16 @@ END MODULE
 !       INTEGER :: a_device_index = 0
 !       LOGICAL :: with_verbose_initialization = .TRUE.
 
-!       INTEGER :: the_mu_extent = 48
-!       INTEGER :: the_vpar_extent = 128
-!       INTEGER :: the_r_extent = 32
-!       INTEGER :: the_theta_extent = 32
-!       INTEGER :: the_phi_extent = 1
-!       INTEGER :: the_global_domain_r_extent = 32
-!       INTEGER :: the_global_domain_theta_extent = 33
-!       INTEGER :: the_local_domain_r_offset = 0
-!       INTEGER :: the_local_domain_theta_offset = 0
-!       INTEGER :: the_species_extent = 1
+!       INTEGER :: mu_extent = 48
+!       INTEGER :: vpar_extent = 128
+!       INTEGER :: r_extent = 32
+!       INTEGER :: theta_extent = 32
+!       INTEGER :: phi_extent = 1
+!       INTEGER :: global_domain_r_extent = 32
+!       INTEGER :: global_domain_theta_extent = 33
+!       INTEGER :: local_domain_r_offset = 0
+!       INTEGER :: local_domain_theta_offset = 0
+!       INTEGER :: species_extent = 1
 !       LOGICAL :: collision_interspecies = .TRUE.
 !       LOGICAL :: SOL = .FALSE.
 !       LOGICAL :: LIM = .FALSE.
@@ -1194,20 +1194,20 @@ END MODULE
 
 !       REAL(C_DOUBLE), DIMENSION(:,:,:,:), ALLOCATABLE :: n_s
 
-!       allocate(hat_As(the_species_extent))
-!       allocate(hat_Zs(the_species_extent))
-!       allocate(mug(the_mu_extent))
-!       allocate(vparg(the_vpar_extent))
-!       allocate(coeff_intdmu(the_mu_extent))
-!       allocate(coeff_intdvpar(the_vpar_extent))
-!       allocate(coeff_AD_r(the_r_extent))
-!       allocate(mask_buffer_r(the_global_domain_r_extent))
-!       ! allocate(mask_LIM(the_global_domain_r_extent, the_global_domain_theta_extent)) ! LIM is false
-!       allocate(B_norm(the_global_domain_r_extent, the_global_domain_theta_extent))
-!       allocate(Bstar_s(the_vpar_extent, the_r_extent, the_theta_extent, the_species_extent))
-!       allocate(f5d_s(the_mu_extent, the_vpar_extent, the_r_extent, the_theta_extent, the_phi_extent, the_species_extent))
+!       allocate(hat_As(species_extent))
+!       allocate(hat_Zs(species_extent))
+!       allocate(mug(mu_extent))
+!       allocate(vparg(vpar_extent))
+!       allocate(coeff_intdmu(mu_extent))
+!       allocate(coeff_intdvpar(vpar_extent))
+!       allocate(coeff_AD_r(r_extent))
+!       allocate(mask_buffer_r(global_domain_r_extent))
+!       ! allocate(mask_LIM(global_domain_r_extent, global_domain_theta_extent)) ! LIM is false
+!       allocate(B_norm(global_domain_r_extent, global_domain_theta_extent))
+!       allocate(Bstar_s(vpar_extent, r_extent, theta_extent, species_extent))
+!       allocate(f5d_s(mu_extent, vpar_extent, r_extent, theta_extent, phi_extent, species_extent))
 
-!       allocate(n_s(the_r_extent, the_theta_extent, the_phi_extent, the_species_extent))
+!       allocate(n_s(r_extent, theta_extent, phi_extent, species_extent))
 
 !       hat_As = 42.0_C_DOUBLE
 !       hat_Zs = 42.0_C_DOUBLE
@@ -1232,10 +1232,10 @@ END MODULE
 !       print *, "koliop_Initialize_f:an_error_code", an_error_code
 
 !       call koliop_Create_f(an_operator, &
-!          the_mu_extent, the_vpar_extent, the_r_extent, &
-!          the_theta_extent, the_phi_extent, the_species_extent, &
-!          the_global_domain_r_extent, the_global_domain_theta_extent, &
-!          the_local_domain_r_offset, the_local_domain_theta_offset, &
+!          mu_extent, vpar_extent, r_extent, &
+!          theta_extent, phi_extent, species_extent, &
+!          global_domain_r_extent, global_domain_theta_extent, &
+!          local_domain_r_offset, local_domain_theta_offset, &
 !          collision_interspecies, SOL, LIM, &
 !          ir_SOL_separatrix, &
 !          hat_As, hat_Zs, &

@@ -11,12 +11,12 @@ namespace koliop {
 
         CvCdDriverEraser::InterfaceType*
         CvCdDriverEraser::get() {
-            return the_erased_cvcd_driver_.get();
+            return erased_cvcd_driver_.get();
         }
 
         const CvCdDriverEraser::InterfaceType*
         CvCdDriverEraser::get() const {
-            return the_erased_cvcd_driver_.get();
+            return erased_cvcd_driver_.get();
         }
 
         CvCdDriverEraser::InterfaceType&
@@ -32,7 +32,7 @@ namespace koliop {
         void CvCdDriverEraser::clear() {
             // NOTE: there is an asymmetry where a unique_ptr's reset can take a
             // nullptr but not a shared_ptr's.
-            the_erased_cvcd_driver_.reset(/* nullptr */);
+            erased_cvcd_driver_.reset(/* nullptr */);
         }
 
         bool CvCdDriverEraser::IsSet() const {

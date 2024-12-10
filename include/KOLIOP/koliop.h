@@ -62,43 +62,43 @@ typedef struct koliop_OpaqueOperator_* koliop_Operator;
 /// The values given below are expected NOT to change during the lifetime
 /// of the operator.
 /// @param an_operator_handle A pointer to a koliop_Operator. This handle represents the operator as an opaque pointer.
-/// @param the_mu_extent The rank's Mu domain extent in grid point.
-/// @param the_vpar_extent The rank's Vpar domain extent in grid point.
-/// @param the_r_extent The rank's R domain extent in grid point.
-/// @param the_theta_extent The rank's Theta domain extent in grid point.
-/// @param the_phi_extent The rank's Phi domain extent in grid point.
-/// @param the_species_extent The rank's Species domain extent (aka number of species).
-/// @param the_global_domain_r_extent The simulation's R domain extent in grid point.
-/// @param the_global_domain_theta_extent The simulation's Theta domain extent in grid point.
-/// @param the_local_domain_r_offset The rank's R offset in the simulation's domain.
-/// @param the_local_domain_theta_offset The rank's R offset in the simulation's domain.
+/// @param mu_extent The rank's Mu domain extent in grid point.
+/// @param vpar_extent The rank's Vpar domain extent in grid point.
+/// @param r_extent The rank's R domain extent in grid point.
+/// @param theta_extent The rank's Theta domain extent in grid point.
+/// @param phi_extent The rank's Phi domain extent in grid point.
+/// @param species_extent The rank's Species domain extent (aka number of species).
+/// @param global_domain_r_extent The simulation's R domain extent in grid point.
+/// @param global_domain_theta_extent The simulation's Theta domain extent in grid point.
+/// @param local_domain_r_offset The rank's R offset in the simulation's domain.
+/// @param local_domain_theta_offset The rank's R offset in the simulation's domain.
 /// @param collision_interspecies Boolean as type int8_t (0 = false, else true) describing if a species collision with itself.
 /// @param SOL Boolean as type int8_t (0 = false, else true) used in the Nu* computation.
 /// @param LIM Boolean as type int8_t (0 = false, else true) set to true to tell the operator to apply a limiter mask.
-/// @param ir_SOL_separatrix Fix the collisionality past ir_SOL_separatrix to the value at ir_SOL_separatrix. Must respect the following constraint: 0 <= ir_SOL_separatrix < the_global_domain_r_extent. In Gysela fortran, ir_SOL_separatrix must respect the following constraint: MAX_R_START <= ir_SOL_separatrix <= the_global_domain_r_extent where MAX_R_START is the the_local_domain_r_offset of a rank processing the most outer subdomain in R. Used in the Nu computation. Used for a specific treatment of the SOL.
-/// @param hat_As An array of double with extents ([0, the_species_extent) ).
-/// @param hat_Zs An array of double with extents ([0, the_species_extent) ).
-/// @param mug An array of double with extents ([0, the_mu_extent) ) representing the coordinate of the Mu grid points.
-/// @param vparg An array of double with extents ([0, the_vpar_extent) ) representing the coordinate of the Vpar grid points.
-/// @param coeff_intdmu An array of double with extents ([0, the_mu_extent) ) representing the coefficients for the integral of the coordinates in Mu.
-/// @param coeff_intdvpar An array of double with extents ([0, the_vpar_extent) ) representing the coefficients for the integral of the coordinates in Vpar (generally using the simpson).
-/// @param coeff_AD_r An array of double with extents ([0, the_r_extent) ) representing the AD coefficients.
-/// @param mask_buffer_r An array of double with extents ([0, the_global_domain_r_extent) ) representing an operator mask in R.
-/// @param mask_LIM An array of double with extents ([0, the_global_domain_r_extent), [0, the_global_domain_theta_extent) ) representing an operator's limiter mask. Must be set if LIM is true else, it may be a NULL.
-/// @param B_norm An array of double with extents ([0, the_global_domain_r_extent), [0, the_global_domain_theta_extent) ).
-/// @param Bstar_s An array of double with extents ([0, the_vpar_extent), [0, the_r_extent), [0, the_theta_extent), [0, the_species_extent) ).
+/// @param ir_SOL_separatrix Fix the collisionality past ir_SOL_separatrix to the value at ir_SOL_separatrix. Must respect the following constraint: 0 <= ir_SOL_separatrix < global_domain_r_extent. In Gysela fortran, ir_SOL_separatrix must respect the following constraint: MAX_R_START <= ir_SOL_separatrix <= global_domain_r_extent where MAX_R_START is the local_domain_r_offset of a rank processing the most outer subdomain in R. Used in the Nu computation. Used for a specific treatment of the SOL.
+/// @param hat_As An array of double with extents ([0, species_extent) ).
+/// @param hat_Zs An array of double with extents ([0, species_extent) ).
+/// @param mug An array of double with extents ([0, mu_extent) ) representing the coordinate of the Mu grid points.
+/// @param vparg An array of double with extents ([0, vpar_extent) ) representing the coordinate of the Vpar grid points.
+/// @param coeff_intdmu An array of double with extents ([0, mu_extent) ) representing the coefficients for the integral of the coordinates in Mu.
+/// @param coeff_intdvpar An array of double with extents ([0, vpar_extent) ) representing the coefficients for the integral of the coordinates in Vpar (generally using the simpson).
+/// @param coeff_AD_r An array of double with extents ([0, r_extent) ) representing the AD coefficients.
+/// @param mask_buffer_r An array of double with extents ([0, global_domain_r_extent) ) representing an operator mask in R.
+/// @param mask_LIM An array of double with extents ([0, global_domain_r_extent), [0, global_domain_theta_extent) ) representing an operator's limiter mask. Must be set if LIM is true else, it may be a NULL.
+/// @param B_norm An array of double with extents ([0, global_domain_r_extent), [0, global_domain_theta_extent) ).
+/// @param Bstar_s An array of double with extents ([0, vpar_extent), [0, r_extent), [0, theta_extent), [0, species_extent) ).
 /// @return KOLIOP_STATUS_SUCCESS on success.
 koliop_Status koliop_Create(koliop_Operator* an_operator_handle,
-                            size_t           the_mu_extent,
-                            size_t           the_vpar_extent,
-                            size_t           the_r_extent,
-                            size_t           the_theta_extent,
-                            size_t           the_phi_extent,
-                            size_t           the_species_extent,
-                            size_t           the_global_domain_r_extent,
-                            size_t           the_global_domain_theta_extent,
-                            size_t           the_local_domain_r_offset,
-                            size_t           the_local_domain_theta_offset,
+                            size_t           mu_extent,
+                            size_t           vpar_extent,
+                            size_t           r_extent,
+                            size_t           theta_extent,
+                            size_t           phi_extent,
+                            size_t           species_extent,
+                            size_t           global_domain_r_extent,
+                            size_t           global_domain_theta_extent,
+                            size_t           local_domain_r_offset,
+                            size_t           local_domain_theta_offset,
                             int8_t           collision_interspecies,
                             int8_t           SOL,
                             int8_t           LIM,
@@ -134,7 +134,7 @@ koliop_Status koliop_Fence(koliop_Operator an_operator);
 /// WARNING: Either call koliop_Fence after this call or chain with other
 /// koliop_* operator's operations. You still may have to fence after the last
 /// operation.
-/// @param f5d_s An array of double with extents ([0, the_mu_extent), [0, the_vpar_extent), [0, the_r_extent), [0, the_theta_extent), [0, the_phi_extent), [0, the_species_extent) ).
+/// @param f5d_s An array of double with extents ([0, mu_extent), [0, vpar_extent), [0, r_extent), [0, theta_extent), [0, phi_extent), [0, species_extent) ).
 /// @return KOLIOP_STATUS_SUCCESS on success.
 koliop_Status koliop_ComputeMoments(koliop_Operator an_operator,
                                     double*         f5d_s);
@@ -160,7 +160,7 @@ koliop_Status koliop_PrecomputeNu(koliop_Operator an_operator);
 /// koliop_* operator's operations. You still may have to fence after the last
 /// operation.
 /// @param dt The collision dt (it may be larger than the simulation's dt).
-/// @param f5d_s An array of double with extents ([0, the_mu_extent), [0, the_vpar_extent), [0, the_r_extent), [0, the_theta_extent), [0, the_phi_extent), [0, the_species_extent) ).
+/// @param f5d_s An array of double with extents ([0, mu_extent), [0, vpar_extent), [0, r_extent), [0, theta_extent), [0, phi_extent), [0, species_extent) ).
 /// @return KOLIOP_STATUS_SUCCESS on success.
 koliop_Status koliop_ComputeMaxwellianEvolution(koliop_Operator an_operator,
                                                 double          dt,
@@ -174,7 +174,7 @@ koliop_Status koliop_ComputeMaxwellianEvolution(koliop_Operator an_operator,
 /// WARNING: Either call koliop_Fence after this call or chain with other
 /// koliop_* operator's operations. You still may have to fence after the last
 /// operation.
-/// @param f5d_s An array of double with extents ([0, the_mu_extent), [0, the_vpar_extent), [0, the_r_extent), [0, the_theta_extent), [0, the_phi_extent), [0, the_species_extent) ).
+/// @param f5d_s An array of double with extents ([0, mu_extent), [0, vpar_extent), [0, r_extent), [0, theta_extent), [0, phi_extent), [0, species_extent) ).
 /// @return KOLIOP_STATUS_SUCCESS on success.
 koliop_Status koliop_ComputeQparOnNT(koliop_Operator an_operator,
                                      const double*   f5d_s);
@@ -191,7 +191,7 @@ koliop_Status koliop_ComputeQparOnNT(koliop_Operator an_operator,
 /// koliop_* operator's operations. You still may have to fence after the last
 /// operation.
 /// @param dt The collision dt (it may be larger than the simulation's dt).
-/// @param f5d_s An array of double with extents ([0, the_mu_extent), [0, the_vpar_extent), [0, the_r_extent), [0, the_theta_extent), [0, the_phi_extent), [0, the_species_extent) ).
+/// @param f5d_s An array of double with extents ([0, mu_extent), [0, vpar_extent), [0, r_extent), [0, theta_extent), [0, phi_extent), [0, species_extent) ).
 /// @return KOLIOP_STATUS_SUCCESS on success.
 koliop_Status koliop_ComputeCpar(koliop_Operator an_operator,
                                  double          dt,
@@ -205,7 +205,7 @@ koliop_Status koliop_ComputeCpar(koliop_Operator an_operator,
 /// WARNING: Either call koliop_Fence after this call or chain with other
 /// koliop_* operator's operations. You still may have to fence after the last
 /// operation.
-/// @param f5d_s An array of double with extents ([0, the_mu_extent), [0, the_vpar_extent), [0, the_r_extent), [0, the_theta_extent), [0, the_phi_extent), [0, the_species_extent) ).
+/// @param f5d_s An array of double with extents ([0, mu_extent), [0, vpar_extent), [0, r_extent), [0, theta_extent), [0, phi_extent), [0, species_extent) ).
 /// @param choice [3, 4]
 /// @return KOLIOP_STATUS_SUCCESS on success.
 koliop_Status koliop_ComputeMaxwellianUnshiftedLoc(koliop_Operator an_operator,
@@ -218,7 +218,7 @@ koliop_Status koliop_ComputeMaxwellianUnshiftedLoc(koliop_Operator an_operator,
 /// koliop_* operator's operations. You still may have to fence after the last
 /// operation.
 /// @param dt The collision dt (it may be larger than the simulation's dt).
-/// @param f5d_s An array of double with extents ([0, the_mu_extent), [0, the_vpar_extent), [0, the_r_extent), [0, the_theta_extent), [0, the_phi_extent), [0, the_species_extent) ).
+/// @param f5d_s An array of double with extents ([0, mu_extent), [0, vpar_extent), [0, r_extent), [0, theta_extent), [0, phi_extent), [0, species_extent) ).
 /// @return KOLIOP_STATUS_SUCCESS on success.
 koliop_Status koliop_Apply(koliop_Operator an_operator,
                            double          dt,
@@ -235,7 +235,7 @@ koliop_Status koliop_Apply(koliop_Operator an_operator,
 /// WARNING: Either call koliop_Fence after this call or chain with other
 /// koliop_* operator's operations. You still may have to fence after the last
 /// operation.
-/// @param f5d_s An array of double with extents ([0, the_mu_extent), [0, the_vpar_extent), [0, the_r_extent), [0, the_theta_extent), [0, the_phi_extent), [0, the_species_extent) ).
+/// @param f5d_s An array of double with extents ([0, mu_extent), [0, vpar_extent), [0, r_extent), [0, theta_extent), [0, phi_extent), [0, species_extent) ).
 /// @return KOLIOP_STATUS_SUCCESS on success.
 koliop_Status koliop_ComputeDensityCorrection(koliop_Operator an_operator,
                                               double*         f5d_s);
@@ -249,7 +249,7 @@ koliop_Status koliop_ComputeDensityCorrection(koliop_Operator an_operator,
 /// koliop_* operator's operations. You still may have to fence after the last
 /// operation.
 /// @param dt The collision dt (it may be larger than the simulation's dt).
-/// @param f5d_s An array of double with extents ([0, the_mu_extent), [0, the_vpar_extent), [0, the_r_extent), [0, the_theta_extent), [0, the_phi_extent), [0, the_species_extent) ).
+/// @param f5d_s An array of double with extents ([0, mu_extent), [0, vpar_extent), [0, r_extent), [0, theta_extent), [0, phi_extent), [0, species_extent) ).
 /// @return KOLIOP_STATUS_SUCCESS on success.
 koliop_Status koliop_ComputeUparTCorrection(koliop_Operator an_operator,
                                             double          dt,
@@ -262,18 +262,18 @@ koliop_Status koliop_ComputeUparTCorrection(koliop_Operator an_operator,
 #define KOLIOP_EXTRACTION_IDENTIFIER_nu_ab         5
 #define KOLIOP_EXTRACTION_IDENTIFIER_q_par_on_nT_s 6
 
-/// @brief Extract an internal buffer into the_output_buffer. The buffer in
-/// question is specified using the_value_identifier and the
+/// @brief Extract an internal buffer into output_buffer. The buffer in
+/// question is specified using value_identifier and the
 /// KOLIOP_EXTRACTION_IDENTIFIER_* preprocessor definition.
 /// WARNING: Either call koliop_Fence after this call or chain with other
 ///
 /// koliop_* operator's operations. You still may have to fence after the last
 /// operation.
-/// @param the_value_identifier A KOLIOP_EXTRACTION_IDENTIFIER_* preprocessor
+/// @param value_identifier A KOLIOP_EXTRACTION_IDENTIFIER_* preprocessor
 /// definition.
-/// @param the_output_buffer A correctly sized buffer.
+/// @param output_buffer A correctly sized buffer.
 koliop_Status koliop_ExtractRaw(koliop_Operator an_operator,
-                                int32_t         the_value_identifier,
+                                int32_t         value_identifier,
                                 void*           an_output_buffer);
 
 // TODO(Etienne M): Diags, not that making copies back into gysela could be
@@ -291,7 +291,7 @@ koliop_Status koliop_ExtractRaw(koliop_Operator an_operator,
 /// @brief Computes the evolution of the distribution function due to
 /// collisions. It computes the collision of all species against all other
 /// species (if asked for through collision_interspecies and
-/// the_species_extent). This "do it all method" is mostly used for the
+/// species_extent). This "do it all method" is mostly used for the
 /// Gyselalib++.
 /// The operation, in order, are:
 /// - Compute fluid moments n, Vpar, T, q_par (koliop_ComputeMoments);
@@ -313,7 +313,7 @@ koliop_Status koliop_ExtractRaw(koliop_Operator an_operator,
 /// are visible for next operation.
 ///
 /// @param dt The collision dt (it may be larger than the simulation's dt).
-/// @param f5d_s An array of double with extents ([0, the_mu_extent), [0, the_vpar_extent), [0, the_r_extent), [0, the_theta_extent), [0, the_phi_extent), [0, the_species_extent) ).
+/// @param f5d_s An array of double with extents ([0, mu_extent), [0, vpar_extent), [0, r_extent), [0, theta_extent), [0, phi_extent), [0, species_extent) ).
 /// @return KOLIOP_STATUS_SUCCESS on success.
 koliop_Status koliop_Collision(koliop_Operator an_operator,
                                double          dt,

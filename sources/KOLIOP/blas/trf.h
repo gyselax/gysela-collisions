@@ -75,7 +75,7 @@ namespace koliop {
         ///     ]
         /// ]
         ///
-        /// For the_rhs vector we expect the following format:
+        /// For rhs vector we expect the following format:
         ///     View<value_type **cc>{A_matrix_extent / BatchTraitsType::kBatchSize, kBigBlockExtent, kSmallBlockExtent, BatchTraitsType::kBatchSize}
         ///
         /// NOTE:
@@ -125,7 +125,7 @@ namespace koliop {
                   // TODO(Etienne M): See if kFlattenedBlockExtent which is
                   // constexpr, can help improve the performance when used as an
                   // template argument. kBigBlockExtent = kFlattenedBlockExtent.
-                  // This would remove the_A_matrix_extent argument.
+                  // This would remove A_matrix_extent argument.
                   OrdinalType kSmallBlockExtent>
         class BatchedBlockTridiagonalByBlockTRF {
         public:
@@ -164,17 +164,17 @@ namespace koliop {
 
         public:
             /// TRF
-            /// @param the_A_matrix Must respect the format described in the
+            /// @param A_matrix Must respect the format described in the
             /// BatchedBlockTridiagonalByBlockTRF notes.
-            /// @param the_A_matrix_extent The number of independent block
+            /// @param A_matrix_extent The number of independent block
             /// diagonal problem. Must be a multiple of
             /// BatchTraitsType::kBatchSize.
-            /// @param the_M_matrix_extent The number extent of the block
+            /// @param M_matrix_extent The number extent of the block
             /// diagonal problem.
             void Factorize(ExecutionSpaceType an_execution_space,
-                           value_type*        the_A_matrix,
-                           OrdinalType        the_A_matrix_extent,
-                           OrdinalType        the_M_matrix_extent) const;
+                           value_type*        A_matrix,
+                           OrdinalType        A_matrix_extent,
+                           OrdinalType        M_matrix_extent) const;
 
         protected:
         };
@@ -188,24 +188,24 @@ namespace koliop {
                   OrdinalType kSmallBlockExtent>
         void BatchedBlockTridiagonalByBlockTRF<BatchTraits,
                                                kSmallBlockExtent>::Factorize(ExecutionSpaceType an_execution_space,
-                                                                             value_type*        the_A_matrix,
-                                                                             OrdinalType        the_A_matrix_extent,
-                                                                             OrdinalType        the_M_matrix_extent) const {
+                                                                             value_type*        A_matrix,
+                                                                             OrdinalType        A_matrix_extent,
+                                                                             OrdinalType        M_matrix_extent) const {
 
-            KOLIOP_ASSERT(the_A_matrix != nullptr);
-            // the_A_matrix_extent must be divisible by
+            KOLIOP_ASSERT(A_matrix != nullptr);
+            // A_matrix_extent must be divisible by
             // BatchTraitsType::kBatchSize. Else we need padding.
-            KOLIOP_ASSERT(the_A_matrix_extent % BatchTraitsType::kBatchSize == 0);
-            KOLIOP_ASSERT(the_M_matrix_extent > 0);
+            KOLIOP_ASSERT(A_matrix_extent % BatchTraitsType::kBatchSize == 0);
+            KOLIOP_ASSERT(M_matrix_extent > 0);
 
-            const OrdinalType kBatchCount     = BatchTraitsType::BatchCount(the_A_matrix_extent);
-            const OrdinalType kBigBlockExtent = the_M_matrix_extent;
+            const OrdinalType kBatchCount     = BatchTraitsType::BatchCount(A_matrix_extent);
+            const OrdinalType kBigBlockExtent = M_matrix_extent;
 
             static_assert(MatrixKindType::kDiagonalCount == 3, "");
 
-            typename MatrixKindType::VectorType the_A_matrix_view{reinterpret_cast<typename BatchTraitsType::ThreadVectorType*>(the_A_matrix),
-                                                                  static_cast<std::size_t>(kBatchCount),
-                                                                  static_cast<std::size_t>(kBigBlockExtent)};
+            typename MatrixKindType::VectorType A_matrix_view{reinterpret_cast<typename BatchTraitsType::ThreadVectorType*>(A_matrix),
+                                                              static_cast<std::size_t>(kBatchCount),
+                                                              static_cast<std::size_t>(kBigBlockExtent)};
 
             // TODO(Etienne M): Check that we do not benefit from using
             // TeamLU/TRSM/GEMM. This require a trick with vector threads.
@@ -218,17 +218,17 @@ namespace koliop {
             // MI250 GCD. This means, assuming 1024 nvpar and Flo64:
             // (8 * 1024 * (3 * (3*3))) * 225280 = 49'828'331'520 o.
 
-            const auto the_kernel = KOKKOS_LAMBDA(OrdinalType the_batch_element_index, OrdinalType the_batch_index) {
+            const auto kernel = KOKKOS_LAMBDA(OrdinalType batch_element_index, OrdinalType batch_index) {
 
-                auto the_batch_element = Kokkos::subview(the_A_matrix_view,
-                                                         the_batch_index,
-                                                         // TODO(Etienne M): These ALL() are constant, should we
-                                                         // hardcode them to facilitate the compiler's work ?
-                                                         Kokkos::ALL(), // kBigBlockExtent
-                                                         Kokkos::ALL(), // kDiagonalCount
-                                                         Kokkos::ALL(), // kSmallBlockExtent
-                                                         Kokkos::ALL(), // kSmallBlockExtent
-                                                         the_batch_element_index);
+                auto batch_element = Kokkos::subview(A_matrix_view,
+                                                     batch_index,
+                                                     // TODO(Etienne M): These ALL() are constant, should we
+                                                     // hardcode them to facilitate the compiler's work ?
+                                                     Kokkos::ALL(), // kBigBlockExtent
+                                                     Kokkos::ALL(), // kDiagonalCount
+                                                     Kokkos::ALL(), // kSmallBlockExtent
+                                                     Kokkos::ALL(), // kSmallBlockExtent
+                                                     batch_element_index);
 
                 // M =
                 // B_0 C_0       0
@@ -237,14 +237,14 @@ namespace koliop {
                 // 0       A_n B_n
 
                 // Applying the naming above, we have:
-                auto B      = Kokkos::subview(the_batch_element, 0, 1, Kokkos::ALL(), Kokkos::ALL());
-                auto C      = Kokkos::subview(the_batch_element, 0, 2, Kokkos::ALL(), Kokkos::ALL());
-                auto A_next = Kokkos::subview(the_batch_element, 0, 0, Kokkos::ALL(), Kokkos::ALL());
-                auto B_next = Kokkos::subview(the_batch_element, kBigBlockExtent - 1, 1, Kokkos::ALL(), Kokkos::ALL());
+                auto B      = Kokkos::subview(batch_element, 0, 1, Kokkos::ALL(), Kokkos::ALL());
+                auto C      = Kokkos::subview(batch_element, 0, 2, Kokkos::ALL(), Kokkos::ALL());
+                auto A_next = Kokkos::subview(batch_element, 0, 0, Kokkos::ALL(), Kokkos::ALL());
+                auto B_next = Kokkos::subview(batch_element, kBigBlockExtent - 1, 1, Kokkos::ALL(), Kokkos::ALL());
 
-                for(OrdinalType the_small_block_index = 0;
-                    the_small_block_index < (kBigBlockExtent - 1);
-                    ++the_small_block_index) {
+                for(OrdinalType small_block_index = 0;
+                    small_block_index < (kBigBlockExtent - 1);
+                    ++small_block_index) {
 
                     // TODO(Etienne M): Recreate view or assign ? Which is
                     // faster ?
@@ -252,10 +252,10 @@ namespace koliop {
                     // of the B, C, A_next and B_next alias in a given iteration
                     // if there is unrolling then B_next becomes B.
 
-                    B.assign_data(&the_batch_element(the_small_block_index, 1, 0, 0));
-                    C.assign_data(&the_batch_element(the_small_block_index, 2, 0, 0));
-                    A_next.assign_data(&the_batch_element(the_small_block_index + 1, 0, 0, 0));
-                    B_next.assign_data(&the_batch_element(the_small_block_index + 1, 1, 0, 0));
+                    B.assign_data(&batch_element(small_block_index, 1, 0, 0));
+                    C.assign_data(&batch_element(small_block_index, 2, 0, 0));
+                    A_next.assign_data(&batch_element(small_block_index + 1, 0, 0, 0));
+                    B_next.assign_data(&batch_element(small_block_index + 1, 1, 0, 0));
 
                     LU::invoke(B);                                              // B = L + U - I
                     TRSMLower::invoke(static_cast<value_type>(1.0), B, C);      // Solve: B_lower * X = C, X is put into C
@@ -278,7 +278,7 @@ namespace koliop {
                                                      {BatchTraitsType::kVectorPerBatch, kBatchCount}};
 
             Kokkos::parallel_for("BatchedBlockTridiagonalByBlockTRF::Factorize",
-                                 a_policy, the_kernel);
+                                 a_policy, kernel);
         }
 
     } // namespace blas

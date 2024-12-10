@@ -15,8 +15,8 @@ namespace koliop {
                          an_explanation);
         }
 
-        void AssertionFailure(const char* the_message) noexcept {
-            PresentErrorExplanation("ASSERTION_FAILURE", the_message);
+        void AssertionFailure(const char* message) noexcept {
+            PresentErrorExplanation("ASSERTION_FAILURE", message);
 
             std::fflush(stdout);
             std::fflush(stderr);
