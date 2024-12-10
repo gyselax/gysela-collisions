@@ -1,0 +1,232 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" version="25.0.3">
+  <diagram name="Page-1" id="VP-y3N8EJg8OdFcOmosx">
+    <mxGraphModel dx="3612" dy="2108" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="Ix4C8yxILUHJK1lK30wg-1" target="Ix4C8yxILUHJK1lK30wg-2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-1" value="Fortran interface" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="40" y="-20" width="120" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="Ix4C8yxILUHJK1lK30wg-2" target="Ix4C8yxILUHJK1lK30wg-5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-2" value="C interface" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="200" y="-20" width="120" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-3" value="include/KOLIOP/koliop.f90" style="text;html=1;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="40" y="20" width="120" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-4" value="include/KOLIOP/koliop.h" style="text;html=1;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="200" y="20" width="120" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="Ix4C8yxILUHJK1lK30wg-5" target="Ix4C8yxILUHJK1lK30wg-9">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="490.0000000000002" y="320.0000000000001" as="targetPoint" />
+            <mxPoint x="490.0000000000002" y="140.0344827586207" as="sourcePoint" />
+            <Array as="points">
+              <mxPoint x="520" />
+              <mxPoint x="520" y="220" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-5" value="C implementation" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="360" y="-20" width="120" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-6" value="sources/KOLIOP/koliop.cc" style="text;html=1;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="360" y="20" width="120" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="Ix4C8yxILUHJK1lK30wg-9" target="Ix4C8yxILUHJK1lK30wg-11">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-15" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="Ix4C8yxILUHJK1lK30wg-9" target="Ix4C8yxILUHJK1lK30wg-14">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-17" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="Ix4C8yxILUHJK1lK30wg-9" target="Ix4C8yxILUHJK1lK30wg-16">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-24" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="Ix4C8yxILUHJK1lK30wg-9" target="Ix4C8yxILUHJK1lK30wg-18">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-25" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="Ix4C8yxILUHJK1lK30wg-9" target="Ix4C8yxILUHJK1lK30wg-20">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-26" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="Ix4C8yxILUHJK1lK30wg-9" target="Ix4C8yxILUHJK1lK30wg-21">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-27" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="Ix4C8yxILUHJK1lK30wg-9" target="Ix4C8yxILUHJK1lK30wg-19">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-28" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="Ix4C8yxILUHJK1lK30wg-9" target="Ix4C8yxILUHJK1lK30wg-22">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-29" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="Ix4C8yxILUHJK1lK30wg-9" target="Ix4C8yxILUHJK1lK30wg-23">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-9" value="class Operator" style="rounded=0;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="360" y="200" width="120" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-34" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="Ix4C8yxILUHJK1lK30wg-11" target="Ix4C8yxILUHJK1lK30wg-33">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-11" value="Operator::ComputeMoments(f5d_s)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="40" y="200" width="280" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-12" value="sources/KOLIOP/collision/operator.h&lt;br&gt;sources/KOLIOP/collision/operator.cc" style="text;html=1;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="360" y="240" width="120" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-32" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="Ix4C8yxILUHJK1lK30wg-14" target="Ix4C8yxILUHJK1lK30wg-31">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-14" value="Operator::PrecomputeNu()" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="40" y="260" width="280" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-36" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="Ix4C8yxILUHJK1lK30wg-16" target="Ix4C8yxILUHJK1lK30wg-35">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-16" value="Operator::ComputeMaxwellianEvolution(dt, f5d_s)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="40" y="320" width="280" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-38" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="Ix4C8yxILUHJK1lK30wg-18" target="Ix4C8yxILUHJK1lK30wg-37">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-18" value="Operator::ComputeQparOnNT(f5d_s)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="40" y="380" width="280" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-45" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="Ix4C8yxILUHJK1lK30wg-19" target="Ix4C8yxILUHJK1lK30wg-47">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="-90" y="580" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-19" value="Operator::Apply(dt, f5d_s)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="40" y="560" width="280" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-40" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="Ix4C8yxILUHJK1lK30wg-20" target="Ix4C8yxILUHJK1lK30wg-39">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-20" value="Operator::ComputeCpar(f5d_s)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="40" y="440" width="280" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-43" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="Ix4C8yxILUHJK1lK30wg-21" target="Ix4C8yxILUHJK1lK30wg-41">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-21" value="Operator::ComputeMaxwellianUnshiftedLoc(f5d_s)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="40" y="500" width="280" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-49" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="Ix4C8yxILUHJK1lK30wg-22" target="Ix4C8yxILUHJK1lK30wg-48">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-22" value="Operator::ComputeDensityCorrection(f5d_s)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="40" y="620" width="280" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-52" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="Ix4C8yxILUHJK1lK30wg-23" target="Ix4C8yxILUHJK1lK30wg-50">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-23" value="Operator::ComputeUparTCorrection(dt, f5d_s)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="40" y="680" width="280" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-31" value="Modifies:&lt;br&gt;&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;- Operator::nu_ab&lt;/span&gt;&lt;/div&gt;" style="text;html=1;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="-120" y="260" width="140" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-33" value="Modifies:&lt;br&gt;&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;- f5d_s&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;- Operator::n_s&lt;br&gt;&lt;/span&gt;- Operator::U_par_s&lt;br&gt;- Operator::T_s&lt;span style=&quot;background-color: initial;&quot;&gt;&lt;br&gt;&lt;/span&gt;&lt;/div&gt;" style="text;html=1;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="-230" y="180" width="140" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-35" value="Modifies:&lt;div&gt;- f5d_s&lt;br&gt;&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;- Operator::T_s&lt;/span&gt;&lt;/div&gt;&lt;/div&gt;" style="text;html=1;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="-230" y="315" width="140" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-37" value="Modifies:&lt;div&gt;&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;- Operator::&lt;/span&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;q_par_on_nT_s&lt;/span&gt;&lt;/div&gt;&lt;/div&gt;" style="text;html=1;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="-130" y="375" width="150" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-39" value="Modifies:&lt;div&gt;&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;- Operator::&lt;/span&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;f5d_s&lt;/span&gt;&lt;/div&gt;&lt;/div&gt;" style="text;html=1;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="-235" y="435" width="150" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-41" value="Modifies:&lt;div&gt;&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;- Operator::&lt;/span&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;f5d_s&lt;/span&gt;&lt;/div&gt;&lt;/div&gt;" style="text;html=1;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="-125" y="495" width="145" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-65" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="Ix4C8yxILUHJK1lK30wg-47" target="Ix4C8yxILUHJK1lK30wg-63">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-66" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="Ix4C8yxILUHJK1lK30wg-47" target="Ix4C8yxILUHJK1lK30wg-61">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-67" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="Ix4C8yxILUHJK1lK30wg-47" target="Ix4C8yxILUHJK1lK30wg-60">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-68" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="Ix4C8yxILUHJK1lK30wg-47" target="Ix4C8yxILUHJK1lK30wg-59">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-69" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="Ix4C8yxILUHJK1lK30wg-47" target="Ix4C8yxILUHJK1lK30wg-54">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="-390" y="580" />
+              <mxPoint x="-390" y="760" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-70" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="Ix4C8yxILUHJK1lK30wg-47" target="Ix4C8yxILUHJK1lK30wg-55">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="-390" y="580" />
+              <mxPoint x="-390" y="815" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-71" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="Ix4C8yxILUHJK1lK30wg-47" target="Ix4C8yxILUHJK1lK30wg-56">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="-390" y="580" />
+              <mxPoint x="-390" y="875" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-47" value="CvCdDriver::Apply" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="-370" y="560" width="280" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-48" value="Modifies:&lt;div&gt;&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;- Operator::&lt;/span&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;f5d_s&lt;/span&gt;&lt;/div&gt;&lt;/div&gt;" style="text;html=1;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="-130" y="615" width="150" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-50" value="Modifies:&lt;div&gt;&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;- Operator::&lt;/span&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;f5d_s&lt;/span&gt;&lt;/div&gt;&lt;/div&gt;" style="text;html=1;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="-235" y="675" width="150" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-54" value="class&amp;nbsp;BatchedBlockTridiagonalByBlockTRF" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="-1010" y="740" width="280" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-55" value="class BatchedBlockTridiagonalByBlockTRSV" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="-1010" y="795" width="280" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-56" value="class BatchedMatrixSamplingBlockTridiagonalByBlockMV" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="-1010" y="855" width="280" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-59" value="DoComputeReconstruction" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="-690" y="680" width="280" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-60" value="DoComputeCvCdSource" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="-690" y="620" width="280" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-61" value="DoPrepareMatrix" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="-690" y="560" width="280" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-62" value="DoPrepareCollisionMask" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="-690" y="440" width="280" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-63" value="DoComputeAlphaProjection" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="-690" y="500" width="280" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-64" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.402;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="Ix4C8yxILUHJK1lK30wg-47" target="Ix4C8yxILUHJK1lK30wg-62">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-73" value="&lt;span style=&quot;text-align: left;&quot;&gt;In sources/KOLIOP/collision/cvcddriver.h&lt;/span&gt;" style="shape=process;whiteSpace=wrap;html=1;backgroundOutline=1;fillColor=#f5f5f5;fontColor=#333333;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="-690" y="380" width="280" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-74" value="&lt;span style=&quot;text-align: left;&quot;&gt;In sources/KOLIOP/blas/mv.h&lt;br&gt;&lt;/span&gt;&lt;span style=&quot;text-align: left;&quot;&gt;In sources/KOLIOP/blas/trf.h&lt;br&gt;&lt;/span&gt;&lt;span style=&quot;text-align: left;&quot;&gt;In sources/KOLIOP/blas/trsv.h&lt;/span&gt;&lt;span style=&quot;text-align: left;&quot;&gt;&lt;br&gt;&lt;/span&gt;" style="shape=process;whiteSpace=wrap;html=1;backgroundOutline=1;fillColor=#f5f5f5;fontColor=#333333;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="-1010" y="680" width="280" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="Ix4C8yxILUHJK1lK30wg-75" value="&lt;span style=&quot;&quot;&gt;In sources/KOLIOP/collision/moments.cc&lt;/span&gt;&lt;span style=&quot;color: rgba(0, 0, 0, 0); font-family: monospace; font-size: 0px; text-wrap: nowrap;&quot;&gt;%3CmxGraphModel%3E%3Croot%3E%3CmxCell%20id%3D%220%22%2F%3E%3CmxCell%20id%3D%221%22%20parent%3D%220%22%2F%3E%3CmxCell%20id%3D%222%22%20value%3D%22%26lt%3Bspan%20style%3D%26quot%3Btext-align%3A%20left%3B%26quot%3B%26gt%3BIn%20sources%2FKOLIOP%2Fblas%2Fmv.h%26lt%3Bbr%26gt%3B%26lt%3B%2Fspan%26gt%3B%26lt%3Bspan%20style%3D%26quot%3Btext-align%3A%20left%3B%26quot%3B%26gt%3BIn%20sources%2FKOLIOP%2Fblas%2Ftrf.h%26lt%3Bbr%26gt%3B%26lt%3B%2Fspan%26gt%3B%26lt%3Bspan%20style%3D%26quot%3Btext-align%3A%20left%3B%26quot%3B%26gt%3BIn%20sources%2FKOLIOP%2Fblas%2Ftrsv.h%26lt%3B%2Fspan%26gt%3B%26lt%3Bspan%20style%3D%26quot%3Btext-align%3A%20left%3B%26quot%3B%26gt%3B%26lt%3Bbr%26gt%3B%26lt%3B%2Fspan%26gt%3B%22%20style%3D%22shape%3Dprocess%3BwhiteSpace%3Dwrap%3Bhtml%3D1%3BbackgroundOutline%3D1%3B%22%20vertex%3D%221%22%20parent%3D%221%22%3E%3CmxGeometry%20x%3D%22-1010%22%20y%3D%22680%22%20width%3D%22280%22%20height%3D%2240%22%20as%3D%22geometry%22%2F%3E%3C%2FmxCell%3E%3C%2Froot%3E%3C%2FmxGraphModel%3E&lt;/span&gt;&lt;span style=&quot;&quot;&gt;&lt;br&gt;&lt;/span&gt;&lt;span style=&quot;&quot;&gt;In sources/KOLIOP/collision/nu.cc&lt;/span&gt;&lt;span style=&quot;text-wrap: nowrap; color: rgba(0, 0, 0, 0); font-family: monospace; font-size: 0px;&quot;&gt;%3CmxGraphModel%3E%3Croot%3E%3CmxCell%20id%3D%220%22%2F%3E%3CmxCell%20id%3D%221%22%20parent%3D%220%22%2F%3E%3CmxCell%20id%3D%222%22%20value%3D%22%26lt%3Bspan%20style%3D%26quot%3Btext-align%3A%20left%3B%26quot%3B%26gt%3BIn%20sources%2FKOLIOP%2Fblas%2Fmv.h%26lt%3Bbr%26gt%3B%26lt%3B%2Fspan%26gt%3B%26lt%3Bspan%20style%3D%26quot%3Btext-align%3A%20left%3B%26quot%3B%26gt%3BIn%20sources%2FKOLIOP%2Fblas%2Ftrf.h%26lt%3Bbr%26gt%3B%26lt%3B%2Fspan%26gt%3B%26lt%3Bspan%20style%3D%26quot%3Btext-align%3A%20left%3B%26quot%3B%26gt%3BIn%20sources%2FKOLIOP%2Fblas%2Ftrsv.h%26lt%3B%2Fspan%26gt%3B%26lt%3Bspan%20style%3D%26quot%3Btext-align%3A%20left%3B%26quot%3B%26gt%3B%26lt%3Bbr%26gt%3B%26lt%3B%2Fspan%26gt%3B%22%20style%3D%22shape%3Dprocess%3BwhiteSpace%3Dwrap%3Bhtml%3D1%3BbackgroundOutline%3D1%3B%22%20vertex%3D%221%22%20parent%3D%221%22%3E%3CmxGeometry%20x%3D%22-1010%22%20y%3D%22680%22%20width%3D%22280%22%20height%3D%2240%22%20as%3D%22geometry%22%2F%3E%3C%2FmxCell%3E%3C%2Froot%3E%3C%2FmxGraphModel%3E&lt;/span&gt;&lt;span style=&quot;&quot;&gt;&lt;br&gt;&lt;/span&gt;&lt;span style=&quot;&quot;&gt;In sources/KOLIOP/collision/maxwellianevolution.cc&lt;/span&gt;&lt;span style=&quot;text-wrap: nowrap; color: rgba(0, 0, 0, 0); font-family: monospace; font-size: 0px;&quot;&gt;%3CmxGraphModel%3E%3Croot%3E%3CmxCell%20id%3D%220%22%2F%3E%3CmxCell%20id%3D%221%22%20parent%3D%220%22%2F%3E%3CmxCell%20id%3D%222%22%20value%3D%22%26lt%3Bspan%20style%3D%26quot%3Btext-align%3A%20left%3B%26quot%3B%26gt%3BIn%20sources%2FKOLIOP%2Fblas%2Fmv.h%26lt%3Bbr%26gt%3B%26lt%3B%2Fspan%26gt%3B%26lt%3Bspan%20style%3D%26quot%3Btext-align%3A%20left%3B%26quot%3B%26gt%3BIn%20sources%2FKOLIOP%2Fblas%2Ftrf.h%26lt%3Bbr%26gt%3B%26lt%3B%2Fspan%26gt%3B%26lt%3Bspan%20style%3D%26quot%3Btext-align%3A%20left%3B%26quot%3B%26gt%3BIn%20sources%2FKOLIOP%2Fblas%2Ftrsv.h%26lt%3B%2Fspan%26gt%3B%26lt%3Bspan%20style%3D%26quot%3Btext-align%3A%20left%3B%26quot%3B%26gt%3B%26lt%3Bbr%26gt%3B%26lt%3B%2Fspan%26gt%3B%22%20style%3D%22shape%3Dprocess%3BwhiteSpace%3Dwrap%3Bhtml%3D1%3BbackgroundOutline%3D1%3B%22%20vertex%3D%221%22%20parent%3D%221%22%3E%3CmxGeometry%20x%3D%22-1010%22%20y%3D%22680%22%20width%3D%22280%22%20height%3D%2240%22%20as%3D%22geometry%22%2F%3E%3C%2FmxCell%3E%3C%2Froot%3E%3C%2FmxGraphModel%3E&lt;br&gt;&lt;/span&gt;&lt;span style=&quot;&quot;&gt;In sources/KOLIOP/collision/qparonnt.cc&lt;/span&gt;&lt;span style=&quot;text-wrap: nowrap; color: rgba(0, 0, 0, 0); font-family: monospace; font-size: 0px;&quot;&gt;%3CmxGraphModel%3E%3Croot%3E%3CmxCell%20id%3D%220%22%2F%3E%3CmxCell%20id%3D%221%22%20parent%3D%220%22%2F%3E%3CmxCell%20id%3D%222%22%20value%3D%22%26lt%3Bspan%20style%3D%26quot%3Btext-align%3A%20left%3B%26quot%3B%26gt%3BIn%20sources%2FKOLIOP%2Fblas%2Fmv.h%26lt%3Bbr%26gt%3B%26lt%3B%2Fspan%26gt%3B%26lt%3Bspan%20style%3D%26quot%3Btext-align%3A%20left%3B%26quot%3B%26gt%3BIn%20sources%2FKOLIOP%2Fblas%2Ftrf.h%26lt%3Bbr%26gt%3B%26lt%3B%2Fspan%26gt%3B%26lt%3Bspan%20style%3D%26quot%3Btext-align%3A%20left%3B%26quot%3B%26gt%3BIn%20sources%2FKOLIOP%2Fblas%2Ftrsv.h%26lt%3B%2Fspan%26gt%3B%26lt%3Bspan%20style%3D%26quot%3Btext-align%3A%20left%3B%26quot%3B%26gt%3B%26lt%3Bbr%26gt%3B%26lt%3B%2Fspan%26gt%3B%22%20style%3D%22shape%3Dprocess%3BwhiteSpace%3Dwrap%3Bhtml%3D1%3BbackgroundOutline%3D1%3B%22%20vertex%3D%221%22%20parent%3D%221%22%3E%3CmxGeometry%20x%3D%22-1010%22%20y%3D%22680%22%20width%3D%22280%22%20height%3D%2240%22%20as%3D%22geometry%22%2F%3E%3C%2FmxCell%3E%3C%2Froot%3E%3C%2FmxGraphModel%3E&lt;/span&gt;&lt;span style=&quot;&quot;&gt;&lt;br&gt;&lt;/span&gt;&lt;div&gt;&lt;span style=&quot;&quot;&gt;In sources/KOLIOP/collision/cpar.cc&lt;/span&gt;&lt;span style=&quot;text-wrap: nowrap; color: rgba(0, 0, 0, 0); font-family: monospace; font-size: 0px;&quot;&gt;%3CmxGraphModel%3E%3Croot%3E%3CmxCell%20id%3D%220%22%2F%3E%3CmxCell%20id%3D%221%22%20parent%3D%220%22%2F%3E%3CmxCell%20id%3D%222%22%20value%3D%22%26lt%3Bspan%20style%3D%26quot%3Btext-align%3A%20left%3B%26quot%3B%26gt%3BIn%20sources%2FKOLIOP%2Fblas%2Fmv.h%26lt%3Bbr%26gt%3B%26lt%3B%2Fspan%26gt%3B%26lt%3Bspan%20style%3D%26quot%3Btext-align%3A%20left%3B%26quot%3B%26gt%3BIn%20sources%2FKOLIOP%2Fblas%2Ftrf.h%26lt%3Bbr%26gt%3B%26lt%3B%2Fspan%26gt%3B%26lt%3Bspan%20style%3D%26quot%3Btext-align%3A%20left%3B%26quot%3B%26gt%3BIn%20sources%2FKOLIOP%2Fblas%2Ftrsv.h%26lt%3B%2Fspan%26gt%3B%26lt%3Bspan%20style%3D%26quot%3Btext-align%3A%20left%3B%26quot%3B%26gt%3B%26lt%3Bbr%26gt%3B%26lt%3B%2Fspan%26gt%3B%22%20style%3D%22shape%3Dprocess%3BwhiteSpace%3Dwrap%3Bhtml%3D1%3BbackgroundOutline%3D1%3B%22%20vertex%3D%221%22%20parent%3D%221%22%3E%3CmxGeometry%20x%3D%22-1010%22%20y%3D%22680%22%20width%3D%22280%22%20height%3D%2240%22%20as%3D%22geometry%22%2F%3E%3C%2FmxCell%3E%3C%2Froot%3E%3C%2FmxGraphModel%3E&lt;br&gt;&lt;/span&gt;&lt;span style=&quot;&quot;&gt;In sources/KOLIOP/collision/maxwellianunshifted.cc&lt;/span&gt;&lt;span style=&quot;text-wrap: nowrap; color: rgba(0, 0, 0, 0); font-family: monospace; font-size: 0px;&quot;&gt;%3CmxGraphModel%3E%3Croot%3E%3CmxCell%20id%3D%220%22%2F%3E%3CmxCell%20id%3D%221%22%20parent%3D%220%22%2F%3E%3CmxCell%20id%3D%222%22%20value%3D%22%26lt%3Bspan%20style%3D%26quot%3Btext-align%3A%20left%3B%26quot%3B%26gt%3BIn%20sources%2FKOLIOP%2Fblas%2Fmv.h%26lt%3Bbr%26gt%3B%26lt%3B%2Fspan%26gt%3B%26lt%3Bspan%20style%3D%26quot%3Btext-align%3A%20left%3B%26quot%3B%26gt%3BIn%20sources%2FKOLIOP%2Fblas%2Ftrf.h%26lt%3Bbr%26gt%3B%26lt%3B%2Fspan%26gt%3B%26lt%3Bspan%20style%3D%26quot%3Btext-align%3A%20left%3B%26quot%3B%26gt%3BIn%20sources%2FKOLIOP%2Fblas%2Ftrsv.h%26lt%3B%2Fspan%26gt%3B%26lt%3Bspan%20style%3D%26quot%3Btext-align%3A%20left%3B%26quot%3B%26gt%3B%26lt%3Bbr%26gt%3B%26lt%3B%2Fspan%26gt%3B%22%20style%3D%22shape%3Dprocess%3BwhiteSpace%3Dwrap%3Bhtml%3D1%3BbackgroundOutline%3D1%3B%22%20vertex%3D%221%22%20parent%3D%221%22%3E%3CmxGeometry%20x%3D%22-1010%22%20y%3D%22680%22%20width%3D%22280%22%20height%3D%2240%22%20as%3D%22geometry%22%2F%3E%3C%2FmxCell%3E%3C%2Froot%3E%3C%2FmxGraphModel%3E&lt;br&gt;&lt;/span&gt;&lt;span style=&quot;&quot;&gt;In sources/KOLIOP/collision/apply.cc&lt;br&gt;&lt;/span&gt;In sources/KOLIOP/collision/densitycorrection.cc&lt;br&gt;In sources/KOLIOP/collision/upartcorrection.cc&lt;span style=&quot;text-wrap: nowrap; color: rgba(0, 0, 0, 0); font-family: monospace; font-size: 0px;&quot;&gt;%3CmxGraphModel%3E%3Croot%3E%3CmxCell%20id%3D%220%22%2F%3E%3CmxCell%20id%3D%221%22%20parent%3D%220%22%2F%3E%3CmxCell%20id%3D%222%22%20value%3D%22%26lt%3Bspan%20style%3D%26quot%3Btext-align%3A%20left%3B%26quot%3B%26gt%3BIn%20sources%2FKOLIOP%2Fblas%2Fmv.h%26lt%3Bbr%26gt%3B%26lt%3B%2Fspan%26gt%3B%26lt%3Bspan%20style%3D%26quot%3Btext-align%3A%20left%3B%26quot%3B%26gt%3BIn%20sources%2FKOLIOP%2Fblas%2Ftrf.h%26lt%3Bbr%26gt%3B%26lt%3B%2Fspan%26gt%3B%26lt%3Bspan%20style%3D%26quot%3Btext-align%3A%20left%3B%26quot%3B%26gt%3BIn%20sources%2FKOLIOP%2Fblas%2Ftrsv.h%26lt%3B%2Fspan%26gt%3B%26lt%3Bspan%20style%3D%26quot%3Btext-align%3A%20left%3B%26quot%3B%26gt%3B%26lt%3Bbr%26gt%3B%26lt%3B%2Fspan%26gt%3B%22%20style%3D%22shape%3Dprocess%3BwhiteSpace%3Dwrap%3Bhtml%3D1%3BbackgroundOutline%3D1%3B%22%20vertex%3D%221%22%20parent%3D%221%22%3E%3CmxGeometry%20x%3D%22-1010%22%20y%3D%22680%22%20width%3D%22280%22%20height%3D%2240%22%20as%3D%22geometry%22%2F%3E%3C%2FmxCell%3E%3C%2Froot%3E%3C%2FmxGraphModel%3E&lt;/span&gt;&lt;span style=&quot;text-wrap: nowrap; color: rgba(0, 0, 0, 0); font-family: monospace; font-size: 0px;&quot;&gt;&lt;br&gt;&lt;/span&gt;&lt;/div&gt;" style="shape=process;whiteSpace=wrap;html=1;backgroundOutline=1;align=left;fillColor=#f5f5f5;fontColor=#333333;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry y="50" width="360" height="130" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
