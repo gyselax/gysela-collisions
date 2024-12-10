@@ -15,7 +15,7 @@ $ git clone https://gitlab.com/cines/code.gysela/libkoliop
 ### Dependencies
 
 ```
-cmake > 3.16 (3.25 and up is recommended)
+cmake >= 3.22.1 (3.25 and up is recommended)
 ```
 
 ### Compiling
