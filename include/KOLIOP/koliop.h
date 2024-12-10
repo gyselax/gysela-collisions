@@ -130,6 +130,7 @@ koliop_Status koliop_Fence(koliop_Operator an_operator);
 ///   Vpara = (1/na) * int 2 * Pi * Bstar * dmu * dvpar * vpar * Fa
 ///   Ta = (1/(3*na)) * int 2 * Pi * Bstar * dmu * dvpar * Fa * &
 ///        (2 * mu *B + (vpar-Vpara)^2)
+///
 /// WARNING: Either call koliop_Fence after this call or chain with other
 /// koliop_* operator's operations. You still may have to fence after the last
 /// operation.
@@ -138,7 +139,8 @@ koliop_Status koliop_Fence(koliop_Operator an_operator);
 koliop_Status koliop_ComputeMoments(koliop_Operator an_operator,
                                     double*         f5d_s);
 
-/// @brief
+/// @brief Collisionarity
+///
 /// WARNING: Either call koliop_Fence after this call or chain with other
 /// koliop_* operator's operations. You still may have to fence after the last
 /// operation.
@@ -153,6 +155,7 @@ koliop_Status koliop_PrecomputeNu(koliop_Operator an_operator);
 /// Evolution of the temperatures via the term C0:
 ///   Ta = Ta + deltat*sum_b nu_ab * (2*hat_Aa/(hat_Aa + hat_Ab)*(Tb -Ta) +
 ///     (2/3) * Vpara *(Vpara - Vparb))
+///
 /// WARNING: Either call koliop_Fence after this call or chain with other
 /// koliop_* operator's operations. You still may have to fence after the last
 /// operation.
@@ -167,6 +170,7 @@ koliop_Status koliop_ComputeMaxwellianEvolution(koliop_Operator an_operator,
 ///   q_par_on_nT = 0.5*int (2 * Pi * Bstar) *  dmu * dvpar * &
 ///       (vpar-Vpara) * ((vpar-Vpara)^2 + vperp^2) * (Fa - FMa)
 ///  Indeed  q_par_on_nT = 0 for a Maxwellian distribution function
+///
 /// WARNING: Either call koliop_Fence after this call or chain with other
 /// koliop_* operator's operations. You still may have to fence after the last
 /// operation.
@@ -182,6 +186,7 @@ koliop_Status koliop_ComputeQparOnNT(koliop_Operator an_operator,
 ///  with Rat = sqrt(hat_Aa/hat_Ab)
 ///   xa = v /(sqrt(2*Ta)) = sqrt(2*mu*B + vpar*vpar)/(sqrt(2*Ta))
 ///   xb = xa * vTa / vTb
+///
 /// WARNING: Either call koliop_Fence after this call or chain with other
 /// koliop_* operator's operations. You still may have to fence after the last
 /// operation.
@@ -196,6 +201,7 @@ koliop_Status koliop_ComputeCpar(koliop_Operator an_operator,
 /// distribution function:
 ///  - choice 3 : Fa = Fa * FM0a
 ///  - choice 4 : Fa = Fa / FM0a
+///
 /// WARNING: Either call koliop_Fence after this call or chain with other
 /// koliop_* operator's operations. You still may have to fence after the last
 /// operation.
@@ -207,6 +213,7 @@ koliop_Status koliop_ComputeMaxwellianUnshiftedLoc(koliop_Operator an_operator,
                                                    int32_t         choice);
 
 /// @brief Compute alpha, make alpha evolve and reconstruct Fa.
+///
 /// WARNING: Either call koliop_Fence after this call or chain with other
 /// koliop_* operator's operations. You still may have to fence after the last
 /// operation.
@@ -217,7 +224,14 @@ koliop_Status koliop_Apply(koliop_Operator an_operator,
                            double          dt,
                            double*         f5d_s);
 
-/// @brief
+/// @brief Correction to keep the local density constant
+/// After the main part of the collisions, the distribution function has
+///  evolved:
+///   C(Fa) = Fa'
+/// The new density na' can be different than the one before collisions
+/// In order to keep the local density constant one can applied a correction
+///  after collisions by taking Fa'' = Fa' * na /na'
+///
 /// WARNING: Either call koliop_Fence after this call or chain with other
 /// koliop_* operator's operations. You still may have to fence after the last
 /// operation.
@@ -226,7 +240,11 @@ koliop_Status koliop_Apply(koliop_Operator an_operator,
 koliop_Status koliop_ComputeDensityCorrection(koliop_Operator an_operator,
                                               double*         f5d_s);
 
-/// @brief
+/// @brief Correction to keep the local fluid moments constant.
+/// init corresponds to values before collisions.
+/// old corresponds to values after collisions but before correction.
+/// new corresponds to corrected values.
+///
 /// WARNING: Either call koliop_Fence after this call or chain with other
 /// koliop_* operator's operations. You still may have to fence after the last
 /// operation.
@@ -248,6 +266,7 @@ koliop_Status koliop_ComputeUparTCorrection(koliop_Operator an_operator,
 /// question is specified using the_value_identifier and the
 /// KOLIOP_EXTRACTION_IDENTIFIER_* preprocessor definition.
 /// WARNING: Either call koliop_Fence after this call or chain with other
+///
 /// koliop_* operator's operations. You still may have to fence after the last
 /// operation.
 /// @param the_value_identifier A KOLIOP_EXTRACTION_IDENTIFIER_* preprocessor

@@ -15,6 +15,11 @@
 namespace koliop {
     namespace collision {
 
+        /// @brief Computation of q_para/(na*Ta):
+        ///   q_par_on_nT = 0.5*int (2 * Pi * Bstar) *  dmu * dvpar * &
+        ///       (vpar-Vpara) * ((vpar-Vpara)^2 + vperp^2) * (Fa - FMa)
+        ///  Indeed  q_par_on_nT = 0 for a Maxwellian distribution function
+        ///
         template <typename ExecutionSpace,
                   typename View6D,
                   typename View4D>
@@ -72,13 +77,15 @@ namespace koliop {
                 const OrdinalType iphi     = (the_team_index / (the_r_extent * the_theta_extent)) % the_phi_extent;
                 const OrdinalType ispecies = (the_team_index / (the_r_extent * the_theta_extent * the_phi_extent)) /* % the_species_extent */;
 
+                static constexpr auto k2Pi = koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi;
+
                 const ComputeFloatType Bij   = B_norm(the_local_domain_r_offset + ir,
                                                       the_local_domain_theta_offset + itheta);
                 const ComputeFloatType na    = n_s(ir, itheta, iphi, ispecies);
                 const ComputeFloatType Vpara = U_par_s(ir, itheta, iphi, ispecies);
                 const ComputeFloatType Ta    = T_s(ir, itheta, iphi, ispecies);
-                // TODO(Etienne M): SIMPLIFY as std::pow(koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta, -3 / 2);
-                const ComputeFloatType coeff = 1.0 / (koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta * Kokkos::sqrt(koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta));
+                // TODO(Etienne M): SIMPLIFY as std::pow(k2Pi * Ta, -3 / 2);
+                const ComputeFloatType coeff = 1.0 / (k2Pi * Ta * Kokkos::sqrt(k2Pi * Ta));
 
                 ComputeFloatType              q_par_on_nT_s_reduction;
                 Kokkos::Sum<ComputeFloatType> the_q_par_on_nT_s_reducer{q_par_on_nT_s_reduction};
@@ -95,7 +102,7 @@ namespace koliop {
                                               std::remove_reference_t<decltype(a_team_handle)>>(a_team_handle,
                                                                                                 the_mu_extent, the_vpar_extent),
                     [&](auto imu, auto ivpar) {
-                        const ComputeFloatType jac = koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi *
+                        const ComputeFloatType jac = k2Pi *
                                                      Bstar_s(ivpar, ir, itheta, ispecies);
 
                         const ComputeFloatType vparg_minus_vpara         = vparg(ivpar) - Vpara;

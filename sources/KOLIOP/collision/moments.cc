@@ -15,6 +15,12 @@
 namespace koliop {
     namespace collision {
 
+        /// @brief Computes the fluid moments:
+        ///   na =  int 2 * Pi * Bstar * dmu * dvpar * Fa
+        ///   Vpara = (1/na) * int 2 * Pi * Bstar * dmu * dvpar * vpar * Fa
+        ///   Ta = (1/(3*na)) * int 2 * Pi * Bstar * dmu * dvpar * Fa * &
+        ///        (2 * mu *B + (vpar-Vpara)^2)
+        ///
         template <typename ExecutionSpace,
                   typename View6D,
                   typename View4D>
@@ -172,12 +178,14 @@ namespace koliop {
                 // NOTE: This should be a no-op.
                 Ta = the_Ta_reducer.reference();
 
+                static constexpr auto k2Pi = koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi;
+
                 Kokkos::single(
                     Kokkos::PerTeam(a_team_handle),
                     [&]() {
                         Ta = Ta / (3.0 * na);
 
-                        na = koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * na;
+                        na = k2Pi * na;
 
                         n_s(ir, itheta, iphi, ispecies)     = na;
                         U_par_s(ir, itheta, iphi, ispecies) = vpara;

@@ -15,6 +15,14 @@
 namespace koliop {
     namespace collision {
 
+        /// Correction to keep the local density constant
+        /// After the main part of the collisions, the distribution function has
+        ///  evolved:
+        ///   C(Fa) = Fa'
+        /// The new density na' can be different than the one before collisions
+        /// In order to keep the local density constant one can applied a correction
+        ///  after collisions by taking Fa'' = Fa' * na /na'
+        ///
         template <typename ExecutionSpace,
                   typename View6D>
         static inline void

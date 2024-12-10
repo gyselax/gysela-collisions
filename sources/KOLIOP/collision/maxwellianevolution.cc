@@ -15,6 +15,15 @@
 namespace koliop {
     namespace collision {
 
+        /// @brief Make the Maxwellian evolve:
+        ///     - remove the Maxwellian to the distribution function Fa = Fa - FMa;
+        ///     - evolve temperature;
+        ///     - compute the new Maxwellian;
+        ///     - add it to the function distribution Fa = Fa + FMa.
+        /// Evolution of the temperatures via the term C0:
+        ///   Ta = Ta + deltat*sum_b nu_ab * (2*hat_Aa/(hat_Aa + hat_Ab)*(Tb -Ta) +
+        ///     (2/3) * Vpara *(Vpara - Vparb))
+        ///
         template <typename ExecutionSpace,
                   typename View6D,
                   typename View4D>
@@ -120,10 +129,10 @@ namespace koliop {
 
                     const ComputeFloatType na = n_s(ir, itheta, iphi, ispeciesA);
 
-                    const ComputeFloatType coeff_old = na / (koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta *
-                                                             Kokkos::sqrt(koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta));
-                    const ComputeFloatType coeff_new = na / (koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta_new *
-                                                             Kokkos::sqrt(koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta_new));
+                    static constexpr auto k2Pi = koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi;
+
+                    const ComputeFloatType coeff_old = na / (k2Pi * Ta * Kokkos::sqrt(k2Pi * Ta));
+                    const ComputeFloatType coeff_new = na / (k2Pi * Ta_new * Kokkos::sqrt(k2Pi * Ta_new));
 
                     const ComputeFloatType Bij = B_norm(the_local_domain_r_offset + ir,
                                                         the_local_domain_theta_offset + itheta);

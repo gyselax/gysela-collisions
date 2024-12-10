@@ -9,7 +9,7 @@ A KOkkos based colLIsion OPerator (KoLiOp) for Gysela that computes the evolutio
 ### Cloning the repository
 
 ```bash
-$ git clone <TODO(Etienne M)>.git
+$ git clone https://gitlab.com/cines/code.gysela/libkoliop
 ```
 
 ### Dependencies

@@ -19,6 +19,10 @@ namespace koliop {
         // CvCdDriverEraser definition
         ////////////////////////////////////////////////////////////////////////
 
+        /// @brief Hides the compiletime blocking of the CvCd operation. This
+        /// allows us to have compiletime blocking and a runtime dispatch on
+        /// these blocks.
+        ///
         class CvCdDriverEraser {
         public:
             class InterfaceType {

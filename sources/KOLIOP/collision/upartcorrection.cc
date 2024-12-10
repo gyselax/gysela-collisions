@@ -16,6 +16,11 @@
 namespace koliop {
     namespace collision {
 
+        /// @brief Correction to keep the local fluid moments constant.
+        /// init corresponds to values before collisions.
+        /// old corresponds to values after collisions but before correction.
+        /// new corresponds to corrected values.
+        ///
         template <typename ExecutionSpace,
                   typename View6D,
                   typename View4D0,
@@ -86,6 +91,8 @@ namespace koliop {
                                                                             std::remove_reference_t<decltype(a_team_handle)>>(a_team_handle,
                                                                                                                               the_mu_extent, the_vpar_extent);
 
+                static constexpr auto k2Pi = koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi;
+
                 ComputeFloatType              impulsion_coll;
                 Kokkos::Sum<ComputeFloatType> the_impulsion_coll_reducer{impulsion_coll};
                 the_impulsion_coll_reducer.init(the_impulsion_coll_reducer.reference());
@@ -101,7 +108,7 @@ namespace koliop {
                 Kokkos::parallel_for(
                     an_intra_team_policy,
                     [&](auto imu, auto ivpar) {
-                        const ComputeFloatType jacob_vel = koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi *
+                        const ComputeFloatType jacob_vel = k2Pi *
                                                            Bstar_s(ivpar, ir, itheta, ispeciesA);
 
                         the_impulsion_coll_reducer.join(the_impulsion_coll_reducer.reference(),
@@ -127,7 +134,7 @@ namespace koliop {
                 Kokkos::parallel_for(
                     an_intra_team_policy,
                     [&](auto imu, auto ivpar) {
-                        const ComputeFloatType jacob_vel = (koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi / na) *
+                        const ComputeFloatType jacob_vel = (k2Pi / na) *
                                                            Bstar_s(ivpar, ir, itheta, ispeciesA);
 
                         the_T_coll_reducer.join(the_T_coll_reducer.reference(),
@@ -179,13 +186,9 @@ namespace koliop {
                     U_par_new += dt * R_ab;
                 }
 
-                const ComputeFloatType coeff_Max_coll = na / (koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi *
-                                                              T_coll *
-                                                              Kokkos::sqrt(koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * T_coll));
+                const ComputeFloatType coeff_Max_coll = na / (k2Pi * T_coll * Kokkos::sqrt(k2Pi * T_coll));
 
-                const ComputeFloatType coeff_Max_new = na / (koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi *
-                                                             T_new *
-                                                             Kokkos::sqrt(koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * T_new));
+                const ComputeFloatType coeff_Max_new = na / (k2Pi * T_new * Kokkos::sqrt(k2Pi * T_new));
 
                 // We remove the old Maxwellian and add the new one.
 

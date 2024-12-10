@@ -211,7 +211,9 @@ namespace koliop {
                         const ValueType the_sqrtXtr_inv_on_exp_Xtr = sqrtXtr_inv / the_exp_Xtr;
                         const ValueType the_erfc_sqrt_Xtr          = Kokkos::erfc(sqrtXtr);
 
-                        J_vec[1] = koliop::portability::MathematicalConstant<ValueType>::kSqrtPi * the_erfc_sqrt_Xtr;
+                        static constexpr auto kSqrtPi = koliop::portability::MathematicalConstant<ComputeFloatType>::kSqrtPi;
+
+                        J_vec[1] = kSqrtPi * the_erfc_sqrt_Xtr;
                         J_vec[0] = 2.0 * (the_sqrtXtr_inv_on_exp_Xtr - J_vec[1]);
 
                         for(OrdinalType ind_k = 2; ind_k < the_J_vec_size; ++ind_k) {
@@ -378,13 +380,17 @@ namespace koliop {
                         const ValueType hat_Ab = hat_As(ispeciesB);
                         const ValueType hat_Zb = hat_Zs(ispeciesB);
 
-                        const ValueType coeff_L = (0.75 * koliop::portability::MathematicalConstant<ValueType>::kSqrtPi * koliop::portability::MathematicalConstant<ValueType>::kSqrt2) *
+                        static constexpr auto kSqrtPi = koliop::portability::MathematicalConstant<ValueType>::kSqrtPi;
+                        static constexpr auto kSqrt2 = koliop::portability::MathematicalConstant<ValueType>::kSqrt2;
+                        static constexpr auto kPi = koliop::portability::MathematicalConstant<ValueType>::kPi;
+
+                        const ValueType coeff_L = (0.75 * kSqrtPi * kSqrt2) *
                                                   nu * (hat_Zb * hat_Zb * local_n_s(ispeciesB)) / (hat_Za * hat_Za * local_n_s(the_species_index));
 
                         const ValueType vTb_on_vta_2 = (hat_Aa * local_T_s(ispeciesB)) / (hat_Ab * local_T_s(the_species_index));
 
                         {
-                            const ValueType Xtr         = vpar2_on_Ta * 0.5 + vTb_on_vta_2 * (9.0 * koliop::portability::MathematicalConstant<ValueType>::kPi / 16.0);
+                            const ValueType Xtr         = vpar2_on_Ta * 0.5 + vTb_on_vta_2 * (9.0 * kPi / 16.0);
                             const ValueType sqrtXtr     = Kokkos::sqrt(Xtr);
                             const ValueType sqrtXtr_inv = 1.0 / sqrtXtr;
 

@@ -17,6 +17,11 @@
 namespace koliop {
     namespace collision {
 
+        /// @brief This routine compute one of the following operation on the
+        /// distribution function:
+        ///  - choice 3 : Fa = Fa * FM0a
+        ///  - choice 4 : Fa = Fa / FM0a
+        ///
         template <typename ExecutionSpace,
                   typename View6D>
         static inline void
@@ -71,13 +76,15 @@ namespace koliop {
                         const OrdinalType iphi      = (the_team_index / (the_r_extent * the_theta_extent)) % the_phi_extent;
                         const OrdinalType ispeciesA = (the_team_index / (the_r_extent * the_theta_extent * the_phi_extent)) /* % the_species_extent */;
 
+                        static constexpr auto k2Pi = koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi;
+
                         const ComputeFloatType Bij    = B_norm(the_local_domain_r_offset + ir,
                                                                the_local_domain_theta_offset + itheta);
                         const ComputeFloatType na     = n_s(ir, itheta, iphi, ispeciesA);
                         const ComputeFloatType Ta     = T_s(ir, itheta, iphi, ispeciesA);
                         const ComputeFloatType BijoTa = Bij / Ta;
                         const ComputeFloatType f2oTa  = 0.5 / Ta;
-                        const ComputeFloatType coeff  = na / (koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta * Kokkos::sqrt(koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta));
+                        const ComputeFloatType coeff  = na / (k2Pi * Ta * k2Pi * Ta));
 
                         Kokkos::parallel_for(
                             // NOTE: The explicit Left iteration direction may not benefit
@@ -106,13 +113,15 @@ namespace koliop {
                         const OrdinalType iphi      = (the_team_index / (the_r_extent * the_theta_extent)) % the_phi_extent;
                         const OrdinalType ispeciesA = (the_team_index / (the_r_extent * the_theta_extent * the_phi_extent)) /* % the_species_extent */;
 
+                        static constexpr auto k2Pi = koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi;
+
                         const ComputeFloatType Bij    = B_norm(the_local_domain_r_offset + ir,
                                                                the_local_domain_theta_offset + itheta);
                         const ComputeFloatType na     = n_s(ir, itheta, iphi, ispeciesA);
                         const ComputeFloatType Ta     = T_s(ir, itheta, iphi, ispeciesA);
                         const ComputeFloatType BijoTa = Bij / Ta;
                         const ComputeFloatType f2oTa  = 0.5 / Ta;
-                        const ComputeFloatType coeff  = (koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta * Kokkos::sqrt(koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta)) / na;
+                        const ComputeFloatType coeff  = (k2Pi * Ta * Kokkos::sqrt(k2Pi * Ta)) / na;
 
                         Kokkos::parallel_for(
                             // NOTE: The explicit Left iteration direction may not benefit

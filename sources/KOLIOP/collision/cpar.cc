@@ -15,6 +15,14 @@
 namespace koliop {
     namespace collision {
 
+        /// @brief Make Fa evolve:
+        ///   f = f + dt * sum_b (nu_sab(xb) * vpar / Ta) * F_M0a * &
+        ///           (Rat * Vparb - Vpara + (q_para / (na * Ta)) * (1 - 2*xa*xa/5) -
+        ///           (3/5) *  Rat * (q_parb / (nb * Tb)) / (1 + (vTa/vTb)^2 ))
+        ///  with Rat = sqrt(hat_Aa/hat_Ab)
+        ///   xa = v /(sqrt(2*Ta)) = sqrt(2*mu*B + vpar*vpar)/(sqrt(2*Ta))
+        ///   xb = xa * vTa / vTb
+        ///
         template <typename ExecutionSpace,
                   typename View6D>
         static inline void
@@ -86,9 +94,11 @@ namespace koliop {
                 const ComputeFloatType Ta          = T_s(ir, itheta, iphi, ispeciesA);
                 const ComputeFloatType q_par_on_nT = q_par_on_nT_s(ir, itheta, iphi, ispeciesA);
 
+                static constexpr auto k2Pi = koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi;
+
                 const ComputeFloatType vTa    = Kokkos::sqrt(Ta * inv_hat_Aa);
                 const ComputeFloatType coeff1 = 1.0 / (2.0 * Ta);
-                const ComputeFloatType coeff3 = na / (koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta * Kokkos::sqrt(koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi * Ta));
+                const ComputeFloatType coeff3 = na / (k2Pi * Ta * Kokkos::sqrt(k2Pi * Ta));
                 const ComputeFloatType AD     = coeff_AD_r(the_local_domain_r_offset + ir);
 
                 for(OrdinalType ispeciesB = 0; ispeciesB < the_species_extent; ++ispeciesB) {
