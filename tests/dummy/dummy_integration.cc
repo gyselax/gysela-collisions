@@ -139,7 +139,7 @@ int Test1() {
 }
 
 int Test2() {
-    // Takes 1.89 sec on MI250X.
+    // Takes 1.85 sec on MI250X (after rocm-smi -r).
     //       0.78 sec on MI300A.
 
     // NOTE: This function is used to test the GPU code. We pass the operator
