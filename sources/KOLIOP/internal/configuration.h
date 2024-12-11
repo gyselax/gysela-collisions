@@ -167,7 +167,7 @@ static_assert(false, "This library doesn't support your compiler.");
 
 namespace koliop {
     namespace error {
-        void AssertionFailure(const char* the_message) noexcept;
+        void AssertionFailure(const char* message) noexcept;
     }
 } // namespace koliop
 

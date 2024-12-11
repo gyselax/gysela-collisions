@@ -7,6 +7,7 @@
 #include "KOLIOP/collision/operator.h"
 #include "KOLIOP/internal/configuration.h"
 #include "KOLIOP/utility/select.h"
+#include "KOLIOP/utility/tordu.h"
 
 namespace koliop {
     namespace collision {
@@ -49,12 +50,13 @@ namespace koliop {
                        ExecutionSpace  an_execution_space,
                        View5D&&        nu_ab) {
 
-            const auto& the_r_extent       = an_operator.the_r_extent_;
-            const auto& the_theta_extent   = an_operator.the_theta_extent_;
-            const auto& the_phi_extent     = an_operator.the_phi_extent_;
-            const auto& the_species_extent = an_operator.the_species_extent_;
+            const auto& tor1_extent    = an_operator.tor1_extent_;
+            const auto& tor2_extent    = an_operator.tor2_extent_;
+            const auto& tor3_extent    = an_operator.tor3_extent_;
+            const auto& r_extent       = an_operator.r_extent_;
+            const auto& species_extent = an_operator.species_extent_;
 
-            const auto& the_local_domain_r_offset = an_operator.the_local_domain_r_offset_;
+            const auto& local_domain_r_offset = an_operator.local_domain_r_offset_;
 
             const auto& hat_As       = an_operator.hat_As_;
             const auto& nustar_coeff = an_operator.nustar_coeff_;
@@ -63,18 +65,18 @@ namespace koliop {
 
             // Ensure the ir_SOL_separatrix_ is always only processed by the
             // rank processing the most outer torus region (in R). If there is
-            // a rank with the_local_domain_r_offset > ir_SOL_separatrix_ we
+            // a rank with local_domain_r_offset > ir_SOL_separatrix_ we
             // break the contract.
-            KOLIOP_ASSERT(the_local_domain_r_offset <= an_operator.ir_SOL_separatrix_);
+            KOLIOP_ASSERT(local_domain_r_offset <= an_operator.ir_SOL_separatrix_);
 
             // Here we make sure ir_SOL_separatrix is in the rank's domain, not
             // global domain.
-            const auto& ir_SOL_separatrix = an_operator.ir_SOL_separatrix_ - the_local_domain_r_offset;
+            const auto& ir_SOL_separatrix = an_operator.ir_SOL_separatrix_ - local_domain_r_offset;
 
-            const auto the_team_count = the_theta_extent * the_phi_extent * the_species_extent * the_species_extent;
+            const auto team_count = tor2_extent * tor3_extent * species_extent * species_extent;
 
             // Due to the inherent Cuda/HIP thread block limit.
-            KOLIOP_ASSERT(the_team_count <= std::numeric_limits<int>::max());
+            KOLIOP_ASSERT(team_count <= std::numeric_limits<int>::max());
 
             using PolicyType = Kokkos::TeamPolicy<
                 // Kokkos::LaunchBounds<64, 1>, Kokkos::IndexType<OrdinalType>,
@@ -84,28 +86,34 @@ namespace koliop {
             // opportunities.
             const auto a_policy = PolicyType{
                 an_execution_space,
-                static_cast<int>(the_team_count),
+                static_cast<int>(team_count),
                 koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, Kokkos::AUTO, 64, 32)};
 
-            const OrdinalType the_local_r_extent = Kokkos::min(the_r_extent, ir_SOL_separatrix + 1);
+            const OrdinalType local_r_extent = Kokkos::min(r_extent, ir_SOL_separatrix + 1);
 
-            const auto the_kernel = KOKKOS_LAMBDA(const typename PolicyType::member_type& a_team_handle) {
+            const auto kernel = KOKKOS_LAMBDA(const typename PolicyType::member_type& a_team_handle) {
 
-                const OrdinalType the_team_index = a_team_handle.league_rank();
+                const OrdinalType team_index = a_team_handle.league_rank();
 
-                const OrdinalType itheta    = (the_team_index) % the_theta_extent;
-                const OrdinalType iphi      = (the_team_index / (the_theta_extent)) % the_phi_extent;
-                const OrdinalType ispeciesA = (the_team_index / (the_theta_extent * the_phi_extent)) % the_species_extent;
-                const OrdinalType ispeciesB = (the_team_index / (the_theta_extent * the_phi_extent * the_species_extent)) /* % the_species_extent */;
+                const OrdinalType itor2     = (team_index) % tor2_extent;
+                const OrdinalType itor3     = (team_index / (tor2_extent)) % tor3_extent;
+                const OrdinalType ispeciesA = (team_index / (tor2_extent * tor3_extent)) % species_extent;
+                const OrdinalType ispeciesB = (team_index / (tor2_extent * tor3_extent * species_extent)) /* % species_extent */;
 
                 Kokkos::parallel_for(Kokkos::TeamThreadRange(a_team_handle,
-                                                             0, the_local_r_extent),
-                                     [&](auto ir) {
-                                         nu_ab(ir, itheta, iphi, ispeciesA, ispeciesB) = DoComputeFrequencyNuab(nustar_coeff(ispeciesA, ispeciesB, ir),
-                                                                                                                hat_As(ispeciesA), hat_As(ispeciesB),
-                                                                                                                T_s(ir, itheta, iphi, ispeciesA),
-                                                                                                                n_s(ir, itheta, iphi, ispeciesB),
-                                                                                                                T_s(ir, itheta, iphi, ispeciesB));
+                                                             0, tor1_extent),
+                                     [&](auto itor1) {
+                                         const OrdinalType ir = koliop::utility::GetRValue(itor1, itor2, itor3);
+
+                                         if(ir >= local_r_extent) {
+                                             return;
+                                         }
+
+                                         nu_ab(itor1, itor2, itor3, ispeciesA, ispeciesB) = DoComputeFrequencyNuab(nustar_coeff(ispeciesA, ispeciesB, ir),
+                                                                                                                   hat_As(ispeciesA), hat_As(ispeciesB),
+                                                                                                                   T_s(itor1, itor2, itor3, ispeciesA),
+                                                                                                                   n_s(itor1, itor2, itor3, ispeciesB),
+                                                                                                                   T_s(itor1, itor2, itor3, ispeciesB));
                                      });
 
                 // NOTE: We must ensure that the DoPrecomputeNu0 kernel ended
@@ -113,21 +121,33 @@ namespace koliop {
                 a_team_handle.team_barrier();
 
                 Kokkos::parallel_for(Kokkos::TeamThreadRange(a_team_handle,
-                                                             the_local_r_extent, the_r_extent),
-                                     [&](auto ir) {
+                                                             0, tor1_extent),
+                                     [&](auto itor1) {
+                                         const OrdinalType ir = koliop::utility::GetThetaValue(itor1, itor2, itor3);
+
+                                         if(ir < local_r_extent) {
+                                             return;
+                                         }
+
                                          // Propagate the value at nu_ab(ir_SOL_separatrix, itheta, iphi, ispeciesA, ispeciesB) or
-                                         // nu_ab(the_local_r_extent - 1, itheta, iphi, ispeciesA, ispeciesB)
-                                         nu_ab(ir, itheta, iphi, ispeciesA, ispeciesB) = nu_ab(ir_SOL_separatrix, itheta, iphi, ispeciesA, ispeciesB);
+                                         // nu_ab(local_r_extent - 1, itheta, iphi, ispeciesA, ispeciesB)
+
+                                         const auto clamped_itor1 = koliop::utility::SetRValue<1>(itor1, ir_SOL_separatrix);
+                                         const auto clamped_itor2 = koliop::utility::SetRValue<2>(itor2, ir_SOL_separatrix);
+                                         const auto clamped_itor3 = koliop::utility::SetRValue<3>(itor3, ir_SOL_separatrix);
+
+                                         nu_ab(itor1, itor2, itor3, ispeciesA, ispeciesB) = nu_ab(clamped_itor1, clamped_itor2, clamped_itor3,
+                                                                                                  ispeciesA, ispeciesB);
                                      });
             };
 
             Kokkos::parallel_for("DoPrecomputeNu",
-                                 a_policy, the_kernel);
+                                 a_policy, kernel);
         }
 
         void Operator::PrecomputeNu() {
 
-            DoPrecomputeNu(*this, the_execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],
+            DoPrecomputeNu(*this, execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],
                            nu_ab_);
 
 #if defined(KOLIOP_FENCE_ON_OPERATOR_EXIT)

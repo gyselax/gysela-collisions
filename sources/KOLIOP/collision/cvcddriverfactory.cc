@@ -11,12 +11,12 @@ namespace koliop {
 
             void CreateCvCdDriver(const Operator&   an_operator,
                                   CvCdDriverEraser& a_cvcd_driver,
-                                  OrdinalType       the_block_r_extent,
-                                  OrdinalType       the_block_theta_extent,
-                                  OrdinalType       the_block_phi_extent) {
+                                  OrdinalType       block_tor1_extent,
+                                  OrdinalType       block_tor2_extent,
+                                  OrdinalType       block_tor3_extent) {
 
-                const auto& the_vpar_extent    = an_operator.the_vpar_extent_;
-                const auto& the_species_extent = an_operator.the_species_extent_;
+                const auto& vpar_extent    = an_operator.vpar_extent_;
+                const auto& species_extent = an_operator.species_extent_;
 
                 const auto& hat_As         = an_operator.hat_As_;
                 const auto& hat_Zs         = an_operator.hat_Zs_;
@@ -28,58 +28,58 @@ namespace koliop {
                 // TODO(Etienne M): Build a constexpr thingy that builds the
                 // factory out of Constant::kPresetBlockExtent
 
-                if(the_block_r_extent == 256 && the_block_theta_extent == 128 && the_block_phi_extent == 2) {
-                    a_cvcd_driver.Set(CvCdDriver<256, 128, 2, Constant::BatchTraitsType>{the_vpar_extent, the_species_extent, collision_interspecies, hat_As, hat_Zs, vparg, coeff_intdvpar});
-                } else if(the_block_r_extent == 128 && the_block_theta_extent == 256 && the_block_phi_extent == 2) {
-                    a_cvcd_driver.Set(CvCdDriver<128, 256, 2, Constant::BatchTraitsType>{the_vpar_extent, the_species_extent, collision_interspecies, hat_As, hat_Zs, vparg, coeff_intdvpar});
-                } else if(the_block_r_extent == 256 && the_block_theta_extent == 128 && the_block_phi_extent == 1) {
-                    a_cvcd_driver.Set(CvCdDriver<256, 128, 1, Constant::BatchTraitsType>{the_vpar_extent, the_species_extent, collision_interspecies, hat_As, hat_Zs, vparg, coeff_intdvpar});
-                } else if(the_block_r_extent == 128 && the_block_theta_extent == 256 && the_block_phi_extent == 1) {
-                    a_cvcd_driver.Set(CvCdDriver<128, 256, 1, Constant::BatchTraitsType>{the_vpar_extent, the_species_extent, collision_interspecies, hat_As, hat_Zs, vparg, coeff_intdvpar});
-                } else if(the_block_r_extent == 128 && the_block_theta_extent == 128 && the_block_phi_extent == 2) {
-                    a_cvcd_driver.Set(CvCdDriver<128, 128, 2, Constant::BatchTraitsType>{the_vpar_extent, the_species_extent, collision_interspecies, hat_As, hat_Zs, vparg, coeff_intdvpar});
-                } else if(the_block_r_extent == 128 && the_block_theta_extent == 128 && the_block_phi_extent == 1) {
-                    a_cvcd_driver.Set(CvCdDriver<128, 128, 1, Constant::BatchTraitsType>{the_vpar_extent, the_species_extent, collision_interspecies, hat_As, hat_Zs, vparg, coeff_intdvpar});
-                } else if(the_block_r_extent == 128 && the_block_theta_extent == 64 && the_block_phi_extent == 2) {
-                    a_cvcd_driver.Set(CvCdDriver<128, 64, 2, Constant::BatchTraitsType>{the_vpar_extent, the_species_extent, collision_interspecies, hat_As, hat_Zs, vparg, coeff_intdvpar});
-                } else if(the_block_r_extent == 128 && the_block_theta_extent == 32 && the_block_phi_extent == 4) {
-                    a_cvcd_driver.Set(CvCdDriver<128, 32, 4, Constant::BatchTraitsType>{the_vpar_extent, the_species_extent, collision_interspecies, hat_As, hat_Zs, vparg, coeff_intdvpar});
-                } else if(the_block_r_extent == 64 && the_block_theta_extent == 128 && the_block_phi_extent == 2) {
-                    a_cvcd_driver.Set(CvCdDriver<64, 128, 2, Constant::BatchTraitsType>{the_vpar_extent, the_species_extent, collision_interspecies, hat_As, hat_Zs, vparg, coeff_intdvpar});
-                } else if(the_block_r_extent == 128 && the_block_theta_extent == 64 && the_block_phi_extent == 1) {
-                    a_cvcd_driver.Set(CvCdDriver<128, 64, 1, Constant::BatchTraitsType>{the_vpar_extent, the_species_extent, collision_interspecies, hat_As, hat_Zs, vparg, coeff_intdvpar});
-                } else if(the_block_r_extent == 128 && the_block_theta_extent == 32 && the_block_phi_extent == 2) {
-                    a_cvcd_driver.Set(CvCdDriver<128, 32, 2, Constant::BatchTraitsType>{the_vpar_extent, the_species_extent, collision_interspecies, hat_As, hat_Zs, vparg, coeff_intdvpar});
-                } else if(the_block_r_extent == 64 && the_block_theta_extent == 128 && the_block_phi_extent == 1) {
-                    a_cvcd_driver.Set(CvCdDriver<64, 128, 1, Constant::BatchTraitsType>{the_vpar_extent, the_species_extent, collision_interspecies, hat_As, hat_Zs, vparg, coeff_intdvpar});
-                } else if(the_block_r_extent == 64 && the_block_theta_extent == 64 && the_block_phi_extent == 2) {
-                    a_cvcd_driver.Set(CvCdDriver<64, 64, 2, Constant::BatchTraitsType>{the_vpar_extent, the_species_extent, collision_interspecies, hat_As, hat_Zs, vparg, coeff_intdvpar});
-                } else if(the_block_r_extent == 32 && the_block_theta_extent == 128 && the_block_phi_extent == 2) {
-                    a_cvcd_driver.Set(CvCdDriver<32, 128, 2, Constant::BatchTraitsType>{the_vpar_extent, the_species_extent, collision_interspecies, hat_As, hat_Zs, vparg, coeff_intdvpar});
-                } else if(the_block_r_extent == 128 && the_block_theta_extent == 32 && the_block_phi_extent == 1) {
-                    a_cvcd_driver.Set(CvCdDriver<128, 32, 1, Constant::BatchTraitsType>{the_vpar_extent, the_species_extent, collision_interspecies, hat_As, hat_Zs, vparg, coeff_intdvpar});
-                } else if(the_block_r_extent == 64 && the_block_theta_extent == 64 && the_block_phi_extent == 1) {
-                    a_cvcd_driver.Set(CvCdDriver<64, 64, 1, Constant::BatchTraitsType>{the_vpar_extent, the_species_extent, collision_interspecies, hat_As, hat_Zs, vparg, coeff_intdvpar});
-                } else if(the_block_r_extent == 64 && the_block_theta_extent == 32 && the_block_phi_extent == 2) {
-                    a_cvcd_driver.Set(CvCdDriver<64, 32, 2, Constant::BatchTraitsType>{the_vpar_extent, the_species_extent, collision_interspecies, hat_As, hat_Zs, vparg, coeff_intdvpar});
-                } else if(the_block_r_extent == 32 && the_block_theta_extent == 128 && the_block_phi_extent == 1) {
-                    a_cvcd_driver.Set(CvCdDriver<32, 128, 1, Constant::BatchTraitsType>{the_vpar_extent, the_species_extent, collision_interspecies, hat_As, hat_Zs, vparg, coeff_intdvpar});
-                } else if(the_block_r_extent == 32 && the_block_theta_extent == 64 && the_block_phi_extent == 2) {
-                    a_cvcd_driver.Set(CvCdDriver<32, 64, 2, Constant::BatchTraitsType>{the_vpar_extent, the_species_extent, collision_interspecies, hat_As, hat_Zs, vparg, coeff_intdvpar});
-                } else if(the_block_r_extent == 64 && the_block_theta_extent == 32 && the_block_phi_extent == 1) {
-                    a_cvcd_driver.Set(CvCdDriver<64, 32, 1, Constant::BatchTraitsType>{the_vpar_extent, the_species_extent, collision_interspecies, hat_As, hat_Zs, vparg, coeff_intdvpar});
-                } else if(the_block_r_extent == 32 && the_block_theta_extent == 64 && the_block_phi_extent == 1) {
-                    a_cvcd_driver.Set(CvCdDriver<32, 64, 1, Constant::BatchTraitsType>{the_vpar_extent, the_species_extent, collision_interspecies, hat_As, hat_Zs, vparg, coeff_intdvpar});
-                } else if(the_block_r_extent == 32 && the_block_theta_extent == 32 && the_block_phi_extent == 2) {
-                    a_cvcd_driver.Set(CvCdDriver<32, 32, 2, Constant::BatchTraitsType>{the_vpar_extent, the_species_extent, collision_interspecies, hat_As, hat_Zs, vparg, coeff_intdvpar});
-                } else if(the_block_r_extent == 32 && the_block_theta_extent == 32 && the_block_phi_extent == 1) {
-                    a_cvcd_driver.Set(CvCdDriver<32, 32, 1, Constant::BatchTraitsType>{the_vpar_extent, the_species_extent, collision_interspecies, hat_As, hat_Zs, vparg, coeff_intdvpar});
-                } else if(the_block_r_extent == 1 && the_block_theta_extent == 1 && the_block_phi_extent == 1) {
+                if(block_tor1_extent == 256 && block_tor2_extent == 128 && block_tor3_extent == 2) {
+                    a_cvcd_driver.Set(CvCdDriver<256, 128, 2, Constant::BatchTraitsType>{vpar_extent, species_extent, collision_interspecies, hat_As, hat_Zs, vparg, coeff_intdvpar});
+                } else if(block_tor1_extent == 128 && block_tor2_extent == 256 && block_tor3_extent == 2) {
+                    a_cvcd_driver.Set(CvCdDriver<128, 256, 2, Constant::BatchTraitsType>{vpar_extent, species_extent, collision_interspecies, hat_As, hat_Zs, vparg, coeff_intdvpar});
+                } else if(block_tor1_extent == 256 && block_tor2_extent == 128 && block_tor3_extent == 1) {
+                    a_cvcd_driver.Set(CvCdDriver<256, 128, 1, Constant::BatchTraitsType>{vpar_extent, species_extent, collision_interspecies, hat_As, hat_Zs, vparg, coeff_intdvpar});
+                } else if(block_tor1_extent == 128 && block_tor2_extent == 256 && block_tor3_extent == 1) {
+                    a_cvcd_driver.Set(CvCdDriver<128, 256, 1, Constant::BatchTraitsType>{vpar_extent, species_extent, collision_interspecies, hat_As, hat_Zs, vparg, coeff_intdvpar});
+                } else if(block_tor1_extent == 128 && block_tor2_extent == 128 && block_tor3_extent == 2) {
+                    a_cvcd_driver.Set(CvCdDriver<128, 128, 2, Constant::BatchTraitsType>{vpar_extent, species_extent, collision_interspecies, hat_As, hat_Zs, vparg, coeff_intdvpar});
+                } else if(block_tor1_extent == 128 && block_tor2_extent == 128 && block_tor3_extent == 1) {
+                    a_cvcd_driver.Set(CvCdDriver<128, 128, 1, Constant::BatchTraitsType>{vpar_extent, species_extent, collision_interspecies, hat_As, hat_Zs, vparg, coeff_intdvpar});
+                } else if(block_tor1_extent == 128 && block_tor2_extent == 64 && block_tor3_extent == 2) {
+                    a_cvcd_driver.Set(CvCdDriver<128, 64, 2, Constant::BatchTraitsType>{vpar_extent, species_extent, collision_interspecies, hat_As, hat_Zs, vparg, coeff_intdvpar});
+                } else if(block_tor1_extent == 128 && block_tor2_extent == 32 && block_tor3_extent == 4) {
+                    a_cvcd_driver.Set(CvCdDriver<128, 32, 4, Constant::BatchTraitsType>{vpar_extent, species_extent, collision_interspecies, hat_As, hat_Zs, vparg, coeff_intdvpar});
+                } else if(block_tor1_extent == 64 && block_tor2_extent == 128 && block_tor3_extent == 2) {
+                    a_cvcd_driver.Set(CvCdDriver<64, 128, 2, Constant::BatchTraitsType>{vpar_extent, species_extent, collision_interspecies, hat_As, hat_Zs, vparg, coeff_intdvpar});
+                } else if(block_tor1_extent == 128 && block_tor2_extent == 64 && block_tor3_extent == 1) {
+                    a_cvcd_driver.Set(CvCdDriver<128, 64, 1, Constant::BatchTraitsType>{vpar_extent, species_extent, collision_interspecies, hat_As, hat_Zs, vparg, coeff_intdvpar});
+                } else if(block_tor1_extent == 128 && block_tor2_extent == 32 && block_tor3_extent == 2) {
+                    a_cvcd_driver.Set(CvCdDriver<128, 32, 2, Constant::BatchTraitsType>{vpar_extent, species_extent, collision_interspecies, hat_As, hat_Zs, vparg, coeff_intdvpar});
+                } else if(block_tor1_extent == 64 && block_tor2_extent == 128 && block_tor3_extent == 1) {
+                    a_cvcd_driver.Set(CvCdDriver<64, 128, 1, Constant::BatchTraitsType>{vpar_extent, species_extent, collision_interspecies, hat_As, hat_Zs, vparg, coeff_intdvpar});
+                } else if(block_tor1_extent == 64 && block_tor2_extent == 64 && block_tor3_extent == 2) {
+                    a_cvcd_driver.Set(CvCdDriver<64, 64, 2, Constant::BatchTraitsType>{vpar_extent, species_extent, collision_interspecies, hat_As, hat_Zs, vparg, coeff_intdvpar});
+                } else if(block_tor1_extent == 32 && block_tor2_extent == 128 && block_tor3_extent == 2) {
+                    a_cvcd_driver.Set(CvCdDriver<32, 128, 2, Constant::BatchTraitsType>{vpar_extent, species_extent, collision_interspecies, hat_As, hat_Zs, vparg, coeff_intdvpar});
+                } else if(block_tor1_extent == 128 && block_tor2_extent == 32 && block_tor3_extent == 1) {
+                    a_cvcd_driver.Set(CvCdDriver<128, 32, 1, Constant::BatchTraitsType>{vpar_extent, species_extent, collision_interspecies, hat_As, hat_Zs, vparg, coeff_intdvpar});
+                } else if(block_tor1_extent == 64 && block_tor2_extent == 64 && block_tor3_extent == 1) {
+                    a_cvcd_driver.Set(CvCdDriver<64, 64, 1, Constant::BatchTraitsType>{vpar_extent, species_extent, collision_interspecies, hat_As, hat_Zs, vparg, coeff_intdvpar});
+                } else if(block_tor1_extent == 64 && block_tor2_extent == 32 && block_tor3_extent == 2) {
+                    a_cvcd_driver.Set(CvCdDriver<64, 32, 2, Constant::BatchTraitsType>{vpar_extent, species_extent, collision_interspecies, hat_As, hat_Zs, vparg, coeff_intdvpar});
+                } else if(block_tor1_extent == 32 && block_tor2_extent == 128 && block_tor3_extent == 1) {
+                    a_cvcd_driver.Set(CvCdDriver<32, 128, 1, Constant::BatchTraitsType>{vpar_extent, species_extent, collision_interspecies, hat_As, hat_Zs, vparg, coeff_intdvpar});
+                } else if(block_tor1_extent == 32 && block_tor2_extent == 64 && block_tor3_extent == 2) {
+                    a_cvcd_driver.Set(CvCdDriver<32, 64, 2, Constant::BatchTraitsType>{vpar_extent, species_extent, collision_interspecies, hat_As, hat_Zs, vparg, coeff_intdvpar});
+                } else if(block_tor1_extent == 64 && block_tor2_extent == 32 && block_tor3_extent == 1) {
+                    a_cvcd_driver.Set(CvCdDriver<64, 32, 1, Constant::BatchTraitsType>{vpar_extent, species_extent, collision_interspecies, hat_As, hat_Zs, vparg, coeff_intdvpar});
+                } else if(block_tor1_extent == 32 && block_tor2_extent == 64 && block_tor3_extent == 1) {
+                    a_cvcd_driver.Set(CvCdDriver<32, 64, 1, Constant::BatchTraitsType>{vpar_extent, species_extent, collision_interspecies, hat_As, hat_Zs, vparg, coeff_intdvpar});
+                } else if(block_tor1_extent == 32 && block_tor2_extent == 32 && block_tor3_extent == 2) {
+                    a_cvcd_driver.Set(CvCdDriver<32, 32, 2, Constant::BatchTraitsType>{vpar_extent, species_extent, collision_interspecies, hat_As, hat_Zs, vparg, coeff_intdvpar});
+                } else if(block_tor1_extent == 32 && block_tor2_extent == 32 && block_tor3_extent == 1) {
+                    a_cvcd_driver.Set(CvCdDriver<32, 32, 1, Constant::BatchTraitsType>{vpar_extent, species_extent, collision_interspecies, hat_As, hat_Zs, vparg, coeff_intdvpar});
+                } else if(block_tor1_extent == 1 && block_tor2_extent == 1 && block_tor3_extent == 1) {
                     // NOTE: the FakeBatchTraitsType is important.
-                    a_cvcd_driver.Set(CvCdDriver<1, 1, 1, Constant::FakeBatchTraitsType>{the_vpar_extent, the_species_extent, collision_interspecies, hat_As, hat_Zs, vparg, coeff_intdvpar});
+                    a_cvcd_driver.Set(CvCdDriver<1, 1, 1, Constant::FakeBatchTraitsType>{vpar_extent, species_extent, collision_interspecies, hat_As, hat_Zs, vparg, coeff_intdvpar});
                 } else {
                     // The block size is registered in
-                    // the_preset_block_extent but we are not able to build
+                    // preset_block_extent but we are not able to build
                     // such block of this size.
                     KOLIOP_ASSERT(false);
                 }

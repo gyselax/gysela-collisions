@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 
-#ifndef KOLIOP_UTILITY_DEFECT_H
-#define KOLIOP_UTILITY_DEFECT_H
+#ifndef KOLIOP_UTILITY_SELECT_H
+#define KOLIOP_UTILITY_SELECT_H
 
 #include <Kokkos_Core.hpp>
 
@@ -16,10 +16,10 @@ namespace koliop {
                   typename T2,
                   typename T3>
         constexpr auto
-        Select(T0&& the_default_value,
-               T1&& the_OMP_value,
-               T2&& the_HIP_value,
-               T3&& the_CUDA_value) {
+        Select(T0&& default_value,
+               T1&& OMP_value,
+               T2&& HIP_value,
+               T3&& CUDA_value) {
 
             // NOTE: We need these if def shenanigans to cover an other defect.
             // The fact that Kokkos::HIP simply does not exist if the backend is
@@ -48,18 +48,18 @@ namespace koliop {
 #endif
 
             if constexpr(std::is_same_v<ExecutionSpace, OpenMPExecutionSpace>) {
-                return the_OMP_value;
+                return OMP_value;
             } else if constexpr(std::is_same_v<ExecutionSpace, HIPExecutionSpace>) {
-                return the_HIP_value;
+                return HIP_value;
             } else if constexpr(std::is_same_v<ExecutionSpace, CUDAExecutionSpace>) {
-                return the_CUDA_value;
+                return CUDA_value;
             } else {
                 // // NOTE: A shame there is no *else constexpr*.
                 // static_assert(std::is_same_v<ExecutionSpace, OpenMPExecutionSpace> ||
                 //                   std::is_same_v<ExecutionSpace, HIPExecutionSpace> ||
                 //                   std::is_same_v<ExecutionSpace, CUDAExecutionSpace>,
                 //               "Execution space not supported we need to work on that.");
-                return the_default_value;
+                return default_value;
             }
         }
 

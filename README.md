@@ -9,13 +9,13 @@ A KOkkos based colLIsion OPerator (KoLiOp) for Gysela that computes the evolutio
 ### Cloning the repository
 
 ```bash
-$ git clone <TODO(Etienne M)>.git
+$ git clone https://gitlab.com/cines/code.gysela/libkoliop
 ```
 
 ### Dependencies
 
 ```
-cmake > 3.16 (3.25 and up is recommended)
+cmake >= 3.22.1 (3.25 and up is recommended)
 ```
 
 ### Compiling
@@ -79,9 +79,9 @@ NOTE:
 ## TODOs
 
 - Some tuning:
-    - On CPU (need Ofast for SIMD transcendental function);
     - Reduce register usage. Each time you use a view, you consume a LOT of register (dimension/stride storage ?).. much more than a simple pointer;
         - File a bug regarding this issue ?
         - One could construct the view inside the kernel, this would help the compiler factorize the register values.
     - Reduced precision ?:
         - NOTE: that the fact that we do not have pivoting for the LU factorization *could* reduce the precision more when treating Flo32 matrices.
+    - operator fusing.

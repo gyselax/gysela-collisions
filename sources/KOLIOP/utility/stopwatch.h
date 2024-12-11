@@ -37,11 +37,11 @@ namespace koliop {
             ///
             duration Elapsed() const;
 
-            /// Same as Elapsed() but return true if the Elapsed() time was >= the_duration, else false.
+            /// Same as Elapsed() but return true if the Elapsed() time was >= duration, else false.
             /// Nifty idea by Marcelo Juchem.
             ///
             template <typename ADuration>
-            bool Elapsed(ADuration&& the_duration) const;
+            bool Elapsed(ADuration&& duration) const;
 
             /// Same as lap but do not return the time difference (duration).
             /// Do not call Elapsed() and then Reset(), just call Lap() instead.
@@ -49,15 +49,15 @@ namespace koliop {
             void Reset();
 
             /// Return time difference (duration) between the last Lap() or Reset() or object construction.
-            /// The next Lap() will be computed based on now. (that is, now - the_past_now).
+            /// The next Lap() will be computed based on now. (that is, now - past_now).
             ///
             duration Lap();
 
-            /// Same as Lap() but return true if the Elapsed() time was >= the_duration, else false.
+            /// Same as Lap() but return true if the Elapsed() time was >= duration, else false.
             /// Nifty idea by Marcelo Juchem.
             ///
             template <typename ADuration>
-            bool Lap(ADuration&& the_duration);
+            bool Lap(ADuration&& duration);
 
             template <typename Callable>
             static duration Measure(Callable&& a_callable);
@@ -65,7 +65,7 @@ namespace koliop {
             static duration ExperimentalResolution();
 
         protected:
-            time_point the_last_point_in_time_;
+            time_point last_point_in_time_;
         };
 
         ////////////////////////////////////////////////////////////////////////
@@ -74,7 +74,7 @@ namespace koliop {
 
         template <typename Duration>
         Stopwatch<Duration>::Stopwatch()
-            : the_last_point_in_time_{std::chrono::steady_clock::now()} {
+            : last_point_in_time_{std::chrono::steady_clock::now()} {
             // EMPTY
         }
 
@@ -82,40 +82,40 @@ namespace koliop {
         typename Stopwatch<Duration>::duration
         Stopwatch<Duration>::Elapsed() const {
             // The cast is a no-op if std::chrono::steady_clock::duration "is same" duration. For other duration, I dunno.
-            return std::chrono::duration_cast<duration>(std::chrono::steady_clock::now() - the_last_point_in_time_);
+            return std::chrono::duration_cast<duration>(std::chrono::steady_clock::now() - last_point_in_time_);
         }
 
         template <typename Duration>
         template <typename ADuration>
-        bool Stopwatch<Duration>::Elapsed(ADuration&& the_duration) const {
-            return (std::chrono::steady_clock::now() - the_last_point_in_time_) >= the_duration;
+        bool Stopwatch<Duration>::Elapsed(ADuration&& duration) const {
+            return (std::chrono::steady_clock::now() - last_point_in_time_) >= duration;
         }
 
         template <typename Duration>
         void Stopwatch<Duration>::Reset() {
-            the_last_point_in_time_ = std::chrono::steady_clock::now();
+            last_point_in_time_ = std::chrono::steady_clock::now();
         }
 
         template <typename Duration>
         typename Stopwatch<Duration>::duration
         Stopwatch<Duration>::Lap() {
-            const time_point the_previous_point_in_time_ = the_last_point_in_time_;
+            const time_point previous_point_in_time_ = last_point_in_time_;
 
-            the_last_point_in_time_ = std::chrono::steady_clock::now();
+            last_point_in_time_ = std::chrono::steady_clock::now();
 
             // The cast is a no-op if std::chrono::steady_clock::duration "is same" duration. For other duration, I dunno.
-            return std::chrono::duration_cast<duration>(the_last_point_in_time_ - the_previous_point_in_time_);
+            return std::chrono::duration_cast<duration>(last_point_in_time_ - previous_point_in_time_);
         }
 
         template <typename Duration>
         template <typename ADuration>
-        bool Stopwatch<Duration>::Lap(ADuration&& the_duration) {
-            const time_point the_new_point_in_time = std::chrono::steady_clock::now();
+        bool Stopwatch<Duration>::Lap(ADuration&& duration) {
+            const time_point new_point_in_time = std::chrono::steady_clock::now();
 
             // Dont use Elapsed() because we want to be precise, some time may pass between the call to Elapsed() and
             // the next (necessary) call to now(). Think transactional.
-            if(/* __builtin_expect((the_expr), 0) would that be useful ? */ (the_new_point_in_time - the_last_point_in_time_) >= the_duration) {
-                the_last_point_in_time_ = the_new_point_in_time;
+            if(/* __builtin_expect((expr), 0) would that be useful ? */ (new_point_in_time - last_point_in_time_) >= duration) {
+                last_point_in_time_ = new_point_in_time;
                 return true;
             }
 
@@ -128,9 +128,9 @@ namespace koliop {
         Stopwatch<Duration>::Measure(Callable&& a_callable) {
             Stopwatch a_stopwatch;
             { a_callable(); }
-            const auto the_duration = a_stopwatch.Elapsed();
-            // std::cout << __PRETTY_FUNCTION__ << " took " << (the_duration.count() / 1'000) << "us\n";
-            return the_duration;
+            const auto duration = a_stopwatch.Elapsed();
+            // std::cout << __PRETTY_FUNCTION__ << " took " << (duration.count() / 1'000) << "us\n";
+            return duration;
         }
 
     } // namespace utility

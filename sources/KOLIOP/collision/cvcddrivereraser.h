@@ -19,6 +19,10 @@ namespace koliop {
         // CvCdDriverEraser definition
         ////////////////////////////////////////////////////////////////////////
 
+        /// @brief Hides the compiletime blocking of the CvCd operation. This
+        /// allows us to have compiletime blocking and a runtime dispatch on
+        /// these blocks.
+        ///
         class CvCdDriverEraser {
         public:
             class InterfaceType {
@@ -26,11 +30,11 @@ namespace koliop {
             public:
                 virtual void Apply(const Operator&                                an_operator,
                                    Constant::DeviceExecutionSpaceType             an_execution_space,
-                                   OrdinalType                                    the_block_first_r,
-                                   OrdinalType                                    the_block_first_theta,
-                                   OrdinalType                                    the_block_first_phi,
+                                   OrdinalType                                    block_first_tor1,
+                                   OrdinalType                                    block_first_tor2,
+                                   OrdinalType                                    block_first_tor3,
                                    ComputeFloatType                               dt,
-                                   OrdinalType                                    the_species_index,
+                                   OrdinalType                                    species_index,
                                    koliop::utility::View::InternalInputL6<Flo64>& f5d_s) = 0;
                 virtual ~InterfaceType()                                                 = default;
 
@@ -45,30 +49,30 @@ namespace koliop {
 
             public:
                 explicit ImplementationType(value_type&& a_value)
-                    : the_value_{std::move(a_value)} {
+                    : value_{std::move(a_value)} {
                     // EMPTY
                 }
 
                 void Apply(const Operator&                                an_operator,
                            Constant::DeviceExecutionSpaceType             an_execution_space,
-                           OrdinalType                                    the_block_first_r,
-                           OrdinalType                                    the_block_first_theta,
-                           OrdinalType                                    the_block_first_phi,
+                           OrdinalType                                    block_first_tor1,
+                           OrdinalType                                    block_first_tor2,
+                           OrdinalType                                    block_first_tor3,
                            ComputeFloatType                               dt,
-                           OrdinalType                                    the_species_index,
+                           OrdinalType                                    species_index,
                            koliop::utility::View::InternalInputL6<Flo64>& f5d_s) override {
-                    the_value_.Apply(an_operator,
-                                     an_execution_space,
-                                     the_block_first_r,
-                                     the_block_first_theta,
-                                     the_block_first_phi,
-                                     dt,
-                                     the_species_index,
-                                     f5d_s);
+                    value_.Apply(an_operator,
+                                 an_execution_space,
+                                 block_first_tor1,
+                                 block_first_tor2,
+                                 block_first_tor3,
+                                 dt,
+                                 species_index,
+                                 f5d_s);
                 }
 
             protected:
-                value_type the_value_;
+                value_type value_;
             };
 
         public:
@@ -85,7 +89,7 @@ namespace koliop {
             bool IsSet() const;
 
         protected:
-            std::shared_ptr<InterfaceType> the_erased_cvcd_driver_;
+            std::shared_ptr<InterfaceType> erased_cvcd_driver_;
         };
 
 
@@ -96,7 +100,7 @@ namespace koliop {
         template <typename T>
         CvCdDriverEraser&
         CvCdDriverEraser::Set(T&& a_cvcd_driver) {
-            the_erased_cvcd_driver_ = std::make_shared<ImplementationType<
+            erased_cvcd_driver_ = std::make_shared<ImplementationType<
                 std::remove_reference_t<
                     std::remove_cv_t<T>>>>(std::forward<T>(a_cvcd_driver));
             return *this;

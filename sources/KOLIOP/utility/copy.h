@@ -69,8 +69,8 @@ namespace koliop {
             static constexpr bool
             IsCopyRequired();
 
-            /// May or may not allocate new memory to represent the_raw_data. As
-            /// such it is required that the_raw_data's lifetime may be as long
+            /// May or may not allocate new memory to represent raw_data. As
+            /// such it is required that raw_data's lifetime may be as long
             /// as the one of the returned view.
             ///
             template <typename UnmanagedView,
@@ -80,9 +80,9 @@ namespace koliop {
                       typename... Indicies>
             static auto
             RawDataToView(ExecutionSpace&&                    an_execution_space,
-                          typename UnmanagedView::value_type* the_raw_data,
-                          const char*                         the_view_label,
-                          Indicies... the_indicies);
+                          typename UnmanagedView::value_type* raw_data,
+                          const char*                         view_label,
+                          Indicies... indicies);
 
             template <typename SourceView,
                       typename UnmanagedView,
@@ -91,8 +91,8 @@ namespace koliop {
             static typename SourceView::value_type*
             ViewToRawData(ExecutionSpace&&                    an_execution_space,
                           SourceView                          a_source_view,
-                          typename UnmanagedView::value_type* the_raw_data,
-                          Indicies... the_indicies);
+                          typename UnmanagedView::value_type* raw_data,
+                          Indicies... indicies);
         };
 
 
@@ -188,9 +188,9 @@ namespace koliop {
                   typename ExecutionSpace,
                   typename... Indicies>
         auto Copy::RawDataToView(ExecutionSpace&&                    an_execution_space,
-                                 typename UnmanagedView::value_type* the_raw_data,
-                                 const char*                         the_view_label,
-                                 Indicies... the_indicies) {
+                                 typename UnmanagedView::value_type* raw_data,
+                                 const char*                         view_label,
+                                 Indicies... indicies) {
 
             // NOTE:
             // Assuming host as device, given a constant host ptr, we do not copy and do a                       simple assignment into a const view
@@ -204,19 +204,19 @@ namespace koliop {
                 // KOLIOP_ASSERT(!Kokkos::SpaceAccessibility<typename std::remove_reference_t<DestinationView>::memory_space,
                 //                                           typename std::remove_reference_t<UnmanagedView>::memory_space>::accessible);
                 return Deep(an_execution_space,
-                            UnmanagedView{the_raw_data,
-                                          static_cast<std::size_t>(the_indicies)...},
+                            UnmanagedView{raw_data,
+                                          static_cast<std::size_t>(indicies)...},
                             DestinationView{Kokkos::view_alloc(Kokkos::WithoutInitializing,
-                                                               std::string{the_view_label}),
-                                            static_cast<std::size_t>(the_indicies)...});
+                                                               std::string{view_label}),
+                                            static_cast<std::size_t>(indicies)...});
             } else {
                 static_assert(Kokkos::SpaceAccessibility<typename std::remove_reference_t<DestinationView>::memory_space,
                                                          typename std::remove_reference_t<UnmanagedView>::memory_space>::accessible,
                               "");
                 // We can not return an unmanaged DestinationView as it may not
                 // be const.
-                return UnmanagedView{the_raw_data,
-                                     static_cast<std::size_t>(the_indicies)...};
+                return UnmanagedView{raw_data,
+                                     static_cast<std::size_t>(indicies)...};
             }
         }
 
@@ -227,8 +227,8 @@ namespace koliop {
         typename SourceView::value_type*
         Copy::ViewToRawData(ExecutionSpace&&                    an_execution_space,
                             SourceView                          a_source_view,
-                            typename UnmanagedView::value_type* the_raw_data,
-                            Indicies... the_indicies) {
+                            typename UnmanagedView::value_type* raw_data,
+                            Indicies... indicies) {
 
             // TODO(Etienne M): Should we use
             // Kokkos::is_always_assignable_v<DestinationView, SourceView> ?
@@ -239,17 +239,17 @@ namespace koliop {
                 //                                           typename std::remove_reference_t<SourceView>::memory_space>::accessible);
                 return Deep(an_execution_space,
                             a_source_view,
-                            UnmanagedView{the_raw_data,
-                                          static_cast<std::size_t>(the_indicies)...})
+                            UnmanagedView{raw_data,
+                                          static_cast<std::size_t>(indicies)...})
                     .data();
             } else {
                 static_assert(Kokkos::SpaceAccessibility<typename std::remove_reference_t<UnmanagedView>::memory_space,
                                                          typename std::remove_reference_t<SourceView>::memory_space>::accessible,
                               "");
 
-                KOLIOP_ASSERT(a_source_view.data() == the_raw_data);
+                KOLIOP_ASSERT(a_source_view.data() == raw_data);
 
-                return the_raw_data;
+                return raw_data;
             }
         }
 

@@ -1,7 +1,8 @@
 module purge
 
-module load cmake
+module load cpe/24.07
+module load rocm/6.1.2
 
-module load rocm/5.7.1
+module load cmake
 
 module list

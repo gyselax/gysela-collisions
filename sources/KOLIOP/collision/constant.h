@@ -63,6 +63,8 @@ namespace koliop {
             // to 1) and lowering the block size can help reduce the memory
             // consumption.
 
+            /// {Tor1, Tor2, Tor3} block extents.
+            ///
             static inline constexpr OrdinalType kPresetBlockExtent[][3] = {
                 // Nspace = 65536
                 // {256, 128, 2},

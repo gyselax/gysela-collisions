@@ -103,12 +103,12 @@ namespace koliop {
         protected:
         public:
             /// @brief
-            /// @param the_mu_extent
-            /// @param the_vpar_extent
-            /// @param the_r_extent
-            /// @param the_theta_extent
-            /// @param the_phi_extent
-            /// @param the_species_extent
+            /// @param mu_extent
+            /// @param vpar_extent
+            /// @param tor1_extent
+            /// @param tor2_extent
+            /// @param tor3_extent
+            /// @param species_extent
             /// @param collision_interspecies
             /// @param SOL
             /// @param LIM
@@ -125,16 +125,16 @@ namespace koliop {
             /// @param mask_LIM
             /// @param B_norm
             /// @param Bstar_s
-            Operator(uint64_t     the_mu_extent,
-                     uint64_t     the_vpar_extent,
-                     uint64_t     the_r_extent,
-                     uint64_t     the_theta_extent,
-                     uint64_t     the_phi_extent,
-                     uint64_t     the_species_extent,
-                     uint64_t     the_global_domain_r_extent,
-                     uint64_t     the_global_domain_theta_extent,
-                     uint64_t     the_local_domain_r_offset,
-                     uint64_t     the_local_domain_theta_offset,
+            Operator(uint64_t     mu_extent,
+                     uint64_t     vpar_extent,
+                     uint64_t     tor1_extent,
+                     uint64_t     tor2_extent,
+                     uint64_t     tor3_extent,
+                     uint64_t     species_extent,
+                     uint64_t     global_domain_r_extent,
+                     uint64_t     global_domain_theta_extent,
+                     uint64_t     local_domain_r_offset,
+                     uint64_t     local_domain_theta_offset,
                      bool         collision_interspecies,
                      bool         SOL,
                      bool         LIM,
@@ -153,7 +153,7 @@ namespace koliop {
 
             ~Operator();
 
-            void Fence(OrdinalType the_execution_space_index) const;
+            void Fence(OrdinalType execution_space_index) const;
 
             void FenceAll() const;
 
@@ -180,12 +180,12 @@ namespace koliop {
             void ComputeUparTCorrection(ComputeFloatType dt,
                                         Flo64*           f5d_s);
 
-            void ExtractRaw(uint32_t the_value_identifier,
+            void ExtractRaw(uint32_t value_identifier,
                             void*    an_output_buffer) const;
 
             /// Compute the evolution of the distribution function due to
             /// collisions. The collision are applied to all the species in the
-            /// [0, the_species_extent_) range.
+            /// [0, species_extent_) range.
             ///
             void Collision(ComputeFloatType dt,
                            Flo64*           f5d_s);
@@ -193,13 +193,13 @@ namespace koliop {
         protected:
             /// Compute the evolution of the distribution function due to
             /// collisions. The collision are applied to all the species in the
-            /// [the_first_species, the_last_species) range.
+            /// [first_species, last_species) range.
             ///
             template <typename ForwardIterator>
             void CollisionFor(ComputeFloatType dt,
                               Flo64*           f5d_s,
-                              ForwardIterator  the_first_species,
-                              ForwardIterator  the_last_species);
+                              ForwardIterator  first_species,
+                              ForwardIterator  last_species);
 
         public:
             // Could be protected but we would have to use friend functions.
@@ -209,20 +209,23 @@ namespace koliop {
             // Constant, externally computed values
             //
 
-            OrdinalType      the_mu_extent_;
-            OrdinalType      the_vpar_extent_;
-            OrdinalType      the_r_extent_;
-            OrdinalType      the_theta_extent_;
-            OrdinalType      the_phi_extent_;
-            OrdinalType      the_species_extent_;
-            OrdinalType      the_global_domain_r_extent_;
-            OrdinalType      the_global_domain_theta_extent_;
-            OrdinalType      the_local_domain_r_offset_;
-            OrdinalType      the_local_domain_theta_offset_;
-            bool             collision_interspecies_;
-            bool             SOL_;
-            bool             LIM_;
-            OrdinalType      ir_SOL_separatrix_;
+            OrdinalType mu_extent_;
+            OrdinalType vpar_extent_;
+            OrdinalType tor1_extent_;
+            OrdinalType tor2_extent_;
+            OrdinalType tor3_extent_;
+            OrdinalType r_extent_;
+            OrdinalType theta_extent_;
+            OrdinalType phi_extent_;
+            OrdinalType species_extent_;
+            OrdinalType global_domain_r_extent_;
+            OrdinalType global_domain_theta_extent_;
+            OrdinalType local_domain_r_offset_;
+            OrdinalType local_domain_theta_offset_;
+            bool        collision_interspecies_;
+            bool        SOL_;
+            bool        LIM_;
+            OrdinalType ir_SOL_separatrix_;
 
             // TODO(Etienne M): we store Flo64 but it should be
             // ComputeFloatType. To achieve this, we would need to handle
@@ -262,13 +265,13 @@ namespace koliop {
             // Miscellaneous tooling
             //
 
-            std::vector<Constant::DeviceExecutionSpaceType> the_execution_space_pool_;
+            std::vector<Constant::DeviceExecutionSpaceType> execution_space_pool_;
 
             //
             // Miscellaneous numerical tooling
             //
 
-            CvCdDriverScheduler the_cvcd_drivers_scheduler_;
+            CvCdDriverScheduler cvcd_drivers_scheduler_;
         };
 
     } // namespace collision

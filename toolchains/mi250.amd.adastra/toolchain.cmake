@@ -4,7 +4,6 @@ set(CMAKE_CXX_COMPILER CC)
 set(CMAKE_Fortran_COMPILER ftn)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_EXTENSIONS OFF)
-set(CMAKE_BUILD_TYPE Release) # Debug, Release, RelWithDebInfo and MinSizeRel
 
 # Kokkos options:
 
@@ -31,8 +30,6 @@ set(koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE OFF CACHE BOOL "")
 
 set(koliop_FLAGS_BASE -Wall -Wextra -Wpedantic -Wcast-align -Wctor-dtor-privacy -Wdouble-promotion -Wformat=2 -Winit-self -Woverloaded-virtual -Wredundant-decls -Wsign-promo -Wstrict-aliasing -Wdisabled-optimization -Wsuggest-override -Wswitch-default -Wtautological-compare -Wpacked -Wunreachable-code -Wcast-qual -Wold-style-cast -Wswitch-enum -Wundef) # -Wconversion -Wmissing-include-dirs
 
-set(koliop_FLAGS_FP -fno-math-errno -fno-trapping-math -ffp-contract=fast)
-
 # Show spill, S/VGPR usage, scratch size and occupancy. -Rpass-analysis=kernel-resource-usage
 
 # FIXME: OpenMP + amdclang + craype has some issue. A cray ticket has been submitted
@@ -40,5 +37,5 @@ set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -fopenmp -Xopenmp-target=amdgcn-amd-amdhs
 
 set(koliop_FLAGS_DEBUG          -g -Og -ggdb -fno-omit-frame-pointer -fno-optimize-sibling-calls)
 set(koliop_FLAGS_MINSIZEREL     -Os)
-set(koliop_FLAGS_RELEASE        -g -O3 "SHELL:-mllvm -amdgpu-early-inline-all=true" "SHELL:-mllvm -amdgpu-function-calls=false")
+set(koliop_FLAGS_RELEASE        -g -O3 "SHELL:-mllvm -amdgpu-early-inline-all=true" "SHELL:-mllvm -amdgpu-function-calls=false" -fno-math-errno -fno-trapping-math -ffp-contract=fast) # -ffast-math allows the compiler to use SIMD implementation of some functions.
 set(koliop_FLAGS_RELWITHDEBINFO -g -O3 "SHELL:-mllvm -amdgpu-early-inline-all=true" "SHELL:-mllvm -amdgpu-function-calls=false" -fno-omit-frame-pointer -fno-optimize-sibling-calls)

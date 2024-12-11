@@ -30,6 +30,11 @@
         if(static_cast<bool>(with_verbose_initialization)) {
             std::cout << "Koliop: v" << KOLIOP_VERSION << "\n";
             std::cout << "  KOLIOP_TOOLCHAIN_NAME: " << KOLIOP_TOOLCHAIN_NAME << "\n";
+#if defined(KOLIOP_BUILD_FORTRAN_INTERFACE)
+            std::cout << "  KOLIOP_BUILD_FORTRAN_INTERFACE: true (expecting f5d_s as (mu,vpar),(r,theta,phi),species)\n";
+#else
+            std::cout << "  KOLIOP_BUILD_FORTRAN_INTERFACE: false (expecting f5d_s as (mu,vpar),(theta,r,phi),species)\n";
+#endif
 #if defined(KOLIOP_FENCE_ON_OPERATOR_EXIT)
             std::cout << "  KOLIOP_FENCE_ON_OPERATOR_EXIT: true\n";
 #else
@@ -96,38 +101,38 @@
 }
 
 ::koliop_Status koliop_Create(::koliop_Operator* an_operator_handle,
-                              size_t  the_mu_extent,
-                              size_t  the_vpar_extent,
-                              size_t  the_r_extent,
-                              size_t  the_theta_extent,
-                              size_t  the_phi_extent,
-                              size_t  the_species_extent,
-                              size_t  the_global_domain_r_extent,
-                              size_t  the_global_domain_theta_extent,
-                              size_t  the_local_domain_r_offset,
-                              size_t  the_local_domain_theta_offset,
-                              int8_t  collision_interspecies,
-                              int8_t  SOL,
-                              int8_t  LIM,
-                              int64_t ir_SOL_separatrix,
-                              const double* hat_As,
-                              const double* hat_Zs,
-                              const double* mug,
-                              const double* vparg,
-                              const double* coeff_intdmu,
-                              const double* coeff_intdvpar,
-                              const double* coeff_AD_r,
-                              const double* mask_buffer_r,
-                              const double* mask_LIM,
-                              const double* B_norm,
-                              const double* Bstar_s) {
+                              size_t             mu_extent,
+                              size_t             vpar_extent,
+                              size_t             tor1_extent,
+                              size_t             tor2_extent,
+                              size_t             tor3_extent,
+                              size_t             species_extent,
+                              size_t             global_domain_r_extent,
+                              size_t             global_domain_theta_extent,
+                              size_t             local_domain_r_offset,
+                              size_t             local_domain_theta_offset,
+                              int8_t             collision_interspecies,
+                              int8_t             SOL,
+                              int8_t             LIM,
+                              int64_t            ir_SOL_separatrix,
+                              const double*      hat_As,
+                              const double*      hat_Zs,
+                              const double*      mug,
+                              const double*      vparg,
+                              const double*      coeff_intdmu,
+                              const double*      coeff_intdvpar,
+                              const double*      coeff_AD_r,
+                              const double*      mask_buffer_r,
+                              const double*      mask_LIM,
+                              const double*      B_norm,
+                              const double*      Bstar_s) {
     return koliop::error::FromException([&]() {
         if(!Kokkos::is_initialized()) {
             return KOLIOP_STATUS_INITIALIZATION_FAILURE;
         }
 
         if(an_operator_handle == nullptr ||
-           !(0 <= ir_SOL_separatrix && static_cast<size_t>(ir_SOL_separatrix) <= the_global_domain_r_extent) ||
+           !(0 <= ir_SOL_separatrix && static_cast<size_t>(ir_SOL_separatrix) <= global_domain_r_extent) ||
            hat_As == nullptr ||
            hat_Zs == nullptr ||
            mug == nullptr ||
@@ -144,16 +149,16 @@
 
         using Operator = koliop::collision::Operator;
 
-        auto* const an_operator = new Operator{static_cast<uint64_t>(the_mu_extent),
-                                               static_cast<uint64_t>(the_vpar_extent),
-                                               static_cast<uint64_t>(the_r_extent),
-                                               static_cast<uint64_t>(the_theta_extent),
-                                               static_cast<uint64_t>(the_phi_extent),
-                                               static_cast<uint64_t>(the_species_extent),
-                                               static_cast<uint64_t>(the_global_domain_r_extent),
-                                               static_cast<uint64_t>(the_global_domain_theta_extent),
-                                               static_cast<uint64_t>(the_local_domain_r_offset),
-                                               static_cast<uint64_t>(the_local_domain_theta_offset),
+        auto* const an_operator = new Operator{static_cast<uint64_t>(mu_extent),
+                                               static_cast<uint64_t>(vpar_extent),
+                                               static_cast<uint64_t>(tor1_extent),
+                                               static_cast<uint64_t>(tor2_extent),
+                                               static_cast<uint64_t>(tor3_extent),
+                                               static_cast<uint64_t>(species_extent),
+                                               static_cast<uint64_t>(global_domain_r_extent),
+                                               static_cast<uint64_t>(global_domain_theta_extent),
+                                               static_cast<uint64_t>(local_domain_r_offset),
+                                               static_cast<uint64_t>(local_domain_theta_offset),
                                                static_cast<bool>(collision_interspecies),
                                                static_cast<bool>(SOL),
                                                static_cast<bool>(LIM),
@@ -378,7 +383,7 @@
 }
 
 ::koliop_Status koliop_ExtractRaw(::koliop_Operator an_operator,
-                                  int32_t           the_value_identifier,
+                                  int32_t           value_identifier,
                                   void*             an_output_buffer) {
     return koliop::error::FromException([&]() {
         if(!Kokkos::is_initialized()) {
@@ -386,12 +391,12 @@
         }
 
         if(an_operator == nullptr ||
-           the_value_identifier < 0 ||
+           value_identifier < 0 ||
            an_output_buffer == nullptr) {
             return KOLIOP_STATUS_INVALID_VALUE;
         }
 
-        reinterpret_cast<koliop::collision::Operator*>(an_operator)->ExtractRaw(static_cast<uint32_t>(the_value_identifier), an_output_buffer);
+        reinterpret_cast<koliop::collision::Operator*>(an_operator)->ExtractRaw(static_cast<uint32_t>(value_identifier), an_output_buffer);
 
         return KOLIOP_STATUS_SUCCESS;
     });
