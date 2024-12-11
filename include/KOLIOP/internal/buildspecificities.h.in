@@ -13,6 +13,7 @@
 #cmakedefine koliop_ASSERT_ENABLED
 #cmakedefine koliop_FENCE_ON_OPERATOR_EXIT
 #cmakedefine koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE
+#cmakedefine koliop_BUILD_FORTRAN_INTERFACE
 
 #if defined(koliop_ASSERT_ENABLED)
     #define KOLIOP_ASSERT_ENABLED
@@ -24,6 +25,10 @@
 
 #if defined(koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE)
     #define KOLIOP_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE
+#endif
+
+#if defined(koliop_BUILD_FORTRAN_INTERFACE)
+    #define KOLIOP_BUILD_FORTRAN_INTERFACE
 #endif
 
 #endif

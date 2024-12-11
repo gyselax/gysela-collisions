@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 
-#ifndef KOLIOP_UTILITY_DEFECT_H
-#define KOLIOP_UTILITY_DEFECT_H
+#ifndef KOLIOP_UTILITY_SELECT_H
+#define KOLIOP_UTILITY_SELECT_H
 
 #include <Kokkos_Core.hpp>
 

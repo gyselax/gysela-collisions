@@ -7,6 +7,7 @@
 #include "KOLIOP/collision/operator.h"
 #include "KOLIOP/internal/configuration.h"
 #include "KOLIOP/utility/select.h"
+#include "KOLIOP/utility/tordu.h"
 
 namespace koliop {
     namespace collision {
@@ -49,9 +50,10 @@ namespace koliop {
                        ExecutionSpace  an_execution_space,
                        View5D&&        nu_ab) {
 
+            const auto& tor1_extent    = an_operator.tor1_extent_;
+            const auto& tor2_extent    = an_operator.tor2_extent_;
+            const auto& tor3_extent    = an_operator.tor3_extent_;
             const auto& r_extent       = an_operator.r_extent_;
-            const auto& theta_extent   = an_operator.theta_extent_;
-            const auto& phi_extent     = an_operator.phi_extent_;
             const auto& species_extent = an_operator.species_extent_;
 
             const auto& local_domain_r_offset = an_operator.local_domain_r_offset_;
@@ -71,7 +73,7 @@ namespace koliop {
             // global domain.
             const auto& ir_SOL_separatrix = an_operator.ir_SOL_separatrix_ - local_domain_r_offset;
 
-            const auto team_count = theta_extent * phi_extent * species_extent * species_extent;
+            const auto team_count = tor2_extent * tor3_extent * species_extent * species_extent;
 
             // Due to the inherent Cuda/HIP thread block limit.
             KOLIOP_ASSERT(team_count <= std::numeric_limits<int>::max());
@@ -93,19 +95,25 @@ namespace koliop {
 
                 const OrdinalType team_index = a_team_handle.league_rank();
 
-                const OrdinalType itheta    = (team_index) % theta_extent;
-                const OrdinalType iphi      = (team_index / (theta_extent)) % phi_extent;
-                const OrdinalType ispeciesA = (team_index / (theta_extent * phi_extent)) % species_extent;
-                const OrdinalType ispeciesB = (team_index / (theta_extent * phi_extent * species_extent)) /* % species_extent */;
+                const OrdinalType itor2     = (team_index) % tor2_extent;
+                const OrdinalType itor3     = (team_index / (tor2_extent)) % tor3_extent;
+                const OrdinalType ispeciesA = (team_index / (tor2_extent * tor3_extent)) % species_extent;
+                const OrdinalType ispeciesB = (team_index / (tor2_extent * tor3_extent * species_extent)) /* % species_extent */;
 
                 Kokkos::parallel_for(Kokkos::TeamThreadRange(a_team_handle,
-                                                             0, local_r_extent),
-                                     [&](auto ir) {
-                                         nu_ab(ir, itheta, iphi, ispeciesA, ispeciesB) = DoComputeFrequencyNuab(nustar_coeff(ispeciesA, ispeciesB, ir),
-                                                                                                                hat_As(ispeciesA), hat_As(ispeciesB),
-                                                                                                                T_s(ir, itheta, iphi, ispeciesA),
-                                                                                                                n_s(ir, itheta, iphi, ispeciesB),
-                                                                                                                T_s(ir, itheta, iphi, ispeciesB));
+                                                             0, tor1_extent),
+                                     [&](auto itor1) {
+                                         const OrdinalType ir = koliop::utility::GetRValue(itor1, itor2, itor3);
+
+                                         if(ir >= local_r_extent) {
+                                             return;
+                                         }
+
+                                         nu_ab(itor1, itor2, itor3, ispeciesA, ispeciesB) = DoComputeFrequencyNuab(nustar_coeff(ispeciesA, ispeciesB, ir),
+                                                                                                                   hat_As(ispeciesA), hat_As(ispeciesB),
+                                                                                                                   T_s(itor1, itor2, itor3, ispeciesA),
+                                                                                                                   n_s(itor1, itor2, itor3, ispeciesB),
+                                                                                                                   T_s(itor1, itor2, itor3, ispeciesB));
                                      });
 
                 // NOTE: We must ensure that the DoPrecomputeNu0 kernel ended
@@ -113,11 +121,23 @@ namespace koliop {
                 a_team_handle.team_barrier();
 
                 Kokkos::parallel_for(Kokkos::TeamThreadRange(a_team_handle,
-                                                             local_r_extent, r_extent),
-                                     [&](auto ir) {
+                                                             0, tor1_extent),
+                                     [&](auto itor1) {
+                                         const OrdinalType ir = koliop::utility::GetThetaValue(itor1, itor2, itor3);
+
+                                         if(ir < local_r_extent) {
+                                             return;
+                                         }
+
                                          // Propagate the value at nu_ab(ir_SOL_separatrix, itheta, iphi, ispeciesA, ispeciesB) or
                                          // nu_ab(local_r_extent - 1, itheta, iphi, ispeciesA, ispeciesB)
-                                         nu_ab(ir, itheta, iphi, ispeciesA, ispeciesB) = nu_ab(ir_SOL_separatrix, itheta, iphi, ispeciesA, ispeciesB);
+
+                                         const auto clamped_itor1 = koliop::utility::SetRValue<1>(itor1, ir_SOL_separatrix);
+                                         const auto clamped_itor2 = koliop::utility::SetRValue<2>(itor2, ir_SOL_separatrix);
+                                         const auto clamped_itor3 = koliop::utility::SetRValue<3>(itor3, ir_SOL_separatrix);
+
+                                         nu_ab(itor1, itor2, itor3, ispeciesA, ispeciesB) = nu_ab(clamped_itor1, clamped_itor2, clamped_itor3,
+                                                                                                  ispeciesA, ispeciesB);
                                      });
             };
 

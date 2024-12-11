@@ -18,7 +18,7 @@ namespace koliop {
                                                                                koliop::utility::View::InternalInputL6>(execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],
                                                                                                                        f5d_s, "f5d_s",
                                                                                                                        mu_extent_, vpar_extent_,
-                                                                                                                       r_extent_, theta_extent_, phi_extent_,
+                                                                                                                       tor1_extent_, tor2_extent_, tor3_extent_,
                                                                                                                        species_extent_);
 
             // NOTE: Stream usage semantic change
@@ -36,7 +36,7 @@ namespace koliop {
                                                                                                 a_device_visible_f5d_s,
                                                                                                 f5d_s,
                                                                                                 mu_extent_, vpar_extent_,
-                                                                                                r_extent_, theta_extent_, phi_extent_,
+                                                                                                tor1_extent_, tor2_extent_, tor3_extent_,
                                                                                                 species_extent_);
 
 #if defined(KOLIOP_FENCE_ON_OPERATOR_EXIT)

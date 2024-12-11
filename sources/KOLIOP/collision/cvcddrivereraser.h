@@ -30,9 +30,9 @@ namespace koliop {
             public:
                 virtual void Apply(const Operator&                                an_operator,
                                    Constant::DeviceExecutionSpaceType             an_execution_space,
-                                   OrdinalType                                    block_first_r,
-                                   OrdinalType                                    block_first_theta,
-                                   OrdinalType                                    block_first_phi,
+                                   OrdinalType                                    block_first_tor1,
+                                   OrdinalType                                    block_first_tor2,
+                                   OrdinalType                                    block_first_tor3,
                                    ComputeFloatType                               dt,
                                    OrdinalType                                    species_index,
                                    koliop::utility::View::InternalInputL6<Flo64>& f5d_s) = 0;
@@ -55,17 +55,17 @@ namespace koliop {
 
                 void Apply(const Operator&                                an_operator,
                            Constant::DeviceExecutionSpaceType             an_execution_space,
-                           OrdinalType                                    block_first_r,
-                           OrdinalType                                    block_first_theta,
-                           OrdinalType                                    block_first_phi,
+                           OrdinalType                                    block_first_tor1,
+                           OrdinalType                                    block_first_tor2,
+                           OrdinalType                                    block_first_tor3,
                            ComputeFloatType                               dt,
                            OrdinalType                                    species_index,
                            koliop::utility::View::InternalInputL6<Flo64>& f5d_s) override {
                     value_.Apply(an_operator,
                                  an_execution_space,
-                                 block_first_r,
-                                 block_first_theta,
-                                 block_first_phi,
+                                 block_first_tor1,
+                                 block_first_tor2,
+                                 block_first_tor3,
                                  dt,
                                  species_index,
                                  f5d_s);

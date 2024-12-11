@@ -30,6 +30,11 @@
         if(static_cast<bool>(with_verbose_initialization)) {
             std::cout << "Koliop: v" << KOLIOP_VERSION << "\n";
             std::cout << "  KOLIOP_TOOLCHAIN_NAME: " << KOLIOP_TOOLCHAIN_NAME << "\n";
+#if defined(KOLIOP_BUILD_FORTRAN_INTERFACE)
+            std::cout << "  KOLIOP_BUILD_FORTRAN_INTERFACE: true (expecting f5d_s as (mu,vpar),(r,theta,phi),species)\n";
+#else
+            std::cout << "  KOLIOP_BUILD_FORTRAN_INTERFACE: false (expecting f5d_s as (mu,vpar),(theta,r,phi),species)\n";
+#endif
 #if defined(KOLIOP_FENCE_ON_OPERATOR_EXIT)
             std::cout << "  KOLIOP_FENCE_ON_OPERATOR_EXIT: true\n";
 #else
@@ -98,9 +103,9 @@
 ::koliop_Status koliop_Create(::koliop_Operator* an_operator_handle,
                               size_t             mu_extent,
                               size_t             vpar_extent,
-                              size_t             r_extent,
-                              size_t             theta_extent,
-                              size_t             phi_extent,
+                              size_t             tor1_extent,
+                              size_t             tor2_extent,
+                              size_t             tor3_extent,
                               size_t             species_extent,
                               size_t             global_domain_r_extent,
                               size_t             global_domain_theta_extent,
@@ -146,9 +151,9 @@
 
         auto* const an_operator = new Operator{static_cast<uint64_t>(mu_extent),
                                                static_cast<uint64_t>(vpar_extent),
-                                               static_cast<uint64_t>(r_extent),
-                                               static_cast<uint64_t>(theta_extent),
-                                               static_cast<uint64_t>(phi_extent),
+                                               static_cast<uint64_t>(tor1_extent),
+                                               static_cast<uint64_t>(tor2_extent),
+                                               static_cast<uint64_t>(tor3_extent),
                                                static_cast<uint64_t>(species_extent),
                                                static_cast<uint64_t>(global_domain_r_extent),
                                                static_cast<uint64_t>(global_domain_theta_extent),

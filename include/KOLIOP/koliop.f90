@@ -117,9 +117,9 @@ MODULE koliop
       ! koliop_Status koliop_Create(koliop_Operator* an_operator_handle,
       !                             size_t           mu_extent,
       !                             size_t           vpar_extent,
-      !                             size_t           r_extent,
-      !                             size_t           theta_extent,
-      !                             size_t           phi_extent,
+      !                             size_t           tor1_extent,
+      !                             size_t           tor2_extent,
+      !                             size_t           tor3_extent,
       !                             size_t           species_extent,
       !                             size_t           global_domain_r_extent,
       !                             size_t           global_domain_theta_extent,
@@ -144,9 +144,9 @@ MODULE koliop
          an_operator_handle, &
          mu_extent, &
          vpar_extent, &
-         r_extent, &
-         theta_extent, &
-         phi_extent, &
+         tor1_extent, &
+         tor2_extent, &
+         tor3_extent, &
          species_extent, &
          global_domain_r_extent, &
          global_domain_theta_extent, &
@@ -183,9 +183,9 @@ MODULE koliop
          TYPE(C_PTR), INTENT(INOUT) :: an_operator_handle
          INTEGER(C_SIZE_T), VALUE, INTENT(IN) :: mu_extent
          INTEGER(C_SIZE_T), VALUE, INTENT(IN) :: vpar_extent
-         INTEGER(C_SIZE_T), VALUE, INTENT(IN) :: r_extent
-         INTEGER(C_SIZE_T), VALUE, INTENT(IN) :: theta_extent
-         INTEGER(C_SIZE_T), VALUE, INTENT(IN) :: phi_extent
+         INTEGER(C_SIZE_T), VALUE, INTENT(IN) :: tor1_extent
+         INTEGER(C_SIZE_T), VALUE, INTENT(IN) :: tor2_extent
+         INTEGER(C_SIZE_T), VALUE, INTENT(IN) :: tor3_extent
          INTEGER(C_SIZE_T), VALUE, INTENT(IN) :: species_extent
          INTEGER(C_SIZE_T), VALUE, INTENT(IN) :: global_domain_r_extent
          INTEGER(C_SIZE_T), VALUE, INTENT(IN) :: global_domain_theta_extent
@@ -450,9 +450,9 @@ CONTAINS
       an_operator_handle, &
       mu_extent, &
       vpar_extent, &
-      r_extent, &
-      theta_extent, &
-      phi_extent, &
+      tor1_extent, &
+      tor2_extent, &
+      tor3_extent, &
       species_extent, &
       global_domain_r_extent, &
       global_domain_theta_extent, &
@@ -480,9 +480,9 @@ CONTAINS
       TYPE(C_PTR), INTENT(INOUT) :: an_operator_handle
       INTEGER, INTENT(IN) :: mu_extent
       INTEGER, INTENT(IN) :: vpar_extent
-      INTEGER, INTENT(IN) :: r_extent
-      INTEGER, INTENT(IN) :: theta_extent
-      INTEGER, INTENT(IN) :: phi_extent
+      INTEGER, INTENT(IN) :: tor1_extent
+      INTEGER, INTENT(IN) :: tor2_extent
+      INTEGER, INTENT(IN) :: tor3_extent
       INTEGER, INTENT(IN) :: species_extent
       INTEGER, INTENT(IN) :: global_domain_r_extent
       INTEGER, INTENT(IN) :: global_domain_theta_extent
@@ -542,9 +542,9 @@ CONTAINS
          an_operator_handle, &
          INT(mu_extent, C_SIZE_T), &
          INT(vpar_extent, C_SIZE_T), &
-         INT(r_extent, C_SIZE_T), &
-         INT(theta_extent, C_SIZE_T), &
-         INT(phi_extent, C_SIZE_T), &
+         INT(tor1_extent, C_SIZE_T), &
+         INT(tor2_extent, C_SIZE_T), &
+         INT(tor3_extent, C_SIZE_T), &
          INT(species_extent, C_SIZE_T), &
          INT(global_domain_r_extent, C_SIZE_T), &
          INT(global_domain_theta_extent, C_SIZE_T), &
@@ -821,9 +821,9 @@ CONTAINS
       an_operator_handle, &
       mu_extent, &
       vpar_extent, &
-      r_extent, &
-      theta_extent, &
-      phi_extent, &
+      tor1_extent, &
+      tor2_extent, &
+      tor3_extent, &
       species_extent, &
       global_domain_r_extent, &
       global_domain_theta_extent, &
@@ -851,9 +851,9 @@ CONTAINS
       TYPE(C_PTR), INTENT(INOUT) :: an_operator_handle
       INTEGER, INTENT(IN) :: mu_extent
       INTEGER, INTENT(IN) :: vpar_extent
-      INTEGER, INTENT(IN) :: r_extent
-      INTEGER, INTENT(IN) :: theta_extent
-      INTEGER, INTENT(IN) :: phi_extent
+      INTEGER, INTENT(IN) :: tor1_extent
+      INTEGER, INTENT(IN) :: tor2_extent
+      INTEGER, INTENT(IN) :: tor3_extent
       INTEGER, INTENT(IN) :: species_extent
       INTEGER, INTENT(IN) :: global_domain_r_extent
       INTEGER, INTENT(IN) :: global_domain_theta_extent
@@ -880,9 +880,9 @@ CONTAINS
          an_operator_handle, &
          mu_extent, &
          vpar_extent, &
-         r_extent, &
-         theta_extent, &
-         phi_extent, &
+         tor1_extent, &
+         tor2_extent, &
+         tor3_extent, &
          species_extent, &
          global_domain_r_extent, &
          global_domain_theta_extent, &
@@ -1137,7 +1137,7 @@ END MODULE
 
 ! To test the interface, uncomment the PROGRAM below and build using something
 ! like:
-! ninja && ftn -v -m 2 -O3 ../include/KOLIOP/koliop.f90 -c && cc -v -o test_dummy_test_f koliop.o -Wl,-rpath,/opt/rocm-5.3.0/lib:/opt/rocm-5.3.0/hip/lib libkoliop.a  _deps/kokkoskernels-build/libkokkoskernels.a _deps/kokkos-build/containers/src/libkokkoscontainers.a _deps/kokkos-build/core/src/libkokkoscore.a -ldl /opt/rocm-5.3.0/lib/libhsa-runtime64.so /opt/rocm-5.3.0/hip/lib/libamdhip64.so /opt/rocm-5.3.0/llvm/lib/clang/15.0.0/lib/linux/libclang_rt.builtins-x86_64.a /opt/cray/pe/libsci/22.11.1.2/CRAY/9.0/x86_64/lib/libsci_cray_mpi_mp.so /opt/cray/pe/libsci/22.11.1.2/CRAY/9.0/x86_64/lib/libsci_cray_mp.so /opt/cray/pe/cce/15.0.0/cce/x86_64/lib/libcraymp.so _deps/kokkos-build/simd/src/libkokkossimd.a && echo OK
+! ninja && ftn -v -m 2 -O3 -fopenmp ../include/KOLIOP/koliop.f90 -c && cc -v -o test_dummy_test_f koliop.o -Wl,-rpath,/opt/rocm/lib libkoliop.a  _deps/kokkoskernels-build/libkokkoskernels.a _deps/kokkos-build/containers/src/libkokkoscontainers.a _deps/kokkos-build/core/src/libkokkoscore.a -ldl /opt/rocm/lib/libhsa-runtime64.so /opt/rocm/lib/libamdhip64.so _deps/kokkos-build/simd/src/libkokkossimd.a && echo OK
 
 ! PROGRAM Testing
 !    USE koliop

@@ -28,7 +28,7 @@ namespace koliop {
                     koliop::utility::Copy::Deep(execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],
                                                 n_s_,
                                                 koliop::utility::View::ExternalInputL4<Flo64>{static_cast<Flo64*>(an_output_buffer),
-                                                                                              static_cast<std::size_t>(r_extent_), static_cast<std::size_t>(theta_extent_), static_cast<std::size_t>(phi_extent_),
+                                                                                              static_cast<std::size_t>(tor1_extent_), static_cast<std::size_t>(tor2_extent_), static_cast<std::size_t>(tor3_extent_),
                                                                                               static_cast<std::size_t>(species_extent_)});
                     break;
                 }
@@ -36,14 +36,14 @@ namespace koliop {
                     koliop::utility::Copy::Deep(execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],
                                                 U_par_s_,
                                                 koliop::utility::View::ExternalInputL4<Flo64>{static_cast<Flo64*>(an_output_buffer),
-                                                                                              static_cast<std::size_t>(r_extent_), static_cast<std::size_t>(theta_extent_), static_cast<std::size_t>(phi_extent_),
+                                                                                              static_cast<std::size_t>(tor1_extent_), static_cast<std::size_t>(tor2_extent_), static_cast<std::size_t>(tor3_extent_),
                                                                                               static_cast<std::size_t>(species_extent_)});
                     break;
                 }
                 case KOLIOP_EXTRACTION_IDENTIFIER_T_s: {
                     koliop::utility::Copy::Deep(execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex], T_s_,
                                                 koliop::utility::View::ExternalInputL4<Flo64>{static_cast<Flo64*>(an_output_buffer),
-                                                                                              static_cast<std::size_t>(r_extent_), static_cast<std::size_t>(theta_extent_), static_cast<std::size_t>(phi_extent_),
+                                                                                              static_cast<std::size_t>(tor1_extent_), static_cast<std::size_t>(tor2_extent_), static_cast<std::size_t>(tor3_extent_),
                                                                                               static_cast<std::size_t>(species_extent_)});
                     break;
                 }
@@ -51,7 +51,7 @@ namespace koliop {
                     koliop::utility::Copy::Deep(execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],
                                                 nu_ab_,
                                                 koliop::utility::View::ExternalInputL5<Flo64>{static_cast<Flo64*>(an_output_buffer),
-                                                                                              static_cast<std::size_t>(r_extent_), static_cast<std::size_t>(theta_extent_), static_cast<std::size_t>(phi_extent_),
+                                                                                              static_cast<std::size_t>(tor1_extent_), static_cast<std::size_t>(tor2_extent_), static_cast<std::size_t>(tor3_extent_),
                                                                                               static_cast<std::size_t>(species_extent_), static_cast<std::size_t>(species_extent_)});
                     break;
                 }
@@ -59,7 +59,7 @@ namespace koliop {
                     koliop::utility::Copy::Deep(execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],
                                                 q_par_on_nT_s_,
                                                 koliop::utility::View::ExternalInputL4<Flo64>{static_cast<Flo64*>(an_output_buffer),
-                                                                                              static_cast<std::size_t>(r_extent_), static_cast<std::size_t>(theta_extent_), static_cast<std::size_t>(phi_extent_),
+                                                                                              static_cast<std::size_t>(tor1_extent_), static_cast<std::size_t>(tor2_extent_), static_cast<std::size_t>(tor3_extent_),
                                                                                               static_cast<std::size_t>(species_extent_)});
                     break;
                 }

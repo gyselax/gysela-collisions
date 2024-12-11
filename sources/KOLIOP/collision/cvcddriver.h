@@ -9,6 +9,7 @@
 #include "KOLIOP/collision/matrixsampler.h"
 #include "KOLIOP/collision/najl.h"
 #include "KOLIOP/utility/select.h"
+#include "KOLIOP/utility/tordu.h"
 
 namespace koliop {
     namespace collision {
@@ -96,9 +97,9 @@ namespace koliop {
             static inline void
             DoComputeAlphaProjection(const Operator& an_operator,
                                      ExecutionSpace  an_execution_space,
-                                     OrdinalType     block_first_r,
-                                     OrdinalType     block_first_theta,
-                                     OrdinalType     block_first_phi,
+                                     OrdinalType     block_first_tor1,
+                                     OrdinalType     block_first_tor2,
+                                     OrdinalType     block_first_tor3,
                                      OrdinalType     species_index,
                                      const View2D&   mask_coll,
                                      const View6D&   f5d_s,
@@ -118,7 +119,7 @@ namespace koliop {
                 // TODO(Etienne M): Make sure the accesses are sequential on
                 // CPU.
 
-                const auto team_count = CvCdDriver::kBlockExtentR * CvCdDriver::kBlockExtentTheta * CvCdDriver::kBlockExtentPhi;
+                const auto team_count = CvCdDriver::kBlockExtentTor1 * CvCdDriver::kBlockExtentTor2 * CvCdDriver::kBlockExtentTor3;
 
                 // Due to the inherent Cuda/HIP thread block limit.
                 KOLIOP_ASSERT(team_count <= std::numeric_limits<int>::max());
@@ -141,25 +142,31 @@ namespace koliop {
 
                     // NOTE: kBlockExtentXXX are constant, the compiler can replace
                     // the modulo with faster instructions.
-                    const OrdinalType block_local_index_ir     = (team_index) % CvCdDriver::kBlockExtentR;
-                    const OrdinalType block_local_index_itheta = (team_index / (CvCdDriver::kBlockExtentR)) % CvCdDriver::kBlockExtentTheta;
-                    const OrdinalType block_local_index_iphi   = (team_index / (CvCdDriver::kBlockExtentR * CvCdDriver::kBlockExtentTheta)) /* % CvCdDriver::kBlockExtentPhi */;
+                    const OrdinalType block_local_index_itor1 = (team_index) % CvCdDriver::kBlockExtentTor1;
+                    const OrdinalType block_local_index_itor2 = (team_index / (CvCdDriver::kBlockExtentTor1)) % CvCdDriver::kBlockExtentTor2;
+                    const OrdinalType block_local_index_itor3 = (team_index / (CvCdDriver::kBlockExtentTor1 * CvCdDriver::kBlockExtentTor2)) /* % CvCdDriver::kBlockExtentTor3 */;
+
+                    const OrdinalType block_local_index_ir     = koliop::utility::GetRValue(block_local_index_itor1, block_local_index_itor2, block_local_index_itor3);
+                    const OrdinalType block_local_index_itheta = koliop::utility::GetThetaValue(block_local_index_itor1, block_local_index_itor2, block_local_index_itor3);
 
                     const OffsetType flattened_index = team_index;
 
                     const OrdinalType batch_element_index = (flattened_index) % CvCdDriver::BatchTraitsType::kBatchSize;
                     const OrdinalType batch_index         = (flattened_index / (CvCdDriver::BatchTraitsType::kBatchSize)) /* % CvCdDriver::kBatchCount */;
 
-                    const OrdinalType ir     = block_first_r + block_local_index_ir;
-                    const OrdinalType itheta = block_first_theta + block_local_index_itheta;
-                    const OrdinalType iphi   = block_first_phi + block_local_index_iphi;
+                    const OrdinalType itor1 = block_first_tor1 + block_local_index_itor1;
+                    const OrdinalType itor2 = block_first_tor2 + block_local_index_itor2;
+                    const OrdinalType itor3 = block_first_tor3 + block_local_index_itor3;
+
+                    const OrdinalType ir     = koliop::utility::GetRValue(itor1, itor2, itor3);
+                    const OrdinalType itheta = koliop::utility::GetThetaValue(itor1, itor2, itor3);
 
                     if(mask_coll(block_local_index_ir,
                                  block_local_index_itheta)) {
 
                         const ComputeFloatType BoT = B_norm(local_domain_r_offset + ir,
                                                             local_domain_theta_offset + itheta) /
-                                                     T_s(ir, itheta, iphi, species_index);
+                                                     T_s(itor1, itor2, itor3, species_index);
 
                         for(OrdinalType ivpar = 0; ivpar < vpar_extent; ++ivpar) {
                             for(OrdinalType ipol = 0; ipol < Constant::kMaximumLaguerrePolynomialDegree; ++ipol) {
@@ -176,7 +183,7 @@ namespace koliop {
                                         const ComputeFloatType coeff_tot = DoComputeLaguerrePol(ipol, muBoT) * BoT * coeff_intdmu(imu) * Kokkos::exp(-muBoT);
 
                                         rhs_value_reducer.join(rhs_value_reducer.reference(),
-                                                               coeff_tot * f5d_s(imu, ivpar, ir, itheta, iphi, species_index));
+                                                               coeff_tot * f5d_s(imu, ivpar, itor1, itor2, itor3, species_index));
                                     });
 
                                 a_team_handle.team_reduce(rhs_value_reducer);
@@ -266,9 +273,9 @@ namespace koliop {
             static inline void
             DoComputeCvCdSource(const Operator&  an_operator,
                                 ExecutionSpace   an_execution_space,
-                                OrdinalType      block_first_r,
-                                OrdinalType      block_first_theta,
-                                OrdinalType      block_first_phi,
+                                OrdinalType      block_first_tor1,
+                                OrdinalType      block_first_tor2,
+                                OrdinalType      block_first_tor3,
                                 ComputeFloatType dt,
                                 OrdinalType      species_index,
                                 const View6D&    Najl,
@@ -281,25 +288,25 @@ namespace koliop {
 
                 const auto& vparg = an_operator.vparg_;
 
-                const auto kernel = KOKKOS_LAMBDA(OrdinalType ipol, OrdinalType ivpar, OrdinalType ir, OrdinalType itheta, OrdinalType iphi) {
+                const auto kernel = KOKKOS_LAMBDA(OrdinalType ipol, OrdinalType ivpar, OrdinalType itor1, OrdinalType itor2, OrdinalType itor3) {
 
                     // NOTE: kBlockExtentXXX are constant, the compiler can replace
                     // the modulo with faster instructions.
-                    const OrdinalType block_local_index_ir     = ir - block_first_r;
-                    const OrdinalType block_local_index_itheta = itheta - block_first_theta;
-                    const OrdinalType block_local_index_iphi   = iphi - block_first_phi;
+                    const OrdinalType block_local_index_itor1 = itor1 - block_first_tor1;
+                    const OrdinalType block_local_index_itor2 = itor2 - block_first_tor2;
+                    const OrdinalType block_local_index_itor3 = itor3 - block_first_tor3;
 
-                    const OffsetType flattened_index = CvCdDriver::kBlockExtentR * CvCdDriver::kBlockExtentTheta * block_local_index_iphi +
-                                                       CvCdDriver::kBlockExtentR * block_local_index_itheta +
-                                                       block_local_index_ir;
+                    const OffsetType flattened_index = CvCdDriver::kBlockExtentTor1 * CvCdDriver::kBlockExtentTor2 * block_local_index_itor3 +
+                                                       CvCdDriver::kBlockExtentTor1 * block_local_index_itor2 +
+                                                       block_local_index_itor1;
 
                     const OrdinalType batch_element_index = (flattened_index) % CvCdDriver::BatchTraitsType::kBatchSize;
                     const OrdinalType batch_index         = (flattened_index / (CvCdDriver::BatchTraitsType::kBatchSize)) /* % CvCdDriver::kBatchCount */;
 
                     const ComputeFloatType vpar_tmp       = vparg(ivpar);
-                    const ComputeFloatType Ta             = T_s(ir, itheta, iphi, species_index);
-                    const ComputeFloatType U_para         = U_par_s(ir, itheta, iphi, species_index);
-                    const ComputeFloatType q_para_on_naTa = q_par_on_nT_s(ir, itheta, iphi, species_index);
+                    const ComputeFloatType Ta             = T_s(itor1, itor2, itor3, species_index);
+                    const ComputeFloatType U_para         = U_par_s(itor1, itor2, itor3, species_index);
+                    const ComputeFloatType q_para_on_naTa = q_par_on_nT_s(itor1, itor2, itor3, species_index);
 
                     // TODO(Etienne M): Can we simplify that ?
 
@@ -319,14 +326,14 @@ namespace koliop {
                                  Kokkos::Iterate::Left>>{an_execution_space,
                                                          {0,
                                                           0,
-                                                          block_first_r,
-                                                          block_first_theta,
-                                                          block_first_phi},
+                                                          block_first_tor1,
+                                                          block_first_tor2,
+                                                          block_first_tor3},
                                                          {Constant::kMaximumLaguerrePolynomialDegree,
                                                           vpar_extent,
-                                                          block_first_r + CvCdDriver::kBlockExtentR,
-                                                          block_first_theta + CvCdDriver::kBlockExtentTheta,
-                                                          block_first_phi + CvCdDriver::kBlockExtentPhi}};
+                                                          block_first_tor1 + CvCdDriver::kBlockExtentTor1,
+                                                          block_first_tor2 + CvCdDriver::kBlockExtentTor2,
+                                                          block_first_tor3 + CvCdDriver::kBlockExtentTor3}};
 
                 Kokkos::parallel_for("DoComputeCvCdSource",
                                      a_policy, kernel);
@@ -341,9 +348,9 @@ namespace koliop {
             static inline void
             DoComputeReconstruction(const Operator& an_operator,
                                     ExecutionSpace  an_execution_space,
-                                    OrdinalType     block_first_r,
-                                    OrdinalType     block_first_theta,
-                                    OrdinalType     block_first_phi,
+                                    OrdinalType     block_first_tor1,
+                                    OrdinalType     block_first_tor2,
+                                    OrdinalType     block_first_tor3,
                                     OrdinalType     species_index,
                                     const View2D&   mask_coll,
                                     const View4D&   rhs,
@@ -362,7 +369,7 @@ namespace koliop {
                 // TODO(Etienne M): Make sure the accesses are sequential on
                 // CPU.
 
-                const auto team_count = CvCdDriver::kBlockExtentR * CvCdDriver::kBlockExtentTheta * CvCdDriver::kBlockExtentPhi;
+                const auto team_count = CvCdDriver::kBlockExtentTor1 * CvCdDriver::kBlockExtentTor2 * CvCdDriver::kBlockExtentTor3;
 
                 // Due to the inherent Cuda/HIP thread block limit.
                 KOLIOP_ASSERT(team_count <= std::numeric_limits<int>::max());
@@ -385,9 +392,12 @@ namespace koliop {
 
                     // NOTE: kBlockExtentXXX are constant, the compiler can replace
                     // the modulo with faster instructions.
-                    const OrdinalType block_local_index_ir     = (team_index) % CvCdDriver::kBlockExtentR;
-                    const OrdinalType block_local_index_itheta = (team_index / (CvCdDriver::kBlockExtentR)) % CvCdDriver::kBlockExtentTheta;
-                    const OrdinalType block_local_index_iphi   = (team_index / (CvCdDriver::kBlockExtentR * CvCdDriver::kBlockExtentTheta)) /* % CvCdDriver::kBlockExtentPhi */;
+                    const OrdinalType block_local_index_itor1 = (team_index) % CvCdDriver::kBlockExtentTor1;
+                    const OrdinalType block_local_index_itor2 = (team_index / (CvCdDriver::kBlockExtentTor1)) % CvCdDriver::kBlockExtentTor2;
+                    const OrdinalType block_local_index_itor3 = (team_index / (CvCdDriver::kBlockExtentTor1 * CvCdDriver::kBlockExtentTor2)) /* % CvCdDriver::kBlockExtentTor3 */;
+
+                    const OrdinalType block_local_index_ir     = koliop::utility::GetRValue(block_local_index_itor1, block_local_index_itor2, block_local_index_itor3);
+                    const OrdinalType block_local_index_itheta = koliop::utility::GetThetaValue(block_local_index_itor1, block_local_index_itor2, block_local_index_itor3);
 
                     if(!mask_coll(block_local_index_ir,
                                   block_local_index_itheta)) {
@@ -402,13 +412,16 @@ namespace koliop {
                     const OrdinalType batch_element_index = (flattened_index) % CvCdDriver::BatchTraitsType::kBatchSize;
                     const OrdinalType batch_index         = (flattened_index / (CvCdDriver::BatchTraitsType::kBatchSize)) /* % CvCdDriver::kBatchCount */;
 
-                    const OrdinalType ir     = block_first_r + block_local_index_ir;
-                    const OrdinalType itheta = block_first_theta + block_local_index_itheta;
-                    const OrdinalType iphi   = block_first_phi + block_local_index_iphi;
+                    const OrdinalType itor1 = block_first_tor1 + block_local_index_itor1;
+                    const OrdinalType itor2 = block_first_tor2 + block_local_index_itor2;
+                    const OrdinalType itor3 = block_first_tor3 + block_local_index_itor3;
+
+                    const OrdinalType ir     = koliop::utility::GetRValue(itor1, itor2, itor3);
+                    const OrdinalType itheta = koliop::utility::GetThetaValue(itor1, itor2, itor3);
 
                     const ComputeFloatType BoT = B_norm(local_domain_r_offset + ir,
                                                         local_domain_theta_offset + itheta) /
-                                                 T_s(ir, itheta, iphi, species_index);
+                                                 T_s(itor1, itor2, itor3, species_index);
 
                     Kokkos::parallel_for(
                         // NOTE: The explicit Left iteration direction may not benefit
@@ -425,7 +438,7 @@ namespace koliop {
                                                DoComputeLaguerrePol(ipol, muBoT);
                             }
 
-                            f5d_s(imu, ivpar, ir, itheta, iphi, species_index) = f5d_s_value;
+                            f5d_s(imu, ivpar, itor1, itor2, itor3, species_index) = f5d_s_value;
                         });
                 };
 
@@ -440,17 +453,20 @@ namespace koliop {
         // CvCdDriver definition
         ////////////////////////////////////////////////////////////////////////
 
-        template <OrdinalType block_extent_r,
-                  OrdinalType block_extent_theta,
-                  OrdinalType block_extent_phi,
+        template <OrdinalType block_extent_tor1,
+                  OrdinalType block_extent_tor2,
+                  OrdinalType block_extent_tor3,
                   typename BatchTraits>
         class CvCdDriver {
         public:
-            static inline constexpr OrdinalType kBlockExtentR     = block_extent_r;
-            static inline constexpr OrdinalType kBlockExtentTheta = block_extent_theta;
-            static inline constexpr OrdinalType kBlockExtentPhi   = block_extent_phi;
+            static inline constexpr OrdinalType kBlockExtentTor1 = block_extent_tor1;
+            static inline constexpr OrdinalType kBlockExtentTor2 = block_extent_tor2;
+            static inline constexpr OrdinalType kBlockExtentTor3 = block_extent_tor3;
 
-            static inline constexpr OffsetType kFlattenedBlockExtent = kBlockExtentR * kBlockExtentTheta * kBlockExtentPhi;
+            static inline constexpr OrdinalType kBlockExtentR     = koliop::utility::GetRValue(kBlockExtentTor1, kBlockExtentTor2, kBlockExtentTor3);
+            static inline constexpr OrdinalType kBlockExtentTheta = koliop::utility::GetThetaValue(kBlockExtentTor1, kBlockExtentTor2, kBlockExtentTor3);
+
+            static inline constexpr OffsetType kFlattenedBlockExtent = kBlockExtentTor1 * kBlockExtentTor2 * kBlockExtentTor3;
 
             using BatchTraitsType = BatchTraits;
 
@@ -481,9 +497,9 @@ namespace koliop {
                       typename View6D>
             void Apply(const Operator&  an_operator,
                        ExecutionSpace   an_execution_space,
-                       OrdinalType      block_first_r,
-                       OrdinalType      block_first_theta,
-                       OrdinalType      block_first_phi,
+                       OrdinalType      block_first_tor1,
+                       OrdinalType      block_first_tor2,
+                       OrdinalType      block_first_tor3,
                        ComputeFloatType dt,
                        OrdinalType      species_index,
                        View6D&&         f5d_s);
@@ -517,13 +533,13 @@ namespace koliop {
         // CvCdDriver methods definition
         ////////////////////////////////////////////////////////////////////////
 
-        template <OrdinalType block_extent_r,
-                  OrdinalType block_extent_theta,
-                  OrdinalType block_extent_phi,
+        template <OrdinalType block_extent_tor1,
+                  OrdinalType block_extent_tor2,
+                  OrdinalType block_extent_tor3,
                   typename BatchTraits>
-        CvCdDriver<block_extent_r,
-                   block_extent_theta,
-                   block_extent_phi,
+        CvCdDriver<block_extent_tor1,
+                   block_extent_tor2,
+                   block_extent_tor3,
                    BatchTraits>::CvCdDriver(OrdinalType                                                vpar_extent,
                                             OrdinalType                                                species_extent,
                                             bool                                                       collision_interspecies,
@@ -557,21 +573,21 @@ namespace koliop {
             // EMPTY
         }
 
-        template <OrdinalType block_extent_r,
-                  OrdinalType block_extent_theta,
-                  OrdinalType block_extent_phi,
+        template <OrdinalType block_extent_tor1,
+                  OrdinalType block_extent_tor2,
+                  OrdinalType block_extent_tor3,
                   typename BatchTraits>
         template <typename Operator, // Templatized to avoid dependency loops
                   typename ExecutionSpace,
                   typename View6D>
-        void CvCdDriver<block_extent_r,
-                        block_extent_theta,
-                        block_extent_phi,
+        void CvCdDriver<block_extent_tor1,
+                        block_extent_tor2,
+                        block_extent_tor3,
                         BatchTraits>::Apply(const Operator&  an_operator,
                                             ExecutionSpace   an_execution_space,
-                                            OrdinalType      block_first_r,
-                                            OrdinalType      block_first_theta,
-                                            OrdinalType      block_first_phi,
+                                            OrdinalType      block_first_tor1,
+                                            OrdinalType      block_first_tor2,
+                                            OrdinalType      block_first_tor3,
                                             ComputeFloatType dt,
                                             OrdinalType      species_index,
                                             View6D&&         f5d_s) {
@@ -585,14 +601,17 @@ namespace koliop {
 
             // std::exit(42);
 
-            const auto& vpar_extent  = an_operator.vpar_extent_;
-            const auto& r_extent     = an_operator.r_extent_;
-            const auto& theta_extent = an_operator.theta_extent_;
-            const auto& phi_extent   = an_operator.phi_extent_;
+            const auto& vpar_extent = an_operator.vpar_extent_;
+            const auto& tor1_extent = an_operator.tor1_extent_;
+            const auto& tor2_extent = an_operator.tor2_extent_;
+            const auto& tor3_extent = an_operator.tor3_extent_;
 
             const auto& n_s   = an_operator.n_s_;
             const auto& T_s   = an_operator.T_s_;
             const auto& nu_ab = an_operator.nu_ab_;
+
+            const auto block_first_r     = koliop::utility::GetRValue(block_first_tor1, block_first_tor2, block_first_tor3);
+            const auto block_first_theta = koliop::utility::GetThetaValue(block_first_tor1, block_first_tor2, block_first_tor3);
 
             // TODO(Etienne M): Extent standardization global_domain, vs
             // local_domain vs block:
@@ -607,14 +626,14 @@ namespace koliop {
             // coefs and overwrite the f5d_s with the matrix/alpha coef/najl ?
 
             // NOTE: If you have an issue with these assertions, checkout the
-            // constant.h file and tune kBlockExtent[R|Theta|Phi].
-            KOLIOP_ASSERT(r_extent % kBlockExtentR == 0);
-            KOLIOP_ASSERT(theta_extent % kBlockExtentTheta == 0);
-            KOLIOP_ASSERT(phi_extent % kBlockExtentPhi == 0);
+            // constant.h file and tune kBlockExtent[Tor1|Tor2|Tor3].
+            KOLIOP_ASSERT(tor1_extent % kBlockExtentTor1 == 0);
+            KOLIOP_ASSERT(tor2_extent % kBlockExtentTor2 == 0);
+            KOLIOP_ASSERT(tor3_extent % kBlockExtentTor3 == 0);
 
-            KOLIOP_ASSERT((block_first_r + kBlockExtentR) <= r_extent);
-            KOLIOP_ASSERT((block_first_theta + kBlockExtentTheta) <= theta_extent);
-            KOLIOP_ASSERT((block_first_phi + kBlockExtentPhi) <= phi_extent);
+            KOLIOP_ASSERT((block_first_tor1 + kBlockExtentTor1) <= tor1_extent);
+            KOLIOP_ASSERT((block_first_tor2 + kBlockExtentTor2) <= tor2_extent);
+            KOLIOP_ASSERT((block_first_tor3 + kBlockExtentTor3) <= tor3_extent);
 
             // In the future, the time step could vary.
             LHS_matrix_sampler_.DeltaTime() = static_cast<ComputeFloatType>(-dt / 4.0);
@@ -640,14 +659,14 @@ namespace koliop {
                 // Projection of f on Laguerre Polynomials.
                 detail::DoComputeAlphaProjection<CvCdDriver>(an_operator,
                                                              an_execution_space,
-                                                             block_first_r, block_first_theta, block_first_phi,
+                                                             block_first_tor1, block_first_tor2, block_first_tor3,
                                                              species_index,
                                                              mask_coll_, f5d_s, alpha_coefficients_);
 
                 {
                     // Computation of the N_i,a ^ jl = sum_b M_i,ab ^ jl.
                     najl_provider_.Compute(an_execution_space,
-                                           block_first_r, block_first_theta, block_first_phi,
+                                           block_first_tor1, block_first_tor2, block_first_tor3,
                                            species_index,
                                            n_s, T_s, nu_ab, Najl_);
 
@@ -691,7 +710,7 @@ namespace koliop {
                         // rhs = alpha~~
                         detail::DoComputeCvCdSource<CvCdDriver>(an_operator,
                                                                 an_execution_space,
-                                                                block_first_r, block_first_theta, block_first_phi,
+                                                                block_first_tor1, block_first_tor2, block_first_tor3,
                                                                 dt,
                                                                 species_index,
                                                                 Najl_, alpha_coefficients_);
@@ -719,7 +738,7 @@ namespace koliop {
                 // Reconstruct the normalized function distribution.
                 detail::DoComputeReconstruction<CvCdDriver>(an_operator,
                                                             an_execution_space,
-                                                            block_first_r, block_first_theta, block_first_phi,
+                                                            block_first_tor1, block_first_tor2, block_first_tor3,
                                                             species_index,
                                                             mask_coll_, alpha_coefficients_, f5d_s);
             }
