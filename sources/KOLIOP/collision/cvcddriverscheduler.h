@@ -24,12 +24,12 @@ namespace koliop {
             struct CvCdDriverConfiguration {
             public:
                 CvCdDriverEraser                   cvcd_driver_;
-                OrdinalType                        block_first_r_;
-                OrdinalType                        block_first_theta_;
-                OrdinalType                        block_first_phi_;
-                OrdinalType                        block_r_extent_;
-                OrdinalType                        block_theta_extent_;
-                OrdinalType                        block_phi_extent_;
+                OrdinalType                        block_first_tor1_;
+                OrdinalType                        block_first_tor2_;
+                OrdinalType                        block_first_tor3_;
+                OrdinalType                        block_tor1_extent_;
+                OrdinalType                        block_tor2_extent_;
+                OrdinalType                        block_tor3_extent_;
                 Constant::DeviceExecutionSpaceType execution_space_;
             };
 

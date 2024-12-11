@@ -10,6 +10,7 @@
 #include "KOLIOP/portability/cmath.h"
 #include "KOLIOP/utility/copy.h"
 #include "KOLIOP/utility/select.h"
+#include "KOLIOP/utility/tordu.h"
 #include "KOLIOP/utility/view.h"
 
 namespace koliop {
@@ -34,9 +35,9 @@ namespace koliop {
 
             const auto& mu_extent      = an_operator.mu_extent_;
             const auto& vpar_extent    = an_operator.vpar_extent_;
-            const auto& r_extent       = an_operator.r_extent_;
-            const auto& theta_extent   = an_operator.theta_extent_;
-            const auto& phi_extent     = an_operator.phi_extent_;
+            const auto& tor1_extent    = an_operator.tor1_extent_;
+            const auto& tor2_extent    = an_operator.tor2_extent_;
+            const auto& tor3_extent    = an_operator.tor3_extent_;
             const auto& species_extent = an_operator.species_extent_;
 
             const auto& local_domain_r_offset     = an_operator.local_domain_r_offset_;
@@ -51,7 +52,7 @@ namespace koliop {
 
             // TODO(Etienne M): Make sure the accesses are sequential on CPU.
 
-            const auto team_count = r_extent * theta_extent * phi_extent * species_extent;
+            const auto team_count = tor1_extent * tor2_extent * tor3_extent * species_extent;
 
             // Due to the inherent Cuda/HIP thread block limit.
             KOLIOP_ASSERT(team_count <= std::numeric_limits<int>::max());
@@ -92,10 +93,13 @@ namespace koliop {
 
                 const OrdinalType team_index = a_team_handle.league_rank();
 
-                const OrdinalType ir       = (team_index) % r_extent;
-                const OrdinalType itheta   = (team_index / (r_extent)) % theta_extent;
-                const OrdinalType iphi     = (team_index / (r_extent * theta_extent)) % phi_extent;
-                const OrdinalType ispecies = (team_index / (r_extent * theta_extent * phi_extent)) /* % species_extent */;
+                const OrdinalType itor1    = (team_index) % tor1_extent;
+                const OrdinalType itor2    = (team_index / (tor1_extent)) % tor2_extent;
+                const OrdinalType itor3    = (team_index / (tor1_extent * tor2_extent)) % tor3_extent;
+                const OrdinalType ispecies = (team_index / (tor1_extent * tor2_extent * tor3_extent)) /* % species_extent */;
+
+                const OrdinalType ir     = koliop::utility::GetRValue(itor1, itor2, itor3);
+                const OrdinalType itheta = koliop::utility::GetThetaValue(itor1, itor2, itor3);
 
                 // NOTE: The explicit Left iteration direction may not benefit
                 // the CPUs depending on how that is implemented.
@@ -127,7 +131,7 @@ namespace koliop {
                     an_intra_team_policy,
                     [&](auto imu, auto ivpar) {
                         const ComputeFloatType f5d_s_value = Kokkos::max(1.0E-40,
-                                                                         f5d_s(imu, ivpar, ir, itheta, iphi, ispecies));
+                                                                         f5d_s(imu, ivpar, itor1, itor2, itor3, ispecies));
 
                         const ComputeFloatType ftmp = Bstar_s(ivpar, ir, itheta, ispecies) *
                                                       coeff_intdmu(imu) *
@@ -139,7 +143,7 @@ namespace koliop {
                         vpara_reducer.join(vpara_reducer.reference(),
                                            vparg(ivpar) * ftmp);
 
-                        f5d_s(imu, ivpar, ir, itheta, iphi, ispecies) = f5d_s_value;
+                        f5d_s(imu, ivpar, itor1, itor2, itor3, ispecies) = f5d_s_value;
                     });
 
                 a_team_handle.team_reduce(na_reducer);
@@ -165,7 +169,7 @@ namespace koliop {
                         const ComputeFloatType ftmp = Bstar_s(ivpar, ir, itheta, ispecies) *
                                                       coeff_intdmu(imu) *
                                                       coeff_intdvpar(ivpar) *
-                                                      f5d_s(imu, ivpar, ir, itheta, iphi, ispecies);
+                                                      f5d_s(imu, ivpar, itor1, itor2, itor3, ispecies);
 
                         Ta_reducer.join(Ta_reducer.reference(),
                                         (((vparg(ivpar) - vpara) * (vparg(ivpar) - vpara)) +
@@ -187,9 +191,9 @@ namespace koliop {
 
                         na = k2Pi * na;
 
-                        n_s(ir, itheta, iphi, ispecies)     = na;
-                        U_par_s(ir, itheta, iphi, ispecies) = vpara;
-                        T_s(ir, itheta, iphi, ispecies)     = Ta;
+                        n_s(itor1, itor2, itor3, ispecies)     = na;
+                        U_par_s(itor1, itor2, itor3, ispecies) = vpara;
+                        T_s(itor1, itor2, itor3, ispecies)     = Ta;
                     });
             };
 
@@ -203,7 +207,7 @@ namespace koliop {
                                                                                koliop::utility::View::InternalInputL6>(execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],
                                                                                                                        f5d_s, "f5d_s",
                                                                                                                        mu_extent_, vpar_extent_,
-                                                                                                                       r_extent_, theta_extent_, phi_extent_,
+                                                                                                                       tor1_extent_, tor2_extent_, tor3_extent_,
                                                                                                                        species_extent_);
 
             DoComputeMoments(*this, execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],
@@ -214,7 +218,7 @@ namespace koliop {
                                                                                                 a_device_visible_f5d_s,
                                                                                                 f5d_s,
                                                                                                 mu_extent_, vpar_extent_,
-                                                                                                r_extent_, theta_extent_, phi_extent_,
+                                                                                                tor1_extent_, tor2_extent_, tor3_extent_,
                                                                                                 species_extent_);
 
 #if defined(KOLIOP_FENCE_ON_OPERATOR_EXIT)

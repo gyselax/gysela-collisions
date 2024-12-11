@@ -461,9 +461,9 @@ namespace koliop {
             static inline void
             DoComputeNajl(const Najl&    najl_provider,
                           ExecutionSpace an_execution_space,
-                          OrdinalType    block_first_r,
-                          OrdinalType    block_first_theta,
-                          OrdinalType    block_first_phi,
+                          OrdinalType    block_first_tor1,
+                          OrdinalType    block_first_tor2,
+                          OrdinalType    block_first_tor3,
                           OrdinalType    species_index,
                           const View4D&  n_s,
                           const View4D&  T_s,
@@ -487,17 +487,17 @@ namespace koliop {
 
                 const auto& collision_interspecies = najl_provider.collision_interspecies_;
 
-                const auto kernel = KOKKOS_LAMBDA(OrdinalType ivpar, OrdinalType ir, OrdinalType itheta, OrdinalType iphi) {
+                const auto kernel = KOKKOS_LAMBDA(OrdinalType ivpar, OrdinalType itor1, OrdinalType itor2, OrdinalType itor3) {
 
                     // NOTE: kBlockExtentXXX are constant, the compiler can replace
                     // the modulo with faster instructions.
-                    const OrdinalType block_local_index_ir     = ir - block_first_r;
-                    const OrdinalType block_local_index_itheta = itheta - block_first_theta;
-                    const OrdinalType block_local_index_iphi   = iphi - block_first_phi;
+                    const OrdinalType block_local_index_itor1 = itor1 - block_first_tor1;
+                    const OrdinalType block_local_index_itor2 = itor2 - block_first_tor2;
+                    const OrdinalType block_local_index_itor3 = itor3 - block_first_tor3;
 
-                    const OffsetType flattened_index = Najl::CvCdDriverType::kBlockExtentR * Najl::CvCdDriverType::kBlockExtentTheta * block_local_index_iphi +
-                                                       Najl::CvCdDriverType::kBlockExtentR * block_local_index_itheta +
-                                                       block_local_index_ir;
+                    const OffsetType flattened_index = Najl::CvCdDriverType::kBlockExtentTor1 * Najl::CvCdDriverType::kBlockExtentTor2 * block_local_index_itor3 +
+                                                       Najl::CvCdDriverType::kBlockExtentTor1 * block_local_index_itor2 +
+                                                       block_local_index_itor1;
 
                     const OrdinalType batch_element_index = (flattened_index) % Najl::CvCdDriverType::BatchTraitsType::kBatchSize;
                     const OrdinalType batch_index         = (flattened_index / (Najl::CvCdDriverType::BatchTraitsType::kBatchSize)) /* % Najl::CvCdDriverType::kBatchCount */;
@@ -528,15 +528,15 @@ namespace koliop {
                                                     batch_element_index);
 
                     const auto local_n_s = Kokkos::subview(n_s,
-                                                           ir,
-                                                           itheta,
-                                                           iphi,
+                                                           itor1,
+                                                           itor2,
+                                                           itor3,
                                                            Kokkos::ALL());
 
                     const auto local_T_s = Kokkos::subview(T_s,
-                                                           ir,
-                                                           itheta,
-                                                           iphi,
+                                                           itor1,
+                                                           itor2,
+                                                           itor3,
                                                            Kokkos::ALL());
 
                     const ValueType vpar2_on_Ta = vparg(ivpar) * vparg(ivpar) / local_T_s(species_index);
@@ -554,7 +554,7 @@ namespace koliop {
                                           collision_interspecies,
                                           hat_As, hat_Zs,
                                           local_n_s, local_T_s,
-                                          nu_ab(ir, itheta, iphi, species_index, species_index),
+                                          nu_ab(itor1, itor2, itor3, species_index, species_index),
                                           vpar2_on_Ta,
                                           L_mat);
 
@@ -625,13 +625,13 @@ namespace koliop {
                                  Kokkos::Iterate::Left,
                                  Kokkos::Iterate::Left>>{an_execution_space,
                                                          {0,
-                                                          block_first_r,
-                                                          block_first_theta,
-                                                          block_first_phi},
+                                                          block_first_tor1,
+                                                          block_first_tor2,
+                                                          block_first_tor3},
                                                          {vpar_extent,
-                                                          block_first_r + Najl::CvCdDriverType::kBlockExtentR,
-                                                          block_first_theta + Najl::CvCdDriverType::kBlockExtentTheta,
-                                                          block_first_phi + Najl::CvCdDriverType::kBlockExtentPhi}};
+                                                          block_first_tor1 + Najl::CvCdDriverType::kBlockExtentTor1,
+                                                          block_first_tor2 + Najl::CvCdDriverType::kBlockExtentTor2,
+                                                          block_first_tor3 + Najl::CvCdDriverType::kBlockExtentTor3}};
 
                 Kokkos::parallel_for("DoComputeNajl",
                                      a_policy, kernel);
@@ -679,9 +679,9 @@ namespace koliop {
 
             template <typename ExecutionSpace>
             void Compute(ExecutionSpace                                       an_execution_space,
-                         OrdinalType                                          block_first_r,
-                         OrdinalType                                          block_first_theta,
-                         OrdinalType                                          block_first_phi,
+                         OrdinalType                                          block_first_tor1,
+                         OrdinalType                                          block_first_tor2,
+                         OrdinalType                                          block_first_tor3,
                          OrdinalType                                          species_index,
                          const koliop::utility::View::MDL4<ComputeFloatType>& n_s,
                          const koliop::utility::View::MDL4<ComputeFloatType>& T_s,
@@ -739,9 +739,9 @@ namespace koliop {
         template <typename CvCdDriver>
         template <typename ExecutionSpace>
         void Najl<CvCdDriver>::Compute(ExecutionSpace                                       an_execution_space,
-                                       OrdinalType                                          block_first_r,
-                                       OrdinalType                                          block_first_theta,
-                                       OrdinalType                                          block_first_phi,
+                                       OrdinalType                                          block_first_tor1,
+                                       OrdinalType                                          block_first_tor2,
+                                       OrdinalType                                          block_first_tor3,
                                        OrdinalType                                          species_index,
                                        const koliop::utility::View::MDL4<ComputeFloatType>& n_s,
                                        const koliop::utility::View::MDL4<ComputeFloatType>& T_s,
@@ -769,9 +769,9 @@ namespace koliop {
 
             detail::DoComputeNajl(*this,
                                   an_execution_space,
-                                  block_first_r,
-                                  block_first_theta,
-                                  block_first_phi,
+                                  block_first_tor1,
+                                  block_first_tor2,
+                                  block_first_tor3,
                                   species_index,
                                   n_s,
                                   T_s,

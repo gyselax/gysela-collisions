@@ -125,7 +125,7 @@ namespace koliop {
             , mask_LIM_{LIM_ ? koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL2<const Flo64>, koliop::utility::View::InternalInputL2>(Constant::DeviceExecutionSpaceType{}, mask_LIM, "mask_LIM_", global_domain_r_extent_, global_domain_theta_extent_) :
                                koliop::utility::View::InternalInputL2<Flo64>{}}
             , B_norm_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL2<const Flo64>, koliop::utility::View::InternalInputL2>(Constant::DeviceExecutionSpaceType{}, B_norm, "B_norm_", global_domain_r_extent_, global_domain_theta_extent_)}
-            , Bstar_s_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL4<const Flo64>, koliop::utility::View::InternalInputL4>(Constant::DeviceExecutionSpaceType{}, Bstar_s, "Bstar_s_", vpar_extent_, tor1_extent_, tor2_extent_, species_extent_)}
+            , Bstar_s_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL4<const Flo64>, koliop::utility::View::InternalInputL4>(Constant::DeviceExecutionSpaceType{}, Bstar_s, "Bstar_s_", vpar_extent_, r_extent_, theta_extent_, species_extent_)}
 
             // Constant, internally computed values
 
