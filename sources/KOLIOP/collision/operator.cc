@@ -7,6 +7,7 @@
 #include "KOLIOP/internal/configuration.h"
 #include "KOLIOP/portability/cmath.h"
 #include "KOLIOP/utility/copy.h"
+#include "KOLIOP/utility/tordu.h"
 
 namespace koliop {
     namespace collision {
@@ -72,9 +73,9 @@ namespace koliop {
 
         Operator::Operator(uint64_t     mu_extent,
                            uint64_t     vpar_extent,
-                           uint64_t     r_extent,
-                           uint64_t     theta_extent,
-                           uint64_t     phi_extent,
+                           uint64_t     tor1_extent,
+                           uint64_t     tor2_extent,
+                           uint64_t     tor3_extent,
                            uint64_t     species_extent,
                            uint64_t     global_domain_r_extent,
                            uint64_t     global_domain_theta_extent,
@@ -98,9 +99,12 @@ namespace koliop {
             // Constant, externally computed values
             : mu_extent_{static_cast<OrdinalType>(mu_extent)}
             , vpar_extent_{static_cast<OrdinalType>(vpar_extent)}
-            , r_extent_{static_cast<OrdinalType>(r_extent)}
-            , theta_extent_{static_cast<OrdinalType>(theta_extent)}
-            , phi_extent_{static_cast<OrdinalType>(phi_extent)}
+            , tor1_extent_{static_cast<OrdinalType>(tor1_extent)}
+            , tor2_extent_{static_cast<OrdinalType>(tor2_extent)}
+            , tor3_extent_{static_cast<OrdinalType>(tor3_extent)}
+            , r_extent_{koliop::utility::GetRValue(tor1_extent_, tor2_extent_, tor3_extent_)}
+            , theta_extent_{koliop::utility::GetThetaValue(tor1_extent_, tor2_extent_, tor3_extent_)}
+            , phi_extent_{koliop::utility::GetPhiValue(tor1_extent_, tor2_extent_, tor3_extent_)}
             , species_extent_{static_cast<OrdinalType>(species_extent)}
             , global_domain_r_extent_{static_cast<OrdinalType>(global_domain_r_extent)}
             , global_domain_theta_extent_{static_cast<OrdinalType>(global_domain_theta_extent)}
@@ -121,7 +125,7 @@ namespace koliop {
             , mask_LIM_{LIM_ ? koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL2<const Flo64>, koliop::utility::View::InternalInputL2>(Constant::DeviceExecutionSpaceType{}, mask_LIM, "mask_LIM_", global_domain_r_extent_, global_domain_theta_extent_) :
                                koliop::utility::View::InternalInputL2<Flo64>{}}
             , B_norm_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL2<const Flo64>, koliop::utility::View::InternalInputL2>(Constant::DeviceExecutionSpaceType{}, B_norm, "B_norm_", global_domain_r_extent_, global_domain_theta_extent_)}
-            , Bstar_s_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL4<const Flo64>, koliop::utility::View::InternalInputL4>(Constant::DeviceExecutionSpaceType{}, Bstar_s, "Bstar_s_", vpar_extent_, r_extent_, theta_extent_, species_extent_)}
+            , Bstar_s_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL4<const Flo64>, koliop::utility::View::InternalInputL4>(Constant::DeviceExecutionSpaceType{}, Bstar_s, "Bstar_s_", vpar_extent_, tor1_extent_, tor2_extent_, species_extent_)}
 
             // Constant, internally computed values
 
@@ -131,17 +135,17 @@ namespace koliop {
             // Variable, internally computed values
 
             , n_s_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "n_s_"),
-                   static_cast<std::size_t>(r_extent_), static_cast<std::size_t>(theta_extent_), static_cast<std::size_t>(phi_extent_), static_cast<std::size_t>(species_extent_)}
+                   static_cast<std::size_t>(tor1_extent_), static_cast<std::size_t>(tor2_extent_), static_cast<std::size_t>(tor3_extent_), static_cast<std::size_t>(species_extent_)}
             , U_par_s_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "U_par_s_0_"),
-                       static_cast<std::size_t>(r_extent_), static_cast<std::size_t>(theta_extent_), static_cast<std::size_t>(phi_extent_), static_cast<std::size_t>(species_extent_)}
+                       static_cast<std::size_t>(tor1_extent_), static_cast<std::size_t>(tor2_extent_), static_cast<std::size_t>(tor3_extent_), static_cast<std::size_t>(species_extent_)}
             , U_par_s_input_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "U_par_s_1_"),
-                             static_cast<std::size_t>(r_extent_), static_cast<std::size_t>(theta_extent_), static_cast<std::size_t>(phi_extent_), static_cast<std::size_t>(species_extent_)}
+                             static_cast<std::size_t>(tor1_extent_), static_cast<std::size_t>(tor2_extent_), static_cast<std::size_t>(tor3_extent_), static_cast<std::size_t>(species_extent_)}
             , T_s_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "T_s_"),
-                   static_cast<std::size_t>(r_extent_), static_cast<std::size_t>(theta_extent_), static_cast<std::size_t>(phi_extent_), static_cast<std::size_t>(species_extent_)}
+                   static_cast<std::size_t>(tor1_extent_), static_cast<std::size_t>(tor2_extent_), static_cast<std::size_t>(tor3_extent_), static_cast<std::size_t>(species_extent_)}
             , nu_ab_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "nu_ab_"),
-                     static_cast<std::size_t>(r_extent_), static_cast<std::size_t>(theta_extent_), static_cast<std::size_t>(phi_extent_), static_cast<std::size_t>(species_extent_), static_cast<std::size_t>(species_extent_)}
+                     static_cast<std::size_t>(tor1_extent_), static_cast<std::size_t>(tor2_extent_), static_cast<std::size_t>(tor3_extent_), static_cast<std::size_t>(species_extent_), static_cast<std::size_t>(species_extent_)}
             , q_par_on_nT_s_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "q_par_on_nT_s_"),
-                             static_cast<std::size_t>(r_extent_), static_cast<std::size_t>(theta_extent_), static_cast<std::size_t>(phi_extent_), static_cast<std::size_t>(species_extent_)}
+                             static_cast<std::size_t>(tor1_extent_), static_cast<std::size_t>(tor2_extent_), static_cast<std::size_t>(tor3_extent_), static_cast<std::size_t>(species_extent_)}
 
             // Miscellaneous tooling
             , execution_space_pool_{}

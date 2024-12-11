@@ -19,47 +19,56 @@ int Test1() {
     static constexpr int64_t ir_SOL_separatrix      = 32;
     static constexpr double  dt                     = 50.0;
 
-    static constexpr size_t the_mu_extent      = 64;
-    static constexpr size_t the_vpar_extent    = 128;
-    static constexpr size_t the_r_extent       = 64;
-    static constexpr size_t the_theta_extent   = 128;
-    static constexpr size_t the_phi_extent     = 1;
-    static constexpr size_t the_species_extent = 1;
+    static constexpr size_t mu_extent   = 64;
+    static constexpr size_t vpar_extent = 128;
 
-    static constexpr size_t the_global_domain_r_extent     = the_r_extent;
-    static constexpr size_t the_global_domain_theta_extent = the_theta_extent + 1;
-    static constexpr size_t the_global_domain_r_offset     = 0;
-    static constexpr size_t the_global_domain_theta_offset = 0;
+    static constexpr size_t r_extent     = 64;
+    static constexpr size_t theta_extent = 128;
+
+#if defined(KOLIOP_BUILD_FORTRAN_INTERFACE)
+    static constexpr size_t tor1_extent = r_extent;
+    static constexpr size_t tor2_extent = theta_extent;
+#else
+    static constexpr size_t tor1_extent = theta_extent;
+    static constexpr size_t tor2_extent = r_extent;
+#endif
+    static constexpr size_t tor3_extent    = 1;
+    static constexpr size_t species_extent = 1;
+
+    static constexpr size_t global_domain_r_extent     = r_extent;
+    static constexpr size_t global_domain_theta_extent = tor3_extent + 1;
+    static constexpr size_t global_domain_r_offset     = 0;
+    static constexpr size_t global_domain_theta_offset = 0;
 
     std::vector<double> a_big_dummy_array{};
-    a_big_dummy_array.resize(the_mu_extent *
-                                 the_vpar_extent *
-                                 the_r_extent *
-                                 the_theta_extent *
-                                 the_phi_extent *
-                                 the_species_extent,
+    a_big_dummy_array.resize(mu_extent *
+                                 vpar_extent *
+                                 tor1_extent *
+                                 tor2_extent *
+                                 tor3_extent *
+                                 species_extent,
                              1.0);
 
     std::vector<double> a_big_dummy_f5d_s{};
-    a_big_dummy_f5d_s.resize(the_mu_extent *
-                                 the_vpar_extent *
-                                 the_r_extent *
-                                 the_theta_extent *
-                                 the_phi_extent *
-                                 the_species_extent,
+    a_big_dummy_f5d_s.resize(mu_extent *
+                                 vpar_extent *
+                                 tor1_extent *
+                                 tor2_extent *
+                                 tor3_extent *
+                                 species_extent,
                              1.0);
 
     if(::koliop_Create(&an_operator,
-                       the_mu_extent,
-                       the_vpar_extent,
-                       the_r_extent,
-                       the_theta_extent,
-                       the_phi_extent,
-                       the_species_extent,
-                       the_global_domain_r_extent,
-                       the_global_domain_theta_extent,
-                       the_global_domain_r_offset,
-                       the_global_domain_theta_offset,
+                       mu_extent,
+                       vpar_extent,
+                       tor1_extent,
+                       tor2_extent,
+                       tor3_extent,
+                       species_extent,
+                       global_domain_r_extent,
+                       global_domain_theta_extent,
+                       global_domain_r_offset,
+                       global_domain_theta_offset,
                        collision_interspecies,
                        SOL,
                        LIM,
@@ -116,11 +125,9 @@ int Test1() {
                                     dt,
                                     a_big_dummy_f5d_s.data());
 
-    double n_s[the_species_extent][the_phi_extent][the_theta_extent][the_r_extent]{{{{42.0}}}};
-
     ::koliop_ExtractRaw(an_operator,
                         KOLIOP_EXTRACTION_IDENTIFIER_n_s,
-                        &n_s[0][0][0]);
+                        a_big_dummy_f5d_s.data());
 
     ::koliop_Fence(an_operator);
 
@@ -142,54 +149,63 @@ int Test2() {
 
     ::koliop_Operator an_operator;
 
-    static constexpr int8_t  collision_interspecies = true;
-    static constexpr int8_t  SOL                    = false;
-    static constexpr int8_t  LIM                    = false;
-    static constexpr double  dt                     = 50.0;
+    static constexpr int8_t collision_interspecies = true;
+    static constexpr int8_t SOL                    = false;
+    static constexpr int8_t LIM                    = false;
+    static constexpr double dt                     = 50.0;
 
-    static constexpr size_t the_mu_extent      = 64;
-    static constexpr size_t the_vpar_extent    = 128;
-    static constexpr size_t the_r_extent       = 64;
-    static constexpr size_t the_theta_extent   = 128;
-    static constexpr size_t the_phi_extent     = 32;
-    static constexpr size_t the_species_extent = 2;
+    static constexpr size_t mu_extent   = 64;
+    static constexpr size_t vpar_extent = 128;
 
-    static constexpr size_t the_global_domain_r_extent     = the_r_extent;
-    static constexpr size_t the_global_domain_theta_extent = the_theta_extent + 1;
-    static constexpr size_t the_global_domain_r_offset     = 0;
-    static constexpr size_t the_global_domain_theta_offset = 0;
+    static constexpr size_t r_extent     = 64;
+    static constexpr size_t theta_extent = 128;
 
-    static constexpr int64_t ir_SOL_separatrix = the_global_domain_r_extent;
+#if defined(KOLIOP_BUILD_FORTRAN_INTERFACE)
+    static constexpr size_t tor1_extent = r_extent;
+    static constexpr size_t tor2_extent = theta_extent;
+#else
+    static constexpr size_t tor1_extent = theta_extent;
+    static constexpr size_t tor2_extent = r_extent;
+#endif
+    static constexpr size_t tor3_extent    = 32;
+    static constexpr size_t species_extent = 2;
+
+    static constexpr size_t global_domain_r_extent     = r_extent;
+    static constexpr size_t global_domain_theta_extent = tor3_extent + 1;
+    static constexpr size_t global_domain_r_offset     = 0;
+    static constexpr size_t global_domain_theta_offset = 0;
+
+    static constexpr int64_t ir_SOL_separatrix = global_domain_r_extent;
 
     std::vector<double> a_big_dummy_array{};
-    a_big_dummy_array.resize(the_mu_extent *
-                                 the_vpar_extent *
-                                 the_r_extent *
-                                 the_theta_extent *
-                                 the_phi_extent *
-                                 the_species_extent,
+    a_big_dummy_array.resize(mu_extent *
+                                 vpar_extent *
+                                 tor1_extent *
+                                 tor2_extent *
+                                 tor3_extent *
+                                 species_extent,
                              1.0);
 
     std::vector<double> a_big_dummy_f5d_s{};
-    a_big_dummy_f5d_s.resize(the_mu_extent *
-                                 the_vpar_extent *
-                                 the_r_extent *
-                                 the_theta_extent *
-                                 the_phi_extent *
-                                 the_species_extent,
+    a_big_dummy_f5d_s.resize(mu_extent *
+                                 vpar_extent *
+                                 tor1_extent *
+                                 tor2_extent *
+                                 tor3_extent *
+                                 species_extent,
                              1.0);
 
     if(::koliop_Create(&an_operator,
-                       the_mu_extent,
-                       the_vpar_extent,
-                       the_r_extent,
-                       the_theta_extent,
-                       the_phi_extent,
-                       the_species_extent,
-                       the_global_domain_r_extent,
-                       the_global_domain_theta_extent,
-                       the_global_domain_r_offset,
-                       the_global_domain_theta_offset,
+                       mu_extent,
+                       vpar_extent,
+                       tor1_extent,
+                       tor2_extent,
+                       tor3_extent,
+                       species_extent,
+                       global_domain_r_extent,
+                       global_domain_theta_extent,
+                       global_domain_r_offset,
+                       global_domain_theta_offset,
                        collision_interspecies,
                        SOL,
                        LIM,
@@ -229,7 +245,8 @@ int Test2() {
         }
 
         const auto duration = std::chrono::steady_clock::now() - time_point;
-        std::cout << (duration.count() / 1'000'000) << " ms\n" << std::flush;
+        std::cout << (duration.count() / 1'000'000) << " ms\n"
+                  << std::flush;
     }
 
     if(::koliop_Release(an_operator) != KOLIOP_STATUS_SUCCESS) {

@@ -105,9 +105,9 @@ namespace koliop {
             /// @brief
             /// @param mu_extent
             /// @param vpar_extent
-            /// @param r_extent
-            /// @param theta_extent
-            /// @param phi_extent
+            /// @param tor1_extent
+            /// @param tor2_extent
+            /// @param tor3_extent
             /// @param species_extent
             /// @param collision_interspecies
             /// @param SOL
@@ -127,9 +127,9 @@ namespace koliop {
             /// @param Bstar_s
             Operator(uint64_t     mu_extent,
                      uint64_t     vpar_extent,
-                     uint64_t     r_extent,
-                     uint64_t     theta_extent,
-                     uint64_t     phi_extent,
+                     uint64_t     tor1_extent,
+                     uint64_t     tor2_extent,
+                     uint64_t     tor3_extent,
                      uint64_t     species_extent,
                      uint64_t     global_domain_r_extent,
                      uint64_t     global_domain_theta_extent,
@@ -211,6 +211,9 @@ namespace koliop {
 
             OrdinalType mu_extent_;
             OrdinalType vpar_extent_;
+            OrdinalType tor1_extent_;
+            OrdinalType tor2_extent_;
+            OrdinalType tor3_extent_;
             OrdinalType r_extent_;
             OrdinalType theta_extent_;
             OrdinalType phi_extent_;
