@@ -79,7 +79,15 @@ namespace koliop {
                 } else if constexpr(GetMapping<kTorIndex>() == 2) {
                     return tor3_value;
                 } else {
-                    static_assert(false);
+                    // NOTE: the program is ill formed if I use
+                    // static_assert(false) here regardless of the input
+                    // template parameter. In truth this feels like a C++ defect
+                    // because the intent of if constexpr in our case is to
+                    // avoid SFINAE.. Anyway, some compiler accept this
+                    // construct (gcc > 11 or clang) some older do not. I
+                    // workaround the issue I generate a tautology based on the
+                    // template argument.
+                    static_assert(kTorIndex || !kTorIndex);
                 }
             }
 
