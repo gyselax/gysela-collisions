@@ -45,9 +45,9 @@ namespace koliop {
                                                        (static_cast<ComputeFloatType>(1.0) / hat_Aa + static_cast<ComputeFloatType>(1.0) / hat_Ab);
 
                     for(OrdinalType ir = 0; ir < r_extent; ++ir) {
-                        // AD(r) = sqrt(2)*eps^(3/2)/(q R0_)*nustaR0_(r) which
+                        // AD(r) = sqrt(2)*eps(r)^(3/2)/(q(r) R0_)*nustaR0_(r) which
                         // is independent on the species considered
-                        // (eps = r/R0_).
+                        // (eps(r) = r/R0_).
                         // AD comprises a mask in r direction to avoid to *
                         // compute collision in the scrape-off layer.
                         const ComputeFloatType AD = a_host_visible_coeff_AD_r(local_domain_r_offset + ir);
