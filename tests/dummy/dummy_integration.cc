@@ -139,8 +139,19 @@ int Test1() {
 }
 
 int Test2() {
-    // Takes 1.85 sec on MI250X (after rocm-smi -r).
-    //       0.78 sec on MI300A.
+    // Naive benchmarks:
+    //  GPU:
+    //      1.85 s on MI250X (after rocm-smi -r).
+    //      0.78 s on MI300A.
+    //  CPU: (reduced case r=32,theta=32,phi=2) single core, no threading but using omp backend.
+    //      Genoa clocked at 2.4 GHz.
+    //          1.79 s on intel-oneapi 2022 and assuming the libm function are all vectorized (svml).
+    //          16.3 s on intel-oneapi if erf function is NOT vectorized in Cpar's tight loop (svml).
+    //              x9.1
+    //          1.21 s on clang 17 and assuming the libm function are all vectorized (svml).
+    //          1.44 s on clang 17 and assuming the libm function are all vectorized (libmvec).
+    //          6.66 s on clang 17 if erf function is NOT vectorized in Cpar's tight loop (svml).
+    //
 
     // NOTE: This function is used to test the GPU code. We pass the operator
     // dummy arrays that get copied to the GPU anyway (assuming

@@ -35,7 +35,7 @@
 /// Example:
 ///
 ///    #if defined(_MSC_VER)
-///        static_assert(false, "");
+///        static_assert(false);
 ///    #elif defined(__clang__)
 ///    #endif
 ///
@@ -46,11 +46,11 @@
 ///
 ///    #if defined(__clang__)
 ///    #elif defined(_MSC_VER)
-///        static_assert(false, "");
+///        static_assert(false);
 ///    #endif
 /// Or:
 ///    #if !defined(__clang__) && defined(_MSC_VER)
-///        static_assert(false, "");
+///        static_assert(false);
 ///    #elif defined(__clang__)
 ///    #endif
 ///
@@ -74,43 +74,67 @@
 /// See:
 ///     https://sourceforge.net/p/predef/wiki/Compilers/
 ///     https://blog.kowalczyk.info/article/j/guide-to-predefined-macros-in-c-compilers-gcc-clang-msvc-etc..html
+///     Test with godbolt.org.
 ///
 /// Find out what is defined by default by your compiler:
 ///
 /// Compiler                   C macros                         C++ macros
 /// Clang/LLVM                 clang -dM -E -x c /dev/null      clang++ -dM -E -x c++ /dev/null
 /// GNU GCC/G++                gcc   -dM -E -x c /dev/null      g++     -dM -E -x c++ /dev/null
-/// Hewlett-Packard C/C++      cc    -dM -E -x c /dev/null      CC     -dM -E -x c++ /dev/null
+/// Hewlett-Packard C/C++      cc    -dM -E -x c /dev/null      CC      -dM -E -x c++ /dev/null
 /// IBM XL C/C++               xlc   -qshowmacros -E /dev/null  xlc++   -qshowmacros -E /dev/null
-/// Intel ICC/ICPC             icc   -dM -E -x c /dev/null      icpc    -dM -E -x c++ /dev/null
+/// Intel classic icc/icpc     icc   -dM -E -x c /dev/null      icpc    -dM -E -x c++ /dev/null
+/// Intel OneAPI icx/icpx      icx   -dM -E -x c /dev/null      icpx    -dM -E -x c++ /dev/null | Does not define __STRICT_ANSI__ but defines __NO_MATH_ERRNO__ by default.
 /// Microsoft Visual Studio    https://docs.microsoft.com/en-us/cpp/preprocessor/predefined-macros?view=vs-2019
 /// Oracle Solaris Studio      cc    -xdumpmacros -E /dev/null  CC      -xdumpmacros -E /dev/null
 /// Portland Group PGCC/PGCPP  pgcc  -dM -E                     (none)
 ///
-////////////////////////////////////////
+/// NOTE: CMake could give it to us, just look at CMakeCXXCompilerId.
+///
+//////////////////////////////////////
 
 #if defined(__INTEL_CLANG_COMPILER)
-    // For icl
-    #define KOLIOP_COMPILER_IS_ICX 1
-#elif defined(__INTEL_COMPILER)
-    // For icc and icl. The order matters, icl also defines __INTEL_COMPILER.
-    #define KOLIOP_COMPILER_IS_ICC 1
-#elif defined(__clang__)
-    // For every Clang *compatible or mimicry* compiler. The order matters, icl also defines __clang__.
-    #define KOLIOP_COMPILER_IS_CLANG 1
-#elif defined(__GNUC__)
-    // For every GCC *compatible or mimicry* compiler. The order matters, Clang also defines __GNUC__.
-    #define KOLIOP_COMPILER_IS_GCC 1
-#elif defined(_MSC_VER)
+    // For icx and icpx.
+    // __INTEL_LLVM_COMPILER would also work.
+    #define KOLIOP_COMPILER_MIMICRY_INTEL_LLVM 1
+#endif
+#if defined(__INTEL_COMPILER)
+    // For icc and icpc.
+    #define KOLIOP_COMPILER_MIMICRY_INTEL_CLASSIC 1
+#endif
+#if defined(__clang__)
+    // For every Clang *compatible or mimicry* compiler. The order matters,
+    // icx/icpx also defines __clang__.
+    #define KOLIOP_COMPILER_MIMICRY_CLANG 1
+#endif
+#if defined(__GNUC__)
+    // For every GCC *compatible or mimicry* compiler. The order matters,
+    // Clang also defines __GNUC__.
+    #define KOLIOP_COMPILER_MIMICRY_GCC 1
+#endif
+#if defined(_MSC_VER)
     // For every MSVC *compatible or mimicry* compiler.
+    #define KOLIOP_COMPILER_MIMICRY_MSVC 1
+#endif
+
+// We now know which "marker" are defined, now we try to determine which
+// compiler is really underneath.
+
+#if defined(KOLIOP_COMPILER_MIMICRY_INTEL_LLVM)
+    #define KOLIOP_COMPILER_IS_INTEL_LLVM 1
+#elif defined(KOLIOP_COMPILER_MIMICRY_INTEL_CLASSIC)
+    #define KOLIOP_COMPILER_IS_INTEL_CLASSIC 1
+#elif defined(KOLIOP_COMPILER_MIMICRY_CLANG)
+    #define KOLIOP_COMPILER_IS_CLANG 1
+#elif defined(KOLIOP_COMPILER_MIMICRY_GCC)
+    #define KOLIOP_COMPILER_IS_GCC 1
+#elif defined(KOLIOP_COMPILER_MIMICRY_MSVC)
     #define KOLIOP_COMPILER_IS_MSVC 1
 #endif
 
-#if !(defined(KOLIOP_COMPILER_IS_CLANG) || \
+#if !(defined(KOLIOP_COMPILER_IS_INTEL_LLVM) || \
+      defined(KOLIOP_COMPILER_IS_CLANG) ||      \
       defined(KOLIOP_COMPILER_IS_GCC))
-// defined(KOLIOP_COMPILER_IS_ICX)
-// defined(KOLIOP_COMPILER_IS_ICC)
-// defined(KOLIOP_COMPILER_IS_MSVC)
 static_assert(false, "This library doesn't support your compiler.");
 #endif
 
@@ -191,7 +215,7 @@ namespace koliop {
 ///
 ////////////////////////////////////////
 
-#if defined(KOLIOP_COMPILER_IS_GCC) || defined(KOLIOP_COMPILER_IS_CLANG)
+#if defined(KOLIOP_COMPILER_MIMICRY_GCC)
     #define KOLIOP_FORCE_INLINE   __attribute__((always_inline))
     #define KOLIOP_FORCE_NOINLINE __attribute__((noinline))
 #elif defined(KOLIOP_COMPILER_IS_MSVC)

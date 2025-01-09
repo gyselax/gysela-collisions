@@ -17,7 +17,7 @@ else()
     endif()
 endif()
 
-project("koliop" VERSION 0.0.20 LANGUAGES CXX)
+project("koliop" VERSION 0.0.21 LANGUAGES CXX)
 
 include(CTest)
 
@@ -164,21 +164,21 @@ koliop_dependent_target_build_options(koliop)
 # ########################################
 
 # install(TARGETS koliop
-# 	    EXPORT KOLIOPTargets)
+#         EXPORT KOLIOPTargets)
 
 # install(EXPORT KOLIOPTargets
-# 	    NAMESPACE koliop::
-# 	    DESTINATION lib/cmake/koliop)
+#         NAMESPACE koliop::
+#         DESTINATION lib/cmake/koliop)
 
 # install(DIRECTORY include/
-# 	    TYPE INCLUDE)
+#         TYPE INCLUDE)
 
 # configure_package_config_file(koliopConfig.cmake.in
-# 	                          ${CMAKE_CURRENT_BINARY_DIR}/koliopConfig.cmake
-# 	                          INSTALL_DESTINATION lib/cmake/koliop)
+#                               ${CMAKE_CURRENT_BINARY_DIR}/koliopConfig.cmake
+#                               INSTALL_DESTINATION lib/cmake/koliop)
 
 # install(FILES ${CMAKE_CURRENT_BINARY_DIR}/koliopConfig.cmake
-# 	    DESTINATION lib/cmake/koliop)
+#         DESTINATION lib/cmake/koliop)
 
 # # With koliopConfig.cmake to something like that:
 
