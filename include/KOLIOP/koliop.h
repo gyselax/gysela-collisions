@@ -82,11 +82,11 @@ typedef struct koliop_OpaqueOperator_* koliop_Operator;
 /// @param vparg An array of double with extents ([0, vpar_extent) ) representing the coordinate of the Vpar grid points.
 /// @param coeff_intdmu An array of double with extents ([0, mu_extent) ) representing the coefficients for the integral of the coordinates in Mu.
 /// @param coeff_intdvpar An array of double with extents ([0, vpar_extent) ) representing the coefficients for the integral of the coordinates in Vpar (generally using the simpson).
-/// @param coeff_AD_r An array of double with extents ([0, tor1_extent) ) representing the AD coefficients.
+/// @param coeff_AD_r An array of double with extents ([0, global_domain_r_extent) ) representing the AD coefficients.
 /// @param mask_buffer_r An array of double with extents ([0, global_domain_r_extent) ) representing an operator mask in R.
 /// @param mask_LIM An array of double with extents ([0, global_domain_r_extent), [0, global_domain_theta_extent) ) representing an operator's limiter mask. Must be set if LIM is true else, it may be a NULL.
 /// @param B_norm An array of double with extents ([0, global_domain_r_extent), [0, global_domain_theta_extent) ).
-/// @param Bstar_s An array of double with extents ([0, vpar_extent), [0, tor1_extent), [0, tor2_extent), [0, species_extent) ).
+/// @param Bstar_s An array of double with extents ([0, vpar_extent), [0, r), [0, theta), [0, species_extent) ), note that we do not use torN_extent as these may change depending on library calling Koliop.
 /// @return KOLIOP_STATUS_SUCCESS on success.
 koliop_Status koliop_Create(koliop_Operator* an_operator_handle,
                             size_t           mu_extent,
