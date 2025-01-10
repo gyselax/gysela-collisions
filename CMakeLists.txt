@@ -104,7 +104,10 @@ set(koliop_SOURCES_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/sources")
 set(koliop_INCLUDE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 configure_file("${koliop_INCLUDE_DIRECTORY}/KOLIOP/internal/buildspecificities.h.in"
-               "${koliop_INCLUDE_DIRECTORY}/KOLIOP/internal/buildspecificities.h" @ONLY)
+               "${CMAKE_CURRENT_BINARY_DIR}/KOLIOP/internal/buildspecificities.h" @ONLY)
+
+target_include_directories(koliop
+                           PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
 
 # NOTE: GLOBing file is not considered good practice. One could instead specify
 # the full, verbose list of headers and sources.
