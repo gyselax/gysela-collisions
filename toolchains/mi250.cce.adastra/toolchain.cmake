@@ -1,5 +1,3 @@
-set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/installation")
-
 set(CMAKE_CXX_COMPILER CC)
 set(CMAKE_Fortran_COMPILER ftn)
 set(CMAKE_CXX_STANDARD 17)
@@ -24,7 +22,6 @@ set(KokkosKernels_ENABLE_COMPONENT_BLAS ON CACHE BOOL "")
 
 set(koliop_TOOLCHAIN_NAME "mi250.cce.adastra")
 
-set(koliop_ENABLE_LTO OFF CACHE BOOL "")
 set(koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE OFF CACHE BOOL "")
 
 # The rest is optional:

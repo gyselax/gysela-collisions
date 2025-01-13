@@ -17,7 +17,7 @@ else()
     endif()
 endif()
 
-project("koliop" VERSION 0.0.20 LANGUAGES CXX)
+project("koliop" VERSION 0.0.21 LANGUAGES CXX)
 
 include(CTest)
 
@@ -104,7 +104,10 @@ set(koliop_SOURCES_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/sources")
 set(koliop_INCLUDE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 configure_file("${koliop_INCLUDE_DIRECTORY}/KOLIOP/internal/buildspecificities.h.in"
-               "${koliop_INCLUDE_DIRECTORY}/KOLIOP/internal/buildspecificities.h" @ONLY)
+               "${CMAKE_CURRENT_BINARY_DIR}/KOLIOP/internal/buildspecificities.h" @ONLY)
+
+target_include_directories(koliop
+                           PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
 
 # NOTE: GLOBing file is not considered good practice. One could instead specify
 # the full, verbose list of headers and sources.
@@ -164,21 +167,21 @@ koliop_dependent_target_build_options(koliop)
 # ########################################
 
 # install(TARGETS koliop
-# 	    EXPORT KOLIOPTargets)
+#         EXPORT KOLIOPTargets)
 
 # install(EXPORT KOLIOPTargets
-# 	    NAMESPACE koliop::
-# 	    DESTINATION lib/cmake/koliop)
+#         NAMESPACE koliop::
+#         DESTINATION lib/cmake/koliop)
 
 # install(DIRECTORY include/
-# 	    TYPE INCLUDE)
+#         TYPE INCLUDE)
 
 # configure_package_config_file(koliopConfig.cmake.in
-# 	                          ${CMAKE_CURRENT_BINARY_DIR}/koliopConfig.cmake
-# 	                          INSTALL_DESTINATION lib/cmake/koliop)
+#                               ${CMAKE_CURRENT_BINARY_DIR}/koliopConfig.cmake
+#                               INSTALL_DESTINATION lib/cmake/koliop)
 
 # install(FILES ${CMAKE_CURRENT_BINARY_DIR}/koliopConfig.cmake
-# 	    DESTINATION lib/cmake/koliop)
+#         DESTINATION lib/cmake/koliop)
 
 # # With koliopConfig.cmake to something like that:
 

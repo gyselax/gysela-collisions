@@ -1,4 +1,4 @@
-option(${PROJECT_NAME}_ENABLE_LTO "Use Link Time Optimizations (LTO)." ON)
+option(${PROJECT_NAME}_ENABLE_LTO "Use Link Time Optimizations (LTO)." OFF)
 
 if(${PROJECT_NAME}_ENABLE_LTO)
     message(STATUS "[${PROJECT_NAME}] Dependency seeking LTO.")

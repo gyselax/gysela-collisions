@@ -1,5 +1,3 @@
-set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/installation")
-
 set(CMAKE_CXX_COMPILER "${CMAKE_CURRENT_LIST_DIR}/nvcc_wrapper")
 set(CMAKE_Fortran_COMPILER gfortran)
 set(CMAKE_CXX_STANDARD 17)
