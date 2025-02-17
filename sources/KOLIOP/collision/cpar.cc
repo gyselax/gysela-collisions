@@ -103,7 +103,7 @@ namespace koliop {
                 const ComputeFloatType vTa    = Kokkos::sqrt(Ta * inv_hat_Aa);
                 const ComputeFloatType coeff1 = 1.0 / (2.0 * Ta);
                 const ComputeFloatType coeff3 = na / (k2Pi * Ta * Kokkos::sqrt(k2Pi * Ta));
-                const ComputeFloatType AD     = coeff_AD_r(local_domain_r_offset + ir);
+                const ComputeFloatType AD     = coeff_AD_r(ir);
 
                 for(OrdinalType ispeciesB = 0; ispeciesB < species_extent; ++ispeciesB) {
                     // NOTE: We do very large jump in memory, but all the

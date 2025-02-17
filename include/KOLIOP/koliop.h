@@ -82,7 +82,7 @@ typedef struct koliop_OpaqueOperator_* koliop_Operator;
 /// @param vparg An array of double with extents ([0, vpar_extent) ) representing the coordinate of the Vpar grid points.
 /// @param coeff_intdmu An array of double with extents ([0, mu_extent) ) representing the coefficients for the integral of the coordinates in Mu.
 /// @param coeff_intdvpar An array of double with extents ([0, vpar_extent) ) representing the coefficients for the integral of the coordinates in Vpar (generally using the simpson).
-/// @param coeff_AD_r An array of double with extents ([0, global_domain_r_extent) ) representing the AD coefficients.
+/// @param coeff_AD_r An array of double with extents ([0, r) ) representing the AD coefficients.
 /// @param mask_buffer_r An array of double with extents ([0, global_domain_r_extent) ) representing an operator mask in R.
 /// @param mask_LIM An array of double with extents ([0, global_domain_r_extent), [0, global_domain_theta_extent) ) representing an operator's limiter mask. Must be set if LIM is true else, it may be a NULL.
 /// @param B_norm An array of double with extents ([0, global_domain_r_extent), [0, global_domain_theta_extent) ).

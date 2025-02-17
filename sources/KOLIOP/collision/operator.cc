@@ -50,7 +50,7 @@ namespace koliop {
                         // (eps(r) = r/R0_).
                         // AD comprises a mask in r direction to avoid to *
                         // compute collision in the scrape-off layer.
-                        const ComputeFloatType AD = a_host_visible_coeff_AD_r(local_domain_r_offset + ir);
+                        const ComputeFloatType AD = a_host_visible_coeff_AD_r(ir);
 
                         // Computation of nu_ab =
                         //  (AD * hat_Za^2 * hat_Zb^2 * Nb) /
@@ -120,7 +120,7 @@ namespace koliop {
             , vparg_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputL1>(Constant::DeviceExecutionSpaceType{}, vparg, "vparg_", vpar_extent_)}
             , coeff_intdmu_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputL1>(Constant::DeviceExecutionSpaceType{}, coeff_intdmu, "coeff_intdmu_", mu_extent_)}
             , coeff_intdvpar_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputL1>(Constant::DeviceExecutionSpaceType{}, coeff_intdvpar, "coeff_intdvpar_", vpar_extent_)}
-            , coeff_AD_r_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputL1>(Constant::DeviceExecutionSpaceType{}, coeff_AD_r, "coeff_AD_r_", global_domain_r_extent_)}
+            , coeff_AD_r_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputL1>(Constant::DeviceExecutionSpaceType{}, coeff_AD_r, "coeff_AD_r_", r_extent_)}
             , mask_buffer_r_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputL1>(Constant::DeviceExecutionSpaceType{}, mask_buffer_r, "mask_buffer_r_", global_domain_r_extent_)}
             , mask_LIM_{LIM_ ? koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL2<const Flo64>, koliop::utility::View::InternalInputL2>(Constant::DeviceExecutionSpaceType{}, mask_LIM, "mask_LIM_", global_domain_r_extent_, global_domain_theta_extent_) :
                                koliop::utility::View::InternalInputL2<Flo64>{}}
