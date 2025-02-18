@@ -30,8 +30,6 @@ namespace koliop {
             const auto& r_extent       = an_operator.r_extent_;
             const auto& species_extent = an_operator.species_extent_;
 
-            const auto& local_domain_r_offset = an_operator.local_domain_r_offset_;
-
             // TODO(Etienne M): LOOP Obvious loop inter exchange optimization ?
             for(OrdinalType ispeciesB = 0; ispeciesB < species_extent; ++ispeciesB) {
                 for(OrdinalType ispeciesA = 0; ispeciesA < species_extent; ++ispeciesA) {
