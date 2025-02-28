@@ -66,10 +66,10 @@ namespace koliop {
                         // NOTE: Once a block that fits is found, because the domain's dimension are power of two, we
                         // know that we wont need an other block size. We can exit early.
 
-                        KOLIOP_ASSERT((local_domain_tor1_extent - block_count_in_tor1 * current_tor1_block_extent) == 0 &&
-                                      (local_domain_tor2_extent - block_count_in_tor2 * current_tor2_block_extent) == 0 &&
-                                      (local_domain_tor3_extent - block_count_in_tor3 * current_tor3_block_extent) == 0);
-
+                        KOLIOP_ASSERT(((local_domain_tor1_extent - block_count_in_tor1 * current_tor1_block_extent) == 0 &&
+                                       (local_domain_tor2_extent - block_count_in_tor2 * current_tor2_block_extent) == 0 &&
+                                       (local_domain_tor3_extent - block_count_in_tor3 * current_tor3_block_extent) == 0) &&
+                                      "Expecting powers of two as space dimension.");
                         break;
                     }
 
