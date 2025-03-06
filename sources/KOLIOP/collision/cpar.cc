@@ -102,7 +102,6 @@ namespace koliop {
                 static constexpr auto k2Pi = koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi;
 
                 const ComputeFloatType vTa    = Kokkos::sqrt(Ta * inv_hat_Aa);
-                const ComputeFloatType coeff1 = 1.0 / (2.0 * Ta);
                 const ComputeFloatType coeff3 = na / (k2Pi * Ta * Kokkos::sqrt(k2Pi * Ta));
                 const ComputeFloatType AD     = coeff_AD_r(ir);
 
@@ -133,6 +132,10 @@ namespace koliop {
                     const ComputeFloatType factor2 = Rat * Vparb - Vpara + q_par_on_nT - coeff4 + q_par_on_nT * -2.0 * 0.2;
                     const ComputeFloatType factor3 = factor1 * factor2;
                     const ComputeFloatType factor4 = factor3 * inv_Ta * coeff3;
+                    const ComputeFloatType factor5 = 1.0 / (2.0 * Ta);
+                    const ComputeFloatType factor6 = inv_Ta * Bij;
+
+                    // NOTE: By hoisting mu and vparg out of the loop below we can get x1.5 speedup.
 
                     Kokkos::parallel_for(Kokkos::TeamThreadRange(a_team_handle, flattened_mu_vpar.forward()), [&](auto flattened_index) {
                         const auto mu_vpar_work = [&](auto imu, auto ivpar) {
@@ -156,14 +159,18 @@ namespace koliop {
                             // const ComputeFloatType nu_sab = (AD * hat_Za * hat_Za * hat_Zb * hat_Zb * nb) * inv_hat_Aa * (inv_hat_Aa + inv_hat_Ab) * Theta_func_tmp / (vTb * vTb * vTb);
                             // f5d_s(imu, ivpar, itor1, itor2, itor3, ispeciesA) += half_dt * FM0a * nu_sab * coeff5 * (Rat * Vparb - Vpara + q_par_on_nT * (1.0 - 2.0 * xa * xa * 0.2) - coeff4);
 
-                            const ComputeFloatType xa = Kokkos::sqrt(coeff1 * (2.0 * mug(imu) * Bij + vparg(ivpar) * vparg(ivpar)));
-                            const ComputeFloatType xb = xa * coeff2;
+                            const auto vpar    = vparg(ivpar);
+                            const auto vpar_sq = vpar * vpar * factor5;
+
+                            const ComputeFloatType xa_sq = factor6 * mug(imu) + factor5 * vpar_sq;
+                            const ComputeFloatType xa    = Kokkos::sqrt(xa_sq);
+                            const ComputeFloatType xb    = xa * coeff2;
 
                             const ComputeFloatType Theta_func_tmp = xb > 1E-15 ?
                                                                         koliop::portability::GyselaConstant<ComputeFloatType>::kConst_theta * ((Kokkos::erf(xb) - xb * (koliop::portability::GyselaConstant<ComputeFloatType>::kCst_phiprime * Kokkos::exp(-xb * xb))) / (2.0 * xb * xb)) / xb :
                                                                         1.0;
 
-                            f5d_s(imu, ivpar, itor1, itor2, itor3, ispeciesA) += factor4 * Kokkos::exp(-xa * xa) * Theta_func_tmp * vparg(ivpar) * xa * xa;
+                            f5d_s(imu, ivpar, itor1, itor2, itor3, ispeciesA) += factor4 * Kokkos::exp(-xa_sq) * Theta_func_tmp * vpar * xa_sq;
                         };
                         flattened_mu_vpar.Call(flattened_index, mu_vpar_work);
                     });
