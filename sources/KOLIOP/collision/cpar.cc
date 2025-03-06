@@ -105,6 +105,8 @@ namespace koliop {
                 const ComputeFloatType coeff3 = na / (k2Pi * Ta * Kokkos::sqrt(k2Pi * Ta));
                 const ComputeFloatType AD     = coeff_AD_r(ir);
 
+                const ComputeFloatType inv_Ta = 1.0 / Ta;
+
                 for(OrdinalType ispeciesB = 0; ispeciesB < species_extent; ++ispeciesB) {
                     // NOTE: We do very large jump in memory, but all the
                     // threads of a team gets to load this value so in practice
@@ -123,6 +125,12 @@ namespace koliop {
                     const ComputeFloatType coeff2 = vTa / vTb;
                     const ComputeFloatType coeff4 = (3.0 / 5.0) * Rat * q_parb_on_nbTb / (1.0 + (Ta * hat_Ab) / (Tb * hat_Aa));
 
+                    const ComputeFloatType factor0 = (AD * hat_Za * hat_Za * hat_Zb * hat_Zb * nb) * inv_hat_Aa * (inv_hat_Aa + inv_hat_Ab) / (vTb * vTb * vTb);
+                    const ComputeFloatType factor1 = factor0 * half_dt;
+                    const ComputeFloatType factor2 = Rat * Vparb - Vpara + q_par_on_nT - coeff4 + q_par_on_nT * -2.0 * 0.2;
+                    const ComputeFloatType factor3 = factor1 * factor2;
+                    const ComputeFloatType factor4 = factor3 * inv_Ta * coeff3;
+
                     Kokkos::parallel_for(
                         // NOTE: The explicit Left iteration direction may not benefit
                         // the CPUs depending on how that is implemented.
@@ -130,26 +138,34 @@ namespace koliop {
                                                   std::remove_reference_t<decltype(a_team_handle)>>(a_team_handle,
                                                                                                     mu_extent, vpar_extent),
                         [&](auto imu, auto ivpar) {
-                            const ComputeFloatType coeff5 = vparg(ivpar) / Ta;
-                            const ComputeFloatType xa     = Kokkos::sqrt(coeff1 * (2.0 * mug(imu) * Bij + vparg(ivpar) * vparg(ivpar)));
-                            const ComputeFloatType xb     = xa * coeff2;
-                            const ComputeFloatType FM0a   = coeff3 * Kokkos::exp(-xa * xa);
+                            // const ComputeFloatType coeff5 = vparg(ivpar) / Ta;
+                            // const ComputeFloatType xa     = Kokkos::sqrt(coeff1 * (2.0 * mug(imu) * Bij + vparg(ivpar) * vparg(ivpar)));
+                            // const ComputeFloatType xb     = xa * coeff2;
+                            // const ComputeFloatType FM0a   = coeff3 * Kokkos::exp(-xa * xa);
 
-                            // Compute the function:
-                            //    Theta(x) = 3*sqrt(pi)/2 *G(x)/x
-                            //      with G(x) = (phi(x) - x phi'(x)) / (2 x^2)
-                            //      and  x = vTa_on_vTb * sqrt(E) / sqrt_Ta
-                            //      note: phi(x) = 2/sqrt(pi) int_0^x exp(-y^2) dy is computed using ERF()
-                            const ComputeFloatType Theta_func_tmp = xb > 1E-15 ?
-                                                                        koliop::portability::GyselaConstant<ComputeFloatType>::kConst_theta * ((Kokkos::erf(xb) - xb * (koliop::portability::GyselaConstant<ComputeFloatType>::kCst_phiprime * Kokkos::exp(-xb * xb))) / (2.0 * xb * xb)) / xb :
-                                                                        1.0;
+                            // // Compute the function:
+                            // //    Theta(x) = 3*sqrt(pi)/2 *G(x)/x
+                            // //      with G(x) = (phi(x) - x phi'(x)) / (2 x^2)
+                            // //      and  x = vTa_on_vTb * sqrt(E) / sqrt_Ta
+                            // //      note: phi(x) = 2/sqrt(pi) int_0^x exp(-y^2) dy is computed using ERF()
+                            // const ComputeFloatType Theta_func_tmp = xb > 1E-15 ?
+                            //                                             koliop::portability::GyselaConstant<ComputeFloatType>::kConst_theta * ((Kokkos::erf(xb) - xb * (koliop::portability::GyselaConstant<ComputeFloatType>::kCst_phiprime * Kokkos::exp(-xb * xb))) / (2.0 * xb * xb)) / xb :
+                            //                                             1.0;
 
                             // Compute collision frequency nu_sab
                             //  nu_sab(xb) = (AD * hat_Za^2 * hat_Zb^2 * Nb) * (1/hat_Aa) * &
                             //               (1/hat_Aa + 1/hat_Ab)*Theta(xb) / vTb^3
-                            const ComputeFloatType nu_sab = (AD * hat_Za * hat_Za * hat_Zb * hat_Zb * nb) * inv_hat_Aa * (inv_hat_Aa + inv_hat_Ab) * Theta_func_tmp / (vTb * vTb * vTb);
+                            // const ComputeFloatType nu_sab = (AD * hat_Za * hat_Za * hat_Zb * hat_Zb * nb) * inv_hat_Aa * (inv_hat_Aa + inv_hat_Ab) * Theta_func_tmp / (vTb * vTb * vTb);
+                            // f5d_s(imu, ivpar, itor1, itor2, itor3, ispeciesA) += half_dt * FM0a * nu_sab * coeff5 * (Rat * Vparb - Vpara + q_par_on_nT * (1.0 - 2.0 * xa * xa * 0.2) - coeff4);
 
-                            f5d_s(imu, ivpar, itor1, itor2, itor3, ispeciesA) += half_dt * FM0a * nu_sab * coeff5 * (Rat * Vparb - Vpara + q_par_on_nT * (1.0 - 2.0 * xa * xa * 0.2) - coeff4);
+                            const ComputeFloatType xa = Kokkos::sqrt(coeff1 * (2.0 * mug(imu) * Bij + vparg(ivpar) * vparg(ivpar)));
+                            const ComputeFloatType xb = xa * coeff2;
+
+                            const ComputeFloatType Theta_func_tmp = xb > 1E-15 ?
+                                                                        koliop::portability::GyselaConstant<ComputeFloatType>::kConst_theta * ((Kokkos::erf(xb) - xb * (koliop::portability::GyselaConstant<ComputeFloatType>::kCst_phiprime * Kokkos::exp(-xb * xb))) / (2.0 * xb * xb)) / xb :
+                                                                        1.0;
+
+                            f5d_s(imu, ivpar, itor1, itor2, itor3, ispeciesA) += factor4 * Kokkos::exp(-xa * xa) * Theta_func_tmp * vparg(ivpar) * xa * xa;
                         });
                 }
             };
