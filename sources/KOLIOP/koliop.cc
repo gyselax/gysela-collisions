@@ -3,7 +3,9 @@
 #include "KOLIOP/koliop.h"
 
 #include <Kokkos_Core.hpp>
+#include <cstdlib>
 #include <iostream>
+#include <string>
 
 #include "KOLIOP/collision/constant.h"
 #include "KOLIOP/collision/operator.h"
@@ -59,13 +61,24 @@
         }
 
         if(static_cast<bool>(do_kokkos_initialization)) {
-            Kokkos::initialize(Kokkos::InitializationSettings()
-                                   .set_num_threads(static_cast<int>(a_host_thread_count))
-                                   .set_device_id(static_cast<int>(a_device_index))
-                                   .set_disable_warnings(!static_cast<bool>(with_verbose_initialization))
-                                   // NOTE: As of version 4.0.0
-                                   // set_print_configuration does not work ?
-                                   .set_print_configuration(static_cast<bool>(with_verbose_initialization)));
+            auto the_configuration = Kokkos::InitializationSettings()
+                                         .set_device_id(static_cast<int>(a_device_index))
+                                         .set_disable_warnings(!static_cast<bool>(with_verbose_initialization))
+                                         // NOTE: As of version 4.0.0
+                                         // set_print_configuration does not work ?
+                                         .set_print_configuration(static_cast<bool>(with_verbose_initialization));
+
+            // If KOLIOP_SET_NUM_THREADS is set, use that value.
+            auto* koliop_set_num_threads_string = std::getenv("KOLIOP_SET_NUM_THREADS");
+            if(koliop_set_num_threads_string) {
+                a_host_thread_count = std::stoi(koliop_set_num_threads_string);
+            }
+
+            if(a_host_thread_count > 0) {
+                the_configuration.set_num_threads(a_host_thread_count);
+            }
+
+            Kokkos::initialize(the_configuration);
         }
 
         if(!Kokkos::is_initialized()) {

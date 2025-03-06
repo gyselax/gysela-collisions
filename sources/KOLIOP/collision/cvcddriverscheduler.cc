@@ -16,6 +16,14 @@ namespace koliop {
                                  std::size_t                                                preset_block_extent_count,
                                  const OrdinalType (*preset_block_extent)[3]) {
 
+                if(!((local_domain_tor1_extent > 0) && ((local_domain_tor1_extent & (local_domain_tor1_extent - 1)) == 0) &&
+                     (local_domain_tor2_extent > 0) && ((local_domain_tor2_extent & (local_domain_tor2_extent - 1)) == 0) &&
+                     (local_domain_tor3_extent > 0) && ((local_domain_tor3_extent & (local_domain_tor3_extent - 1)) == 0))) {
+                    throw std::runtime_error(
+                        "For performance reason, the number of points in "
+                        "each dimension must be a power of 2.");
+                }
+
                 auto       first_block_extent = preset_block_extent;
                 const auto last_block_extent  = first_block_extent + preset_block_extent_count;
 
