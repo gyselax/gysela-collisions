@@ -9,6 +9,7 @@
 #include "KOLIOP/internal/configuration.h"
 #include "KOLIOP/portability/cmath.h"
 #include "KOLIOP/utility/copy.h"
+#include "KOLIOP/utility/flatten.h"
 #include "KOLIOP/utility/select.h"
 #include "KOLIOP/utility/tordu.h"
 #include "KOLIOP/utility/view.h"
@@ -107,6 +108,8 @@ namespace koliop {
 
                 const ComputeFloatType inv_Ta = 1.0 / Ta;
 
+                koliop::utility::Flatten2 flattened_mu_vpar{mu_extent, vpar_extent};
+
                 for(OrdinalType ispeciesB = 0; ispeciesB < species_extent; ++ispeciesB) {
                     // NOTE: We do very large jump in memory, but all the
                     // threads of a team gets to load this value so in practice
@@ -131,13 +134,8 @@ namespace koliop {
                     const ComputeFloatType factor3 = factor1 * factor2;
                     const ComputeFloatType factor4 = factor3 * inv_Ta * coeff3;
 
-                    Kokkos::parallel_for(
-                        // NOTE: The explicit Left iteration direction may not benefit
-                        // the CPUs depending on how that is implemented.
-                        Kokkos::TeamThreadMDRange<Kokkos::Rank<2, Kokkos::Iterate::Left, Kokkos::Iterate::Left>,
-                                                  std::remove_reference_t<decltype(a_team_handle)>>(a_team_handle,
-                                                                                                    mu_extent, vpar_extent),
-                        [&](auto imu, auto ivpar) {
+                    Kokkos::parallel_for(Kokkos::TeamThreadRange(a_team_handle, flattened_mu_vpar.forward()), [&](auto flattened_index) {
+                        const auto mu_vpar_work = [&](auto imu, auto ivpar) {
                             // const ComputeFloatType coeff5 = vparg(ivpar) / Ta;
                             // const ComputeFloatType xa     = Kokkos::sqrt(coeff1 * (2.0 * mug(imu) * Bij + vparg(ivpar) * vparg(ivpar)));
                             // const ComputeFloatType xb     = xa * coeff2;
@@ -152,9 +150,9 @@ namespace koliop {
                             //                                             koliop::portability::GyselaConstant<ComputeFloatType>::kConst_theta * ((Kokkos::erf(xb) - xb * (koliop::portability::GyselaConstant<ComputeFloatType>::kCst_phiprime * Kokkos::exp(-xb * xb))) / (2.0 * xb * xb)) / xb :
                             //                                             1.0;
 
-                            // Compute collision frequency nu_sab
-                            //  nu_sab(xb) = (AD * hat_Za^2 * hat_Zb^2 * Nb) * (1/hat_Aa) * &
-                            //               (1/hat_Aa + 1/hat_Ab)*Theta(xb) / vTb^3
+                            // // Compute collision frequency nu_sab
+                            // //  nu_sab(xb) = (AD * hat_Za^2 * hat_Zb^2 * Nb) * (1/hat_Aa) * &
+                            // //               (1/hat_Aa + 1/hat_Ab)*Theta(xb) / vTb^3
                             // const ComputeFloatType nu_sab = (AD * hat_Za * hat_Za * hat_Zb * hat_Zb * nb) * inv_hat_Aa * (inv_hat_Aa + inv_hat_Ab) * Theta_func_tmp / (vTb * vTb * vTb);
                             // f5d_s(imu, ivpar, itor1, itor2, itor3, ispeciesA) += half_dt * FM0a * nu_sab * coeff5 * (Rat * Vparb - Vpara + q_par_on_nT * (1.0 - 2.0 * xa * xa * 0.2) - coeff4);
 
@@ -166,7 +164,9 @@ namespace koliop {
                                                                         1.0;
 
                             f5d_s(imu, ivpar, itor1, itor2, itor3, ispeciesA) += factor4 * Kokkos::exp(-xa * xa) * Theta_func_tmp * vparg(ivpar) * xa * xa;
-                        });
+                        };
+                        flattened_mu_vpar.Call(flattened_index, mu_vpar_work);
+                    });
                 }
             };
 
