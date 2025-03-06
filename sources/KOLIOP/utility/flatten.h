@@ -44,7 +44,7 @@ namespace koliop {
             template <typename Callable>
             KOKKOS_INLINE_FUNCTION constexpr void
             Call(OrdinalType flattened_index,
-                 Callable&&  a_callable) {
+                 Callable&&  a_callable) const {
                 OrdinalType extent_1_index;
                 OrdinalType extent_2_index;
                 backward(flattened_index,
@@ -94,7 +94,7 @@ namespace koliop {
             template <typename Callable>
             KOKKOS_INLINE_FUNCTION constexpr void
             Call(OrdinalType flattened_index,
-                 Callable&&  a_callable) {
+                 Callable&&  a_callable) const {
                 OrdinalType extent_1_index;
                 OrdinalType extent_2_index;
                 OrdinalType extent_3_index;

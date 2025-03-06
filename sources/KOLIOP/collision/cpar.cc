@@ -107,7 +107,7 @@ namespace koliop {
 
                 const ComputeFloatType inv_Ta = 1.0 / Ta;
 
-                koliop::utility::Flatten2 flattened_mu_vpar{mu_extent, vpar_extent};
+                const koliop::utility::Flatten2 flattened_mu_vpar{mu_extent, vpar_extent};
 
                 for(OrdinalType ispeciesB = 0; ispeciesB < species_extent; ++ispeciesB) {
                     // NOTE: We do very large jump in memory, but all the

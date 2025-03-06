@@ -64,9 +64,9 @@
             auto the_configuration = Kokkos::InitializationSettings()
                                          .set_device_id(static_cast<int>(a_device_index))
                                          .set_disable_warnings(!static_cast<bool>(with_verbose_initialization))
-                                         // NOTE: As of version 4.0.0
+                                         // NOTE: As of version 4.0.0:4.5.0
                                          // set_print_configuration does not work ?
-                                         .set_print_configuration(static_cast<bool>(with_verbose_initialization));
+                                         .set_print_configuration(static_cast<bool>(false));
 
             // If KOLIOP_SET_NUM_THREADS is set, use that value.
             auto* koliop_set_num_threads_string = std::getenv("KOLIOP_SET_NUM_THREADS");

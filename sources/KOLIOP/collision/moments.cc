@@ -9,6 +9,7 @@
 #include "KOLIOP/internal/configuration.h"
 #include "KOLIOP/portability/cmath.h"
 #include "KOLIOP/utility/copy.h"
+#include "KOLIOP/utility/flatten.h"
 #include "KOLIOP/utility/select.h"
 #include "KOLIOP/utility/tordu.h"
 #include "KOLIOP/utility/view.h"
@@ -101,12 +102,6 @@ namespace koliop {
                 const OrdinalType ir     = koliop::utility::GetRValue(itor1, itor2, itor3);
                 const OrdinalType itheta = koliop::utility::GetThetaValue(itor1, itor2, itor3);
 
-                // NOTE: The explicit Left iteration direction may not benefit
-                // the CPUs depending on how that is implemented.
-                const auto an_intra_team_policy = Kokkos::TeamThreadMDRange<Kokkos::Rank<2, Kokkos::Iterate::Left, Kokkos::Iterate::Left>,
-                                                                            std::remove_reference_t<decltype(a_team_handle)>>(a_team_handle,
-                                                                                                                              mu_extent, vpar_extent);
-
                 ComputeFloatType na;
                 ComputeFloatType vpara;
 
@@ -123,13 +118,14 @@ namespace koliop {
                 na_reducer.init(na_reducer.reference());
                 vpara_reducer.init(vpara_reducer.reference());
 
-                // TODO(Etienne M): Is parallel_for + TeamThreadMDRange +
+                // TODO(Etienne M): Is parallel_for + TeamThreadRange +
                 // explicit na_reducer followed by team_reduce, a valid
                 // semantic.
 
-                Kokkos::parallel_for(
-                    an_intra_team_policy,
-                    [&](auto imu, auto ivpar) {
+                const koliop::utility::Flatten2 flattened_mu_vpar{mu_extent, vpar_extent};
+
+                Kokkos::parallel_for(Kokkos::TeamThreadRange(a_team_handle, flattened_mu_vpar.forward()), [&](auto flattened_index) {
+                    const auto mu_vpar_work = [&](auto imu, auto ivpar) {
                         const ComputeFloatType f5d_s_value = Kokkos::max(1.0E-40,
                                                                          f5d_s(imu, ivpar, itor1, itor2, itor3, ispecies));
 
@@ -144,7 +140,9 @@ namespace koliop {
                                            vparg(ivpar) * ftmp);
 
                         f5d_s(imu, ivpar, itor1, itor2, itor3, ispecies) = f5d_s_value;
-                    });
+                    };
+                    flattened_mu_vpar.Call(flattened_index, mu_vpar_work);
+                });
 
                 a_team_handle.team_reduce(na_reducer);
                 a_team_handle.team_reduce(vpara_reducer);
@@ -159,9 +157,9 @@ namespace koliop {
                 Kokkos::Sum<ComputeFloatType> Ta_reducer{Ta};
                 Ta_reducer.init(Ta_reducer.reference());
 
-                Kokkos::parallel_for(
-                    an_intra_team_policy,
-                    [&](auto imu, auto ivpar) {
+
+                Kokkos::parallel_for(Kokkos::TeamThreadRange(a_team_handle, flattened_mu_vpar.forward()), [&](auto flattened_index) {
+                    const auto mu_vpar_work = [&](auto imu, auto ivpar) {
                         // TODO(Etienne M): Avoid this recomputation ? On
                         // Gysela fortran, a temporary buffer is used but
                         // that would hardly fit on a GPU.
@@ -175,7 +173,9 @@ namespace koliop {
                                         (((vparg(ivpar) - vpara) * (vparg(ivpar) - vpara)) +
                                          (2.0 * mug(imu) * B_norm(local_domain_r_offset + ir, local_domain_theta_offset + itheta))) *
                                             ftmp);
-                    });
+                    };
+                    flattened_mu_vpar.Call(flattened_index, mu_vpar_work);
+                });
 
                 a_team_handle.team_reduce(Ta_reducer);
 

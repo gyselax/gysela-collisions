@@ -9,6 +9,7 @@
 #include "KOLIOP/internal/configuration.h"
 #include "KOLIOP/portability/cmath.h"
 #include "KOLIOP/utility/copy.h"
+#include "KOLIOP/utility/flatten.h"
 #include "KOLIOP/utility/select.h"
 #include "KOLIOP/utility/tordu.h"
 #include "KOLIOP/utility/view.h"
@@ -144,13 +145,10 @@ namespace koliop {
                     const ComputeFloatType bot_old = Bij / Ta;
                     const ComputeFloatType bot_new = Bij / Ta_new;
 
-                    Kokkos::parallel_for(
-                        // NOTE: The explicit Left iteration direction may not benefit
-                        // the CPUs depending on how that is implemented.
-                        Kokkos::TeamThreadMDRange<Kokkos::Rank<2, Kokkos::Iterate::Left, Kokkos::Iterate::Left>,
-                                                  std::remove_reference_t<decltype(a_team_handle)>>(a_team_handle,
-                                                                                                    mu_extent, vpar_extent),
-                        [&](auto imu, auto ivpar) {
+                    const koliop::utility::Flatten2 flattened_mu_vpar{mu_extent, vpar_extent};
+
+                    Kokkos::parallel_for(Kokkos::TeamThreadRange(a_team_handle, flattened_mu_vpar.forward()), [&](auto flattened_index) {
+                        const auto mu_vpar_work = [&](auto imu, auto ivpar) {
                             const ComputeFloatType vp2_old = (vparg(ivpar) - Vpara) * (vparg(ivpar) - Vpara) / (2.0 * Ta);
                             const ComputeFloatType vp2_new = (vparg(ivpar) - Vpara) * (vparg(ivpar) - Vpara) / (2.0 * Ta_new);
 
@@ -169,7 +167,9 @@ namespace koliop {
                             f5d_s(imu, ivpar, itor1, itor2, itor3, ispeciesA) = f5d_s(imu, ivpar, itor1, itor2, itor3, ispeciesA) -
                                                                                 coeff_old * Kokkos::exp(-bot_old * mug(imu) - vp2_old) +
                                                                                 coeff_new * Kokkos::exp(-bot_new * mug(imu) - vp2_new);
-                        });
+                        };
+                        flattened_mu_vpar.Call(flattened_index, mu_vpar_work);
+                    });
                 }
 
                 Kokkos::single(
