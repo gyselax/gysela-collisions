@@ -146,6 +146,11 @@
 
         if(an_operator_handle == nullptr ||
            !(0 <= ir_SOL_separatrix && static_cast<size_t>(ir_SOL_separatrix) <= global_domain_r_extent) ||
+#if defined(KOLIOP_UTILITY_FLATTEN_EXPECT_POW2_EXTENTS)
+           // Assert for powers of two.
+           ((mu_extent - 1) & mu_extent) != 0 ||
+           ((vpar_extent - 1) & vpar_extent) != 0 ||
+#endif
            hat_As == nullptr ||
            hat_Zs == nullptr ||
            mug == nullptr ||

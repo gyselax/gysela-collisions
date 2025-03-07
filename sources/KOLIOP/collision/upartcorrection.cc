@@ -10,7 +10,7 @@
 #include "KOLIOP/internal/configuration.h"
 #include "KOLIOP/portability/cmath.h"
 #include "KOLIOP/utility/copy.h"
-#include "KOLIOP/utility/flatten.h"
+#include "KOLIOP/utility/iterate.h"
 #include "KOLIOP/utility/select.h"
 #include "KOLIOP/utility/tordu.h"
 #include "KOLIOP/utility/view.h"
@@ -101,10 +101,10 @@ namespace koliop {
                 // explicit na_reducer followed by team_reduce, a valid
                 // semantic.
 
-                const koliop::utility::Flatten2 flattened_mu_vpar{mu_extent, vpar_extent};
-
-                Kokkos::parallel_for(Kokkos::TeamThreadRange(a_team_handle, flattened_mu_vpar.forward()), [&](auto flattened_index) {
-                    const auto mu_vpar_loop_body = [&](auto imu, auto ivpar) {
+                using koliop::utility::IntraTeam;
+                IntraTeam::Iterate2D(
+                    mu_extent, vpar_extent,
+                    a_team_handle, [&](auto imu, auto ivpar) {
                         const ComputeFloatType jacob_vel = k2Pi *
                                                            Bstar_s(ivpar, ir, itheta, ispeciesA);
 
@@ -114,9 +114,7 @@ namespace koliop {
                                                         jacob_vel *
                                                         vparg(ivpar) *
                                                         f5d_s(imu, ivpar, itor1, itor2, itor3, ispeciesA));
-                    };
-                    flattened_mu_vpar.Call(flattened_index, mu_vpar_loop_body);
-                });
+                    });
 
                 a_team_handle.team_reduce(impulsion_coll_reducer);
 
@@ -130,8 +128,9 @@ namespace koliop {
                 Kokkos::Sum<ComputeFloatType> T_coll_reducer{T_coll};
                 T_coll_reducer.init(T_coll_reducer.reference());
 
-                Kokkos::parallel_for(Kokkos::TeamThreadRange(a_team_handle, flattened_mu_vpar.forward()), [&](auto flattened_index) {
-                    const auto mu_vpar_loop_body = [&](auto imu, auto ivpar) {
+                IntraTeam::Iterate2D(
+                    mu_extent, vpar_extent,
+                    a_team_handle, [&](auto imu, auto ivpar) {
                         const ComputeFloatType jacob_vel = (k2Pi / na) *
                                                            Bstar_s(ivpar, ir, itheta, ispeciesA);
 
@@ -142,9 +141,7 @@ namespace koliop {
                                                 ((vparg(ivpar) - U_par_coll) * (vparg(ivpar) - U_par_coll) +
                                                  2.0 * mug(imu) * Bij) *
                                                 f5d_s(imu, ivpar, itor1, itor2, itor3, ispeciesA));
-                    };
-                    flattened_mu_vpar.Call(flattened_index, mu_vpar_loop_body);
-                });
+                    });
 
                 a_team_handle.team_reduce(T_coll_reducer);
 
@@ -192,8 +189,9 @@ namespace koliop {
 
                 // We remove the old Maxwellian and add the new one.
 
-                Kokkos::parallel_for(Kokkos::TeamThreadRange(a_team_handle, flattened_mu_vpar.forward()), [&](auto flattened_index) {
-                    const auto mu_vpar_loop_body = [&](auto imu, auto ivpar) {
+                IntraTeam::Iterate2D(
+                    mu_extent, vpar_extent,
+                    a_team_handle, [&](auto imu, auto ivpar) {
                         const ComputeFloatType u_coll = mug(imu) * Bij / T_coll;
                         const ComputeFloatType u_new  = mug(imu) * Bij / T_new;
 
@@ -205,9 +203,7 @@ namespace koliop {
                                                                                           (vparg(ivpar) - U_par_new) / (2.0 * T_new));
 
                         f5d_s(imu, ivpar, itor1, itor2, itor3, ispeciesA) += FMa_new - FMa_coll;
-                    };
-                    flattened_mu_vpar.Call(flattened_index, mu_vpar_loop_body);
-                });
+                    });
 
                 Kokkos::single(
                     Kokkos::PerTeam(a_team_handle),

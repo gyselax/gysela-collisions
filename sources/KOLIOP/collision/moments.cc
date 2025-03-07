@@ -9,7 +9,7 @@
 #include "KOLIOP/internal/configuration.h"
 #include "KOLIOP/portability/cmath.h"
 #include "KOLIOP/utility/copy.h"
-#include "KOLIOP/utility/flatten.h"
+#include "KOLIOP/utility/iterate.h"
 #include "KOLIOP/utility/select.h"
 #include "KOLIOP/utility/tordu.h"
 #include "KOLIOP/utility/view.h"
@@ -123,10 +123,10 @@ namespace koliop {
                 // explicit na_reducer followed by team_reduce, a valid
                 // semantic.
 
-                const koliop::utility::Flatten2 flattened_mu_vpar{mu_extent, vpar_extent};
-
-                Kokkos::parallel_for(Kokkos::TeamThreadRange(a_team_handle, flattened_mu_vpar.forward()), [&](auto flattened_index) {
-                    const auto mu_vpar_loop_body = [&](auto imu, auto ivpar) {
+                using koliop::utility::IntraTeam;
+                IntraTeam::Iterate2D(
+                    mu_extent, vpar_extent,
+                    a_team_handle, [&](auto imu, auto ivpar) {
                         const ComputeFloatType f5d_s_value = Kokkos::max(1.0E-40,
                                                                          f5d_s(imu, ivpar, itor1, itor2, itor3, ispecies));
 
@@ -141,9 +141,7 @@ namespace koliop {
                                            vparg(ivpar) * ftmp);
 
                         f5d_s(imu, ivpar, itor1, itor2, itor3, ispecies) = f5d_s_value;
-                    };
-                    flattened_mu_vpar.Call(flattened_index, mu_vpar_loop_body);
-                });
+                    });
 
                 a_team_handle.team_reduce(na_reducer);
                 a_team_handle.team_reduce(vpara_reducer);
@@ -160,8 +158,9 @@ namespace koliop {
 
                 const ComputeFloatType B_norm_r_theta = B_norm(local_domain_r_offset + ir, local_domain_theta_offset + itheta);
 
-                Kokkos::parallel_for(Kokkos::TeamThreadRange(a_team_handle, flattened_mu_vpar.forward()), [&](auto flattened_index) {
-                    const auto mu_vpar_loop_body = [&](auto imu, auto ivpar) {
+                IntraTeam::Iterate2D(
+                    mu_extent, vpar_extent,
+                    a_team_handle, [&](auto imu, auto ivpar) {
                         // TODO(Etienne M): Avoid this recomputation ? On
                         // Gysela fortran, a temporary buffer is used but
                         // that would hardly fit on a GPU.
@@ -175,9 +174,7 @@ namespace koliop {
                                         (((vparg(ivpar) - vpara) * (vparg(ivpar) - vpara)) +
                                          (2.0 * mug(imu) * B_norm_r_theta)) *
                                             ftmp);
-                    };
-                    flattened_mu_vpar.Call(flattened_index, mu_vpar_loop_body);
-                });
+                    });
 
                 a_team_handle.team_reduce(Ta_reducer);
 

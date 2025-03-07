@@ -9,7 +9,7 @@
 #include "KOLIOP/internal/configuration.h"
 #include "KOLIOP/portability/cmath.h"
 #include "KOLIOP/utility/copy.h"
-#include "KOLIOP/utility/flatten.h"
+#include "KOLIOP/utility/iterate.h"
 #include "KOLIOP/utility/select.h"
 #include "KOLIOP/utility/tordu.h"
 #include "KOLIOP/utility/view.h"
@@ -104,8 +104,6 @@ namespace koliop {
 
                 const ComputeFloatType inv_Ta = 1.0 / Ta;
 
-                const koliop::utility::Flatten2 flattened_mu_vpar{mu_extent, vpar_extent};
-
                 for(OrdinalType ispeciesB = 0; ispeciesB < species_extent; ++ispeciesB) {
                     // NOTE: We do very large jump in memory, but all the
                     // threads of a team gets to load this value so in practice
@@ -134,8 +132,11 @@ namespace koliop {
 
                     // NOTE: By hoisting mu and vparg out of the loop below we can get x1.5 speedup.
 
-                    Kokkos::parallel_for(Kokkos::TeamThreadRange(a_team_handle, flattened_mu_vpar.forward()), [&](auto flattened_index) {
-                        const auto mu_vpar_loop_body = [&](auto imu, auto ivpar) {
+                    using koliop::utility::IntraTeam;
+                    IntraTeam::Iterate2D(
+                        mu_extent, vpar_extent,
+                        a_team_handle, [&](auto imu, auto ivpar) {
+                            // const ComputeFloatType coeff1 = 1.0 / (2.0 * Ta);
                             // const ComputeFloatType coeff5 = vparg(ivpar) / Ta;
                             // const ComputeFloatType xa     = Kokkos::sqrt(coeff1 * (2.0 * mug(imu) * Bij + vparg(ivpar) * vparg(ivpar)));
                             // const ComputeFloatType xb     = xa * coeff2;
@@ -171,9 +172,7 @@ namespace koliop {
                                                                         1.0;
 
                             f5d_s(imu, ivpar, itor1, itor2, itor3, ispeciesA) += factor4 * Kokkos::exp(-xa_sq) * Theta_func_tmp * vpar * xa_sq;
-                        };
-                        flattened_mu_vpar.Call(flattened_index, mu_vpar_loop_body);
-                    });
+                        });
                 }
             };
 

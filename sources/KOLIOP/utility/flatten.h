@@ -13,19 +13,19 @@ namespace koliop {
     namespace utility {
 
         ////////////////////////////////////////////////////////////////////////
-        // Flatten definition
+        // Flatten2D definition
         ////////////////////////////////////////////////////////////////////////
 
         /// Flattens two extents.
         ///
         template <typename Ordinal>
-        class Flatten2 {
+        class Flatten2D {
         public:
             using OrdinalType = Ordinal;
 
         public:
-            KOKKOS_INLINE_FUNCTION constexpr Flatten2(OrdinalType extent_1,
-                                                      OrdinalType extent_2)
+            KOKKOS_INLINE_FUNCTION constexpr Flatten2D(OrdinalType extent_1,
+                                                       OrdinalType extent_2)
 #if defined(KOLIOP_UTILITY_FLATTEN_EXPECT_POW2_EXTENTS)
                 : extent_1_{CheapLog2(extent_1)}
                 , extent_2_{CheapLog2(extent_2)} {
@@ -70,6 +70,14 @@ namespace koliop {
                 a_callable(extent_1_index,
                            extent_2_index);
             }
+
+            // template <typename Callable>
+            // KOKKOS_INLINE_FUNCTION constexpr auto
+            // Wrap(Callable&& a_callable) const {
+            //     return [&](auto flattened_index) {
+            //         Call(flattened_index, a_callable);
+            //     };
+            // }
 
         protected:
             OrdinalType extent_1_;

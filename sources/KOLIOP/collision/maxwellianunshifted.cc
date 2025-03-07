@@ -11,7 +11,7 @@
 #include "KOLIOP/internal/configuration.h"
 #include "KOLIOP/portability/cmath.h"
 #include "KOLIOP/utility/copy.h"
-#include "KOLIOP/utility/flatten.h"
+#include "KOLIOP/utility/iterate.h"
 #include "KOLIOP/utility/select.h"
 #include "KOLIOP/utility/tordu.h"
 #include "KOLIOP/utility/view.h"
@@ -88,17 +88,15 @@ namespace koliop {
                         const ComputeFloatType f2oTa  = 0.5 / Ta;
                         const ComputeFloatType coeff  = na / (k2Pi * Ta * Kokkos::sqrt(k2Pi * Ta));
 
-                        const koliop::utility::Flatten2 flattened_mu_vpar{mu_extent, vpar_extent};
-
-                        Kokkos::parallel_for(Kokkos::TeamThreadRange(a_team_handle, flattened_mu_vpar.forward()), [&](auto flattened_index) {
-                            const auto mu_vpar_loop_body = [&](auto imu, auto ivpar) {
+                        using koliop::utility::IntraTeam;
+                        IntraTeam::Iterate2D(
+                            mu_extent, vpar_extent,
+                            a_team_handle, [&](auto imu, auto ivpar) {
                                 const ComputeFloatType v2oTa = mug(imu) * BijoTa + vparg(ivpar) * vparg(ivpar) * f2oTa;
 
                                 f5d_s(imu, ivpar, itor1, itor2, itor3, ispeciesA) = Kokkos::max(0.0,
                                                                                                 coeff * Kokkos::exp(-v2oTa) * f5d_s(imu, ivpar, itor1, itor2, itor3, ispeciesA));
-                            };
-                            flattened_mu_vpar.Call(flattened_index, mu_vpar_loop_body);
-                        });
+                            });
                     };
 
                     Kokkos::parallel_for("DoComputeMaxwellianUnshiftedLoc3",
@@ -127,18 +125,16 @@ namespace koliop {
                         const ComputeFloatType f2oTa  = 0.5 / Ta;
                         const ComputeFloatType coeff  = (k2Pi * Ta * Kokkos::sqrt(k2Pi * Ta)) / na;
 
-                        const koliop::utility::Flatten2 flattened_mu_vpar{mu_extent, vpar_extent};
-
-                        Kokkos::parallel_for(Kokkos::TeamThreadRange(a_team_handle, flattened_mu_vpar.forward()), [&](auto flattened_index) {
-                            const auto mu_vpar_loop_body = [&](auto imu, auto ivpar) {
+                        using koliop::utility::IntraTeam;
+                        IntraTeam::Iterate2D(
+                            mu_extent, vpar_extent,
+                            a_team_handle, [&](auto imu, auto ivpar) {
                                 const ComputeFloatType v2oTa = mug(imu) * BijoTa + vparg(ivpar) * vparg(ivpar) * f2oTa;
 
                                 f5d_s(imu, ivpar, itor1, itor2, itor3, ispeciesA) = Kokkos::max(0.001,
                                                                                                 Kokkos::min(1000.0,
                                                                                                             coeff * Kokkos::exp(v2oTa) * f5d_s(imu, ivpar, itor1, itor2, itor3, ispeciesA)));
-                            };
-                            flattened_mu_vpar.Call(flattened_index, mu_vpar_loop_body);
-                        });
+                            });
                     };
 
                     Kokkos::parallel_for("DoComputeMaxwellianUnshiftedLoc4",

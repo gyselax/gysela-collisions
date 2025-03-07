@@ -139,12 +139,21 @@ int Test1() {
 }
 
 int Test2() {
-    // Naive benchmarks:
+    // Naive benchmarks, best of 10 iterations:
     //  GPU:
-    //      1.85 s on MI250X (after rocm-smi -r).
-    //      0.78 s on MI300A.
-    //  CPU: (reduced case r=32,theta=32,phi=2) single core, no threading but using omp backend.
+    //      (after rocm-smi -r)
+    //      1.696 s on MI250X with KOLIOP_UTILITY_FLATTEN_EXPECT_POW2_EXTENTS
+    //      1.843 s on MI250X
+    //      0.736 s on MI300A with KOLIOP_UTILITY_FLATTEN_EXPECT_POW2_EXTENTS
+    //      0.770 s on MI300A.
+    //  CPU: (reduced case r=32,theta=32,phi=2) 1 core, 1 thread, no threading but using omp backend.
     //      Genoa clocked at 2.4 GHz.
+    //          Flattened iteration:
+    //              14.1 s on toolchain genoa.cce.adastra.
+    //                  10.9 s on toolchain genoa.cce.adastra replacing erf with exp.
+    //          No flattened:
+    //               10.6 s on toolchain genoa.cce.adastra
+    //                  2.61 s on toolchain genoa.cce.adastra replacing erf with exp. (observe vectorization)
     //          1.79 s on intel-oneapi 2022 and assuming the libm function are all vectorized (svml).
     //          16.3 s on intel-oneapi if erf function is NOT vectorized in Cpar's tight loop (svml).
     //              x9.1

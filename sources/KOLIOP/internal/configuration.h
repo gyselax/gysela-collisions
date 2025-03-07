@@ -6,6 +6,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <Kokkos_Macros.hpp>
 #include <cstddef>
 
 #include "KOLIOP/internal/buildspecificities.h"
@@ -262,6 +263,33 @@ namespace koliop {
 /// also the device.
 ///
 ////////////////////////////////////////
+
+////////////////////////////////////////
+/// KOLIOP_BACKEND_IS_GPU_LIKE
+/// KOLIOP_BACKEND_IS_CPU_LIKE
+///
+/// Factorize/consolidate some often interesting information.
+/// If KOLIOP_BACKEND_IS_GPU_LIKE is defined, this means that at least a backend
+/// that behaves like a GPU is enabled. Its up to you to know if you are indeed
+/// using it through the execution space (or not). Similarly for
+/// KOLIOP_BACKEND_IS_CPU_LIKE.
+///
+//////////////////////////////////////
+
+#if defined(KOKKOS_ENABLE_SERIAL) || defined(KOKKOS_ENABLE_OPENMP) || \
+    defined(KOKKOS_ENABLE_THREADS) || defined(KOKKOS_ENABLE_HPX)
+    #define KOLIOP_BACKEND_IS_CPU_LIKE
+#endif
+
+#if defined(KOKKOS_ENABLE_OPENACC) || defined(KOKKOS_ENABLE_OPENMPTARGET) || \
+    defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) ||             \
+    defined(KOKKOS_ENABLE_SYCL)
+    #define KOLIOP_BACKEND_IS_GPU_LIKE
+#endif
+
+#if !(defined(KOLIOP_BACKEND_IS_CPU_LIKE) || defined(KOLIOP_BACKEND_IS_GPU_LIKE))
+    #error "We dont event have a backend we understand!"
+#endif
 
 
 ////////////////////////////////////////////////////////////////////////////////
