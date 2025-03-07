@@ -5,8 +5,6 @@
 
 #include <Kokkos_Core.hpp>
 
-// #define KOLIOP_UTILITY_FLATTEN_EXPECT_POW2_EXTENTS 1
-
 #if defined(KOLIOP_UTILITY_FLATTEN_EXPECT_POW2_EXTENTS)
     #include "KOLIOP/utility/math.h"
 #endif
