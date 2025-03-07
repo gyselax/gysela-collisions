@@ -60,9 +60,8 @@ namespace koliop {
             const auto a_policy = PolicyType{
                 an_execution_space,
                 static_cast<int>(team_count),
-                // NOTE: The thread block size and the Nmu benefit from being
-                // close. This is due to the TeamThreadMDRange which
-                // parallelizes only the left most index which is Nmu.
+                // NOTE: See the note in the DoComputeMoments kernel
+                // regarding thread block size.
                 koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, Kokkos::AUTO, 64 /* 128 */, 32)};
 
             // TODO(Etienne M): Make sure the accesses are sequential on CPU.
@@ -94,13 +93,13 @@ namespace koliop {
                         const koliop::utility::Flatten2 flattened_mu_vpar{mu_extent, vpar_extent};
 
                         Kokkos::parallel_for(Kokkos::TeamThreadRange(a_team_handle, flattened_mu_vpar.forward()), [&](auto flattened_index) {
-                            const auto mu_vpar_work = [&](auto imu, auto ivpar) {
+                            const auto mu_vpar_loop_body = [&](auto imu, auto ivpar) {
                                 const ComputeFloatType v2oTa = mug(imu) * BijoTa + vparg(ivpar) * vparg(ivpar) * f2oTa;
 
                                 f5d_s(imu, ivpar, itor1, itor2, itor3, ispeciesA) = Kokkos::max(0.0,
                                                                                                 coeff * Kokkos::exp(-v2oTa) * f5d_s(imu, ivpar, itor1, itor2, itor3, ispeciesA));
                             };
-                            flattened_mu_vpar.Call(flattened_index, mu_vpar_work);
+                            flattened_mu_vpar.Call(flattened_index, mu_vpar_loop_body);
                         });
                     };
 
@@ -133,14 +132,14 @@ namespace koliop {
                         const koliop::utility::Flatten2 flattened_mu_vpar{mu_extent, vpar_extent};
 
                         Kokkos::parallel_for(Kokkos::TeamThreadRange(a_team_handle, flattened_mu_vpar.forward()), [&](auto flattened_index) {
-                            const auto mu_vpar_work = [&](auto imu, auto ivpar) {
+                            const auto mu_vpar_loop_body = [&](auto imu, auto ivpar) {
                                 const ComputeFloatType v2oTa = mug(imu) * BijoTa + vparg(ivpar) * vparg(ivpar) * f2oTa;
 
                                 f5d_s(imu, ivpar, itor1, itor2, itor3, ispeciesA) = Kokkos::max(0.001,
                                                                                                 Kokkos::min(1000.0,
                                                                                                             coeff * Kokkos::exp(v2oTa) * f5d_s(imu, ivpar, itor1, itor2, itor3, ispeciesA)));
                             };
-                            flattened_mu_vpar.Call(flattened_index, mu_vpar_work);
+                            flattened_mu_vpar.Call(flattened_index, mu_vpar_loop_body);
                         });
                     };
 

@@ -58,9 +58,8 @@ namespace koliop {
             const auto a_policy = PolicyType{
                 an_execution_space,
                 static_cast<int>(team_count),
-                // NOTE: The thread block size and the Nmu benefit from being
-                // close. This is due to the TeamThreadMDRange which
-                // parallelizes only the left most index which is Nmu.
+                // NOTE: See the note in the DoComputeMoments kernel
+                // regarding thread block size.
                 koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, Kokkos::AUTO, 64 /* 128 */, 32)};
 
             const auto kernel = KOKKOS_LAMBDA(const typename PolicyType::member_type& a_team_handle) {
@@ -86,7 +85,7 @@ namespace koliop {
                 const koliop::utility::Flatten2 flattened_mu_vpar{mu_extent, vpar_extent};
 
                 Kokkos::parallel_for(Kokkos::TeamThreadRange(a_team_handle, flattened_mu_vpar.forward()), [&](auto flattened_index) {
-                    const auto mu_vpar_work = [&](auto imu, auto ivpar) {
+                    const auto mu_vpar_loop_body = [&](auto imu, auto ivpar) {
                         const ComputeFloatType jacob_vel = koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi *
                                                            Bstar_s(ivpar, ir, itheta, ispeciesA);
                         const ComputeFloatType ftmp = Kokkos::max(f5d_s(imu, ivpar, itor1, itor2, itor3, ispeciesA),
@@ -97,7 +96,7 @@ namespace koliop {
 
                         f5d_s(imu, ivpar, itor1, itor2, itor3, ispeciesA) = ftmp;
                     };
-                    flattened_mu_vpar.Call(flattened_index, mu_vpar_work);
+                    flattened_mu_vpar.Call(flattened_index, mu_vpar_loop_body);
                 });
 
                 a_team_handle.team_reduce(na_reducer);
@@ -108,10 +107,10 @@ namespace koliop {
                 const ComputeFloatType na_inverse = 1.0 / na;
 
                 Kokkos::parallel_for(Kokkos::TeamThreadRange(a_team_handle, flattened_mu_vpar.forward()), [&](auto flattened_index) {
-                    const auto mu_vpar_work = [&](auto imu, auto ivpar) {
+                    const auto mu_vpar_loop_body = [&](auto imu, auto ivpar) {
                         f5d_s(imu, ivpar, itor1, itor2, itor3, ispeciesA) *= n_s(itor1, itor2, itor3, ispeciesA) * na_inverse;
                     };
-                    flattened_mu_vpar.Call(flattened_index, mu_vpar_work);
+                    flattened_mu_vpar.Call(flattened_index, mu_vpar_loop_body);
                 });
             };
 

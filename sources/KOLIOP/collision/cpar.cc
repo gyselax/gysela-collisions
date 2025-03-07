@@ -70,9 +70,8 @@ namespace koliop {
             const auto a_policy = PolicyType{
                 an_execution_space,
                 static_cast<int>(team_count),
-                // NOTE: The thread block size and the Nmu benefit from being
-                // close. This is due to the TeamThreadMDRange which
-                // parallelizes only the left most index which is Nmu.
+                // NOTE: See the note in the DoComputeMoments kernel
+                // regarding thread block size.
                 koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, Kokkos::AUTO, 64 /* 128 */, 32)};
 
             const auto kernel = KOKKOS_LAMBDA(const typename PolicyType::member_type& a_team_handle) {
@@ -138,7 +137,7 @@ namespace koliop {
                     // NOTE: By hoisting mu and vparg out of the loop below we can get x1.5 speedup.
 
                     Kokkos::parallel_for(Kokkos::TeamThreadRange(a_team_handle, flattened_mu_vpar.forward()), [&](auto flattened_index) {
-                        const auto mu_vpar_work = [&](auto imu, auto ivpar) {
+                        const auto mu_vpar_loop_body = [&](auto imu, auto ivpar) {
                             // const ComputeFloatType coeff5 = vparg(ivpar) / Ta;
                             // const ComputeFloatType xa     = Kokkos::sqrt(coeff1 * (2.0 * mug(imu) * Bij + vparg(ivpar) * vparg(ivpar)));
                             // const ComputeFloatType xb     = xa * coeff2;
@@ -172,7 +171,7 @@ namespace koliop {
 
                             f5d_s(imu, ivpar, itor1, itor2, itor3, ispeciesA) += factor4 * Kokkos::exp(-xa_sq) * Theta_func_tmp * vpar * xa_sq;
                         };
-                        flattened_mu_vpar.Call(flattened_index, mu_vpar_work);
+                        flattened_mu_vpar.Call(flattened_index, mu_vpar_loop_body);
                     });
                 }
             };

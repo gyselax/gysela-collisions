@@ -65,8 +65,8 @@ namespace koliop {
             const auto a_policy = PolicyType{
                 an_execution_space,
                 static_cast<int>(team_count),
-                // NOTE: The thread block size and the Nmu benefit from being
-                // close. This is due to the TeamThreadMDRange which
+                // NOTE: PREVIOUSLY, the thread block size and the Nmu benefited
+                // from being close. This was due to the TeamThreadMDRange which
                 // parallelizes only the left most index which is Nmu.
                 // NOTE: In the thread blocks, we parallelize on Nmu. If we have
                 // more thread than Nmu we may be wasting resources.
@@ -88,6 +88,9 @@ namespace koliop {
                 // the cache hits. This is significant if you know for a fact
                 // that few of your kernels are need to reach peak memory
                 // throughput.
+                // NOTE: NOW, by using koliop::utility::FlattenN, we reduce
+                // that issue allowing the code to strong scale even if the mu
+                // is less than the warp size.
                 koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, Kokkos::AUTO, 64 /* 128 */, 32)};
 
             const auto kernel = KOKKOS_LAMBDA(const typename PolicyType::member_type& a_team_handle) {
@@ -125,7 +128,7 @@ namespace koliop {
                 const koliop::utility::Flatten2 flattened_mu_vpar{mu_extent, vpar_extent};
 
                 Kokkos::parallel_for(Kokkos::TeamThreadRange(a_team_handle, flattened_mu_vpar.forward()), [&](auto flattened_index) {
-                    const auto mu_vpar_work = [&](auto imu, auto ivpar) {
+                    const auto mu_vpar_loop_body = [&](auto imu, auto ivpar) {
                         const ComputeFloatType f5d_s_value = Kokkos::max(1.0E-40,
                                                                          f5d_s(imu, ivpar, itor1, itor2, itor3, ispecies));
 
@@ -141,7 +144,7 @@ namespace koliop {
 
                         f5d_s(imu, ivpar, itor1, itor2, itor3, ispecies) = f5d_s_value;
                     };
-                    flattened_mu_vpar.Call(flattened_index, mu_vpar_work);
+                    flattened_mu_vpar.Call(flattened_index, mu_vpar_loop_body);
                 });
 
                 a_team_handle.team_reduce(na_reducer);
@@ -159,7 +162,7 @@ namespace koliop {
 
 
                 Kokkos::parallel_for(Kokkos::TeamThreadRange(a_team_handle, flattened_mu_vpar.forward()), [&](auto flattened_index) {
-                    const auto mu_vpar_work = [&](auto imu, auto ivpar) {
+                    const auto mu_vpar_loop_body = [&](auto imu, auto ivpar) {
                         // TODO(Etienne M): Avoid this recomputation ? On
                         // Gysela fortran, a temporary buffer is used but
                         // that would hardly fit on a GPU.
@@ -174,7 +177,7 @@ namespace koliop {
                                          (2.0 * mug(imu) * B_norm(local_domain_r_offset + ir, local_domain_theta_offset + itheta))) *
                                             ftmp);
                     };
-                    flattened_mu_vpar.Call(flattened_index, mu_vpar_work);
+                    flattened_mu_vpar.Call(flattened_index, mu_vpar_loop_body);
                 });
 
                 a_team_handle.team_reduce(Ta_reducer);
