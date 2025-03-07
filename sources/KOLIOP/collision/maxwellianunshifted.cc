@@ -62,7 +62,7 @@ namespace koliop {
                 static_cast<int>(team_count),
                 // NOTE: See the note in the DoComputeMoments kernel
                 // regarding thread block size.
-                koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, Kokkos::AUTO, 64 /* 128 */, 32)};
+                koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, Kokkos::AUTO, 256, 32)};
 
             // TODO(Etienne M): Make sure the accesses are sequential on CPU.
 

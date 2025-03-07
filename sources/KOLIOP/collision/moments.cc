@@ -91,7 +91,7 @@ namespace koliop {
                 // NOTE: NOW, by using koliop::utility::FlattenN, we reduce
                 // that issue allowing the code to strong scale even if the mu
                 // is less than the warp size.
-                koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, Kokkos::AUTO, 64 /* 128 */, 32)};
+                koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, Kokkos::AUTO, 128, 32)};
 
             const auto kernel = KOKKOS_LAMBDA(const typename PolicyType::member_type& a_team_handle) {
 
@@ -160,6 +160,7 @@ namespace koliop {
                 Kokkos::Sum<ComputeFloatType> Ta_reducer{Ta};
                 Ta_reducer.init(Ta_reducer.reference());
 
+                const ComputeFloatType B_norm_r_theta = B_norm(local_domain_r_offset + ir, local_domain_theta_offset + itheta);
 
                 Kokkos::parallel_for(Kokkos::TeamThreadRange(a_team_handle, flattened_mu_vpar.forward()), [&](auto flattened_index) {
                     const auto mu_vpar_loop_body = [&](auto imu, auto ivpar) {
@@ -174,7 +175,7 @@ namespace koliop {
 
                         Ta_reducer.join(Ta_reducer.reference(),
                                         (((vparg(ivpar) - vpara) * (vparg(ivpar) - vpara)) +
-                                         (2.0 * mug(imu) * B_norm(local_domain_r_offset + ir, local_domain_theta_offset + itheta))) *
+                                         (2.0 * mug(imu) * B_norm_r_theta)) *
                                             ftmp);
                     };
                     flattened_mu_vpar.Call(flattened_index, mu_vpar_loop_body);
