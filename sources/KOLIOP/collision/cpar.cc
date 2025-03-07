@@ -163,12 +163,17 @@ namespace koliop {
                             const ComputeFloatType xa_sq = factor6 * mug(imu) + factor5 * vpar_sq;
                             const ComputeFloatType xa    = Kokkos::sqrt(xa_sq);
                             const ComputeFloatType xb    = xa * coeff2;
+                            const ComputeFloatType xb_sq = xb * xb; // = xa_sq * coeff2^2
+                            const ComputeFloatType xb_cb = xb * xb * xb;
+
+                            const ComputeFloatType factor8 = Kokkos::erf(xb) - xb * (koliop::portability::GyselaConstant<ComputeFloatType>::kCst_phiprime * Kokkos::exp(-xb_sq));
+                            const ComputeFloatType factor9 = (0.5 * factor8) / xb_cb;
 
                             // NOTE: this erf() is a pain to vectorize on CPU.
                             // We spend way too much time inside iot if we do
                             // not have it suported by the vectorized libm.
                             const ComputeFloatType Theta_func_tmp = xb > 1E-15 ?
-                                                                        koliop::portability::GyselaConstant<ComputeFloatType>::kConst_theta * ((Kokkos::erf(xb) - xb * (koliop::portability::GyselaConstant<ComputeFloatType>::kCst_phiprime * Kokkos::exp(-xb * xb))) / (2.0 * xb * xb)) / xb :
+                                                                        factor9 :
                                                                         1.0;
 
                             f5d_s(imu, ivpar, itor1, itor2, itor3, ispeciesA) += factor4 * Kokkos::exp(-xa_sq) * Theta_func_tmp * vpar * xa_sq;
