@@ -153,7 +153,7 @@ int Test2() {
     //                  10.9 s on toolchain genoa.cce.adastra replacing erf with exp.
     //          No flattened:
     //               10.4 s on toolchain genoa.cce.adastra
-    //                  2.48 s on toolchain genoa.cce.adastra replacing erf with exp. (observe vectorization)
+    //                  2.56 s on toolchain genoa.cce.adastra replacing erf with exp. (observe vectorization)
     //          1.79 s on intel-oneapi 2022 and assuming the libm function are all vectorized (svml).
     //          16.3 s on intel-oneapi if erf function is NOT vectorized in Cpar's tight loop (svml).
     //              x9.1
