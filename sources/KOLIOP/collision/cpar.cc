@@ -56,8 +56,6 @@ namespace koliop {
 
             const ComputeFloatType half_dt = dt / 2.0;
 
-            // TODO(Etienne M): Make sure the accesses are sequential on CPU.
-
             const auto team_count = tor1_extent * tor2_extent * tor3_extent * species_extent;
 
             // Due to the inherent Cuda/HIP thread block limit.
@@ -165,6 +163,9 @@ namespace koliop {
                             const ComputeFloatType xa    = Kokkos::sqrt(xa_sq);
                             const ComputeFloatType xb    = xa * coeff2;
 
+                            // NOTE: this erf() is a pain to vectorize on CPU.
+                            // We spend way too much time inside iot if we do
+                            // not have it suported by the vectorized libm.
                             const ComputeFloatType Theta_func_tmp = xb > 1E-15 ?
                                                                         koliop::portability::GyselaConstant<ComputeFloatType>::kConst_theta * ((Kokkos::erf(xb) - xb * (koliop::portability::GyselaConstant<ComputeFloatType>::kCst_phiprime * Kokkos::exp(-xb * xb))) / (2.0 * xb * xb)) / xb :
                                                                         1.0;

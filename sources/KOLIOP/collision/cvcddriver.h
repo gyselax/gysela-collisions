@@ -117,9 +117,6 @@ namespace koliop {
                 const auto& B_norm       = an_operator.B_norm_;
                 const auto& T_s          = an_operator.T_s_;
 
-                // TODO(Etienne M): Make sure the accesses are sequential on
-                // CPU.
-
                 const auto team_count = CvCdDriver::kBlockExtentTor1 * CvCdDriver::kBlockExtentTor2 * CvCdDriver::kBlockExtentTor3;
 
                 // Due to the inherent Cuda/HIP thread block limit.
@@ -366,9 +363,6 @@ namespace koliop {
                 const auto& B_norm = an_operator.B_norm_;
                 const auto& T_s    = an_operator.T_s_;
 
-                // TODO(Etienne M): Make sure the accesses are sequential on
-                // CPU.
-
                 const auto team_count = CvCdDriver::kBlockExtentTor1 * CvCdDriver::kBlockExtentTor2 * CvCdDriver::kBlockExtentTor3;
 
                 // Due to the inherent Cuda/HIP thread block limit.
@@ -430,6 +424,7 @@ namespace koliop {
                             ComputeFloatType       f5d_s_value = 0.0;
 
                             for(OrdinalType ipol = 0; ipol < Constant::kMaximumLaguerrePolynomialDegree; ++ipol) {
+                                // NOTE: large strided loads here.
                                 f5d_s_value += rhs(batch_index, ivpar, ipol, batch_element_index) *
                                                DoComputeLaguerrePol(ipol, muBoT);
                             }

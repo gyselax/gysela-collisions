@@ -59,8 +59,6 @@ namespace koliop {
 
             const auto& collision_interspecies = an_operator.collision_interspecies_;
 
-            // TODO(Etienne M): Make sure the accesses are sequential on CPU.
-
             const auto team_count = tor1_extent * tor2_extent * tor3_extent * species_extent;
 
             // Due to the inherent Cuda/HIP thread block limit.

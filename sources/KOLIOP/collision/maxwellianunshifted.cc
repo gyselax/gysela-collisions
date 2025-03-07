@@ -64,8 +64,6 @@ namespace koliop {
                 // regarding thread block size.
                 koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, Kokkos::AUTO, 256, 32)};
 
-            // TODO(Etienne M): Make sure the accesses are sequential on CPU.
-
             switch(choice) {
                 case 3: {
                     const auto kernel_choice_3 = KOKKOS_LAMBDA(const typename PolicyType::member_type& a_team_handle) {

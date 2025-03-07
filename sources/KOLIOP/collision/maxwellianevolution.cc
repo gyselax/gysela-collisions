@@ -64,8 +64,6 @@ namespace koliop {
 
             const uint64_t scratch_memory_bytes_per_thread = species_extent * sizeof(ComputeFloatType);
 
-            // TODO(Etienne M): Make sure the accesses are sequential on CPU.
-
             const auto team_count = tor1_extent * tor2_extent * tor3_extent;
 
             // Due to the inherent Cuda/HIP thread block limit.

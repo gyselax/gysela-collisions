@@ -51,8 +51,6 @@ namespace koliop {
             const auto& B_norm         = an_operator.B_norm_;
             const auto& Bstar_s        = an_operator.Bstar_s_;
 
-            // TODO(Etienne M): Make sure the accesses are sequential on CPU.
-
             const auto team_count = tor1_extent * tor2_extent * tor3_extent * species_extent;
 
             // Due to the inherent Cuda/HIP thread block limit.
