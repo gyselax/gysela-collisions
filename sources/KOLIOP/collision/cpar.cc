@@ -166,6 +166,9 @@ namespace koliop {
                             const ComputeFloatType xb_sq = xb * xb; // = xa_sq * coeff2^2
                             const ComputeFloatType xb_cb = xb * xb * xb;
 
+                            // TODO(Etienne M): take a look at https://codebrowser.dev/glibc/glibc/sysdeps/ieee754/dbl-64/s_erf.c.html
+                            // to reimplement a simd compatible erf.
+                            // Also look at the llvm implementation.
                             const ComputeFloatType factor8 = Kokkos::erf(xb) - xb * (koliop::portability::GyselaConstant<ComputeFloatType>::kCst_phiprime * Kokkos::exp(-xb_sq));
                             const ComputeFloatType factor9 = (0.5 * factor8) / xb_cb;
 
