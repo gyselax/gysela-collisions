@@ -24,14 +24,14 @@ namespace koliop {
             using OrdinalType = Ordinal;
 
         public:
-            KOKKOS_INLINE_FUNCTION constexpr Flatten2D(OrdinalType extent_1,
-                                                       OrdinalType extent_2)
+            KOKKOS_INLINE_FUNCTION constexpr Flatten2D(OrdinalType extent_0,
+                                                       OrdinalType extent_1)
 #if defined(KOLIOP_UTILITY_FLATTEN_EXPECT_POW2_EXTENTS)
-                : extent_1_{CheapLog2(extent_1)}
-                , extent_2_{CheapLog2(extent_2)} {
+                : extent_0_{CheapLog2(extent_0)}
+                , extent_1_{CheapLog2(extent_1)} {
 #else
-                : extent_1_{extent_1}
-                , extent_2_{extent_2} {
+                : extent_0_{extent_0}
+                , extent_1_{extent_1} {
 #endif
                 // EMPTY
             }
@@ -39,22 +39,28 @@ namespace koliop {
             KOKKOS_INLINE_FUNCTION constexpr OrdinalType
             forward() const {
 #if defined(KOLIOP_UTILITY_FLATTEN_EXPECT_POW2_EXTENTS)
-                return (1 << extent_1_) << extent_2_;
+                return (1 << extent_0_) << extent_1_;
 #else
-                return extent_1_ * extent_2_;
+                return extent_0_ * extent_1_;
 #endif
             }
 
             KOKKOS_INLINE_FUNCTION constexpr void
             backward(OrdinalType  flattened_index,
-                     OrdinalType& extent_1_index,
-                     OrdinalType& extent_2_index) const {
+                     OrdinalType& extent_0_index,
+                     OrdinalType& extent_1_index) const {
 #if defined(KOLIOP_UTILITY_FLATTEN_EXPECT_POW2_EXTENTS)
-                extent_1_index = (flattened_index) & ((1 << extent_1_) - 1);
-                extent_2_index = (flattened_index >> (extent_1_)) /* % extent_2_ */;
+                // extent_1_index = flattened_index >> extent_0_;
+                // extent_0_index = flattened_index - extent_1_index * (1 << extent_0_);
+
+                extent_0_index = flattened_index & ((1 << extent_0_) - 1);
+                extent_1_index = flattened_index >> extent_0_;
 #else
-                extent_1_index = (flattened_index) % extent_1_;
-                extent_2_index = (flattened_index / (extent_1_)) /* % extent_2_ */;
+                // extent_1_index = flattened_index / extent_0_;
+                // extent_0_index = flattened_index - extent_1_index * extent_0_;
+
+                extent_0_index = flattened_index % extent_0_;
+                extent_1_index = flattened_index / extent_0_;
 #endif
             }
 
@@ -62,13 +68,13 @@ namespace koliop {
             KOKKOS_INLINE_FUNCTION constexpr void
             Call(OrdinalType flattened_index,
                  Callable&&  a_callable) const {
+                OrdinalType extent_0_index;
                 OrdinalType extent_1_index;
-                OrdinalType extent_2_index;
                 backward(flattened_index,
-                         extent_1_index,
-                         extent_2_index);
-                a_callable(extent_1_index,
-                           extent_2_index);
+                         extent_0_index,
+                         extent_1_index);
+                a_callable(extent_0_index,
+                           extent_1_index);
             }
 
             // template <typename Callable>
@@ -80,8 +86,8 @@ namespace koliop {
             // }
 
         protected:
+            OrdinalType extent_0_;
             OrdinalType extent_1_;
-            OrdinalType extent_2_;
         };
 
     } // namespace utility

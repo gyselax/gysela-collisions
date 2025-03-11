@@ -32,22 +32,42 @@
         if(static_cast<bool>(with_verbose_initialization)) {
             std::cout << "Koliop: v" << KOLIOP_VERSION << "\n";
             std::cout << "  KOLIOP_TOOLCHAIN_NAME: " << KOLIOP_TOOLCHAIN_NAME << "\n";
-#if defined(KOLIOP_BUILD_FORTRAN_INTERFACE)
-            std::cout << "  KOLIOP_BUILD_FORTRAN_INTERFACE: true (expecting f5d_s as (mu,vpar),(r,theta,phi),species)\n";
+#if defined(KOLIOP_BACKEND_IS_GPU_LIKE)
+            std::cout << "  KOLIOP_BACKEND_IS_GPU_LIKE: true\n";
 #else
-            std::cout << "  KOLIOP_BUILD_FORTRAN_INTERFACE: false (expecting f5d_s as (mu,vpar),(theta,r,phi),species)\n";
+            std::cout << "  KOLIOP_BACKEND_IS_GPU_LIKE: false\n";
+#endif
+#if defined(KOLIOP_BACKEND_IS_CPU_LIKE)
+            std::cout << "  KOLIOP_BACKEND_IS_CPU_LIKE: true\n";
+#else
+            std::cout << "  KOLIOP_BACKEND_IS_CPU_LIKE: false\n";
+#endif
+#if defined(KOLIOP_ASSERT_ENABLED)
+            std::cout << "  KOLIOP_ASSERT_ENABLED: true\n";
+#else
+            std::cout << "  KOLIOP_ASSERT_ENABLED: false\n";
 #endif
 #if defined(KOLIOP_FENCE_ON_OPERATOR_EXIT)
             std::cout << "  KOLIOP_FENCE_ON_OPERATOR_EXIT: true\n";
 #else
             std::cout << "  KOLIOP_FENCE_ON_OPERATOR_EXIT: false\n";
 #endif
-
 #if defined(KOLIOP_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE)
             std::cout << "  KOLIOP_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE: true\n";
 #else
             std::cout << "  KOLIOP_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE: false\n";
 #endif
+#if defined(KOLIOP_BUILD_FORTRAN_INTERFACE)
+            std::cout << "  KOLIOP_BUILD_FORTRAN_INTERFACE: true (expecting f5d_s as (mu,vpar),(r,theta,phi),species)\n";
+#else
+            std::cout << "  KOLIOP_BUILD_FORTRAN_INTERFACE: false (expecting f5d_s as (mu,vpar),(theta,r,phi),species)\n";
+#endif
+#if defined(KOLIOP_UTILITY_FLATTEN_EXPECT_POW2_EXTENTS)
+            std::cout << "  KOLIOP_UTILITY_FLATTEN_EXPECT_POW2_EXTENTS: true\n";
+#else
+            std::cout << "  KOLIOP_UTILITY_FLATTEN_EXPECT_POW2_EXTENTS: false\n";
+#endif
+
             std::cout << "  koliop::collision::Constant::kDisjointExecutionSpaceCount: " << koliop::collision::Constant::kDisjointExecutionSpaceCount << "\n";
             std::cout << "  koliop::collision::Constant::kDefaultExecutionSpacePoolIndex: " << koliop::collision::Constant::kDefaultExecutionSpacePoolIndex << "\n";
             std::cout << "  koliop::collision::Constant::kPresetBlockExtent: ";

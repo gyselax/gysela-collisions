@@ -15,7 +15,7 @@ namespace koliop {
             template <typename OrdinalType,
                       typename TeamHandle,
                       typename Callable>
-            static KOKKOS_INLINE_FUNCTION constexpr void
+            static KOKKOS_INLINE_FUNCTION void
             Iterate2D(OrdinalType extent_1,
                       OrdinalType extent_2,
                       TeamHandle  a_team_handle,
@@ -27,7 +27,7 @@ namespace koliop {
                                                                           flattened_range.forward());
                 Kokkos::parallel_for(an_intra_team_policy,
                                      [&](auto flattened_index) {
-                                         flattened_mu_vpar.Call(flattened_index, a_callable)
+                                         flattened_range.Call(flattened_index, a_callable);
                                      });
 #else
                 const auto an_intra_team_policy = Kokkos::TeamThreadMDRange<Kokkos::Rank<2, Kokkos::Iterate::Left, Kokkos::Iterate::Left>,

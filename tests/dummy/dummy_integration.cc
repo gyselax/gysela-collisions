@@ -143,7 +143,7 @@ int Test2() {
     //  GPU:
     //      (after rocm-smi -r)
     //      1.696 s on MI250X with KOLIOP_UTILITY_FLATTEN_EXPECT_POW2_EXTENTS
-    //      1.843 s on MI250X
+    //      1.818 s on MI250X
     //      0.736 s on MI300A with KOLIOP_UTILITY_FLATTEN_EXPECT_POW2_EXTENTS
     //      0.770 s on MI300A.
     //  CPU: (reduced case r=32,theta=32,phi=2) 1 core, 1 thread, no threading but using omp backend.
