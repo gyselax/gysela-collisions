@@ -20,12 +20,13 @@ auto NaiveBenchmark(Callable&& a_callable,
         return (time_point_1 - time_point_0).count();
     };
 
+    const auto sample_duration_ns_to_iteration_ms = iteration_per_sample * 1'000'000;
 
     // Warming up.
     const auto warmup_iteration_factor = 2;
     const auto warmup_duration_ns      = DoSample(warmup_iteration_factor * iteration_per_sample);
 
-    std::cout << "Warmed up in " << (warmup_duration_ns / (warmup_iteration_factor * iteration_per_sample * 1'000'000)) << " ms\n"
+    std::cout << "Warmed up in " << (warmup_duration_ns / (warmup_iteration_factor * sample_duration_ns_to_iteration_ms)) << " ms\n"
               << std::flush;
 
     // Assuming that each op is made of an overhead o and real work w.
@@ -89,14 +90,14 @@ auto NaiveBenchmark(Callable&& a_callable,
         std::cout << "\n";
 
         std::cout << "Min|Max (ms)                      : "
-                  << ((*(first_sample + 0)) / (iteration_per_sample * 1'000'000)) << " | "
-                  << ((*(first_sample + isample)) / (iteration_per_sample * 1'000'000)) << "\n";
+                  << ((*(first_sample + 0)) / sample_duration_ns_to_iteration_ms) << " | "
+                  << ((*(first_sample + isample)) / sample_duration_ns_to_iteration_ms) << "\n";
         std::cout << "Average (ms)                      : "
-                  << (sample_average / (iteration_per_sample * 1'000'000)) << "\n";
+                  << (sample_average / sample_duration_ns_to_iteration_ms) << "\n";
         std::cout << "Quantile (ms) at (0.25, 0.5, 0.75): ("
-                  << ((*(first_sample + ((sample_recorded * 25) / 100))) / (iteration_per_sample * 1'000'000)) << ", "
-                  << ((*(first_sample + ((sample_recorded * 50) / 100))) / (iteration_per_sample * 1'000'000)) << ", "
-                  << ((*(first_sample + ((sample_recorded * 75) / 100))) / (iteration_per_sample * 1'000'000)) << ")\n";
+                  << ((*(first_sample + ((sample_recorded * 25) / 100))) / sample_duration_ns_to_iteration_ms) << ", "
+                  << ((*(first_sample + ((sample_recorded * 50) / 100))) / sample_duration_ns_to_iteration_ms) << ", "
+                  << ((*(first_sample + ((sample_recorded * 75) / 100))) / sample_duration_ns_to_iteration_ms) << ")\n";
     }
 }
 
