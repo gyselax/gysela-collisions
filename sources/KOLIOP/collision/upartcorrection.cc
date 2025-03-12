@@ -105,6 +105,9 @@ namespace koliop {
                 IntraTeam::Iterate2D(
                     mu_extent, vpar_extent,
                     a_team_handle, [&](auto imu, auto ivpar) {
+                        // NOTE: This is not vectorized on CPU due to the
+                        // reduction.
+
                         const ComputeFloatType jacob_vel = k2Pi *
                                                            Bstar_s(ivpar, ir, itheta, ispeciesA);
 

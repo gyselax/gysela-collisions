@@ -22,11 +22,12 @@ auto NaiveBenchmark(Callable&& a_callable,
 
     const auto sample_duration_ns_to_iteration_ms = iteration_per_sample * 1'000'000;
 
-    // Warming up.
+    std::cout << "BENCH:Warming up.\n"
+              << std::flush;
     const auto warmup_iteration_factor = 2;
     const auto warmup_duration_ns      = DoSample(warmup_iteration_factor * iteration_per_sample);
 
-    std::cout << "Warmed up in " << (warmup_duration_ns / (warmup_iteration_factor * sample_duration_ns_to_iteration_ms)) << " ms\n"
+    std::cout << "BENCH:Warmed up in " << (warmup_duration_ns / (warmup_iteration_factor * sample_duration_ns_to_iteration_ms)) << " ms\n"
               << std::flush;
 
     // Assuming that each op is made of an overhead o and real work w.
@@ -37,7 +38,7 @@ auto NaiveBenchmark(Callable&& a_callable,
 
     const int64_t kEpsilon = (warmup_duration_ns * 1'000) / (warmup_iteration_factor * 1'000'000); // 1/1000 of warmup
 
-    std::cout << "Benchmark epsilon (ns)            : " << kEpsilon << "\n"
+    std::cout << "BENCH:Benchmark epsilon (ns)            : " << kEpsilon << "\n"
               << std::flush;
 
     std::vector<int64_t> sample_record;
@@ -47,7 +48,7 @@ auto NaiveBenchmark(Callable&& a_callable,
     int64_t sample_average          = 0;
     int64_t previous_sample_average = 0;
 
-    std::cout << "Running: ";
+    std::cout << "BENCH:Running: ";
 
     int64_t isample = 0;
     for(; isample < maximum_sample; ++isample) {
@@ -73,9 +74,9 @@ auto NaiveBenchmark(Callable&& a_callable,
         auto first_sample = std::begin(sample_record);
         auto last_sample  = first_sample + sample_recorded;
 
-        std::cout << "Sample taken (iteration count)    : "
+        std::cout << "BENCH:Sample taken (iteration count)    : "
                   << sample_recorded << " (" << (sample_recorded * iteration_per_sample) << ") \n";
-        std::cout << "Samples (ns)                      : ";
+        std::cout << "BENCH:Samples (ns)                      : ";
         for(auto first = first_sample; first != last_sample; ++first) {
             std::cout << (*first) << " ";
         }
@@ -83,18 +84,18 @@ auto NaiveBenchmark(Callable&& a_callable,
 
         std::sort(first_sample, last_sample);
 
-        std::cout << "Samples (sorted) (ns)             : ";
+        std::cout << "BENCH:Samples (sorted) (ns)             : ";
         for(auto first = first_sample; first != last_sample; ++first) {
             std::cout << (*first) << " ";
         }
         std::cout << "\n";
 
-        std::cout << "Min|Max (ms)                      : "
+        std::cout << "BENCH:Min|Max (ms)                      : "
                   << ((*(first_sample + 0)) / sample_duration_ns_to_iteration_ms) << " | "
                   << ((*(first_sample + isample)) / sample_duration_ns_to_iteration_ms) << "\n";
-        std::cout << "Average (ms)                      : "
+        std::cout << "BENCH:Average (ms)                      : "
                   << (sample_average / sample_duration_ns_to_iteration_ms) << "\n";
-        std::cout << "Quantile (ms) at (0.25, 0.5, 0.75): ("
+        std::cout << "BENCH:Quantile (ms) at (0.25, 0.5, 0.75): ("
                   << ((*(first_sample + ((sample_recorded * 25) / 100))) / sample_duration_ns_to_iteration_ms) << ", "
                   << ((*(first_sample + ((sample_recorded * 50) / 100))) / sample_duration_ns_to_iteration_ms) << ", "
                   << ((*(first_sample + ((sample_recorded * 75) / 100))) / sample_duration_ns_to_iteration_ms) << ")\n";
@@ -235,21 +236,19 @@ int Test1() {
 }
 
 int Test2() {
-    // Naive benchmarks, best of 10 iterations:
-    //  GPU:
-    //      (after rocm-smi -r)
-    //      1.696 s on MI250X with KOLIOP_UTILITY_FLATTEN_EXPECT_POW2_EXTENTS
-    //      1.818 s on MI250X
-    //      0.736 s on MI300A with KOLIOP_UTILITY_FLATTEN_EXPECT_POW2_EXTENTS
-    //      0.770 s on MI300A.
-    //  CPU: (reduced case r=32,theta=32,phi=2) 1 core, 1 thread, no threading but using omp backend.
-    //      Genoa clocked at 2.4 GHz.
-    //          Flattened iteration:
-    //              14.1 s on toolchain genoa.cce.adastra.
-    //                  10.9 s on toolchain genoa.cce.adastra replacing erf with exp.
-    //          No flattened:
-    //               10.4 s on toolchain genoa.cce.adastra
-    //                  2.56 s on toolchain genoa.cce.adastra replacing erf with exp. (observe vectorization)
+    // Naive benchmarks;
+    // On GPU: run rocm-smi -r before measuring.
+    // On CPU: clocked at 2.4 GHz.
+    //                                                                     (ms)
+    //                          64x128x64x128x32x2 | 1 GPU                         |        64x128x32x32x2x2 | 1 thread
+    //                          MI250X  MI250X (no erf)     MI300   MI300 (no erf)  GENOA (cce toolchain)   GENOA (no erf & cce toolchain)
+    // MDRANGE                  1859    1712                815     750             10508                   2464
+    // Flattened mod            1810    1727                781     740             13086                   10021
+    // Flattened mod pow2       1734    1653                740     713             12272                   9253
+    // Flattened div chain      1823    1744                782     747             13071                   10028
+    // Flattened div chain pow2 1751    1670                750     721             12341                   9481
+    //
+    //  CPU, vecto tests:
     //          1.79 s on intel-oneapi 2022 and assuming the libm function are all vectorized (svml).
     //          16.3 s on intel-oneapi if erf function is NOT vectorized in Cpar's tight loop (svml).
     //              x9.1
@@ -349,6 +348,13 @@ int Test2() {
         std::cout << "::koliop_Collision() failed\n";
         return -1;
     }
+
+    // if(::koliop_Collision(an_operator,
+    //                       dt,
+    //                       a_big_dummy_f5d_s.data()) != KOLIOP_STATUS_SUCCESS) {
+    //     std::cout << "::koliop_Collision() failed\n";
+    //     std::exit(-1);
+    // }
 
     NaiveBenchmark([&](auto) {
         if(::koliop_Collision(an_operator,

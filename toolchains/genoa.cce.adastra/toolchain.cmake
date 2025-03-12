@@ -5,7 +5,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Kokkos options:
 
-set(Kokkos_ENABLE_OPENMP ON CACHE BOOL "Defined if the OpenMP execution space is enabled.")
+set(Kokkos_ENABLE_OPENMP OFF CACHE BOOL "Defined if the OpenMP execution space is enabled.")
 set(Kokkos_ARCH_ZEN4 ON CACHE BOOL "Optimize for AMD Zen4 architecture (HOST).")
 
 # Kokkos kernels options:
@@ -24,10 +24,10 @@ set(koliop_FLAGS_BASE -Wall -Wextra -Wpedantic -Wcast-align -Wctor-dtor-privacy 
 
 set(koliop_FLAGS_DEBUG          -g -Og -ggdb -fno-omit-frame-pointer -fno-optimize-sibling-calls)
 set(koliop_FLAGS_MINSIZEREL     -Os)
-set(koliop_FLAGS_RELEASE        -g -O3 -fno-math-errno -fno-trapping-math -ffp-contract=fast -fveclib=libmvec) # -ffast-math allows the compiler to use SIMD implementation of some functions.
-set(koliop_FLAGS_RELWITHDEBINFO -g -O3 -fno-omit-frame-pointer -fno-optimize-sibling-calls)
+set(koliop_FLAGS_RELEASE        -g -O3 -fno-math-errno -march=znver4 -fveclib=libmvec)
+set(koliop_FLAGS_RELWITHDEBINFO -g -O3 -fno-math-errno -march=znver4 -fveclib=libmvec -fno-omit-frame-pointer -fno-optimize-sibling-calls)
 
-# set(koliop_LINKER_FLAGS_DEBUG          ${koliop_FLAGS_DEBUG})
-# set(koliop_LINKER_FLAGS_MINSIZEREL     ${koliop_FLAGS_MINSIZEREL})
-# set(koliop_LINKER_FLAGS_RELEASE        ${koliop_FLAGS_RELEASE})
-# set(koliop_LINKER_FLAGS_RELWITHDEBINFO ${koliop_FLAGS_RELWITHDEBINFO})
+set(koliop_LINKER_FLAGS_DEBUG          )
+set(koliop_LINKER_FLAGS_MINSIZEREL     )
+set(koliop_LINKER_FLAGS_RELEASE        -fveclib=libmvec)
+set(koliop_LINKER_FLAGS_RELWITHDEBINFO -fveclib=libmvec)
