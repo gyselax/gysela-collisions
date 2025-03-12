@@ -29,5 +29,5 @@ set(koliop_FLAGS_RELWITHDEBINFO -g -O3 -fno-math-errno -march=znver4 -fveclib=AM
 
 set(koliop_LINKER_FLAGS_DEBUG          )
 set(koliop_LINKER_FLAGS_MINSIZEREL     )
-set(koliop_LINKER_FLAGS_RELEASE        -fveclib=AMDLIBM -lamdlibm)
-set(koliop_LINKER_FLAGS_RELWITHDEBINFO -fveclib=AMDLIBM -lamdlibm)
+set(koliop_LINKER_FLAGS_RELEASE        -fveclib=AMDLIBM -lamdlibm) # "$ENV{AOCC_ROOT}/lib/libamdlibm.a" # NOTE: the static lib is not sued 0.o ?
+set(koliop_LINKER_FLAGS_RELWITHDEBINFO -fveclib=AMDLIBM -lamdlibm) # "$ENV{AOCC_ROOT}/lib/libamdlibm.a"

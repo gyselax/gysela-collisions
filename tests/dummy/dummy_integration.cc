@@ -20,11 +20,15 @@ auto NaiveBenchmark(Callable&& a_callable,
         return (time_point_1 - time_point_0).count();
     };
 
+    if(maximum_sample < minimum_sample) {
+        maximum_sample = minimum_sample;
+    }
+
     const auto sample_duration_ns_to_iteration_ms = iteration_per_sample * 1'000'000;
 
     std::cout << "BENCH:Warming up.\n"
               << std::flush;
-    const auto warmup_iteration_factor = 2;
+    const auto warmup_iteration_factor = minimum_sample / 10 + 2;
     const auto warmup_duration_ns      = DoSample(warmup_iteration_factor * iteration_per_sample);
 
     std::cout << "BENCH:Warmed up in " << (warmup_duration_ns / (warmup_iteration_factor * sample_duration_ns_to_iteration_ms)) << " ms\n"
@@ -48,10 +52,11 @@ auto NaiveBenchmark(Callable&& a_callable,
     int64_t sample_average          = 0;
     int64_t previous_sample_average = 0;
 
-    std::cout << "BENCH:Running: ";
+    std::cout << "BENCH:Running                           : ";
 
     int64_t isample = 0;
     for(; isample < maximum_sample; ++isample) {
+        std::cout << "." << std::flush;
         const auto duration_ns = DoSample(iteration_per_sample);
 
         sample_record[isample] = duration_ns;
@@ -64,7 +69,6 @@ auto NaiveBenchmark(Callable&& a_callable,
         }
 
         std::swap(sample_average, previous_sample_average);
-        std::cout << "." << std::flush;
     }
     std::cout << "\n"
               << std::flush;
@@ -247,15 +251,6 @@ int Test2() {
     // Flattened mod pow2       1734    1653                740     713             12272                   9253
     // Flattened div chain      1823    1744                782     747             13071                   10028
     // Flattened div chain pow2 1751    1670                750     721             12341                   9481
-    //
-    //  CPU, vecto tests:
-    //          1.79 s on intel-oneapi 2022 and assuming the libm function are all vectorized (svml).
-    //          16.3 s on intel-oneapi if erf function is NOT vectorized in Cpar's tight loop (svml).
-    //              x9.1
-    //          1.21 s on clang 17 and assuming the libm function are all vectorized (svml).
-    //          1.44 s on clang 17 and assuming the libm function are all vectorized (libmvec).
-    //          6.66 s on clang 17 if erf function is NOT vectorized in Cpar's tight loop (svml).
-    //
 
     // NOTE: This function is used to test the GPU code. We pass the operator
     // dummy arrays that get copied to the GPU anyway (assuming

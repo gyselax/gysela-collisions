@@ -127,6 +127,9 @@ namespace koliop {
                 IntraTeam::Iterate2D(
                     mu_extent, vpar_extent,
                     a_team_handle, [&](auto imu, auto ivpar) {
+                        // NOTE: This is not vectorized on CPU due to the
+                        // reduction.
+
                         const ComputeFloatType f5d_s_value = Kokkos::max(1.0E-40,
                                                                          f5d_s(imu, ivpar, itor1, itor2, itor3, ispecies));
 
