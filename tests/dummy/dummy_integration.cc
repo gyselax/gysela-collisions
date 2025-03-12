@@ -252,12 +252,12 @@ int Test2() {
     // Flattened div chain      1823    1744                782     747             13071                   10028
     // Flattened div chain pow2 1751    1670                750     721             12341                   9481
 
-    // AOCC 5.0       toolchain, 1 thread (no openmp):  2963ms
-    // CCE 18         toolchain, 1 thread (no openmp): 10456ms
-    // AMDCLANG 6.2.1 toolchain, 1 thread (no openmp): 10787ms
-    // OneAPI 2022    toolchain, 1 thread (no openmp): 16002ms
-    // GCC 13.2.1     toolchain, 1 thread (no openmp): 13386ms
-    // ICC 2021       toolchain, 1 thread (no openmp): 22423ms
+    // AOCC 5.0       toolchain, 1 thread (no openmp):  2963ms // Everything vectorized (except reductions)
+    // CCE 18         toolchain, 1 thread (no openmp): 10456ms // Cpar          not vectorized
+    // AMDCLANG 6.2.1 toolchain, 1 thread (no openmp): 10787ms // Cpar          not vectorized
+    // OneAPI 2022    toolchain, 1 thread (no openmp): 16002ms // Cpar          not vectorized
+    // GCC 13.2.1     toolchain, 1 thread (no openmp): 13386ms // Cpar and more not vectorized
+    // ICC 2021       toolchain, 1 thread (no openmp): 22423ms // Crap ?
 
     // NOTE: This function is used to test the GPU code. We pass the operator
     // dummy arrays that get copied to the GPU anyway (assuming
