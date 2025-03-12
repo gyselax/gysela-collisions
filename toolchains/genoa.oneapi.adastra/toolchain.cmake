@@ -16,7 +16,7 @@ set(KokkosKernels_ENABLE_COMPONENT_BLAS ON CACHE BOOL "")
 
 # Koliop options:
 
-set(koliop_TOOLCHAIN_NAME "genoa.intel.adastra")
+set(koliop_TOOLCHAIN_NAME "genoa.oneapi.adastra")
 
 # The rest is optional:
 
@@ -24,8 +24,8 @@ set(koliop_FLAGS_BASE -Wall -Wextra -Wpedantic -Wcast-align -Wctor-dtor-privacy 
 
 set(koliop_FLAGS_DEBUG          -g -Og -ggdb -fno-omit-frame-pointer -fno-optimize-sibling-calls)
 set(koliop_FLAGS_MINSIZEREL     -Os)
-set(koliop_FLAGS_RELEASE        -g -O3 -fno-math-errno -march=znver4)
-set(koliop_FLAGS_RELWITHDEBINFO -g -O3 -fno-math-errno -march=znver4 -fno-omit-frame-pointer -fno-optimize-sibling-calls)
+set(koliop_FLAGS_RELEASE        -g -O3 -fno-math-errno -march=core-avx2)
+set(koliop_FLAGS_RELWITHDEBINFO -g -O3 -fno-math-errno -march=core-avx2 -fno-omit-frame-pointer -fno-optimize-sibling-calls)
 
 # set(koliop_LINKER_FLAGS_DEBUG          )
 # set(koliop_LINKER_FLAGS_MINSIZEREL     )

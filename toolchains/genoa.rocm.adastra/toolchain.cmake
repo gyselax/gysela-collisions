@@ -16,7 +16,7 @@ set(KokkosKernels_ENABLE_COMPONENT_BLAS ON CACHE BOOL "")
 
 # Koliop options:
 
-set(koliop_TOOLCHAIN_NAME "genoa.amdclang.adastra")
+set(koliop_TOOLCHAIN_NAME "genoa.rocm.adastra")
 
 # The rest is optional:
 

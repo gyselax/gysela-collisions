@@ -26,12 +26,12 @@ auto NaiveBenchmark(Callable&& a_callable,
 
     const auto sample_duration_ns_to_iteration_ms = iteration_per_sample * 1'000'000;
 
-    std::cout << "BENCH:Warming up.\n"
-              << std::flush;
     const auto warmup_iteration_factor = minimum_sample / 10 + 2;
-    const auto warmup_duration_ns      = DoSample(warmup_iteration_factor * iteration_per_sample);
+    std::cout << "BENCH:Warming up for " << warmup_iteration_factor << " samples.\n"
+              << std::flush;
+    const auto warmup_duration_ns = DoSample(warmup_iteration_factor * iteration_per_sample);
 
-    std::cout << "BENCH:Warmed up in " << (warmup_duration_ns / (warmup_iteration_factor * sample_duration_ns_to_iteration_ms)) << " ms\n"
+    std::cout << "BENCH:Warmed up in " << (warmup_duration_ns / 1'000'000) << " ms | " << (warmup_duration_ns / (warmup_iteration_factor * sample_duration_ns_to_iteration_ms)) << "ms/sample\n"
               << std::flush;
 
     // Assuming that each op is made of an overhead o and real work w.
@@ -252,6 +252,13 @@ int Test2() {
     // Flattened div chain      1823    1744                782     747             13071                   10028
     // Flattened div chain pow2 1751    1670                750     721             12341                   9481
 
+    // AOCC 5.0       toolchain, 1 thread (no openmp):  2963ms
+    // CCE 18         toolchain, 1 thread (no openmp): 10456ms
+    // AMDCLANG 6.2.1 toolchain, 1 thread (no openmp): 10787ms
+    // OneAPI 2022    toolchain, 1 thread (no openmp): 16002ms
+    // GCC 13.2.1     toolchain, 1 thread (no openmp): 13386ms
+    // ICC 2021       toolchain, 1 thread (no openmp): 22423ms
+
     // NOTE: This function is used to test the GPU code. We pass the operator
     // dummy arrays that get copied to the GPU anyway (assuming
     // koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE=OFF) thus being
@@ -267,8 +274,8 @@ int Test2() {
     static constexpr size_t mu_extent   = 64;
     static constexpr size_t vpar_extent = 128;
 
-    static constexpr size_t r_extent     = 64;
-    static constexpr size_t theta_extent = 128;
+    static constexpr size_t r_extent     = 64;  // 32
+    static constexpr size_t theta_extent = 128; // 32
 
 #if defined(KOLIOP_BUILD_FORTRAN_INTERFACE)
     static constexpr size_t tor1_extent = r_extent;
@@ -277,7 +284,7 @@ int Test2() {
     static constexpr size_t tor1_extent = theta_extent;
     static constexpr size_t tor2_extent = r_extent;
 #endif
-    static constexpr size_t tor3_extent    = 32;
+    static constexpr size_t tor3_extent    = 32; // 2
     static constexpr size_t species_extent = 2;
 
     static constexpr size_t global_domain_r_extent     = r_extent;

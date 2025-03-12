@@ -18,11 +18,9 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////
-/// KOLIOP_COMPILER_IS_ICX
-/// KOLIOP_COMPILER_IS_ICC
+/// KOLIOP_COMPILER_IS_INTEL_LLVM
 /// KOLIOP_COMPILER_IS_CLANG
 /// KOLIOP_COMPILER_IS_GCC
-/// KOLIOP_COMPILER_IS_MSVC
 ///
 /// Use these macros to test for compiler dependant features/source code...
 /// <cpuid.h> (clang/gnu) vs <intrin.h> (msvc)
@@ -99,10 +97,6 @@
     // __INTEL_LLVM_COMPILER would also work.
     #define KOLIOP_COMPILER_MIMICRY_INTEL_LLVM 1
 #endif
-#if defined(__INTEL_COMPILER)
-    // For icc and icpc.
-    #define KOLIOP_COMPILER_MIMICRY_INTEL_CLASSIC 1
-#endif
 #if defined(__clang__)
     // For every Clang *compatible or mimicry* compiler. The order matters,
     // icx/icpx also defines __clang__.
@@ -113,30 +107,22 @@
     // Clang also defines __GNUC__.
     #define KOLIOP_COMPILER_MIMICRY_GCC 1
 #endif
-#if defined(_MSC_VER)
-    // For every MSVC *compatible or mimicry* compiler.
-    #define KOLIOP_COMPILER_MIMICRY_MSVC 1
-#endif
 
 // We now know which "marker" are defined, now we try to determine which
 // compiler is really underneath.
 
 #if defined(KOLIOP_COMPILER_MIMICRY_INTEL_LLVM)
     #define KOLIOP_COMPILER_IS_INTEL_LLVM 1
-#elif defined(KOLIOP_COMPILER_MIMICRY_INTEL_CLASSIC)
-    #define KOLIOP_COMPILER_IS_INTEL_CLASSIC 1
 #elif defined(KOLIOP_COMPILER_MIMICRY_CLANG)
     #define KOLIOP_COMPILER_IS_CLANG 1
 #elif defined(KOLIOP_COMPILER_MIMICRY_GCC)
     #define KOLIOP_COMPILER_IS_GCC 1
-#elif defined(KOLIOP_COMPILER_MIMICRY_MSVC)
-    #define KOLIOP_COMPILER_IS_MSVC 1
 #endif
 
 #if !(defined(KOLIOP_COMPILER_IS_INTEL_LLVM) || \
       defined(KOLIOP_COMPILER_IS_CLANG) ||      \
       defined(KOLIOP_COMPILER_IS_GCC))
-static_assert(false, "This library doesn't support your compiler.");
+    #warning "This library doesn't support your compiler."
 #endif
 
 

@@ -5,7 +5,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Kokkos options:
 
-set(Kokkos_ENABLE_OPENMP OFF CACHE BOOL "Defined if the OpenMP execution space is enabled.")
+set(Kokkos_ENABLE_OPENMP ON CACHE BOOL "Defined if the OpenMP execution space is enabled.")
 set(Kokkos_ARCH_ZEN4 ON CACHE BOOL "Optimize for AMD Zen4 architecture (HOST).")
 
 # Kokkos kernels options:
