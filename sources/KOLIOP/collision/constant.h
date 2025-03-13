@@ -67,6 +67,11 @@ namespace koliop {
             /// NOTE: As GPUs get bigger, we also need more parallelism. So
             /// maybe in two years, increase the block size to unlock
             /// Nspace = 32768.
+            /// For instance, if an MI300X has 304 CUs. Each CU can take 32
+            /// wavefronts (of 64 threads) but we may only be able to fit half.
+            /// So 16 * 304 = 4864 waves must be in flight at a given time.
+            /// Because we tend to have small workgroups (64 or 128 threads) we
+            /// should strive to have bigger CvCd blocks to fill all theses CUs.
             ///
             static inline constexpr OrdinalType kPresetBlockExtent[][3] = {
                 // Nspace = 65536
