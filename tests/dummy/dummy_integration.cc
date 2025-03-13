@@ -275,8 +275,12 @@ int Test2() {
     static constexpr size_t mu_extent   = 64;
     static constexpr size_t vpar_extent = 128;
 
-    static constexpr size_t r_extent     = 64;  // 32
-    static constexpr size_t theta_extent = 128; // 32
+    static constexpr size_t r_extent     = 64;
+    static constexpr size_t theta_extent = 128;
+    static constexpr size_t tor3_extent  = 32;
+    // static constexpr size_t r_extent     = 32;
+    // static constexpr size_t theta_extent = 32;
+    // static constexpr size_t tor3_extent  = 2;
 
 #if defined(KOLIOP_BUILD_FORTRAN_INTERFACE)
     static constexpr size_t tor1_extent = r_extent;
@@ -285,7 +289,6 @@ int Test2() {
     static constexpr size_t tor1_extent = theta_extent;
     static constexpr size_t tor2_extent = r_extent;
 #endif
-    static constexpr size_t tor3_extent    = 32; // 2
     static constexpr size_t species_extent = 2;
 
     static constexpr size_t global_domain_r_extent     = r_extent;
