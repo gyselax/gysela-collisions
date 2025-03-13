@@ -10,6 +10,7 @@
 #include "KOLIOP/internal/configuration.h"
 #include "KOLIOP/portability/cmath.h"
 #include "KOLIOP/utility/copy.h"
+#include "KOLIOP/utility/iterate.h"
 #include "KOLIOP/utility/select.h"
 #include "KOLIOP/utility/tordu.h"
 #include "KOLIOP/utility/view.h"
@@ -58,8 +59,6 @@ namespace koliop {
 
             const auto& collision_interspecies = an_operator.collision_interspecies_;
 
-            // TODO(Etienne M): Make sure the accesses are sequential on CPU.
-
             const auto team_count = tor1_extent * tor2_extent * tor3_extent * species_extent;
 
             // Due to the inherent Cuda/HIP thread block limit.
@@ -72,10 +71,9 @@ namespace koliop {
             const auto a_policy = PolicyType{
                 an_execution_space,
                 static_cast<int>(team_count),
-                // NOTE: The thread block size and the Nmu benefit from being
-                // close. This is due to the TeamThreadMDRange which
-                // parallelizes only the left most index which is Nmu.
-                koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, Kokkos::AUTO, 64 /* 128 */, 32)};
+                // NOTE: See the note in the DoComputeMoments kernel
+                // regarding thread block size.
+                koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, Kokkos::AUTO, 128, 32)};
 
             const auto kernel = KOKKOS_LAMBDA(const typename PolicyType::member_type& a_team_handle) {
 
@@ -89,12 +87,6 @@ namespace koliop {
                 const OrdinalType ir     = koliop::utility::GetRValue(itor1, itor2, itor3);
                 const OrdinalType itheta = koliop::utility::GetThetaValue(itor1, itor2, itor3);
 
-                // NOTE: The explicit Left iteration direction may not benefit
-                // the CPUs depending on how that is implemented.
-                const auto an_intra_team_policy = Kokkos::TeamThreadMDRange<Kokkos::Rank<2, Kokkos::Iterate::Left, Kokkos::Iterate::Left>,
-                                                                            std::remove_reference_t<decltype(a_team_handle)>>(a_team_handle,
-                                                                                                                              mu_extent, vpar_extent);
-
                 static constexpr auto k2Pi = koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi;
 
                 ComputeFloatType              impulsion_coll;
@@ -105,13 +97,17 @@ namespace koliop {
                                                     local_domain_theta_offset + itheta);
                 const ComputeFloatType na  = n_s(itor1, itor2, itor3, ispeciesA);
 
-                // TODO(Etienne M): Is parallel_for + TeamThreadMDRange +
+                // TODO(Etienne M): Is parallel_for + TeamThreadRange +
                 // explicit na_reducer followed by team_reduce, a valid
                 // semantic.
 
-                Kokkos::parallel_for(
-                    an_intra_team_policy,
-                    [&](auto imu, auto ivpar) {
+                using koliop::utility::IntraTeam;
+                IntraTeam::Iterate2D(
+                    mu_extent, vpar_extent,
+                    a_team_handle, [&](auto imu, auto ivpar) {
+                        // NOTE: This is not vectorized on CPU due to the
+                        // reduction.
+
                         const ComputeFloatType jacob_vel = k2Pi *
                                                            Bstar_s(ivpar, ir, itheta, ispeciesA);
 
@@ -135,9 +131,9 @@ namespace koliop {
                 Kokkos::Sum<ComputeFloatType> T_coll_reducer{T_coll};
                 T_coll_reducer.init(T_coll_reducer.reference());
 
-                Kokkos::parallel_for(
-                    an_intra_team_policy,
-                    [&](auto imu, auto ivpar) {
+                IntraTeam::Iterate2D(
+                    mu_extent, vpar_extent,
+                    a_team_handle, [&](auto imu, auto ivpar) {
                         const ComputeFloatType jacob_vel = (k2Pi / na) *
                                                            Bstar_s(ivpar, ir, itheta, ispeciesA);
 
@@ -196,9 +192,9 @@ namespace koliop {
 
                 // We remove the old Maxwellian and add the new one.
 
-                Kokkos::parallel_for(
-                    an_intra_team_policy,
-                    [&](auto imu, auto ivpar) {
+                IntraTeam::Iterate2D(
+                    mu_extent, vpar_extent,
+                    a_team_handle, [&](auto imu, auto ivpar) {
                         const ComputeFloatType u_coll = mug(imu) * Bij / T_coll;
                         const ComputeFloatType u_new  = mug(imu) * Bij / T_new;
 

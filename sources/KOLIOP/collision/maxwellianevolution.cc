@@ -9,6 +9,7 @@
 #include "KOLIOP/internal/configuration.h"
 #include "KOLIOP/portability/cmath.h"
 #include "KOLIOP/utility/copy.h"
+#include "KOLIOP/utility/iterate.h"
 #include "KOLIOP/utility/select.h"
 #include "KOLIOP/utility/tordu.h"
 #include "KOLIOP/utility/view.h"
@@ -63,8 +64,6 @@ namespace koliop {
 
             const uint64_t scratch_memory_bytes_per_thread = species_extent * sizeof(ComputeFloatType);
 
-            // TODO(Etienne M): Make sure the accesses are sequential on CPU.
-
             const auto team_count = tor1_extent * tor2_extent * tor3_extent;
 
             // Due to the inherent Cuda/HIP thread block limit.
@@ -77,10 +76,9 @@ namespace koliop {
             auto a_policy = PolicyType{
                 an_execution_space,
                 static_cast<int>(team_count),
-                // NOTE: The thread block size and the Nmu benefit from being
-                // close. This is due to the TeamThreadMDRange which
-                // parallelizes only the left most index which is Nmu.
-                koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, Kokkos::AUTO, 64 /* 128 */, 32)};
+                // NOTE: See the note in the DoComputeMoments kernel
+                // regarding thread block size.
+                koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, Kokkos::AUTO, 64, 32)};
 
             a_policy.set_scratch_size(0,
                                       Kokkos::PerThread(ScratchMemory::shmem_size(scratch_memory_bytes_per_thread)));
@@ -144,13 +142,10 @@ namespace koliop {
                     const ComputeFloatType bot_old = Bij / Ta;
                     const ComputeFloatType bot_new = Bij / Ta_new;
 
-                    Kokkos::parallel_for(
-                        // NOTE: The explicit Left iteration direction may not benefit
-                        // the CPUs depending on how that is implemented.
-                        Kokkos::TeamThreadMDRange<Kokkos::Rank<2, Kokkos::Iterate::Left, Kokkos::Iterate::Left>,
-                                                  std::remove_reference_t<decltype(a_team_handle)>>(a_team_handle,
-                                                                                                    mu_extent, vpar_extent),
-                        [&](auto imu, auto ivpar) {
+                    using koliop::utility::IntraTeam;
+                    IntraTeam::Iterate2D(
+                        mu_extent, vpar_extent,
+                        a_team_handle, [&](auto imu, auto ivpar) {
                             const ComputeFloatType vp2_old = (vparg(ivpar) - Vpara) * (vparg(ivpar) - Vpara) / (2.0 * Ta);
                             const ComputeFloatType vp2_new = (vparg(ivpar) - Vpara) * (vparg(ivpar) - Vpara) / (2.0 * Ta_new);
 

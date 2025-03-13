@@ -23,6 +23,10 @@ set(koliop_FLAGS_BASE -Wall -Wextra -Wpedantic -Wcast-align -Wctor-dtor-privacy 
 
 set(koliop_FLAGS_DEBUG          -g -Og -ggdb -fno-omit-frame-pointer -fno-optimize-sibling-calls)
 set(koliop_FLAGS_MINSIZEREL     -Os)
-# NOTE: For gcc to start producing vectorized libm calls, we need to add the dangerous -funsafe-math-optimizations -ffinite-math-only flags.
-set(koliop_FLAGS_RELEASE        -g -O3 -fno-math-errno -fno-signed-zeros -fno-signaling-nans -fno-trapping-math -fassociative-math -freciprocal-math -fno-rounding-math -ffp-contract=fast -funsafe-math-optimizations -ffinite-math-only)
-set(koliop_FLAGS_RELWITHDEBINFO -g -O3 -fno-omit-frame-pointer -fno-optimize-sibling-calls)
+set(koliop_FLAGS_RELEASE        -g -O3 -fno-math-errno -march=native -funsafe-math-optimizations -ffinite-math-only)
+set(koliop_FLAGS_RELWITHDEBINFO -g -O3 -fno-math-errno -march=native -funsafe-math-optimizations -ffinite-math-only -fno-omit-frame-pointer -fno-optimize-sibling-calls)
+
+set(koliop_LINKER_FLAGS_DEBUG          )
+set(koliop_LINKER_FLAGS_MINSIZEREL     )
+set(koliop_LINKER_FLAGS_RELEASE        )
+set(koliop_LINKER_FLAGS_RELWITHDEBINFO )

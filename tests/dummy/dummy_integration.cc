@@ -1,9 +1,110 @@
 #include <KOLIOP/koliop.h>
 
+#include <algorithm>
 #include <chrono>
 #include <cstdlib>
 #include <iostream>
 #include <vector>
+
+template <typename Callable>
+auto NaiveBenchmark(Callable&& a_callable,
+                    int64_t    iteration_per_sample = 1,
+                    int64_t    minimum_sample       = 2,
+                    int64_t    maximum_sample       = 128) {
+    const auto DoSample = [&](int64_t niteration) {
+        auto time_point_0 = std::chrono::steady_clock::now();
+        for(int64_t i = 0; i < niteration; ++i) {
+            a_callable(i);
+        }
+        auto time_point_1 = std::chrono::steady_clock::now();
+        return (time_point_1 - time_point_0).count();
+    };
+
+    if(maximum_sample < minimum_sample) {
+        maximum_sample = minimum_sample;
+    }
+
+    const auto sample_duration_ns_to_iteration_ms = iteration_per_sample * 1'000'000;
+
+    const auto warmup_iteration_factor = minimum_sample / 10 + 2;
+    std::cout << "BENCH:Warming up for " << warmup_iteration_factor << " samples.\n"
+              << std::flush;
+    const auto warmup_duration_ns = DoSample(warmup_iteration_factor * iteration_per_sample);
+
+    std::cout << "BENCH:Warmed up in " << (warmup_duration_ns / 1'000'000) << " ms | " << (warmup_duration_ns / (warmup_iteration_factor * sample_duration_ns_to_iteration_ms)) << "ms/sample\n"
+              << std::flush;
+
+    // Assuming that each op is made of an overhead o and real work w.
+    // If we assume that an op ran n times has time:
+    //  o + w * n
+    // Then as n grows to infinity the op duration is:
+    //  (o + w * n) / n, o tends to zero leaving w.
+
+    const int64_t kEpsilon = (warmup_duration_ns * 1'000) / (warmup_iteration_factor * 1'000'000); // 1/1000 of warmup
+
+    std::cout << "BENCH:Benchmark epsilon (ns)            : " << kEpsilon << "\n"
+              << std::flush;
+
+    std::vector<int64_t> sample_record;
+    sample_record.resize(maximum_sample, 0);
+
+    int64_t sample_sum              = 0;
+    int64_t sample_average          = 0;
+    int64_t previous_sample_average = 0;
+
+    std::cout << "BENCH:Running                           : ";
+
+    int64_t isample = 0;
+    for(; isample < maximum_sample; ++isample) {
+        std::cout << "." << std::flush;
+        const auto duration_ns = DoSample(iteration_per_sample);
+
+        sample_record[isample] = duration_ns;
+        sample_sum             = duration_ns + sample_sum;
+        sample_average         = sample_sum / (isample + 1);
+
+        if(minimum_sample <= (isample + 1) &&
+           (sample_average - previous_sample_average) < kEpsilon) {
+            break;
+        }
+
+        std::swap(sample_average, previous_sample_average);
+    }
+    std::cout << "\n"
+              << std::flush;
+    {
+        const auto sample_recorded = isample + 1;
+
+        auto first_sample = std::begin(sample_record);
+        auto last_sample  = first_sample + sample_recorded;
+
+        std::cout << "BENCH:Sample taken (iteration count)    : "
+                  << sample_recorded << " (" << (sample_recorded * iteration_per_sample) << ") \n";
+        std::cout << "BENCH:Samples (ns)                      : ";
+        for(auto first = first_sample; first != last_sample; ++first) {
+            std::cout << (*first) << " ";
+        }
+        std::cout << "\n";
+
+        std::sort(first_sample, last_sample);
+
+        std::cout << "BENCH:Samples (sorted) (ns)             : ";
+        for(auto first = first_sample; first != last_sample; ++first) {
+            std::cout << (*first) << " ";
+        }
+        std::cout << "\n";
+
+        std::cout << "BENCH:Min|Max (ms)                      : "
+                  << ((*(first_sample + 0)) / sample_duration_ns_to_iteration_ms) << " | "
+                  << ((*(first_sample + isample)) / sample_duration_ns_to_iteration_ms) << "\n";
+        std::cout << "BENCH:Average (ms)                      : "
+                  << (sample_average / sample_duration_ns_to_iteration_ms) << "\n";
+        std::cout << "BENCH:Quantile (ms) at (0.25, 0.5, 0.75): ("
+                  << ((*(first_sample + ((sample_recorded * 25) / 100))) / sample_duration_ns_to_iteration_ms) << ", "
+                  << ((*(first_sample + ((sample_recorded * 50) / 100))) / sample_duration_ns_to_iteration_ms) << ", "
+                  << ((*(first_sample + ((sample_recorded * 75) / 100))) / sample_duration_ns_to_iteration_ms) << ")\n";
+    }
+}
 
 int Test1() {
     // NOTE: This function is used to test the GPU code. We pass the operator
@@ -139,19 +240,25 @@ int Test1() {
 }
 
 int Test2() {
-    // Naive benchmarks:
-    //  GPU:
-    //      1.85 s on MI250X (after rocm-smi -r).
-    //      0.78 s on MI300A.
-    //  CPU: (reduced case r=32,theta=32,phi=2) single core, no threading but using omp backend.
-    //      Genoa clocked at 2.4 GHz.
-    //          1.79 s on intel-oneapi 2022 and assuming the libm function are all vectorized (svml).
-    //          16.3 s on intel-oneapi if erf function is NOT vectorized in Cpar's tight loop (svml).
-    //              x9.1
-    //          1.21 s on clang 17 and assuming the libm function are all vectorized (svml).
-    //          1.44 s on clang 17 and assuming the libm function are all vectorized (libmvec).
-    //          6.66 s on clang 17 if erf function is NOT vectorized in Cpar's tight loop (svml).
-    //
+    // Naive benchmarks;
+    // On GPU: run rocm-smi -r before measuring.
+    // On CPU: clocked at 2.4 GHz.
+    //                                                                     (ms)
+    //                          64x128x64x128x32x2 | 1 GPU                         |        64x128x32x32x2x2 | 1 thread
+    //                          MI250X  MI250X (no erf)     MI300   MI300 (no erf)  GENOA (cce toolchain)   GENOA (no erf & cce toolchain) GENOA (aocc toolchain)
+    // MDRANGE                  1859    1712                815     750             10508                   2464                           2963
+    // Flattened mod            1810    1727                781     740             13086                   10021                          15751
+    // Flattened mod pow2       1734    1653                740     713             12272                   9253                           15292
+    // Flattened div chain      1823    1744                782     747             13071                   10028                          15773
+    // Flattened div chain pow2 1751    1670                750     721             12341                   9481                           15307
+
+    // GENOA timings using different toolchains:
+    // AOCC 5.0       toolchain, 1 thread (no openmp):  2963ms // Everything vectorized (except reductions)
+    // CCE 18         toolchain, 1 thread (no openmp): 10508ms // Cpar          not vectorized
+    // AMDCLANG 6.2.1 toolchain, 1 thread (no openmp): 10787ms // Cpar          not vectorized
+    // OneAPI 2022    toolchain, 1 thread (no openmp): 16002ms // Cpar          not vectorized
+    // GCC 13.2.1     toolchain, 1 thread (no openmp): 13386ms // Cpar and more not vectorized
+    // ICC 2021       toolchain, 1 thread (no openmp): 22423ms // Crap ?
 
     // NOTE: This function is used to test the GPU code. We pass the operator
     // dummy arrays that get copied to the GPU anyway (assuming
@@ -168,8 +275,8 @@ int Test2() {
     static constexpr size_t mu_extent   = 64;
     static constexpr size_t vpar_extent = 128;
 
-    static constexpr size_t r_extent     = 64;
-    static constexpr size_t theta_extent = 128;
+    static constexpr size_t r_extent     = 64;  // 32
+    static constexpr size_t theta_extent = 128; // 32
 
 #if defined(KOLIOP_BUILD_FORTRAN_INTERFACE)
     static constexpr size_t tor1_extent = r_extent;
@@ -178,7 +285,7 @@ int Test2() {
     static constexpr size_t tor1_extent = theta_extent;
     static constexpr size_t tor2_extent = r_extent;
 #endif
-    static constexpr size_t tor3_extent    = 32;
+    static constexpr size_t tor3_extent    = 32; // 2
     static constexpr size_t species_extent = 2;
 
     static constexpr size_t global_domain_r_extent     = r_extent;
@@ -245,20 +352,21 @@ int Test2() {
         return -1;
     }
 
-    for(int i = 0; i < 10; ++i) {
-        const auto time_point = std::chrono::steady_clock::now();
+    // if(::koliop_Collision(an_operator,
+    //                       dt,
+    //                       a_big_dummy_f5d_s.data()) != KOLIOP_STATUS_SUCCESS) {
+    //     std::cout << "::koliop_Collision() failed\n";
+    //     std::exit(-1);
+    // }
 
+    NaiveBenchmark([&](auto) {
         if(::koliop_Collision(an_operator,
                               dt,
                               a_big_dummy_f5d_s.data()) != KOLIOP_STATUS_SUCCESS) {
             std::cout << "::koliop_Collision() failed\n";
-            return -1;
+            std::exit(-1);
         }
-
-        const auto duration = std::chrono::steady_clock::now() - time_point;
-        std::cout << (duration.count() / 1'000'000) << " ms\n"
-                  << std::flush;
-    }
+    });
 
     if(::koliop_Release(an_operator) != KOLIOP_STATUS_SUCCESS) {
         std::cout << "::koliop_Release() failed\n";

@@ -43,7 +43,7 @@ namespace koliop {
             // GPU's resources on every kernels. By using streams we can fill
             // the gapes left by the small kernels.
 
-#if defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_CUDA)
+#if defined(KOLIOP_BACKEND_IS_GPU_LIKE)
             static inline constexpr OrdinalType kDisjointExecutionSpaceCount = 2;
 #else
             static inline constexpr OrdinalType kDisjointExecutionSpaceCount = 1;

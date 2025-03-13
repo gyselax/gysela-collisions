@@ -8,6 +8,7 @@
 #include "KOLIOP/blas/trsv.h"
 #include "KOLIOP/collision/matrixsampler.h"
 #include "KOLIOP/collision/najl.h"
+#include "KOLIOP/utility/iterate.h"
 #include "KOLIOP/utility/select.h"
 #include "KOLIOP/utility/tordu.h"
 
@@ -116,9 +117,6 @@ namespace koliop {
                 const auto& B_norm       = an_operator.B_norm_;
                 const auto& T_s          = an_operator.T_s_;
 
-                // TODO(Etienne M): Make sure the accesses are sequential on
-                // CPU.
-
                 const auto team_count = CvCdDriver::kBlockExtentTor1 * CvCdDriver::kBlockExtentTor2 * CvCdDriver::kBlockExtentTor3;
 
                 // Due to the inherent Cuda/HIP thread block limit.
@@ -131,10 +129,9 @@ namespace koliop {
                 const auto a_policy = PolicyType{
                     an_execution_space,
                     static_cast<int>(team_count),
-                    // NOTE: The thread block size and the Nmu benefit from being
-                    // close. This is due to the TeamThreadMDRange which
-                    // parallelizes only the left most index which is Nmu.
-                    koliop::utility::Select<ExecutionSpace>(Kokkos::AUTO, Kokkos::AUTO, 64 /* 128 */, 32)};
+                    // NOTE: See the note in the DoComputeMoments kernel
+                    // regarding thread block size.
+                    koliop::utility::Select<ExecutionSpace>(Kokkos::AUTO, Kokkos::AUTO, 64, 32)};
 
                 const auto kernel = KOKKOS_LAMBDA(const typename PolicyType::member_type& a_team_handle) {
 
@@ -366,9 +363,6 @@ namespace koliop {
                 const auto& B_norm = an_operator.B_norm_;
                 const auto& T_s    = an_operator.T_s_;
 
-                // TODO(Etienne M): Make sure the accesses are sequential on
-                // CPU.
-
                 const auto team_count = CvCdDriver::kBlockExtentTor1 * CvCdDriver::kBlockExtentTor2 * CvCdDriver::kBlockExtentTor3;
 
                 // Due to the inherent Cuda/HIP thread block limit.
@@ -381,10 +375,9 @@ namespace koliop {
                 const auto a_policy = PolicyType{
                     an_execution_space,
                     static_cast<int>(team_count),
-                    // NOTE: The thread block size and the Nmu benefit from being
-                    // close. This is due to the TeamThreadMDRange which
-                    // parallelizes only the left most index which is Nmu.
-                    koliop::utility::Select<ExecutionSpace>(Kokkos::AUTO, Kokkos::AUTO, 64 /* 128 */, 32)};
+                    // NOTE: See the note in the DoComputeMoments kernel
+                    // regarding thread block size.
+                    koliop::utility::Select<ExecutionSpace>(Kokkos::AUTO, Kokkos::AUTO, 64, 32)};
 
                 const auto kernel = KOKKOS_LAMBDA(const typename PolicyType::member_type& a_team_handle) {
 
@@ -423,17 +416,15 @@ namespace koliop {
                                                         local_domain_theta_offset + itheta) /
                                                  T_s(itor1, itor2, itor3, species_index);
 
-                    Kokkos::parallel_for(
-                        // NOTE: The explicit Left iteration direction may not benefit
-                        // the CPUs depending on how that is implemented.
-                        Kokkos::TeamThreadMDRange<Kokkos::Rank<2, Kokkos::Iterate::Left, Kokkos::Iterate::Left>,
-                                                  std::remove_reference_t<decltype(a_team_handle)>>(a_team_handle,
-                                                                                                    mu_extent, vpar_extent),
-                        [&](auto imu, auto ivpar) {
+                    using koliop::utility::IntraTeam;
+                    IntraTeam::Iterate2D(
+                        mu_extent, vpar_extent,
+                        a_team_handle, [&](auto imu, auto ivpar) {
                             const ComputeFloatType muBoT       = mug(imu) * BoT;
                             ComputeFloatType       f5d_s_value = 0.0;
 
                             for(OrdinalType ipol = 0; ipol < Constant::kMaximumLaguerrePolynomialDegree; ++ipol) {
+                                // NOTE: large strided loads here.
                                 f5d_s_value += rhs(batch_index, ivpar, ipol, batch_element_index) *
                                                DoComputeLaguerrePol(ipol, muBoT);
                             }

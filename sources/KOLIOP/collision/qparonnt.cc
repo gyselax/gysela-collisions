@@ -9,6 +9,7 @@
 #include "KOLIOP/internal/configuration.h"
 #include "KOLIOP/portability/cmath.h"
 #include "KOLIOP/utility/copy.h"
+#include "KOLIOP/utility/iterate.h"
 #include "KOLIOP/utility/select.h"
 #include "KOLIOP/utility/tordu.h"
 #include "KOLIOP/utility/view.h"
@@ -50,8 +51,6 @@ namespace koliop {
             const auto& U_par_s        = an_operator.U_par_s_;
             const auto& T_s            = an_operator.T_s_;
 
-            // TODO(Etienne M): Make sure the accesses are sequential on CPU.
-
             const auto team_count = tor1_extent * tor2_extent * tor3_extent * species_extent;
 
             // Due to the inherent Cuda/HIP thread block limit.
@@ -64,10 +63,9 @@ namespace koliop {
             const auto a_policy = PolicyType{
                 an_execution_space,
                 static_cast<int>(team_count),
-                // NOTE: The thread block size and the Nmu benefit from being
-                // close. This is due to the TeamThreadMDRange which
-                // parallelizes only the left most index which is Nmu.
-                koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, Kokkos::AUTO, 64 /* 128 */, 32)};
+                // NOTE: See the note in the DoComputeMoments kernel
+                // regarding thread block size.
+                koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, Kokkos::AUTO, 128, 32)};
 
             const auto kernel = KOKKOS_LAMBDA(const typename PolicyType::member_type& a_team_handle) {
 
@@ -95,17 +93,17 @@ namespace koliop {
                 Kokkos::Sum<ComputeFloatType> q_par_on_nT_s_reducer{q_par_on_nT_s_reduction};
                 q_par_on_nT_s_reducer.init(q_par_on_nT_s_reducer.reference());
 
-                // TODO(Etienne M): Is parallel_for + TeamThreadMDRange +
+                // TODO(Etienne M): Is parallel_for + TeamThreadRange +
                 // explicit q_par_on_nT_s_reducer followed by team_reduce, a
                 // valid semantic.
 
-                Kokkos::parallel_for(
-                    // NOTE: The explicit Left iteration direction may not benefit
-                    // the CPUs depending on how that is implemented.
-                    Kokkos::TeamThreadMDRange<Kokkos::Rank<2, Kokkos::Iterate::Left, Kokkos::Iterate::Left>,
-                                              std::remove_reference_t<decltype(a_team_handle)>>(a_team_handle,
-                                                                                                mu_extent, vpar_extent),
-                    [&](auto imu, auto ivpar) {
+                using koliop::utility::IntraTeam;
+                IntraTeam::Iterate2D(
+                    mu_extent, vpar_extent,
+                    a_team_handle, [&](auto imu, auto ivpar) {
+                        // NOTE: This is not vectorized on CPU due to the
+                        // reduction.
+
                         const ComputeFloatType jac = k2Pi *
                                                      Bstar_s(ivpar, ir, itheta, ispecies);
 

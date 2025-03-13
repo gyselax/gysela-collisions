@@ -141,13 +141,22 @@ namespace koliop {
                         //
                         static constexpr ValueType kFactorial[Xtr_pows_size] = {1, 1, 2, 6, 24, 120};
 
+                        const ValueType offset_k_float = static_cast<ValueType>(offset_k);
+#if defined(KOLIOP_COMPILER_IS_GCC)
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wunknown-pragmas"
+#endif
+#pragma unroll
                         for(OrdinalType ind_i = 0; ind_i < Xtr_pows_size; ++ind_i) {
                             // clang-format off
-                            I_mat[ind_i] = (kFactorial[ind_i] * Kokkos::pow(Xtr, -offset_k - 0.5)) *
-                                           ( 1.0 - ((offset_k + 0.5) * (ind_i + 1)) / Xtr *
-                                            (1.0 - ((offset_k + 1.5) * (ind_i + 2)) / Xtr * 0.5));
+                            I_mat[ind_i] = (kFactorial[ind_i] * Kokkos::pow(Xtr, -offset_k_float - 0.5)) *
+                                           (1.0 - ((offset_k_float + 0.5) * (static_cast<ValueType>(ind_i) + 1)) / Xtr *
+                                           (1.0 - ((offset_k_float + 1.5) * (static_cast<ValueType>(ind_i) + 2)) / Xtr * 0.5));
                             // clang-format on
                         }
+#if defined(KOLIOP_COMPILER_IS_GCC)
+    #pragma GCC diagnostic pop
+#endif
                     } else {
                         // NOTE: Numerical accuracy of this whole branch's computation
                         // isn't good!

@@ -11,6 +11,7 @@
 #include "KOLIOP/internal/configuration.h"
 #include "KOLIOP/portability/cmath.h"
 #include "KOLIOP/utility/copy.h"
+#include "KOLIOP/utility/iterate.h"
 #include "KOLIOP/utility/select.h"
 #include "KOLIOP/utility/tordu.h"
 #include "KOLIOP/utility/view.h"
@@ -59,12 +60,9 @@ namespace koliop {
             const auto a_policy = PolicyType{
                 an_execution_space,
                 static_cast<int>(team_count),
-                // NOTE: The thread block size and the Nmu benefit from being
-                // close. This is due to the TeamThreadMDRange which
-                // parallelizes only the left most index which is Nmu.
-                koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, Kokkos::AUTO, 64 /* 128 */, 32)};
-
-            // TODO(Etienne M): Make sure the accesses are sequential on CPU.
+                // NOTE: See the note in the DoComputeMoments kernel
+                // regarding thread block size.
+                koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, Kokkos::AUTO, 256, 32)};
 
             switch(choice) {
                 case 3: {
@@ -90,13 +88,10 @@ namespace koliop {
                         const ComputeFloatType f2oTa  = 0.5 / Ta;
                         const ComputeFloatType coeff  = na / (k2Pi * Ta * Kokkos::sqrt(k2Pi * Ta));
 
-                        Kokkos::parallel_for(
-                            // NOTE: The explicit Left iteration direction may not benefit
-                            // the CPUs depending on how that is implemented.
-                            Kokkos::TeamThreadMDRange<Kokkos::Rank<2, Kokkos::Iterate::Left, Kokkos::Iterate::Left>,
-                                                      std::remove_reference_t<decltype(a_team_handle)>>(a_team_handle,
-                                                                                                        mu_extent, vpar_extent),
-                            [&](auto imu, auto ivpar) {
+                        using koliop::utility::IntraTeam;
+                        IntraTeam::Iterate2D(
+                            mu_extent, vpar_extent,
+                            a_team_handle, [&](auto imu, auto ivpar) {
                                 const ComputeFloatType v2oTa = mug(imu) * BijoTa + vparg(ivpar) * vparg(ivpar) * f2oTa;
 
                                 f5d_s(imu, ivpar, itor1, itor2, itor3, ispeciesA) = Kokkos::max(0.0,
@@ -130,13 +125,10 @@ namespace koliop {
                         const ComputeFloatType f2oTa  = 0.5 / Ta;
                         const ComputeFloatType coeff  = (k2Pi * Ta * Kokkos::sqrt(k2Pi * Ta)) / na;
 
-                        Kokkos::parallel_for(
-                            // NOTE: The explicit Left iteration direction may not benefit
-                            // the CPUs depending on how that is implemented.
-                            Kokkos::TeamThreadMDRange<Kokkos::Rank<2, Kokkos::Iterate::Left, Kokkos::Iterate::Left>,
-                                                      std::remove_reference_t<decltype(a_team_handle)>>(a_team_handle,
-                                                                                                        mu_extent, vpar_extent),
-                            [&](auto imu, auto ivpar) {
+                        using koliop::utility::IntraTeam;
+                        IntraTeam::Iterate2D(
+                            mu_extent, vpar_extent,
+                            a_team_handle, [&](auto imu, auto ivpar) {
                                 const ComputeFloatType v2oTa = mug(imu) * BijoTa + vparg(ivpar) * vparg(ivpar) * f2oTa;
 
                                 f5d_s(imu, ivpar, itor1, itor2, itor3, ispeciesA) = Kokkos::max(0.001,

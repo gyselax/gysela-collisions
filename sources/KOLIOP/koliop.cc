@@ -32,22 +32,42 @@
         if(static_cast<bool>(with_verbose_initialization)) {
             std::cout << "Koliop: v" << KOLIOP_VERSION << "\n";
             std::cout << "  KOLIOP_TOOLCHAIN_NAME: " << KOLIOP_TOOLCHAIN_NAME << "\n";
-#if defined(KOLIOP_BUILD_FORTRAN_INTERFACE)
-            std::cout << "  KOLIOP_BUILD_FORTRAN_INTERFACE: true (expecting f5d_s as (mu,vpar),(r,theta,phi),species)\n";
+#if defined(KOLIOP_BACKEND_IS_GPU_LIKE)
+            std::cout << "  KOLIOP_BACKEND_IS_GPU_LIKE: true\n";
 #else
-            std::cout << "  KOLIOP_BUILD_FORTRAN_INTERFACE: false (expecting f5d_s as (mu,vpar),(theta,r,phi),species)\n";
+            std::cout << "  KOLIOP_BACKEND_IS_GPU_LIKE: false\n";
+#endif
+#if defined(KOLIOP_BACKEND_IS_CPU_LIKE)
+            std::cout << "  KOLIOP_BACKEND_IS_CPU_LIKE: true\n";
+#else
+            std::cout << "  KOLIOP_BACKEND_IS_CPU_LIKE: false\n";
+#endif
+#if defined(KOLIOP_ASSERT_ENABLED)
+            std::cout << "  KOLIOP_ASSERT_ENABLED: true\n";
+#else
+            std::cout << "  KOLIOP_ASSERT_ENABLED: false\n";
 #endif
 #if defined(KOLIOP_FENCE_ON_OPERATOR_EXIT)
             std::cout << "  KOLIOP_FENCE_ON_OPERATOR_EXIT: true\n";
 #else
             std::cout << "  KOLIOP_FENCE_ON_OPERATOR_EXIT: false\n";
 #endif
-
 #if defined(KOLIOP_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE)
             std::cout << "  KOLIOP_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE: true\n";
 #else
             std::cout << "  KOLIOP_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE: false\n";
 #endif
+#if defined(KOLIOP_BUILD_FORTRAN_INTERFACE)
+            std::cout << "  KOLIOP_BUILD_FORTRAN_INTERFACE: true (expecting f5d_s as (mu,vpar),(r,theta,phi),species)\n";
+#else
+            std::cout << "  KOLIOP_BUILD_FORTRAN_INTERFACE: false (expecting f5d_s as (mu,vpar),(theta,r,phi),species)\n";
+#endif
+#if defined(KOLIOP_UTILITY_FLATTEN_EXPECT_POW2_EXTENTS)
+            std::cout << "  KOLIOP_UTILITY_FLATTEN_EXPECT_POW2_EXTENTS: true\n";
+#else
+            std::cout << "  KOLIOP_UTILITY_FLATTEN_EXPECT_POW2_EXTENTS: false\n";
+#endif
+
             std::cout << "  koliop::collision::Constant::kDisjointExecutionSpaceCount: " << koliop::collision::Constant::kDisjointExecutionSpaceCount << "\n";
             std::cout << "  koliop::collision::Constant::kDefaultExecutionSpacePoolIndex: " << koliop::collision::Constant::kDefaultExecutionSpacePoolIndex << "\n";
             std::cout << "  koliop::collision::Constant::kPresetBlockExtent: ";
@@ -64,9 +84,9 @@
             auto the_configuration = Kokkos::InitializationSettings()
                                          .set_device_id(static_cast<int>(a_device_index))
                                          .set_disable_warnings(!static_cast<bool>(with_verbose_initialization))
-                                         // NOTE: As of version 4.0.0
+                                         // NOTE: As of version 4.0.0:4.5.0
                                          // set_print_configuration does not work ?
-                                         .set_print_configuration(static_cast<bool>(with_verbose_initialization));
+                                         .set_print_configuration(static_cast<bool>(false));
 
             // If KOLIOP_SET_NUM_THREADS is set, use that value.
             auto* koliop_set_num_threads_string = std::getenv("KOLIOP_SET_NUM_THREADS");
@@ -146,6 +166,11 @@
 
         if(an_operator_handle == nullptr ||
            !(0 <= ir_SOL_separatrix && static_cast<size_t>(ir_SOL_separatrix) <= global_domain_r_extent) ||
+#if defined(KOLIOP_UTILITY_FLATTEN_EXPECT_POW2_EXTENTS)
+           // Assert for powers of two.
+           ((mu_extent - 1) & mu_extent) != 0 ||
+           ((vpar_extent - 1) & vpar_extent) != 0 ||
+#endif
            hat_As == nullptr ||
            hat_Zs == nullptr ||
            mug == nullptr ||
