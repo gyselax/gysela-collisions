@@ -181,6 +181,32 @@
             std::cout << "(static_cast<bool>(LIM) && (mask_LIM == nullptr)) : " << ((static_cast<bool>(LIM) && (mask_LIM == nullptr))) << "\n";
             std::cout << "B_norm == nullptr : " << (B_norm == nullptr) << "\n";
             std::cout << "Bstar_s == nullptr : " << (Bstar_s == nullptr) << "\n";
+            std::cout << "\n";
+            std::cout << "static_cast<uint64_t>(mu_extent) : " << static_cast<uint64_t>(mu_extent) << "\n";
+            std::cout << "static_cast<uint64_t>(vpar_extent) : " << static_cast<uint64_t>(vpar_extent) << "\n";
+            std::cout << "static_cast<uint64_t>(tor1_extent) : " << static_cast<uint64_t>(tor1_extent) << "\n";
+            std::cout << "static_cast<uint64_t>(tor2_extent) : " << static_cast<uint64_t>(tor2_extent) << "\n";
+            std::cout << "static_cast<uint64_t>(tor3_extent) : " << static_cast<uint64_t>(tor3_extent) << "\n";
+            std::cout << "static_cast<uint64_t>(species_extent) : " << static_cast<uint64_t>(species_extent) << "\n";
+            std::cout << "static_cast<uint64_t>(global_domain_r_extent) : " << static_cast<uint64_t>(global_domain_r_extent) << "\n";
+            std::cout << "static_cast<uint64_t>(global_domain_theta_extent) : " << static_cast<uint64_t>(global_domain_theta_extent) << "\n";
+            std::cout << "static_cast<uint64_t>(local_domain_r_offset) : " << static_cast<uint64_t>(local_domain_r_offset) << "\n";
+            std::cout << "static_cast<uint64_t>(local_domain_theta_offset) : " << static_cast<uint64_t>(local_domain_theta_offset) << "\n";
+            std::cout << "static_cast<bool>(collision_interspecies) : " << static_cast<bool>(collision_interspecies) << "\n";
+            std::cout << "static_cast<bool>(SOL) : " << static_cast<bool>(SOL) << "\n";
+            std::cout << "static_cast<bool>(LIM) : " << static_cast<bool>(LIM) << "\n";
+            std::cout << "static_cast<uint64_t>(ir_SOL_separatrix) : " << static_cast<uint64_t>(ir_SOL_separatrix) << "\n";
+            std::cout << "hat_As : " << hat_As << "\n";
+            std::cout << "hat_Zs : " << hat_Zs << "\n";
+            std::cout << "mug : " << mug << "\n";
+            std::cout << "vparg : " << vparg << "\n";
+            std::cout << "coeff_intdmu : " << coeff_intdmu << "\n";
+            std::cout << "coeff_intdvpar : " << coeff_intdvpar << "\n";
+            std::cout << "coeff_AD_r : " << coeff_AD_r << "\n";
+            std::cout << "mask_buffer_r : " << mask_buffer_r << "\n";
+            std::cout << "mask_LIM : " << mask_LIM << "\n";
+            std::cout << "B_norm : " << B_norm << "\n";
+            std::cout << "Bstar_s : " << Bstar_s << "\n";
 
             std::cout << std::flush;
         }
@@ -237,37 +263,6 @@
         KOLIOP_ASSERT(an_operator != nullptr);
 
         *an_operator_handle = reinterpret_cast<koliop_Operator>(an_operator);
-
-        if(std::getenv("KOLIOP_DEBUG_ALL") != nullptr ||
-           std::getenv("KOLIOP_DEBUG_koliop_Create") != nullptr) {
-            std::cout << "static_cast<uint64_t>(mu_extent) : " << static_cast<uint64_t>(mu_extent) << "\n";
-            std::cout << "static_cast<uint64_t>(vpar_extent) : " << static_cast<uint64_t>(vpar_extent) << "\n";
-            std::cout << "static_cast<uint64_t>(tor1_extent) : " << static_cast<uint64_t>(tor1_extent) << "\n";
-            std::cout << "static_cast<uint64_t>(tor2_extent) : " << static_cast<uint64_t>(tor2_extent) << "\n";
-            std::cout << "static_cast<uint64_t>(tor3_extent) : " << static_cast<uint64_t>(tor3_extent) << "\n";
-            std::cout << "static_cast<uint64_t>(species_extent) : " << static_cast<uint64_t>(species_extent) << "\n";
-            std::cout << "static_cast<uint64_t>(global_domain_r_extent) : " << static_cast<uint64_t>(global_domain_r_extent) << "\n";
-            std::cout << "static_cast<uint64_t>(global_domain_theta_extent) : " << static_cast<uint64_t>(global_domain_theta_extent) << "\n";
-            std::cout << "static_cast<uint64_t>(local_domain_r_offset) : " << static_cast<uint64_t>(local_domain_r_offset) << "\n";
-            std::cout << "static_cast<uint64_t>(local_domain_theta_offset) : " << static_cast<uint64_t>(local_domain_theta_offset) << "\n";
-            std::cout << "static_cast<bool>(collision_interspecies) : " << static_cast<bool>(collision_interspecies) << "\n";
-            std::cout << "static_cast<bool>(SOL) : " << static_cast<bool>(SOL) << "\n";
-            std::cout << "static_cast<bool>(LIM) : " << static_cast<bool>(LIM) << "\n";
-            std::cout << "static_cast<uint64_t>(ir_SOL_separatrix) : " << static_cast<uint64_t>(ir_SOL_separatrix) << "\n";
-            std::cout << "hat_As : " << hat_As << "\n";
-            std::cout << "hat_Zs : " << hat_Zs << "\n";
-            std::cout << "mug : " << mug << "\n";
-            std::cout << "vparg : " << vparg << "\n";
-            std::cout << "coeff_intdmu : " << coeff_intdmu << "\n";
-            std::cout << "coeff_intdvpar : " << coeff_intdvpar << "\n";
-            std::cout << "coeff_AD_r : " << coeff_AD_r << "\n";
-            std::cout << "mask_buffer_r : " << mask_buffer_r << "\n";
-            std::cout << "mask_LIM : " << mask_LIM << "\n";
-            std::cout << "B_norm : " << B_norm << "\n";
-            std::cout << "Bstar_s : " << Bstar_s << "\n";
-
-            std::cout << std::flush;
-        }
 
         return KOLIOP_STATUS_SUCCESS;
     });

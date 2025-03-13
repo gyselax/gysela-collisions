@@ -64,6 +64,9 @@ namespace koliop {
             // consumption.
 
             /// {Tor1, Tor2, Tor3} block extents.
+            /// NOTE: As GPUs get bigger, we also need more parallelism. So
+            /// maybe in two years, increase the block size to unlock
+            /// Nspace = 32768.
             ///
             static inline constexpr OrdinalType kPresetBlockExtent[][3] = {
                 // Nspace = 65536
@@ -74,10 +77,10 @@ namespace koliop {
                 // {128, 256, 1},
                 // {128, 128, 2},
                 // Nspace = 16384
-                // {128, 128, 1},
-                // {128, 64, 2},
-                // {128, 32, 4},
-                // {64, 128, 2},
+                {128, 128, 1},
+                {128, 64, 2},
+                {128, 32, 4},
+                {64, 128, 2},
                 // Nspace = 8192
                 {128, 64, 1},
                 {128, 32, 2},
