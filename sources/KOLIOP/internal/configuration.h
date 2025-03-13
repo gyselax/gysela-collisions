@@ -262,6 +262,8 @@ namespace koliop {
 ///
 //////////////////////////////////////
 
+// NOTE: KOLIOP_BACKEND_IS_CPU_LIKE should always be define true.
+
 #if defined(KOKKOS_ENABLE_SERIAL) || defined(KOKKOS_ENABLE_OPENMP) || \
     defined(KOKKOS_ENABLE_THREADS) || defined(KOKKOS_ENABLE_HPX)
     #define KOLIOP_BACKEND_IS_CPU_LIKE
