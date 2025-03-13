@@ -46,6 +46,15 @@ namespace koliop {
                        block_count_in_tor2 > 0 &&
                        block_count_in_tor3 > 0) {
 
+                        if(std::getenv("KOLIOP_DEBUG_ALL") != nullptr ||
+                           std::getenv("KOLIOP_DEBUG_PrepareBlockPosition") != nullptr) {
+                            std::cout << "current_tor1_block_extent: " << current_tor1_block_extent << "\n";
+                            std::cout << "current_tor2_block_extent: " << current_tor2_block_extent << "\n";
+                            std::cout << "current_tor3_block_extent: " << current_tor3_block_extent << "\n";
+
+                            std::cout << std::flush;
+                        }
+
                         OrdinalType block_first_tor3 = local_domain_tor3_extent;
                         for(OrdinalType block_index_in_tor3 = 0; block_index_in_tor3 < block_count_in_tor3; ++block_index_in_tor3) {
                             block_first_tor3 -= current_tor3_block_extent;
@@ -67,6 +76,18 @@ namespace koliop {
                                     a_driver_configuration.block_tor1_extent_ = current_tor1_block_extent;
                                     a_driver_configuration.block_tor2_extent_ = current_tor2_block_extent;
                                     a_driver_configuration.block_tor3_extent_ = current_tor3_block_extent;
+
+                                    if(std::getenv("KOLIOP_DEBUG_ALL") != nullptr ||
+                                       std::getenv("KOLIOP_DEBUG_PrepareBlockPosition") != nullptr) {
+                                        std::cout << "a_driver_configuration.block_first_tor1_: " << a_driver_configuration.block_first_tor1_ << "\n";
+                                        std::cout << "a_driver_configuration.block_first_tor2_: " << a_driver_configuration.block_first_tor2_ << "\n";
+                                        std::cout << "a_driver_configuration.block_first_tor3_: " << a_driver_configuration.block_first_tor3_ << "\n";
+                                        std::cout << "a_driver_configuration.block_tor1_extent_: " << a_driver_configuration.block_tor1_extent_ << "\n";
+                                        std::cout << "a_driver_configuration.block_tor2_extent_: " << a_driver_configuration.block_tor2_extent_ << "\n";
+                                        std::cout << "a_driver_configuration.block_tor3_extent_: " << a_driver_configuration.block_tor3_extent_ << "\n";
+
+                                        std::cout << std::flush;
+                                    }
                                 }
                             }
                         }

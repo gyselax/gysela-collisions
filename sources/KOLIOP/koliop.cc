@@ -83,10 +83,7 @@
         if(static_cast<bool>(do_kokkos_initialization)) {
             auto the_configuration = Kokkos::InitializationSettings()
                                          .set_device_id(static_cast<int>(a_device_index))
-                                         .set_disable_warnings(!static_cast<bool>(with_verbose_initialization))
-                                         // NOTE: As of version 4.0.0:4.5.0
-                                         // set_print_configuration does not work ?
-                                         .set_print_configuration(static_cast<bool>(false));
+                                         .set_disable_warnings(!static_cast<bool>(with_verbose_initialization));
 
             // If KOLIOP_SET_NUM_THREADS is set, use that value.
             auto* koliop_set_num_threads_string = std::getenv("KOLIOP_SET_NUM_THREADS");
@@ -106,7 +103,7 @@
         }
 
         if(static_cast<bool>(with_verbose_initialization)) {
-            Kokkos::print_configuration(std::cout, false);
+            Kokkos::print_configuration(std::cout, true);
         }
 
         std::cout << std::flush;
@@ -164,6 +161,30 @@
             return KOLIOP_STATUS_INITIALIZATION_FAILURE;
         }
 
+        if(std::getenv("KOLIOP_DEBUG_ALL") != nullptr ||
+           std::getenv("KOLIOP_DEBUG_koliop_Create") != nullptr) {
+            std::cout << "!(0 <= ir_SOL_separatrix && static_cast<size_t>(ir_SOL_separatrix) <= global_domain_r_extent) : "
+                      << (!(0 <= ir_SOL_separatrix && static_cast<size_t>(ir_SOL_separatrix) <= global_domain_r_extent)) << "\n";
+#if defined(KOLIOP_UTILITY_FLATTEN_EXPECT_POW2_EXTENTS)
+            // Assert for powers of t
+            std::cout << "((mu_extent - 1) & mu_extent) != 0 : " << (((mu_extent - 1) & mu_extent) != 0) << "\n";
+            std::cout << "((vpar_extent - 1) & vpar_extent) != 0 : " << (((vpar_extent - 1) & vpar_extent) != 0) << "\n";
+#endif
+            std::cout << "hat_As == nullptr : " << (hat_As == nullptr) << "\n";
+            std::cout << "hat_Zs == nullptr : " << (hat_Zs == nullptr) << "\n";
+            std::cout << "mug == nullptr : " << (mug == nullptr) << "\n";
+            std::cout << "vparg == nullptr : " << (vparg == nullptr) << "\n";
+            std::cout << "coeff_intdmu == nullptr : " << (coeff_intdmu == nullptr) << "\n";
+            std::cout << "coeff_intdvpar == nullptr : " << (coeff_intdvpar == nullptr) << "\n";
+            std::cout << "coeff_AD_r == nullptr : " << (coeff_AD_r == nullptr) << "\n";
+            std::cout << "mask_buffer_r == nullptr : " << (mask_buffer_r == nullptr) << "\n";
+            std::cout << "(static_cast<bool>(LIM) && (mask_LIM == nullptr)) : " << ((static_cast<bool>(LIM) && (mask_LIM == nullptr))) << "\n";
+            std::cout << "B_norm == nullptr : " << (B_norm == nullptr) << "\n";
+            std::cout << "Bstar_s == nullptr : " << (Bstar_s == nullptr) << "\n";
+
+            std::cout << std::flush;
+        }
+
         if(an_operator_handle == nullptr ||
            !(0 <= ir_SOL_separatrix && static_cast<size_t>(ir_SOL_separatrix) <= global_domain_r_extent) ||
 #if defined(KOLIOP_UTILITY_FLATTEN_EXPECT_POW2_EXTENTS)
@@ -216,6 +237,37 @@
         KOLIOP_ASSERT(an_operator != nullptr);
 
         *an_operator_handle = reinterpret_cast<koliop_Operator>(an_operator);
+
+        if(std::getenv("KOLIOP_DEBUG_ALL") != nullptr ||
+           std::getenv("KOLIOP_DEBUG_koliop_Create") != nullptr) {
+            std::cout << "static_cast<uint64_t>(mu_extent) : " << static_cast<uint64_t>(mu_extent) << "\n";
+            std::cout << "static_cast<uint64_t>(vpar_extent) : " << static_cast<uint64_t>(vpar_extent) << "\n";
+            std::cout << "static_cast<uint64_t>(tor1_extent) : " << static_cast<uint64_t>(tor1_extent) << "\n";
+            std::cout << "static_cast<uint64_t>(tor2_extent) : " << static_cast<uint64_t>(tor2_extent) << "\n";
+            std::cout << "static_cast<uint64_t>(tor3_extent) : " << static_cast<uint64_t>(tor3_extent) << "\n";
+            std::cout << "static_cast<uint64_t>(species_extent) : " << static_cast<uint64_t>(species_extent) << "\n";
+            std::cout << "static_cast<uint64_t>(global_domain_r_extent) : " << static_cast<uint64_t>(global_domain_r_extent) << "\n";
+            std::cout << "static_cast<uint64_t>(global_domain_theta_extent) : " << static_cast<uint64_t>(global_domain_theta_extent) << "\n";
+            std::cout << "static_cast<uint64_t>(local_domain_r_offset) : " << static_cast<uint64_t>(local_domain_r_offset) << "\n";
+            std::cout << "static_cast<uint64_t>(local_domain_theta_offset) : " << static_cast<uint64_t>(local_domain_theta_offset) << "\n";
+            std::cout << "static_cast<bool>(collision_interspecies) : " << static_cast<bool>(collision_interspecies) << "\n";
+            std::cout << "static_cast<bool>(SOL) : " << static_cast<bool>(SOL) << "\n";
+            std::cout << "static_cast<bool>(LIM) : " << static_cast<bool>(LIM) << "\n";
+            std::cout << "static_cast<uint64_t>(ir_SOL_separatrix) : " << static_cast<uint64_t>(ir_SOL_separatrix) << "\n";
+            std::cout << "hat_As : " << hat_As << "\n";
+            std::cout << "hat_Zs : " << hat_Zs << "\n";
+            std::cout << "mug : " << mug << "\n";
+            std::cout << "vparg : " << vparg << "\n";
+            std::cout << "coeff_intdmu : " << coeff_intdmu << "\n";
+            std::cout << "coeff_intdvpar : " << coeff_intdvpar << "\n";
+            std::cout << "coeff_AD_r : " << coeff_AD_r << "\n";
+            std::cout << "mask_buffer_r : " << mask_buffer_r << "\n";
+            std::cout << "mask_LIM : " << mask_LIM << "\n";
+            std::cout << "B_norm : " << B_norm << "\n";
+            std::cout << "Bstar_s : " << Bstar_s << "\n";
+
+            std::cout << std::flush;
+        }
 
         return KOLIOP_STATUS_SUCCESS;
     });
