@@ -48,9 +48,9 @@ namespace koliop {
 
                         if(std::getenv("KOLIOP_DEBUG_ALL") != nullptr ||
                            std::getenv("KOLIOP_DEBUG_PrepareBlockPosition") != nullptr) {
-                            std::cout << "current_tor1_block_extent: " << current_tor1_block_extent << "\n";
-                            std::cout << "current_tor2_block_extent: " << current_tor2_block_extent << "\n";
-                            std::cout << "current_tor3_block_extent: " << current_tor3_block_extent << "\n";
+                            std::cout << "[KOLIOP][DEBUG] current_tor1_block_extent: " << current_tor1_block_extent << "\n";
+                            std::cout << "[KOLIOP][DEBUG] current_tor2_block_extent: " << current_tor2_block_extent << "\n";
+                            std::cout << "[KOLIOP][DEBUG] current_tor3_block_extent: " << current_tor3_block_extent << "\n";
 
                             std::cout << std::flush;
                         }
