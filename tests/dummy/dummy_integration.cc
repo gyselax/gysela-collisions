@@ -348,20 +348,6 @@ int Test2() {
 
     std::cout << an_operator << "\n";
 
-    if(::koliop_Collision(an_operator,
-                          dt,
-                          a_big_dummy_f5d_s.data()) != KOLIOP_STATUS_SUCCESS) {
-        std::cout << "::koliop_Collision() failed\n";
-        return -1;
-    }
-
-    // if(::koliop_Collision(an_operator,
-    //                       dt,
-    //                       a_big_dummy_f5d_s.data()) != KOLIOP_STATUS_SUCCESS) {
-    //     std::cout << "::koliop_Collision() failed\n";
-    //     std::exit(-1);
-    // }
-
     NaiveBenchmark([&](auto) {
         if(::koliop_Collision(an_operator,
                               dt,
@@ -369,6 +355,8 @@ int Test2() {
             std::cout << "::koliop_Collision() failed\n";
             std::exit(-1);
         }
+
+        ::koliop_Fence(an_operator);
     });
 
     if(::koliop_Release(an_operator) != KOLIOP_STATUS_SUCCESS) {
