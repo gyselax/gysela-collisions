@@ -62,6 +62,17 @@ namespace koliop {
             // process. Else, lowering either kDisjointExecutionSpaceCount (down
             // to 1) and lowering the block size can help reduce the memory
             // consumption.
+            // The CvCdDriver memory we allocate is:
+            //  CvCdDriverVectorSize() * CvCdDriverMatrixSize() * CvCdDriverInstance
+            //      Where CvCdDriverInstance = min(kDisjointExecutionSpaceCount,
+            //                                     (itor1_block*itor2_block*itor3_block))
+            //          Where itor*_block are the extent of the largest
+            //          kPresetBlockExtent we could use.
+            //      For instance:
+            //          kDisjointExecutionSpaceCount = 2, (r,theta,phi) = (64, 128, 1)
+            //              CvCdDriverInstance = min(2, 1)
+            //          kDisjointExecutionSpaceCount = 2, (r,theta,phi) = (64, 32, 1)
+            //              CvCdDriverInstance = min(2, 4)
 
             /// {Tor1, Tor2, Tor3} block extents.
             /// NOTE: As GPUs get bigger, we also need more parallelism. So

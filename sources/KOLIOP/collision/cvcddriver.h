@@ -439,6 +439,33 @@ namespace koliop {
 
         } // namespace detail
 
+        static constexpr OrdinalType
+        CvCdDriverVectorSize(
+            OrdinalType vpar_extent,
+            OrdinalType block_extent_tor1,
+            OrdinalType block_extent_tor2,
+            OrdinalType block_extent_tor3) {
+            return Constant::kMaximumLaguerrePolynomialDegree *
+                   Constant::kMaximumLaguerrePolynomialDegree *
+                   3 *
+                   vpar_extent *
+                   block_extent_tor1 *
+                   block_extent_tor2 *
+                   block_extent_tor3;
+        }
+
+        static constexpr OrdinalType
+        CvCdDriverMatrixSize(
+            OrdinalType vpar_extent,
+            OrdinalType block_extent_tor1,
+            OrdinalType block_extent_tor2,
+            OrdinalType block_extent_tor3) {
+            return Constant::kMaximumLaguerrePolynomialDegree *
+                   vpar_extent *
+                   block_extent_tor1 *
+                   block_extent_tor2 *
+                   block_extent_tor3;
+        }
 
         ////////////////////////////////////////////////////////////////////////
         // CvCdDriver definition
@@ -542,6 +569,10 @@ namespace koliop {
                              collision_interspecies,
                              hat_As, hat_Zs, vparg}
             , mask_coll_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "mask_coll")}
+            // NOTE: No, we are not allocating Najl and co. with only
+            // nvpar*kbatchcount values. In fact some extents are constent and
+            // defined kind.h:BatchedBlockByBlock. Here we only define the
+            // dynamic extents.
             , Najl_{Kokkos::view_alloc(Kokkos::WithoutInitializing,
                                        "Najl"),
                     static_cast<std::size_t>(kBatchCount), static_cast<std::size_t>(vpar_extent)}
@@ -561,7 +592,15 @@ namespace koliop {
                                   coeff_intdvpar}
             , RHS_matrix_sampler_{Najl_,
                                   coeff_intdvpar} {
-            // EMPTY
+            if(std::getenv("KOLIOP_DEBUG_ALL") != nullptr ||
+               std::getenv("KOLIOP_DEBUG_CvCdDriver") != nullptr) {
+                std::cout << "[KOLIOP][DEBUG] Allocated Najl_               for : " << (Najl_.size() * sizeof(ComputeFloatType)) << " octets\n";
+                std::cout << "[KOLIOP][DEBUG] Allocated matrix_             for : " << (matrix_.size() * sizeof(ComputeFloatType)) << " octets\n";
+                std::cout << "[KOLIOP][DEBUG] Allocated alpha_coefficients_ for : " << (alpha_coefficients_.size() * sizeof(ComputeFloatType)) << " octets\n";
+                std::cout << "[KOLIOP][DEBUG] Allocated rhs_                for : " << (rhs_.size() * sizeof(ComputeFloatType)) << " octets\n";
+
+                std::cout << std::flush;
+            }
         }
 
         template <OrdinalType block_extent_tor1,

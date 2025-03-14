@@ -511,7 +511,6 @@ namespace koliop {
                     const OrdinalType batch_element_index = (flattened_index) % Najl::CvCdDriverType::BatchTraitsType::kBatchSize;
                     const OrdinalType batch_index         = (flattened_index / (Najl::CvCdDriverType::BatchTraitsType::kBatchSize)) /* % Najl::CvCdDriverType::kBatchCount */;
 
-                    // NOTE: The memset(0) of the local_Nn is done in Najl::Compute.
                     auto local_N0 = Kokkos::subview(najl,
                                                     batch_index,
                                                     ivpar,
@@ -547,6 +546,16 @@ namespace koliop {
                                                            itor2,
                                                            itor3,
                                                            Kokkos::ALL());
+
+                    // NOTE: The memset(0) of the local_Nn used to be done in
+                    // Najl::Compute via a deep_copy.
+                    for(OrdinalType l = 0; l < Constant::kMaximumLaguerrePolynomialDegree; ++l) {
+                        for(OrdinalType j = 0; j < Constant::kMaximumLaguerrePolynomialDegree; ++j) {
+                            local_N0(l, j) = static_cast<ValueType>(0.0);
+                            local_N1(l, j) = static_cast<ValueType>(0.0);
+                            local_N2(l, j) = static_cast<ValueType>(0.0);
+                        }
+                    }
 
                     const ValueType vpar2_on_Ta = vparg(ivpar) * vparg(ivpar) / local_T_s(species_index);
 
@@ -759,9 +768,12 @@ namespace koliop {
 
             KOLIOP_ASSERT(Najl.size() != 0);
 
-            // TODO(Etienne M): what is the perf of such memset.
-            // See if putting that in the main kernel improves the duration.
-            Kokkos::deep_copy(an_execution_space, Najl, static_cast<ComputeFloatType>(0.0));
+            // // NOTE: This is not done in the kernel what is the perf of such
+            // // memset. See if putting that in the main kernel improves the
+            // // duration.
+            // // NOTE: there is a bug in Kokkos 4.5.1 that does not zero every
+            // // thing! See, zeromemset: https://github.com/kokkos/kokkos/pull/7797/files#diff-4fcf172cdeb761406dda3813e1f69edf12e5df844702ca4a3c2c025b1478e6d5
+            // Kokkos::deep_copy(an_execution_space, Najl, static_cast<ComputeFloatType>(0.0));
 
             // TODO(Etienne M): It is not currently possible to do something
             // like:
