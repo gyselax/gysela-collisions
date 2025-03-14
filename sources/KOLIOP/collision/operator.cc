@@ -161,8 +161,6 @@ namespace koliop {
                             hat_Zs_,
                             coeff_AD_r_);
 
-            KOLIOP_ASSERT(execution_space_pool_.empty());
-
             // We emplace the the default execution space.
             Constant::DeviceExecutionSpaceType default_execution_space{};
 
