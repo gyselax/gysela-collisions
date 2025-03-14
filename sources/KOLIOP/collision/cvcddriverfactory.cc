@@ -82,7 +82,7 @@ namespace koliop {
                     // The block size is registered in
                     // preset_block_extent but we are not able to build
                     // such block of this size.
-                    KOLIOP_ASSERT(false && "For some reason, CvCd operator blocking configuration you choose is not part of the factory.");
+                    KOLIOP_ASSERT(false && "For some reason, the CvCd operator blocking configuration you choose is not part of the factory.");
                 }
             }
 

@@ -292,7 +292,7 @@ int Test2() {
     static constexpr size_t species_extent = 2;
 
     static constexpr size_t global_domain_r_extent     = r_extent;
-    static constexpr size_t global_domain_theta_extent = tor3_extent + 1;
+    static constexpr size_t global_domain_theta_extent = theta_extent + 1;
     static constexpr size_t global_domain_r_offset     = 0;
     static constexpr size_t global_domain_theta_offset = 0;
 
