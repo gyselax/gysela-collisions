@@ -436,9 +436,20 @@ MODULE koliop
 CONTAINS
 
     ! NOTE:
-    ! For this reason we offer two version of the interface. Routines suffixed
-    ! with "_f" take plain DIMENSION(*) array as input and convert them to C_PTR.
-    ! "_fp" suffixed routines take C_PTR as input (for use with OpenMP).
+    ! We offer two version of the interface. Routines suffixed with "_f" take
+    ! plain DIMENSION(*) array as input and convert them to C_PTR. "_fp"
+    ! suffixed routines take C_PTR as input (for use with OpenMP).
+    ! NOTE: Regarding the use of USE_DEVICE_ADDR.
+    ! Cray shouts at us with:
+    !   Variable subobjects are not allowed as arguments for this clause or
+    !   directive.
+    ! This occurs when we use USE_DEVICE_ADDR(an_object%a_member). Such sub-
+    ! object is not working with Cray. As such, USE_DEVICE_ADDR is placed in the
+    ! koliop_*_f routines where we have the TARGET property on all vectors can
+    ! safely call OpenMP pointer conversion pragmas.
+    ! NOTE: the data mapping is not done in the routines below. It is expected
+    ! that it is done be the caller. Koliop only does the host to device pointer
+    ! swap.
 
    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -872,6 +883,17 @@ CONTAINS
         REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(IN) :: Bstar_s
         INTEGER(koliop_Status), INTENT(OUT) :: an_error_code
 
+        !$OMP TARGET DATA USE_DEVICE_ADDR(hat_As, &
+        !$OMP                             hat_Zs, &
+        !$OMP                             mug, &
+        !$OMP                             vparg, &
+        !$OMP                             coeff_intdmu, &
+        !$OMP                             coeff_intdvpar, &
+        !$OMP                             coeff_AD_r, &
+        !$OMP                             mask_buffer_r, &
+        !$OMP                             mask_LIM, &
+        !$OMP                             B_norm, &
+        !$OMP                             Bstar_s)
         call koliop_Create_fp( &
             an_operator_handle, &
             mu_extent, &
@@ -900,6 +922,7 @@ CONTAINS
             C_LOC(B_norm), &
             C_LOC(Bstar_s), &
             an_error_code)
+        !$OMP END TARGET DATA
     END SUBROUTINE
 
     SUBROUTINE koliop_Release_f( &
@@ -937,10 +960,12 @@ CONTAINS
         REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(INOUT) :: f5d_s
         INTEGER(koliop_Status), INTENT(OUT) :: an_error_code
 
+        !$OMP TARGET DATA USE_DEVICE_ADDR(f5d_s)
         call koliop_ComputeMoments_fp( &
             an_operator_handle, &
             C_LOC(f5d_s), &
             an_error_code)
+        !$OMP END TARGET DATA
     END SUBROUTINE
 
     SUBROUTINE koliop_PrecomputeNu_f( &
@@ -969,11 +994,13 @@ CONTAINS
         REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(INOUT) :: f5d_s
         INTEGER(koliop_Status), INTENT(OUT) :: an_error_code
 
+        !$OMP TARGET DATA USE_DEVICE_ADDR(f5d_s)
         call koliop_ComputeMaxwellianEvolution_fp( &
             an_operator_handle, &
             dt, &
             C_LOC(f5d_s), &
             an_error_code)
+        !$OMP END TARGET DATA
     END SUBROUTINE
 
     SUBROUTINE koliop_ComputeQparOnNT_f( &
@@ -987,10 +1014,12 @@ CONTAINS
         REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(IN) :: f5d_s
         INTEGER(koliop_Status), INTENT(OUT) :: an_error_code
 
+        !$OMP TARGET DATA USE_DEVICE_ADDR(f5d_s)
         call koliop_ComputeQparOnNT_fp( &
             an_operator_handle, &
             C_LOC(f5d_s), &
             an_error_code)
+        !$OMP END TARGET DATA
     END SUBROUTINE
 
     SUBROUTINE koliop_ComputeCpar_f( &
@@ -1006,11 +1035,13 @@ CONTAINS
         REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(INOUT) :: f5d_s
         INTEGER(koliop_Status), INTENT(OUT) :: an_error_code
 
+        !$OMP TARGET DATA USE_DEVICE_ADDR(f5d_s)
         call koliop_ComputeCpar_fp( &
             an_operator_handle, &
             dt, &
             C_LOC(f5d_s), &
             an_error_code)
+        !$OMP END TARGET DATA
     END SUBROUTINE
 
     SUBROUTINE koliop_ComputeMaxwellianUnshiftedLoc_f( &
@@ -1026,11 +1057,13 @@ CONTAINS
         INTEGER, INTENT(IN) :: choice
         INTEGER(koliop_Status), INTENT(OUT) :: an_error_code
 
+        !$OMP TARGET DATA USE_DEVICE_ADDR(f5d_s)
         call koliop_ComputeMaxwellianUnshiftedLoc_fp( &
             an_operator_handle, &
             C_LOC(f5d_s), &
             choice, &
             an_error_code)
+        !$OMP END TARGET DATA
     END SUBROUTINE
 
     SUBROUTINE koliop_Apply_f( &
@@ -1046,11 +1079,13 @@ CONTAINS
         REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(INOUT) :: f5d_s
         INTEGER(koliop_Status), INTENT(OUT) :: an_error_code
 
+        !$OMP TARGET DATA USE_DEVICE_ADDR(f5d_s)
         call koliop_Apply_fp( &
             an_operator_handle, &
             dt, &
             C_LOC(f5d_s), &
             an_error_code)
+        !$OMP END TARGET DATA
     END SUBROUTINE
 
     SUBROUTINE koliop_ComputeDensityCorrection_f( &
@@ -1064,10 +1099,12 @@ CONTAINS
         REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(INOUT) :: f5d_s
         INTEGER(koliop_Status), INTENT(OUT) :: an_error_code
 
+        !$OMP TARGET DATA USE_DEVICE_ADDR(f5d_s)
         call koliop_ComputeDensityCorrection_fp( &
             an_operator_handle, &
             C_LOC(f5d_s), &
             an_error_code)
+        !$OMP END TARGET DATA
     END SUBROUTINE
 
     SUBROUTINE koliop_ComputeUparTCorrection_f( &
@@ -1083,11 +1120,13 @@ CONTAINS
         REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(INOUT) :: f5d_s
         INTEGER(koliop_Status), INTENT(OUT) :: an_error_code
 
+        !$OMP TARGET DATA USE_DEVICE_ADDR(f5d_s)
         call koliop_ComputeUparTCorrection_fp( &
             an_operator_handle, &
             dt, &
             C_LOC(f5d_s), &
             an_error_code)
+        !$OMP END TARGET DATA
     END SUBROUTINE
 
     SUBROUTINE koliop_ExtractRaw_f( &
@@ -1103,11 +1142,13 @@ CONTAINS
         REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(INOUT) :: an_output_buffer
         INTEGER(koliop_Status), INTENT(OUT) :: an_error_code
 
+        !$OMP TARGET DATA USE_DEVICE_ADDR(an_output_buffer)
         call koliop_ExtractRaw_fp( &
             an_operator_handle, &
             value_identifier, &
             C_LOC(an_output_buffer), &
             an_error_code)
+        !$OMP END TARGET DATA
     END SUBROUTINE
 
     SUBROUTINE koliop_Collision_f( &
@@ -1123,11 +1164,13 @@ CONTAINS
         REAL(C_DOUBLE), TARGET, DIMENSION(*), INTENT(INOUT) :: f5d_s
         INTEGER(koliop_Status), INTENT(OUT) :: an_error_code
 
+        !$OMP TARGET DATA USE_DEVICE_ADDR(f5d_s)
         call koliop_Collision_fp( &
             an_operator_handle, &
             dt, &
             C_LOC(f5d_s), &
             an_error_code)
+        !$OMP END TARGET DATA
     END SUBROUTINE
 END MODULE
 
