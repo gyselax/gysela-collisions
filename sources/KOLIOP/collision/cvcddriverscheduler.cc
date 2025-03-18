@@ -52,6 +52,8 @@ namespace koliop {
                             std::cout << "[KOLIOP][DEBUG] current_tor2_block_extent: " << current_tor2_block_extent << "\n";
                             std::cout << "[KOLIOP][DEBUG] current_tor3_block_extent: " << current_tor3_block_extent << "\n";
 
+                            std::cout << "[KOLIOP][DEBUG] Block count (for each species): " << (block_count_in_tor1 * block_count_in_tor2 * block_count_in_tor3) << "\n";
+
                             std::cout << std::flush;
                         }
 
