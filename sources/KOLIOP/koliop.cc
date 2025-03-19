@@ -114,11 +114,11 @@
 
 ::koliop_Status koliop_Deinitialize(int8_t do_kokkos_deinitialization) {
     return koliop::error::FromException([&]() {
-        if(!Kokkos::is_initialized()) {
-            return KOLIOP_STATUS_DEINITIALIZATION_FAILURE;
-        }
-
         if(static_cast<bool>(do_kokkos_deinitialization)) {
+            if(!Kokkos::is_initialized()) {
+                return KOLIOP_STATUS_DEINITIALIZATION_FAILURE;
+            }
+
             Kokkos::finalize();
 
             if(Kokkos::is_initialized()) {
