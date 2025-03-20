@@ -331,6 +331,8 @@ int Test2() {
                        SOL,
                        LIM,
                        ir_SOL_separatrix,
+                       // NOTE: the cache locality effect implied by spoofing
+                       // all these array as a single ptr is not visible on GPU.
                        a_big_dummy_array.data(),
                        a_big_dummy_array.data(),
                        a_big_dummy_array.data(),
