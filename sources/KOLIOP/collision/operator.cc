@@ -173,6 +173,12 @@ namespace koliop {
             cvcd_drivers_scheduler_.Plan(*this,
                                          Constant::kPresetBlockExtentCount,
                                          Constant::kPresetBlockExtent);
+
+#if defined(KOLIOP_CONSTANT_MEMORY_USAGE)
+            // The memory release is handled thanks to the shared ptr and
+            // the kokkos view reference counting.
+            cvcd_drivers_scheduler_.AllocateScratchMemory(*this);
+#endif
         }
 
         Operator::~Operator() {

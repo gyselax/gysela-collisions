@@ -202,6 +202,27 @@ namespace koliop {
             }
         }
 
+        void CvCdDriverScheduler::AllocateScratchMemory(const Operator& an_operator) {
+            const auto&       execution_space_pool = an_operator.execution_space_pool_;
+            const OrdinalType original_block_count = std::min(cvcd_drivers_configurations_.size(),
+                                                              execution_space_pool.size());
+
+            for(OrdinalType i = 0; i < original_block_count; ++i) {
+                auto& a_driver_configuration = cvcd_drivers_configurations_[i];
+                a_driver_configuration.cvcd_driver_->AllocateScratchMemory();
+            }
+        }
+
+        void CvCdDriverScheduler::ReleaseScratchMemory(const Operator& an_operator) {
+            const auto&       execution_space_pool = an_operator.execution_space_pool_;
+            const OrdinalType original_block_count = std::min(cvcd_drivers_configurations_.size(),
+                                                              execution_space_pool.size());
+            for(OrdinalType i = 0; i < original_block_count; ++i) {
+                auto& a_driver_configuration = cvcd_drivers_configurations_[i];
+                a_driver_configuration.cvcd_driver_->ReleaseScratchMemory();
+            }
+        }
+
         void CvCdDriverScheduler::ScheduleExecution(const Operator&                                an_operator,
                                                     ComputeFloatType                               dt,
                                                     OrdinalType                                    species_index,

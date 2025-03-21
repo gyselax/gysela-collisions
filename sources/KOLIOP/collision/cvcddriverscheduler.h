@@ -38,6 +38,9 @@ namespace koliop {
                       std::size_t     preset_block_extent_count,
                       const OrdinalType (*preset_block_extent)[3]);
 
+            void AllocateScratchMemory(const Operator& an_operator);
+            void ReleaseScratchMemory(const Operator& an_operator);
+
             void ScheduleExecution(const Operator&                                an_operator,
                                    ComputeFloatType                               dt,
                                    OrdinalType                                    species_index,

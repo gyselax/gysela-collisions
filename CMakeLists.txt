@@ -36,6 +36,7 @@ option(koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE "Should koliop assumes 
 option(koliop_BUILD_FORTRAN_INTERFACE                    "Enable the koliop::fortran_interface glue code needed to interface koliop from Fortran." OFF)
 option(koliop_BUILD_TESTING                              "Enable test compilation and ctest regardless of BUILD_TESTING's value." "${BUILD_TESTING}")
 option(koliop_UTILITY_FLATTEN_EXPECT_POW2_EXTENTS        "Assumes that mu and vpar are going to be powers of two (speeds up indexing)." OFF)
+option(koliop_CONSTANT_MEMORY_USAGE                      "Koliop will allocate scratch memory, will not release it but will reuse it for the next call." OFF)
 
 ################################################################################
 ### Dependencies & tooling

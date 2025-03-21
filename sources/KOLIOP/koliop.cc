@@ -67,6 +67,11 @@
 #else
             std::cout << "  KOLIOP_UTILITY_FLATTEN_EXPECT_POW2_EXTENTS: false\n";
 #endif
+#if defined(KOLIOP_CONSTANT_MEMORY_USAGE)
+            std::cout << "  KOLIOP_CONSTANT_MEMORY_USAGE: true\n";
+#else
+            std::cout << "  KOLIOP_CONSTANT_MEMORY_USAGE: false\n";
+#endif
 
             std::cout << "  koliop::collision::Constant::kDisjointExecutionSpaceCount: " << koliop::collision::Constant::kDisjointExecutionSpaceCount << "\n";
             std::cout << "  koliop::collision::Constant::kDefaultExecutionSpacePoolIndex: " << koliop::collision::Constant::kDefaultExecutionSpacePoolIndex << "\n";

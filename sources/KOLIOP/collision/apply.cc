@@ -23,10 +23,15 @@ namespace koliop {
 
             // NOTE: Stream usage semantic change
             Fence(Constant::kDefaultExecutionSpacePoolIndex);
-
+#if !defined(KOLIOP_CONSTANT_MEMORY_USAGE)
+            cvcd_drivers_scheduler_.AllocateScratchMemory(*this);
+#endif
             for(OrdinalType species_index = 0; species_index < species_extent_; ++species_index) {
                 cvcd_drivers_scheduler_.ScheduleExecution(*this, dt, species_index, a_device_visible_f5d_s);
             }
+#if !defined(KOLIOP_CONSTANT_MEMORY_USAGE)
+            cvcd_drivers_scheduler_.ReleaseScratchMemory(*this);
+#endif
 
             // NOTE: Stream usage semantic change
             FenceAll();

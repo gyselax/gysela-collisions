@@ -15,6 +15,7 @@
 #cmakedefine koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE
 #cmakedefine koliop_BUILD_FORTRAN_INTERFACE
 #cmakedefine koliop_UTILITY_FLATTEN_EXPECT_POW2_EXTENTS
+#cmakedefine koliop_CONSTANT_MEMORY_USAGE
 
 #if defined(koliop_ASSERT_ENABLED)
     #define KOLIOP_ASSERT_ENABLED
@@ -34,6 +35,10 @@
 
 #if defined(koliop_UTILITY_FLATTEN_EXPECT_POW2_EXTENTS)
     #define KOLIOP_UTILITY_FLATTEN_EXPECT_POW2_EXTENTS
+#endif
+
+#if defined(koliop_CONSTANT_MEMORY_USAGE)
+    #define KOLIOP_CONSTANT_MEMORY_USAGE
 #endif
 
 #endif
