@@ -29,12 +29,14 @@ namespace koliop {
             for(OrdinalType species_index = 0; species_index < species_extent_; ++species_index) {
                 cvcd_drivers_scheduler_.ScheduleExecution(*this, dt, species_index, a_device_visible_f5d_s);
             }
+
+            // NOTE: Stream usage semantic change. We must also ensure the
+            // computation ended before we free.
+            FenceAll();
+
 #if !defined(KOLIOP_CONSTANT_MEMORY_USAGE)
             cvcd_drivers_scheduler_.ReleaseScratchMemory(*this);
 #endif
-
-            // NOTE: Stream usage semantic change
-            FenceAll();
 
             koliop::utility::Copy::ViewToRawData<koliop::utility::View::InternalInputL6<Flo64>,
                                                  koliop::utility::View::ExternalInputL6<Flo64>>(execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],

@@ -11,6 +11,29 @@
 
 namespace koliop {
     namespace collision {
+        namespace detail {
+            /// See Constant::kDiscardedStreamCount for more detail.
+            ///
+            void GetFreshStreams(OrdinalType                                      discarded_stream_count,
+                                 OrdinalType                                      wanted_stream_count,
+                                 std::vector<Constant::DeviceExecutionSpaceType>& execution_space_pool) {
+                // This represents the null stream.
+                Constant::DeviceExecutionSpaceType default_execution_space{};
+
+                // This represents the streams with weird HW queue mapping. We
+                // keep them in a vector to avoid implicitly freeing them (which
+                // would defeat the purpose).
+                std::vector<Constant::DeviceExecutionSpaceType> unused_streams;
+                for(OrdinalType istream = 0; istream < discarded_stream_count; ++istream) {
+                    unused_streams.push_back(Kokkos::Experimental::partition_space(default_execution_space, 1)[0]);
+                }
+
+                for(OrdinalType istream = 0; istream < wanted_stream_count; ++istream) {
+                    // TODO(Etienne M): Read docs on hipStreamCreateWithPriority.
+                    execution_space_pool.emplace_back(Kokkos::Experimental::partition_space(default_execution_space, 1)[0]);
+                }
+            }
+        } // namespace detail
 
         template <typename View3D,
                   typename View1D>
@@ -161,14 +184,9 @@ namespace koliop {
                             hat_Zs_,
                             coeff_AD_r_);
 
-            // We emplace the the default execution space.
-            Constant::DeviceExecutionSpaceType default_execution_space{};
-
-            while(execution_space_pool_.size() != Constant::kDisjointExecutionSpaceCount) {
-                // TODO(Etienne M): See what hipStreamCreateWithPriority can get
-                // reduce the performance.
-                execution_space_pool_.emplace_back(Kokkos::Experimental::partition_space(default_execution_space, 1)[0]);
-            }
+            detail::GetFreshStreams(Constant::kDiscardedStreamCount,
+                                    Constant::kDisjointExecutionSpaceCount,
+                                    execution_space_pool_);
 
             cvcd_drivers_scheduler_.Plan(*this,
                                          Constant::kPresetBlockExtentCount,
@@ -186,7 +204,7 @@ namespace koliop {
         }
 
         void Operator::Fence(OrdinalType execution_space_index) const {
-            KOLIOP_ASSERT(execution_space_index < Constant::kDisjointExecutionSpaceCount);
+            KOLIOP_ASSERT(static_cast<std::size_t>(execution_space_index) < execution_space_pool_.size());
             execution_space_pool_[execution_space_index].fence();
         }
 

@@ -74,6 +74,7 @@
 #endif
 
             std::cout << "  koliop::collision::Constant::kDisjointExecutionSpaceCount: " << koliop::collision::Constant::kDisjointExecutionSpaceCount << "\n";
+            std::cout << "  koliop::collision::Constant::kDiscardedStreamCount: " << koliop::collision::Constant::kDiscardedStreamCount << "\n";
             std::cout << "  koliop::collision::Constant::kDefaultExecutionSpacePoolIndex: " << koliop::collision::Constant::kDefaultExecutionSpacePoolIndex << "\n";
             std::cout << "  koliop::collision::Constant::kPresetBlockExtent: ";
             for(std::size_t i = 0; i < koliop::collision::Constant::kPresetBlockExtentCount; ++i) {

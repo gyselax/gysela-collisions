@@ -45,8 +45,20 @@ namespace koliop {
 
 #if defined(KOLIOP_BACKEND_IS_GPU_LIKE)
             static inline constexpr OrdinalType kDisjointExecutionSpaceCount = 2;
+
+            /// kDiscardedStreamCount is used to define how many stream to
+            /// discard. The reason for this shady business is that when Koliop
+            /// is used with HIP the stream mapping to hardware queue has a
+            /// weird behavior, see, on MI250X with 4 hardware queues:
+            /// https://github.com/ROCm/hip/issues/3769
+            /// If two streams share the same HW queue, the kernels are
+            /// serialized. So to ensure we are in linear "stream mapping
+            /// regime", we "consume" at least <hardware queue count> streams.
+            ///
+            static inline constexpr OrdinalType kDiscardedStreamCount = /* GPU_MAX_HW_QUEUES * 2 */ 8;
 #else
             static inline constexpr OrdinalType kDisjointExecutionSpaceCount = 1;
+            static inline constexpr OrdinalType kDiscardedStreamCount        = 0;
 #endif
             static inline constexpr OrdinalType kDefaultExecutionSpacePoolIndex = kDisjointExecutionSpaceCount - 1;
             static_assert((kDisjointExecutionSpaceCount >= 1) && (kDefaultExecutionSpacePoolIndex < kDisjointExecutionSpaceCount),
