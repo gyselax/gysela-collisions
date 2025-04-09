@@ -260,6 +260,15 @@ int Test2() {
     // GCC 13.2.1     toolchain, 1 thread (no openmp): 13386ms // Cpar and more not vectorized
     // ICC 2021       toolchain, 1 thread (no openmp): 22423ms // Crap ?
 
+    // Latest performance on MI250X (no copy fdistrib stash, constant alloc, rest is default)
+    //      BENCH:Quantile (ms) at (0.25, 0.5, 0.75): (1834, 1844, 1844)
+    //      With KOLIOP_BUILD_FORTRAN_INTERFACE:
+    //          BENCH:Quantile (ms) at (0.25, 0.5, 0.75): (1953, 1956, 1956)
+    // Latest performance on MI300A (no copy fdistrib stash, constant alloc, rest is default)
+    //      BENCH:Quantile (ms) at (0.25, 0.5, 0.75): (722, 722, 722)
+    //      With KOLIOP_BUILD_FORTRAN_INTERFACE:
+    //          BENCH:Quantile (ms) at (0.25, 0.5, 0.75): (750, 753, 753)
+
     // NOTE: This function is used to test the GPU code. We pass the operator
     // dummy arrays that get copied to the GPU anyway (assuming
     // koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE=OFF) thus being
