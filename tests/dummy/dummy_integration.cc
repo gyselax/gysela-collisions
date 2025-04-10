@@ -9,7 +9,7 @@
 template <typename Callable>
 auto NaiveBenchmark(Callable&& a_callable,
                     int64_t    iteration_per_sample = 1,
-                    int64_t    minimum_sample       = 2,
+                    int64_t    minimum_sample       = 10,
                     int64_t    maximum_sample       = 128) {
     const auto DoSample = [&](int64_t niteration) {
         auto time_point_0 = std::chrono::steady_clock::now();
@@ -281,6 +281,8 @@ int Test2() {
     static constexpr int8_t LIM                    = false;
     static constexpr double dt                     = 50.0;
 
+// #define KOLIOP_BUILD_FORTRAN_INTERFACE
+
     static constexpr size_t mu_extent   = 64;
     static constexpr size_t vpar_extent = 128;
 
@@ -383,16 +385,16 @@ int main(int, char**) {
         return -1;
     }
 
-    // NOTE: Makes sure the kernel are on the device. Indeed the initial kernel
-    // launch has a huge latency due to the kernel needing to be copied to the
-    // GPU's memory.
-    if(Test1() < 0) {
-        return -1;
-    }
+    // // NOTE: Makes sure the kernel are on the device. Indeed the initial kernel
+    // // launch has a huge latency due to the kernel needing to be copied to the
+    // // GPU's memory.
+    // if(Test1() < 0) {
+    //     return -1;
+    // }
 
-    if(Test1() < 0) {
-        return -1;
-    }
+    // if(Test1() < 0) {
+    //     return -1;
+    // }
 
     if(Test2() < 0) {
         return -1;

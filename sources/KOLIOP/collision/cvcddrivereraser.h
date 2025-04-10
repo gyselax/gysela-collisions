@@ -31,14 +31,14 @@ namespace koliop {
                 virtual void AllocateScratchMemory() = 0;
                 virtual void ReleaseScratchMemory()  = 0;
 
-                virtual void Apply(const Operator&                                an_operator,
-                                   Constant::DeviceExecutionSpaceType             an_execution_space,
-                                   OrdinalType                                    block_first_tor1,
-                                   OrdinalType                                    block_first_tor2,
-                                   OrdinalType                                    block_first_tor3,
-                                   ComputeFloatType                               dt,
-                                   OrdinalType                                    species_index,
-                                   koliop::utility::View::InternalInputL6<Flo64>& f5d_s) = 0;
+                virtual void Apply(const Operator&                          an_operator,
+                                   Constant::DeviceExecutionSpaceType       an_execution_space,
+                                   OrdinalType                              block_first_tor1,
+                                   OrdinalType                              block_first_tor2,
+                                   OrdinalType                              block_first_tor3,
+                                   ComputeFloatType                         dt,
+                                   OrdinalType                              species_index,
+                                   koliop::utility::View::MDL<Flo64******>& f5d_s)       = 0;
                 virtual ~InterfaceType()                                                 = default;
 
             protected:
@@ -64,14 +64,14 @@ namespace koliop {
                     value_.ReleaseScratchMemory();
                 }
 
-                void Apply(const Operator&                                an_operator,
-                           Constant::DeviceExecutionSpaceType             an_execution_space,
-                           OrdinalType                                    block_first_tor1,
-                           OrdinalType                                    block_first_tor2,
-                           OrdinalType                                    block_first_tor3,
-                           ComputeFloatType                               dt,
-                           OrdinalType                                    species_index,
-                           koliop::utility::View::InternalInputL6<Flo64>& f5d_s) override {
+                void Apply(const Operator&                          an_operator,
+                           Constant::DeviceExecutionSpaceType       an_execution_space,
+                           OrdinalType                              block_first_tor1,
+                           OrdinalType                              block_first_tor2,
+                           OrdinalType                              block_first_tor3,
+                           ComputeFloatType                         dt,
+                           OrdinalType                              species_index,
+                           koliop::utility::View::MDL<Flo64******>& f5d_s) override {
                     value_.Apply(an_operator,
                                  an_execution_space,
                                  block_first_tor1,

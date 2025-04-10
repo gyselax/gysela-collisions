@@ -272,6 +272,11 @@ namespace koliop {
             //
 
             CvCdDriverScheduler cvcd_drivers_scheduler_;
+
+            koliop::utility::View::MDL<Flo64******> a_device_visible_f5d_s_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "a_device_visible_f5d_s_"),
+                                                                            static_cast<std::size_t>(mu_extent_), static_cast<std::size_t>(vpar_extent_),
+                                                                            static_cast<std::size_t>(tor1_extent_), static_cast<std::size_t>(tor2_extent_), static_cast<std::size_t>(tor3_extent_),
+                                                                            static_cast<std::size_t>(species_extent_)};
         };
 
     } // namespace collision
