@@ -260,14 +260,229 @@ int Test2() {
     // GCC 13.2.1     toolchain, 1 thread (no openmp): 13386ms // Cpar and more not vectorized
     // ICC 2021       toolchain, 1 thread (no openmp): 22423ms // Crap ?
 
-    // Latest performance on MI250X (no copy fdistrib stash, constant alloc, rest is default)
-    //      BENCH:Quantile (ms) at (0.25, 0.5, 0.75): (1834, 1844, 1844)
-    //      With KOLIOP_BUILD_FORTRAN_INTERFACE:
-    //          BENCH:Quantile (ms) at (0.25, 0.5, 0.75): (1953, 1956, 1956)
-    // Latest performance on MI300A (no copy fdistrib stash, constant alloc, rest is default)
-    //      BENCH:Quantile (ms) at (0.25, 0.5, 0.75): (722, 722, 722)
-    //      With KOLIOP_BUILD_FORTRAN_INTERFACE:
-    //          BENCH:Quantile (ms) at (0.25, 0.5, 0.75): (750, 753, 753)
+    // Latest MI300A results (use/merge branch origin/benchmark/no_copy at 417fd, rest is default/toolchain specific):
+    // Koliop: v0.0.22
+    //   KOLIOP_TOOLCHAIN_NAME: mi300a.hipcc.adastra
+    //   KOLIOP_BACKEND_IS_GPU_LIKE: true
+    //   KOLIOP_BACKEND_IS_CPU_LIKE: true
+    //   KOLIOP_ASSERT_ENABLED: true
+    //   KOLIOP_FENCE_ON_OPERATOR_EXIT: false
+    //   KOLIOP_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE: false
+    //   KOLIOP_BUILD_FORTRAN_INTERFACE: false (expecting f5d_s as (mu,vpar),(theta,r,phi),species)
+    //   KOLIOP_UTILITY_FLATTEN_EXPECT_POW2_EXTENTS: false
+    //   KOLIOP_CONSTANT_MEMORY_USAGE: true
+    //   koliop::collision::Constant::kDisjointExecutionSpaceCount: 2
+    //   koliop::collision::Constant::kDiscardedStreamCount: 8
+    //   koliop::collision::Constant::kDefaultExecutionSpacePoolIndex: 1
+    //   koliop::collision::Constant::kPresetBlockExtent: [128,128,1] [128,64,2] [128,32,4] [64,128,2] [128,64,1] [128,32,2] [64,128,1] [64,64,2] [32,128,2] [128,32,1] [64,64,1] [64,32,2] [32,128,1] [32,64,2] [64,32,1] [32,64,1] [32,32,2] [32,32,1] [1,1,1]
+    // Kokkos::HIP::initialize WARNING: running kernels for MI300X (discrete GPU) on a MI300A (APU).
+    //   Kokkos Version: 4.6.0
+    // Compiler:
+    //   KOKKOS_COMPILER_CLANG: 1800
+    // Architecture:
+    //   CPU architecture: AMD_ZEN4
+    //   Default Device: HIP
+    //   GPU architecture: none
+    //   platform: 64bit
+    // Atomics:
+    // Vectorization:
+    //   KOKKOS_ENABLE_PRAGMA_IVDEP: no
+    //   KOKKOS_ENABLE_PRAGMA_LOOPCOUNT: no
+    //   KOKKOS_ENABLE_PRAGMA_UNROLL: no
+    //   KOKKOS_ENABLE_PRAGMA_VECTOR: no
+    // Memory:
+    // Options:
+    //   KOKKOS_ENABLE_ASM: no
+    //   KOKKOS_ENABLE_CXX17: yes
+    //   KOKKOS_ENABLE_CXX20: no
+    //   KOKKOS_ENABLE_CXX23: no
+    //   KOKKOS_ENABLE_CXX26: no
+    //   KOKKOS_ENABLE_DEBUG_BOUNDS_CHECK: no
+    //   KOKKOS_ENABLE_HWLOC: no
+    //   KOKKOS_ENABLE_LIBDL: yes
+    // Host Serial Execution Space:
+    //   KOKKOS_ENABLE_SERIAL: yes
+
+    // Serial Runtime Configuration:
+    // Device Execution Space:
+    //   KOKKOS_ENABLE_HIP: yes
+    // HIP Options:
+    //   KOKKOS_ENABLE_HIP_RELOCATABLE_DEVICE_CODE: no
+
+    // Runtime Configuration:
+    //   XNACK environment variable set: no
+    //   Kernel reports HMM module via `CONFIG_HMM_MIRROR=y` in `/boot/config`: yes
+    // macro  KOKKOS_ENABLE_HIP : defined
+    // macro  HIP_VERSION = 60342134 = version 6.3.42134
+    // macro KOKKOS_ENABLE_ROCTHRUST : defined
+    // macro KOKKOS_ENABLE_IMPL_HIP_MALLOC_ASYNC: yes
+    // Kokkos::HIP[ 0 ] gcnArch gfx942:sramecc+:xnack- : Selected
+    //   Total Global Memory: 128 GiB
+    //   Shared Memory per Block: 64 KiB
+    //   APU or dGPU: APU
+    //   Is Large Bar: 1
+    //   Supports Managed Memory: 1
+    //   Architecture capable of accessing system allocated memory: 1
+    //   System allows accessing system allocated memory on GPU: 0
+    //   Wavefront Size: 64
+    // 0x1febc10
+    // BENCH:Warming up for 3 samples.
+    // BENCH:Warmed up in 2188 ms | 729ms/sample
+    // BENCH:Benchmark epsilon (ns)            : 729500
+    // BENCH:Running                           : ..........
+    // BENCH:Sample taken (iteration count)    : 10 (10)
+    // BENCH:Samples (ns)                      : 728230770 722236565 720542744 722321126 726325088 727030793 728361280 723211870 724955851 723910644
+    // BENCH:Samples (sorted) (ns)             : 720542744 722236565 722321126 723211870 723910644 724955851 726325088 727030793 728230770 728361280
+    // BENCH:Min|Max (ms)                      : 720 | 728
+    // BENCH:Average (ms)                      : 724
+    // BENCH:Quantile (ms) at (0.25, 0.5, 0.75): (722, 724, 727)
+    // Deinitialized()
+
+    // Latest MI250X results (use/merge branch origin/benchmark/no_copy at 417fd, rest is default/toolchain specific):
+    // Koliop: v0.0.22
+    //   KOLIOP_TOOLCHAIN_NAME: mi250.hipcc.adastra
+    //   KOLIOP_BACKEND_IS_GPU_LIKE: true
+    //   KOLIOP_BACKEND_IS_CPU_LIKE: true
+    //   KOLIOP_ASSERT_ENABLED: true
+    //   KOLIOP_FENCE_ON_OPERATOR_EXIT: false
+    //   KOLIOP_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE: false
+    //   KOLIOP_BUILD_FORTRAN_INTERFACE: false (expecting f5d_s as (mu,vpar),(theta,r,phi),species)
+    //   KOLIOP_UTILITY_FLATTEN_EXPECT_POW2_EXTENTS: false
+    //   KOLIOP_CONSTANT_MEMORY_USAGE: false
+    //   koliop::collision::Constant::kDisjointExecutionSpaceCount: 2
+    //   koliop::collision::Constant::kDiscardedStreamCount: 8
+    //   koliop::collision::Constant::kDefaultExecutionSpacePoolIndex: 1
+    //   koliop::collision::Constant::kPresetBlockExtent: [128,128,1] [128,64,2] [128,32,4] [64,128,2] [128,64,1] [128,32,2] [64,128,1] [64,64,2] [32,128,2] [128,32,1] [64,64,1] [64,32,2] [32,128,1] [32,64,2] [64,32,1] [32,64,1] [32,32,2] [32,32,1] [1,1,1]
+    // Kokkos::OpenMP::initialize WARNING: OMP_PROC_BIND environment variable not set
+    //   In general, for best performance with OpenMP 4.0 or better set OMP_PROC_BIND=spread and OMP_PLACES=threads
+    //   For best performance with OpenMP 3.1 set OMP_PROC_BIND=true
+    //   For unit testing set OMP_PROC_BIND=false
+
+    //   Kokkos Version: 4.6.0
+    // Compiler:
+    //   KOKKOS_COMPILER_CLANG: 1800
+    // Architecture:
+    //   CPU architecture: AMD_ZEN3
+    //   Default Device: HIP
+    //   GPU architecture: AMD_GFX90A
+    //   platform: 64bit
+    // Atomics:
+    // Vectorization:
+    //   KOKKOS_ENABLE_PRAGMA_IVDEP: no
+    //   KOKKOS_ENABLE_PRAGMA_LOOPCOUNT: no
+    //   KOKKOS_ENABLE_PRAGMA_UNROLL: no
+    //   KOKKOS_ENABLE_PRAGMA_VECTOR: no
+    // Memory:
+    // Options:
+    //   KOKKOS_ENABLE_ASM: no
+    //   KOKKOS_ENABLE_CXX17: yes
+    //   KOKKOS_ENABLE_CXX20: no
+    //   KOKKOS_ENABLE_CXX23: no
+    //   KOKKOS_ENABLE_CXX26: no
+    //   KOKKOS_ENABLE_DEBUG_BOUNDS_CHECK: no
+    //   KOKKOS_ENABLE_HWLOC: no
+    //   KOKKOS_ENABLE_LIBDL: yes
+    // Host Parallel Execution Space:
+    //   KOKKOS_ENABLE_OPENMP: yes
+
+    // OpenMP Runtime Configuration:
+    // Kokkos::OpenMP thread_pool_topology[ 1 x 8 x 1 ]
+    // Device Execution Space:
+    //   KOKKOS_ENABLE_HIP: yes
+    // HIP Options:
+    //   KOKKOS_ENABLE_HIP_RELOCATABLE_DEVICE_CODE: no
+
+    // Runtime Configuration:
+    //   XNACK environment variable set: no
+    //   Kernel reports HMM module via `CONFIG_HMM_MIRROR=y` in `/boot/config`: yes
+    // macro  KOKKOS_ENABLE_HIP : defined
+    // macro  HIP_VERSION = 60342134 = version 6.3.42134
+    // macro KOKKOS_ENABLE_ROCTHRUST : defined
+    // macro KOKKOS_ENABLE_IMPL_HIP_MALLOC_ASYNC: yes
+    // Kokkos::HIP[ 0 ] gcnArch gfx90a:sramecc+:xnack- : Selected
+    //   Total Global Memory: 63.98 GiB
+    //   Shared Memory per Block: 64 KiB
+    //   APU or dGPU: dGPU
+    //   Is Large Bar: 1
+    //   Supports Managed Memory: 1
+    //   Architecture capable of accessing system allocated memory: 1
+    //   System allows accessing system allocated memory on GPU: 0
+    //   Wavefront Size: 64
+    // Kokkos::HIP[ 1 ] gcnArch gfx90a:sramecc+:xnack-
+    //   Total Global Memory: 63.98 GiB
+    //   Shared Memory per Block: 64 KiB
+    //   APU or dGPU: dGPU
+    //   Is Large Bar: 1
+    //   Supports Managed Memory: 1
+    //   Architecture capable of accessing system allocated memory: 1
+    //   System allows accessing system allocated memory on GPU: 0
+    //   Wavefront Size: 64
+    // Kokkos::HIP[ 2 ] gcnArch gfx90a:sramecc+:xnack-
+    //   Total Global Memory: 63.98 GiB
+    //   Shared Memory per Block: 64 KiB
+    //   APU or dGPU: dGPU
+    //   Is Large Bar: 1
+    //   Supports Managed Memory: 1
+    //   Architecture capable of accessing system allocated memory: 1
+    //   System allows accessing system allocated memory on GPU: 0
+    //   Wavefront Size: 64
+    // Kokkos::HIP[ 3 ] gcnArch gfx90a:sramecc+:xnack-
+    //   Total Global Memory: 63.98 GiB
+    //   Shared Memory per Block: 64 KiB
+    //   APU or dGPU: dGPU
+    //   Is Large Bar: 1
+    //   Supports Managed Memory: 1
+    //   Architecture capable of accessing system allocated memory: 1
+    //   System allows accessing system allocated memory on GPU: 0
+    //   Wavefront Size: 64
+    // Kokkos::HIP[ 4 ] gcnArch gfx90a:sramecc+:xnack-
+    //   Total Global Memory: 63.98 GiB
+    //   Shared Memory per Block: 64 KiB
+    //   APU or dGPU: dGPU
+    //   Is Large Bar: 1
+    //   Supports Managed Memory: 1
+    //   Architecture capable of accessing system allocated memory: 1
+    //   System allows accessing system allocated memory on GPU: 0
+    //   Wavefront Size: 64
+    // Kokkos::HIP[ 5 ] gcnArch gfx90a:sramecc+:xnack-
+    //   Total Global Memory: 63.98 GiB
+    //   Shared Memory per Block: 64 KiB
+    //   APU or dGPU: dGPU
+    //   Is Large Bar: 1
+    //   Supports Managed Memory: 1
+    //   Architecture capable of accessing system allocated memory: 1
+    //   System allows accessing system allocated memory on GPU: 0
+    //   Wavefront Size: 64
+    // Kokkos::HIP[ 6 ] gcnArch gfx90a:sramecc+:xnack-
+    //   Total Global Memory: 63.98 GiB
+    //   Shared Memory per Block: 64 KiB
+    //   APU or dGPU: dGPU
+    //   Is Large Bar: 1
+    //   Supports Managed Memory: 1
+    //   Architecture capable of accessing system allocated memory: 1
+    //   System allows accessing system allocated memory on GPU: 0
+    //   Wavefront Size: 64
+    // Kokkos::HIP[ 7 ] gcnArch gfx90a:sramecc+:xnack-
+    //   Total Global Memory: 63.98 GiB
+    //   Shared Memory per Block: 64 KiB
+    //   APU or dGPU: dGPU
+    //   Is Large Bar: 1
+    //   Supports Managed Memory: 1
+    //   Architecture capable of accessing system allocated memory: 1
+    //   System allows accessing system allocated memory on GPU: 0
+    //   Wavefront Size: 64
+    // 0x30ff2c0
+    // BENCH:Warming up for 3 samples.
+    // BENCH:Warmed up in 5260 ms | 1753ms/sample
+    // BENCH:Benchmark epsilon (ns)            : 1753483
+    // BENCH:Running                           : ..........
+    // BENCH:Sample taken (iteration count)    : 10 (10)
+    // BENCH:Samples (ns)                      : 1755577927 1739701190 1752947813 1751361768 1741506669 1754821475 1768148433 1742677793 1746514569 1740697726
+    // BENCH:Samples (sorted) (ns)             : 1739701190 1740697726 1741506669 1742677793 1746514569 1751361768 1752947813 1754821475 1755577927 1768148433
+    // BENCH:Min|Max (ms)                      : 1739 | 1768
+    // BENCH:Average (ms)                      : 1749
+    // BENCH:Quantile (ms) at (0.25, 0.5, 0.75): (1741, 1751, 1754)
+    // Deinitialized()
 
     // NOTE: This function is used to test the GPU code. We pass the operator
     // dummy arrays that get copied to the GPU anyway (assuming
