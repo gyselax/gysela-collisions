@@ -163,6 +163,8 @@ namespace koliop {
 
             const auto& execution_space_pool = an_operator.execution_space_pool_;
 
+            KOLIOP_ASSERT(!execution_space_pool.empty());
+
             // The first (at most) execution_space_pool.size() get a freshly
             // allocated CvCdDriver and an execution space. The other block will
             // be copies of these ones.
