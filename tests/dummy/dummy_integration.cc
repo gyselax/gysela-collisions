@@ -260,7 +260,7 @@ int Test2() {
     // GCC 13.2.1     toolchain, 1 thread (no openmp): 13386ms // Cpar and more not vectorized
     // ICC 2021       toolchain, 1 thread (no openmp): 22423ms // Crap ?
 
-    // Latest MI300A results (use/merge branch origin/benchmark/no_copy at 417fd, rest is default/toolchain specific):
+    // Latest MI250X results (use/merge branch origin/benchmark/no_copy at 417fd, ROCR_VISIBLE_DEVICES=3, rest is default/toolchain specific):
     // Koliop: v0.0.22
     //   KOLIOP_TOOLCHAIN_NAME: mi300a.hipcc.adastra
     //   KOLIOP_BACKEND_IS_GPU_LIKE: true
@@ -325,20 +325,21 @@ int Test2() {
     //   Architecture capable of accessing system allocated memory: 1
     //   System allows accessing system allocated memory on GPU: 0
     //   Wavefront Size: 64
-    // 0x1febc10
+    // 0x2501df0
     // BENCH:Warming up for 3 samples.
-    // BENCH:Warmed up in 2188 ms | 729ms/sample
-    // BENCH:Benchmark epsilon (ns)            : 729500
+    // BENCH:Warmed up in 2189 ms | 729ms/sample
+    // BENCH:Benchmark epsilon (ns)            : 729800
     // BENCH:Running                           : ..........
     // BENCH:Sample taken (iteration count)    : 10 (10)
-    // BENCH:Samples (ns)                      : 728230770 722236565 720542744 722321126 726325088 727030793 728361280 723211870 724955851 723910644
-    // BENCH:Samples (sorted) (ns)             : 720542744 722236565 722321126 723211870 723910644 724955851 726325088 727030793 728230770 728361280
-    // BENCH:Min|Max (ms)                      : 720 | 728
-    // BENCH:Average (ms)                      : 724
-    // BENCH:Quantile (ms) at (0.25, 0.5, 0.75): (722, 724, 727)
+    // BENCH:Samples (ns)                      : 722652235 726554689 718461148 728502261 724778648 720431041 721955561 721226745 729239326 722481374
+    // BENCH:Samples (sorted) (ns)             : 718461148 720431041 721226745 721955561 722481374 722652235 724778648 726554689 728502261 729239326
+    // BENCH:Min|Max (ms)                      : 718 | 729
+    // BENCH:Average (ms)                      : 723
+    // BENCH:Quantile (ms) at (0.25, 0.5, 0.75): (721, 722, 726)
     // Deinitialized()
+    // x0.97 when HSA_XNACK=1 (same binary, just, enable USM support, even if not used)
 
-    // Latest MI250X results (use/merge branch origin/benchmark/no_copy at 417fd, rest is default/toolchain specific):
+    // Latest MI250X results (use/merge branch origin/benchmark/no_copy at 417fd, ROCR_VISIBLE_DEVICES=3, rest is default/toolchain specific):
     // Koliop: v0.0.22
     //   KOLIOP_TOOLCHAIN_NAME: mi250.hipcc.adastra
     //   KOLIOP_BACKEND_IS_GPU_LIKE: true
@@ -408,81 +409,19 @@ int Test2() {
     //   Architecture capable of accessing system allocated memory: 1
     //   System allows accessing system allocated memory on GPU: 0
     //   Wavefront Size: 64
-    // Kokkos::HIP[ 1 ] gcnArch gfx90a:sramecc+:xnack-
-    //   Total Global Memory: 63.98 GiB
-    //   Shared Memory per Block: 64 KiB
-    //   APU or dGPU: dGPU
-    //   Is Large Bar: 1
-    //   Supports Managed Memory: 1
-    //   Architecture capable of accessing system allocated memory: 1
-    //   System allows accessing system allocated memory on GPU: 0
-    //   Wavefront Size: 64
-    // Kokkos::HIP[ 2 ] gcnArch gfx90a:sramecc+:xnack-
-    //   Total Global Memory: 63.98 GiB
-    //   Shared Memory per Block: 64 KiB
-    //   APU or dGPU: dGPU
-    //   Is Large Bar: 1
-    //   Supports Managed Memory: 1
-    //   Architecture capable of accessing system allocated memory: 1
-    //   System allows accessing system allocated memory on GPU: 0
-    //   Wavefront Size: 64
-    // Kokkos::HIP[ 3 ] gcnArch gfx90a:sramecc+:xnack-
-    //   Total Global Memory: 63.98 GiB
-    //   Shared Memory per Block: 64 KiB
-    //   APU or dGPU: dGPU
-    //   Is Large Bar: 1
-    //   Supports Managed Memory: 1
-    //   Architecture capable of accessing system allocated memory: 1
-    //   System allows accessing system allocated memory on GPU: 0
-    //   Wavefront Size: 64
-    // Kokkos::HIP[ 4 ] gcnArch gfx90a:sramecc+:xnack-
-    //   Total Global Memory: 63.98 GiB
-    //   Shared Memory per Block: 64 KiB
-    //   APU or dGPU: dGPU
-    //   Is Large Bar: 1
-    //   Supports Managed Memory: 1
-    //   Architecture capable of accessing system allocated memory: 1
-    //   System allows accessing system allocated memory on GPU: 0
-    //   Wavefront Size: 64
-    // Kokkos::HIP[ 5 ] gcnArch gfx90a:sramecc+:xnack-
-    //   Total Global Memory: 63.98 GiB
-    //   Shared Memory per Block: 64 KiB
-    //   APU or dGPU: dGPU
-    //   Is Large Bar: 1
-    //   Supports Managed Memory: 1
-    //   Architecture capable of accessing system allocated memory: 1
-    //   System allows accessing system allocated memory on GPU: 0
-    //   Wavefront Size: 64
-    // Kokkos::HIP[ 6 ] gcnArch gfx90a:sramecc+:xnack-
-    //   Total Global Memory: 63.98 GiB
-    //   Shared Memory per Block: 64 KiB
-    //   APU or dGPU: dGPU
-    //   Is Large Bar: 1
-    //   Supports Managed Memory: 1
-    //   Architecture capable of accessing system allocated memory: 1
-    //   System allows accessing system allocated memory on GPU: 0
-    //   Wavefront Size: 64
-    // Kokkos::HIP[ 7 ] gcnArch gfx90a:sramecc+:xnack-
-    //   Total Global Memory: 63.98 GiB
-    //   Shared Memory per Block: 64 KiB
-    //   APU or dGPU: dGPU
-    //   Is Large Bar: 1
-    //   Supports Managed Memory: 1
-    //   Architecture capable of accessing system allocated memory: 1
-    //   System allows accessing system allocated memory on GPU: 0
-    //   Wavefront Size: 64
-    // 0x30ff2c0
+    // 0x2962b80
     // BENCH:Warming up for 3 samples.
-    // BENCH:Warmed up in 5260 ms | 1753ms/sample
-    // BENCH:Benchmark epsilon (ns)            : 1753483
+    // BENCH:Warmed up in 5237 ms | 1745ms/sample
+    // BENCH:Benchmark epsilon (ns)            : 1745931
     // BENCH:Running                           : ..........
     // BENCH:Sample taken (iteration count)    : 10 (10)
-    // BENCH:Samples (ns)                      : 1755577927 1739701190 1752947813 1751361768 1741506669 1754821475 1768148433 1742677793 1746514569 1740697726
-    // BENCH:Samples (sorted) (ns)             : 1739701190 1740697726 1741506669 1742677793 1746514569 1751361768 1752947813 1754821475 1755577927 1768148433
-    // BENCH:Min|Max (ms)                      : 1739 | 1768
-    // BENCH:Average (ms)                      : 1749
-    // BENCH:Quantile (ms) at (0.25, 0.5, 0.75): (1741, 1751, 1754)
+    // BENCH:Samples (ns)                      : 1757237085 1747725079 1753501953 1749396166 1731256631 1743808146 1748624354 1729044417 1746677083 1751066711
+    // BENCH:Samples (sorted) (ns)             : 1729044417 1731256631 1743808146 1746677083 1747725079 1748624354 1749396166 1751066711 1753501953 1757237085
+    // BENCH:Min|Max (ms)                      : 1729 | 1757
+    // BENCH:Average (ms)                      : 1745
+    // BENCH:Quantile (ms) at (0.25, 0.5, 0.75): (1743, 1748, 1751)
     // Deinitialized()
+    // x0.966 when HSA_XNACK=1 (same binary, just, enable USM support, even if not used)
 
     // NOTE: This function is used to test the GPU code. We pass the operator
     // dummy arrays that get copied to the GPU anyway (assuming
