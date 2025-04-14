@@ -1,4 +1,5 @@
 ```
+    (use/merge branch origin/benchmark/no_copy at 417fd, rocm-smi -r, ROCR_VISIBLE_DEVICES=3, rest is default/toolchain specific):
     Koliop: v0.0.22
       KOLIOP_TOOLCHAIN_NAME: mi300a_usm.hipcc.adastra
       KOLIOP_BACKEND_IS_GPU_LIKE: true
