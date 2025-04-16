@@ -1,18 +1,7 @@
-help ([[
-This modulefile defines the system paths and environment
-variables needed to use the ROCm Toolkit. The ROCm modulefile
-enables ROC Profiler, ROC Tracer, HIP, and ROCr.
-
-===================================================================
-To see AMD release information,  visit:
-https://rocmdocs.amd.com/en/latest
-===================================================================
-]])
 --------------------------------------------------------------------------------
 -- Template variables
 --------------------------------------------------------------------------------
 
-local MOD_LEVEL = "6.3.3"
 local ROCM_PATH = "/opt/software/rocm/6.3.3"
 
 --------------------------------------------------------------------------------
@@ -25,17 +14,12 @@ prepend_path("PATH", ROCM_PATH .. "/bin")
 prepend_path("PATH", ROCM_PATH .. "/lib/llvm/bin")
 
 prepend_path("LD_LIBRARY_PATH", ROCM_PATH .. "/lib")
-prepend_path("LD_LIBRARY_PATH", ROCM_PATH .. "/lib/rocprofiler")
-prepend_path("LD_LIBRARY_PATH", ROCM_PATH .. "/lib/roctracer")
+-- -- NOTE: could conflict with other toolchains if mixing compilers.
+-- prepend_path("LD_LIBRARY_PATH", ROCM_PATH .. "/lib/llvm/lib")
+
+-- prepend_path("PYTHONPATH", ROCM_PATH .. "/share/amd_smi")
 
 prepend_path("CMAKE_PREFIX_PATH", ROCM_PATH)
--- prepend_path("CMAKE_PREFIX_PATH", ROCM_PATH .. "/lib/cmake/hip")
-
-prepend_path("MANPATH", ROCM_PATH .. "/share/man")
-prepend_path("MANPATH", ROCM_PATH .. "/lib/llvm/share/man1")
-
--- Dubious:
--- setenv("HIP_PATH", ROCM_PATH)
--- local AMD_GCN           = ROCM_PATH .. "/amdgcn/bitcode"
--- setenv("DEVICE_LIB_PATH", AMD_GCN)
--- setenv("HIP_DEVICE_LIB_PATH", AMD_GCN)
+-- NOTE: hipcc adds --hip-link. Tell clang not to read ${ROCM_PATH}/lib/llvm/bin/rocm.cfg, then the driver relies only
+-- on the user flags and environment variables.
+setenv("HIPCC_COMPILE_FLAGS_APPEND", (os.getenv("HIPCC_COMPILE_FLAGS_APPEND") or "") .. " --no-default-config ")
