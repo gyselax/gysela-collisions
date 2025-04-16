@@ -16,7 +16,7 @@ prepend_path("PATH", ROCM_PATH .. "/lib/llvm/bin")
 prepend_path("LD_LIBRARY_PATH", ROCM_PATH .. "/lib")
 -- -- NOTE: could conflict with other toolchains if mixing compilers.
 -- prepend_path("LD_LIBRARY_PATH", ROCM_PATH .. "/lib/llvm/lib")
-
+-- NOTE: some codes need that (vLLM)
 -- prepend_path("PYTHONPATH", ROCM_PATH .. "/share/amd_smi")
 
 prepend_path("CMAKE_PREFIX_PATH", ROCM_PATH)
