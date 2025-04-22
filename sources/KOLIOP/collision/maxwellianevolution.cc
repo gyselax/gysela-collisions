@@ -96,7 +96,7 @@ namespace koliop {
 
                 // TODO(Etienne M): Should we use a_team_handle.team_barrier() ?
                 ScratchMemory Ta_tmp{a_team_handle.thread_scratch(0),
-                                     scratch_memory_bytes_per_thread};
+                                     static_cast<std::size_t>(species_extent)};
 
                 // NOTE: Iterating on species leads to large strides in
                 // memory access. These *bad* accesses are few and proportional
