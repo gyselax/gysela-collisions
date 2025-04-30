@@ -39,6 +39,12 @@ namespace koliop {
                     a_cvcd_driver.Set(CvCdDriver<128, 256, 1, Constant::BatchTraitsType>{vpar_extent, species_extent, collision_interspecies, hat_As, hat_Zs, vparg, coeff_intdvpar});
                 } else if(block_tor1_extent == 128 && block_tor2_extent == 128 && block_tor3_extent == 2) {
                     a_cvcd_driver.Set(CvCdDriver<128, 128, 2, Constant::BatchTraitsType>{vpar_extent, species_extent, collision_interspecies, hat_As, hat_Zs, vparg, coeff_intdvpar});
+                } else if(block_tor1_extent == 128 && block_tor2_extent == 64 && block_tor3_extent == 4) {
+                    a_cvcd_driver.Set(CvCdDriver<128, 64, 4, Constant::BatchTraitsType>{vpar_extent, species_extent, collision_interspecies, hat_As, hat_Zs, vparg, coeff_intdvpar});
+                } else if(block_tor1_extent == 64 && block_tor2_extent == 128 && block_tor3_extent == 4) {
+                    a_cvcd_driver.Set(CvCdDriver<64, 128, 4, Constant::BatchTraitsType>{vpar_extent, species_extent, collision_interspecies, hat_As, hat_Zs, vparg, coeff_intdvpar});
+                } else if(block_tor1_extent == 128 && block_tor2_extent == 32 && block_tor3_extent == 8) {
+                    a_cvcd_driver.Set(CvCdDriver<128, 32, 8, Constant::BatchTraitsType>{vpar_extent, species_extent, collision_interspecies, hat_As, hat_Zs, vparg, coeff_intdvpar});
                 } else if(block_tor1_extent == 128 && block_tor2_extent == 128 && block_tor3_extent == 1) {
                     a_cvcd_driver.Set(CvCdDriver<128, 128, 1, Constant::BatchTraitsType>{vpar_extent, species_extent, collision_interspecies, hat_As, hat_Zs, vparg, coeff_intdvpar});
                 } else if(block_tor1_extent == 128 && block_tor2_extent == 64 && block_tor3_extent == 2) {

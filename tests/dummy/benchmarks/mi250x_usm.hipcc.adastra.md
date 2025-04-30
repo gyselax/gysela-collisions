@@ -1,5 +1,5 @@
 ```
-    (use/merge branch origin/benchmark/no_copy at 417fd, rocm-smi -r, ROCR_VISIBLE_DEVICES=3, rest is default/toolchain specific):
+    (rocm-smi -r, ROCR_VISIBLE_DEVICES=3 HSA_XNACK=3, rest is default/toolchain specific):
     Koliop: v0.0.22
       KOLIOP_TOOLCHAIN_NAME: mi250x_usm.hipcc.adastra
       KOLIOP_BACKEND_IS_GPU_LIKE: true
@@ -10,10 +10,10 @@
       KOLIOP_BUILD_FORTRAN_INTERFACE: false (expecting f5d_s as (mu,vpar),(theta,r,phi),species)
       KOLIOP_UTILITY_FLATTEN_EXPECT_POW2_EXTENTS: false
       KOLIOP_CONSTANT_MEMORY_USAGE: false
-      koliop::collision::Constant::kDisjointExecutionSpaceCount: 2
+      koliop::collision::Constant::kDisjointExecutionSpaceCount: 1
       koliop::collision::Constant::kDiscardedStreamCount: 8
-      koliop::collision::Constant::kDefaultExecutionSpacePoolIndex: 1
-      koliop::collision::Constant::kPresetBlockExtent: [128,128,1] [128,64,2] [128,32,4] [64,128,2] [128,64,1] [128,32,2] [64,128,1] [64,64,2] [32,128,2] [128,32,1] [64,64,1] [64,32,2] [32,128,1] [32,64,2] [64,32,1] [32,64,1] [32,32,2] [32,32,1] [1,1,1]
+      koliop::collision::Constant::kDefaultExecutionSpacePoolIndex: 0
+      koliop::collision::Constant::kPresetBlockExtent: [256,128,1] [128,    256,1] [128,128,2] [128,64,4] [64,128,4] [128,32,8] [128,128,1]     [128,64,2] [128,32,4] [64,128,2] [128,64,1] [128,32,2] [64,128,1]     [64,64,2] [32,128,2] [128,32,1] [64,64,1] [64,32,2] [32,128,1] [32,    64,2] [64,32,1] [32,64,1] [32,32,2] [32,32,1] [1,1,1]
       Kokkos Version: 4.6.0
     Compiler:
       KOKKOS_COMPILER_CLANG: 1800
@@ -49,7 +49,7 @@
 
     Runtime Configuration:
       XNACK environment variable set: yes
-      Kernel reports HMM module via `CONFIG_HMM_MIRROR=y` in `/boot/config`: yes
+      Kernel reports HMM module via `CONFIG_HMM_MIRROR=y` in `/boot/    config`: yes
     macro  KOKKOS_ENABLE_HIP : defined
     macro  HIP_VERSION = 60342134 = version 6.3.42134
     macro KOKKOS_ENABLE_ROCTHRUST : defined
@@ -63,17 +63,17 @@
       Architecture capable of accessing system allocated memory: 1
       System allows accessing system allocated memory on GPU: 1
       Wavefront Size: 64
-    0x1bd3f60
+    0x21bb020
     BENCH:Warming up for 3 samples.
-    BENCH:Warmed up in 39391 ms | 13130ms/sample
-    BENCH:Benchmark epsilon (ns)            : 13130364
+    BENCH:Warmed up in 37928 ms | 12642ms/sample
+    BENCH:Benchmark epsilon (ns)            : 12642668
     BENCH:Running                           : ..........
     BENCH:Sample taken (iteration count)    : 10 (10)
-    BENCH:Samples (ns)                      : 2302639907 2300157194 2292440153 2300009087 2294295916 2258357300 2284416980 2280474077 2298088298 2287165037
-    BENCH:Samples (sorted) (ns)             : 2258357300 2280474077 2284416980 2287165037 2292440153 2294295916 2298088298 2300009087 2300157194 2302639907
-    BENCH:Min|Max (ms)                      : 2258 | 2302
-    BENCH:Average (ms)                      : 2289
-    BENCH:Quantile (ms) at (0.25, 0.5, 0.75): (2284, 2294, 2300)
+    BENCH:Samples (ns)                      : 2116079208 2115904207     2114847552 2115765828 2116931476 2118147771 2117479241 2115534318     2116578149 2117117968
+    BENCH:Samples (sorted) (ns)             : 2114847552 2115534318     2115765828 2115904207 2116079208 2116578149 2116931476 2117117968     2117479241 2118147771
+    BENCH:Min|Max (ms)                      : 2114 | 2118
+    BENCH:Average (ms)                      : 2116
+    BENCH:Quantile (ms) at (0.25, 0.5, 0.75): (2115, 2116, 2117)
     Deinitialized()
 ```
 

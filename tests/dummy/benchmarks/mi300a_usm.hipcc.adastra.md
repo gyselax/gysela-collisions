@@ -1,5 +1,5 @@
 ```
-    (use/merge branch origin/benchmark/no_copy at 417fd, rocm-smi -r, ROCR_VISIBLE_DEVICES=3, rest is default/toolchain specific):
+    (rocm-smi -r, ROCR_VISIBLE_DEVICES=3, rest is default/toolchain specific):
     Koliop: v0.0.22
       KOLIOP_TOOLCHAIN_NAME: mi300a_usm.hipcc.adastra
       KOLIOP_BACKEND_IS_GPU_LIKE: true
@@ -10,10 +10,10 @@
       KOLIOP_BUILD_FORTRAN_INTERFACE: false (expecting f5d_s as (mu,vpar),(theta,r,phi),species)
       KOLIOP_UTILITY_FLATTEN_EXPECT_POW2_EXTENTS: false
       KOLIOP_CONSTANT_MEMORY_USAGE: true
-      koliop::collision::Constant::kDisjointExecutionSpaceCount: 2
+      koliop::collision::Constant::kDisjointExecutionSpaceCount: 1
       koliop::collision::Constant::kDiscardedStreamCount: 8
-      koliop::collision::Constant::kDefaultExecutionSpacePoolIndex: 1
-      koliop::collision::Constant::kPresetBlockExtent: [128,128,1] [128,64,2] [128,32,4] [64,128,2] [128,64,1] [128,32,2] [64,128,1] [64,64,2] [32,128,2] [128,32,1] [64,64,1] [64,32,2] [32,128,1] [32,64,2] [64,32,1] [32,64,1] [32,32,2] [32,32,1] [1,1,1]
+      koliop::collision::Constant::kDefaultExecutionSpacePoolIndex: 0
+      koliop::collision::Constant::kPresetBlockExtent: [256,128,1] [128,256,1] [128,128,2] [128,64,4] [64,128,4] [128,32,8] [128,128,1] [128,64,2] [128,32,4] [64,128,2]     [128,64,1] [128,32,2] [64,128,1] [64,64,2] [32,128,2] [128,32,1] [64,64,1] [64,32,2] [32,128,1] [32,64,2] [64,32,1] [32,64,1] [32,32,2] [32,32,1] [1,1,1]
       Kokkos Version: 4.6.0
     Compiler:
       KOKKOS_COMPILER_CLANG: 1800
@@ -63,17 +63,17 @@
       Architecture capable of accessing system allocated memory: 1
       System allows accessing system allocated memory on GPU: 1
       Wavefront Size: 64
-    0x17e1b10
+    0x228c7f0
     BENCH:Warming up for 3 samples.
-    BENCH:Warmed up in 3118 ms | 1039ms/sample
-    BENCH:Benchmark epsilon (ns)            : 1039600
+    BENCH:Warmed up in 2894 ms | 964ms/sample
+    BENCH:Benchmark epsilon (ns)            : 964805
     BENCH:Running                           : ..........
     BENCH:Sample taken (iteration count)    : 10 (10)
-    BENCH:Samples (ns)                      : 747368667 747576608 746843264 748684935 750963688 749803202 750911738 748172111 745234124 745313665
-    BENCH:Samples (sorted) (ns)             : 745234124 745313665 746843264 747368667 747576608 748172111 748684935 749803202 750911738 750963688
-    BENCH:Min|Max (ms)                      : 745 | 750
-    BENCH:Average (ms)                      : 748
-    BENCH:Quantile (ms) at (0.25, 0.5, 0.75): (746, 748, 749)
+    BENCH:Samples (ns)                      : 679816053 679080528 679264880 680994350 680708898 680533997 681867565 682092227 677063167 677839151
+    BENCH:Samples (sorted) (ns)             : 677063167 677839151 679080528 679264880 679816053 680533997 680708898 680994350 681867565 682092227
+    BENCH:Min|Max (ms)                      : 677 | 682
+    BENCH:Average (ms)                      : 679
+    BENCH:Quantile (ms) at (0.25, 0.5, 0.75): (679, 680, 680)
     Deinitialized()
 ```
 

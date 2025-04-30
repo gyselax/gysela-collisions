@@ -35,7 +35,7 @@ namespace koliop {
             /// CPU  (AVX2):  32 bytes / sizeof(double) -> kBatchSize =  4
             /// GPU (MI250): 128 bytes / sizeof(double) -> kBatchSize = 16
             /// Now that we know how much we have to load at once to be
-            /// efficient,  we need to figure out, how many bytes one thread can
+            /// efficient, we need to figure out, how many bytes one thread can
             /// load, this is the role of kVectorSize.
             static inline constexpr OrdinalType kBatchSize = KokkosBatched::DefaultVectorLength<value_type,
                                                                                                 typename ExecutionSpaceType::memory_space>::value;
@@ -46,7 +46,7 @@ namespace koliop {
             /// - On GPU it shall represent an inter lane SIMD such as double4.
             /// Indeed, one can very much see the GPU thread's state as
             /// contained in a SIMD register's lane. On GPU though, there is the
-            /// concept of *interlane* SIMD which comes in the form of
+            /// concept of *intralane* SIMD which comes in the form of
             /// float2, double4 etc. As of 2023, doubleN is not really a SIMD
             /// registers and serve more to do efficient loads and in some case,
             /// do operations at higher rates (say, CDNA 2's float2). In the
@@ -57,15 +57,25 @@ namespace koliop {
             /// exposes more concurrency. We are a bit faster, on MI250X, when
             /// using kVectorSize = 1, instead of the default which is 4.
             ///
+#if defined(KOLIOP_BACKEND_IS_GPU_LIKE)
+            /// Due to the blocking we do to mitigate the memory allocation
+            /// requirements, and because GPUs requires us to expose parallelism
+            /// or at least use all the compute units, we enforce a small intra
+            /// thread vector size. This allows us to distribute on more compute
+            /// units.
+            /// Thanks to that we get a speedup of x1.0875 on GFX90A.
+            ///
+            static inline constexpr OrdinalType kVectorSize = 1;
+#else
             static inline constexpr OrdinalType kVectorSize = KokkosBatched::DefaultInternalVectorLength<value_type,
                                                                                                          typename ExecutionSpaceType::memory_space>::value;
-
+#endif
             /// On AMD GPUs,    its 16 / 4 (double4) = 4
             ///    Nvidia GPUs, its  8 / 2 (double2) = 4
             ///    AVX256,      its  4 / 4 (double)  = 1
             static inline constexpr OrdinalType kVectorPerBatch = kBatchSize / kVectorSize;
 
-            /// Represents float2/double2/double4 etc. on GPUs and SIMd
+            /// Represents float2/double2/double4 etc. on GPUs and SIMD
             /// registers on CPUs.
             ///
             using ThreadVectorType = KokkosBatched::Vector<KokkosBatched::SIMD<value_type>,

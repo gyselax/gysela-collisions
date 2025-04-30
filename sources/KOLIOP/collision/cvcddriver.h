@@ -285,7 +285,7 @@ namespace koliop {
 
                 const auto& vparg = an_operator.vparg_;
 
-                const auto kernel = KOKKOS_LAMBDA(OrdinalType ipol, OrdinalType ivpar, OrdinalType itor1, OrdinalType itor2, OrdinalType itor3) {
+                const auto kernel = KOKKOS_LAMBDA(OrdinalType ivpar, OrdinalType ipol, OrdinalType itor1, OrdinalType itor2, OrdinalType itor3) {
 
                     // NOTE: kBlockExtentXXX are constant, the compiler can replace
                     // the modulo with faster instructions.
@@ -326,8 +326,8 @@ namespace koliop {
                                                           block_first_tor1,
                                                           block_first_tor2,
                                                           block_first_tor3},
-                                                         {Constant::kMaximumLaguerrePolynomialDegree,
-                                                          vpar_extent,
+                                                         {vpar_extent,
+                                                          Constant::kMaximumLaguerrePolynomialDegree,
                                                           block_first_tor1 + CvCdDriver::kBlockExtentTor1,
                                                           block_first_tor2 + CvCdDriver::kBlockExtentTor2,
                                                           block_first_tor3 + CvCdDriver::kBlockExtentTor3}};
@@ -552,6 +552,16 @@ namespace koliop {
                 matrix_             = typename MatrixKindType::ScalarType{};
                 alpha_coefficients_ = typename VectorKindType::ScalarType{};
                 rhs_                = typename VectorKindType::ScalarType{};
+
+                if(std::getenv("KOLIOP_DEBUG_ALL") != nullptr ||
+                   std::getenv("KOLIOP_DEBUG_CvCdDriver") != nullptr) {
+                    std::cout << "[KOLIOP][DEBUG] Deallocated Najl_\n";
+                    std::cout << "[KOLIOP][DEBUG] Deallocated matrix_\n";
+                    std::cout << "[KOLIOP][DEBUG] Deallocated alpha_coefficients_\n";
+                    std::cout << "[KOLIOP][DEBUG] Deallocated rhs_\n";
+
+                    std::cout << std::flush;
+                }
             }
 
             template <typename Operator, // Templatized to avoid dependency loops

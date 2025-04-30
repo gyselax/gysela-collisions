@@ -44,7 +44,7 @@ namespace koliop {
             // the gapes left by the small kernels.
 
 #if defined(KOLIOP_BACKEND_IS_GPU_LIKE)
-            static inline constexpr OrdinalType kDisjointExecutionSpaceCount = 2;
+            static inline constexpr OrdinalType kDisjointExecutionSpaceCount = 1;
 
             /// kDiscardedStreamCount is used to define how many stream to
             /// discard. The reason for this shady business is that when Koliop
@@ -101,9 +101,12 @@ namespace koliop {
                 // {256, 128, 2},
                 // {128, 256, 2},
                 // Nspace = 32768
-                // {256, 128, 1},
-                // {128, 256, 1},
-                // {128, 128, 2},
+                {256, 128, 1},
+                {128, 256, 1},
+                {128, 128, 2},
+                {128, 64, 4},
+                {64, 128, 4},
+                {128, 32, 8},
                 // Nspace = 16384
                 {128, 128, 1},
                 {128, 64, 2},
