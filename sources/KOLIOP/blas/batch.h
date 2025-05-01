@@ -64,6 +64,8 @@ namespace koliop {
             /// thread vector size. This allows us to distribute on more compute
             /// units.
             /// Thanks to that we get a speedup of x1.0875 on GFX90A.
+            /// Still, in the CvCd operator, we often use less than 64 threads
+            /// out of a wrap!
             ///
             static inline constexpr OrdinalType kVectorSize = 1;
 #else
