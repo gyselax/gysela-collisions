@@ -1,5 +1,5 @@
 ```
-    (rocm-smi -r, ROCR_VISIBLE_DEVICES=3, rest is default/toolchain specific):
+    (use commit "c5ff021 - Note", rocm-smi -r, ROCR_VISIBLE_DEVICES=3, rest is default/toolchain specific):
     Koliop: v0.0.22
       KOLIOP_TOOLCHAIN_NAME: mi300a_usm.hipcc.adastra
       KOLIOP_BACKEND_IS_GPU_LIKE: true
