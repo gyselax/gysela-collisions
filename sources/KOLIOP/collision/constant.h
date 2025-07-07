@@ -77,14 +77,14 @@ namespace koliop {
             // The CvCdDriver memory we allocate is:
             //  CvCdDriverVectorSize() * CvCdDriverMatrixSize() * CvCdDriverInstance
             //      Where CvCdDriverInstance = min(kDisjointExecutionSpaceCount,
-            //                                     (itor1_block*itor2_block*itor3_block))
+            //                                     (itor1*itor2*itor3)/(itor1_block*itor2_block*itor3_block))
             //          Where itor*_block are the extent of the largest
             //          kPresetBlockExtent we could use.
-            //      For instance:
-            //          kDisjointExecutionSpaceCount = 2, (r,theta,phi) = (64, 128, 1)
-            //              CvCdDriverInstance = min(2, 1)
-            //          kDisjointExecutionSpaceCount = 2, (r,theta,phi) = (64, 32, 1)
-            //              CvCdDriverInstance = min(2, 4)
+            //      For instance, with a domain of (64, 128, 1):
+            //          kDisjointExecutionSpaceCount = 2, blocking of (r,theta,phi) = (64, 128, 1)
+            //              CvCdDriverInstance = min(2, 8192/8192=1)
+            //          kDisjointExecutionSpaceCount = 2, blocking of (r,theta,phi) = (64, 32, 1)
+            //              CvCdDriverInstance = min(2, 8192/2048=4)
 
             /// {Tor1, Tor2, Tor3} block extents.
             /// NOTE: As GPUs get bigger, we also need more parallelism. So
