@@ -440,7 +440,7 @@ namespace koliop {
         } // namespace detail
 
         static constexpr OrdinalType
-        CvCdDriverVectorSize(
+        CvCdDriverMatrixSize(
             OrdinalType vpar_extent,
             OrdinalType block_extent_tor1,
             OrdinalType block_extent_tor2,
@@ -455,7 +455,7 @@ namespace koliop {
         }
 
         static constexpr OrdinalType
-        CvCdDriverMatrixSize(
+        CvCdDriverVectorSize(
             OrdinalType vpar_extent,
             OrdinalType block_extent_tor1,
             OrdinalType block_extent_tor2,
