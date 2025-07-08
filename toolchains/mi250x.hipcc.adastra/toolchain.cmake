@@ -21,7 +21,7 @@ set(KokkosKernels_ADD_DEFAULT_ETI OFF CACHE BOOL "")
 
 # Koliop options:
 
-set(koliop_TOOLCHAIN_NAME "mi250.hipcc.adastra")
+set(koliop_TOOLCHAIN_NAME "mi250x.hipcc.adastra")
 
 set(koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE OFF CACHE BOOL "")
 
