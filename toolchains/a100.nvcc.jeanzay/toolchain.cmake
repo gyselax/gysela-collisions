@@ -17,6 +17,7 @@ set(Kokkos_ENABLE_OPENMP ON CACHE BOOL "Defined if the OpenMP execution space is
 set(KokkosKernels_ENABLE_ALL_COMPONENTS OFF CACHE BOOL "")
 set(KokkosKernels_ENABLE_COMPONENT_BATCHED ON CACHE BOOL "")
 set(KokkosKernels_ENABLE_COMPONENT_BLAS ON CACHE BOOL "")
+set(KokkosKernels_ADD_DEFAULT_ETI OFF CACHE BOOL "")
 
 # Koliop options:
 
