@@ -70,7 +70,7 @@ namespace koliop {
                 static_cast<int>(team_count),
                 // NOTE: See the note in the DoComputeMoments kernel
                 // regarding thread block size.
-                koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, Kokkos::AUTO, 256, 32)};
+                koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, Kokkos::AUTO, 256, 128)};
 
             a_policy.set_scratch_size(0,
                                       Kokkos::PerTeam(ScratchMemory::shmem_size(scratch_memory_bytes_per_team)));

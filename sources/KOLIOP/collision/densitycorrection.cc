@@ -58,7 +58,7 @@ namespace koliop {
                 static_cast<int>(team_count),
                 // NOTE: See the note in the DoComputeMoments kernel
                 // regarding thread block size.
-                koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, Kokkos::AUTO, 64, 32)};
+                koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, Kokkos::AUTO, 64, 64)};
 
             const auto kernel = KOKKOS_LAMBDA(const typename PolicyType::member_type& a_team_handle) {
 

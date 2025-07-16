@@ -89,7 +89,7 @@ namespace koliop {
                 // NOTE: NOW, by using koliop::utility::FlattenN, we reduce
                 // that issue allowing the code to strong scale even if the mu
                 // is less than the warp size.
-                koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, Kokkos::AUTO, 128, 32)};
+                koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, Kokkos::AUTO, 128, 128)};
 
             const auto kernel = KOKKOS_LAMBDA(const typename PolicyType::member_type& a_team_handle) {
 
