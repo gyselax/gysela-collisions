@@ -18,10 +18,9 @@ namespace koliop {
     namespace collision {
 
         /// @brief Computes the fluid moments:
-        ///   na =  int 2 * Pi * Bstar * dmu * dvpar * Fa
-        ///   Vpara = (1/na) * int 2 * Pi * Bstar * dmu * dvpar * vpar * Fa
-        ///   Ta = (1/(3*na)) * int 2 * Pi * Bstar * dmu * dvpar * Fa * &
-        ///        (2 * mu *B + (vpar-Vpara)^2)
+        ///   na    =                int 2 * Pi * Bstar * dmu * dvpar * Fa
+        ///   Vpara = (1/na)       * int 2 * Pi * Bstar * dmu * dvpar * Fa * vpar
+        ///   Ta    = (1/(3 * na)) * int 2 * Pi * Bstar * dmu * dvpar * Fa * (2 * mu * B + (vpar-Vpara)^2)
         ///
         template <typename ExecutionSpace,
                   typename View6D,

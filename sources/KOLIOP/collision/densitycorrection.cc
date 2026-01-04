@@ -87,21 +87,26 @@ namespace koliop {
                         // NOTE: This is not vectorized on CPU due to the
                         // reduction.
 
-                        const ComputeFloatType jacob_vel = koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi *
-                                                           Bstar_s(ivpar, ir, itheta, ispeciesA);
-                        const ComputeFloatType ftmp = Kokkos::max(f5d_s(imu, ivpar, itor1, itor2, itor3, ispeciesA),
-                                                                  0.0);
+                        const ComputeFloatType f5d_s_value = Kokkos::max(f5d_s(imu, ivpar, itor1, itor2, itor3, ispeciesA),
+                                                                         0.0);
+
+                        const ComputeFloatType ftmp = Bstar_s(ivpar, ir, itheta, ispeciesA) *
+                                                      coeff_intdmu(imu) *
+                                                      coeff_intdvpar(ivpar) *
+                                                      f5d_s_value;
 
                         na_reducer.join(na_reducer.reference(),
-                                        jacob_vel * coeff_intdmu(imu) * coeff_intdvpar(ivpar) * ftmp);
+                                        ftmp);
 
-                        f5d_s(imu, ivpar, itor1, itor2, itor3, ispeciesA) = ftmp;
+                        f5d_s(imu, ivpar, itor1, itor2, itor3, ispeciesA) = f5d_s_value;
                     });
 
                 a_team_handle.team_reduce(na_reducer);
 
                 // NOTE: This should be a no-op.
                 na = na_reducer.reference();
+
+                na *= koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi;
 
                 const ComputeFloatType na_inverse = 1.0 / na;
 
