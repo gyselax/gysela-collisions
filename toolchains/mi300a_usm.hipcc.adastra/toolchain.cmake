@@ -5,24 +5,25 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Kokkos options:
 
-set(Kokkos_ENABLE_HIP ON CACHE BOOL "Defined if the HIP execution space is enabled.")
-set(Kokkos_ENABLE_HIP_MULTIPLE_KERNEL_INSTANTIATIONS ON CACHE BOOL "If defined, multiple kernel versions are instantiated potentially improving run time.")
-set(Kokkos_ARCH_VEGA90A ON CACHE BOOL "Enable support for AMD GPU MI200 series (GFX90A).")
+set(Kokkos_ENABLE_HIP ON CACHE BOOL "")
+set(Kokkos_ENABLE_HIP_MULTIPLE_KERNEL_INSTANTIATIONS ON CACHE BOOL "")
+set(Kokkos_ARCH_AMD_GFX942_APU ON CACHE BOOL "")
 
-set(Kokkos_ENABLE_OPENMP ON CACHE BOOL "Defined if the OpenMP execution space is enabled.")
-set(Kokkos_ARCH_ZEN3 ON CACHE BOOL "Optimize for AMD Zen3 architecture (HOST).")
+set(Kokkos_ARCH_ZEN4 ON CACHE BOOL "")
 
 # Kokkos kernels options:
 
 set(KokkosKernels_ENABLE_ALL_COMPONENTS OFF CACHE BOOL "")
 set(KokkosKernels_ENABLE_COMPONENT_BATCHED ON CACHE BOOL "")
 set(KokkosKernels_ENABLE_COMPONENT_BLAS ON CACHE BOOL "")
+set(KokkosKernels_ADD_DEFAULT_ETI OFF CACHE BOOL "")
 
 # Koliop options:
 
-set(koliop_TOOLCHAIN_NAME "mi250.hipcc.adastra")
+set(koliop_TOOLCHAIN_NAME "mi300a_usm.hipcc.adastra")
 
-set(koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE OFF CACHE BOOL "")
+set(koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE ON CACHE BOOL "")
+set(koliop_CONSTANT_MEMORY_USAGE ON CACHE BOOL "")
 
 # The rest is optional:
 

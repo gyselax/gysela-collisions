@@ -17,7 +17,7 @@ else()
     endif()
 endif()
 
-project("koliop" VERSION 0.0.21 LANGUAGES CXX)
+project("koliop" VERSION 0.0.22 LANGUAGES CXX)
 
 include(CTest)
 
@@ -35,7 +35,8 @@ option(koliop_FENCE_ON_OPERATOR_EXIT                     "Fences before returnin
 option(koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE "Should koliop assumes the input data can be read or else, intermediate copies are required." ON)
 option(koliop_BUILD_FORTRAN_INTERFACE                    "Enable the koliop::fortran_interface glue code needed to interface koliop from Fortran." OFF)
 option(koliop_BUILD_TESTING                              "Enable test compilation and ctest regardless of BUILD_TESTING's value." "${BUILD_TESTING}")
-
+option(koliop_UTILITY_FLATTEN_EXPECT_POW2_EXTENTS        "Assumes that mu and vpar are going to be powers of two (speeds up indexing)." OFF)
+option(koliop_CONSTANT_MEMORY_USAGE                      "Koliop will allocate scratch memory, will not release it but will reuse it for the next call." OFF)
 
 ################################################################################
 ### Dependencies & tooling

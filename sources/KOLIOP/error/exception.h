@@ -35,7 +35,7 @@ namespace koliop {
                 return KOLIOP_STATUS_UNKOWN_FAILURE;
             }
 
-            KOLIOP_ASSERT(false);
+            // KOLIOP_ASSERT(false);
             return KOLIOP_STATUS_UNKOWN_FAILURE;
         }
 

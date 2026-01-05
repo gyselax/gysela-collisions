@@ -8,6 +8,7 @@
 #include "KOLIOP/blas/trsv.h"
 #include "KOLIOP/collision/matrixsampler.h"
 #include "KOLIOP/collision/najl.h"
+#include "KOLIOP/utility/iterate.h"
 #include "KOLIOP/utility/select.h"
 #include "KOLIOP/utility/tordu.h"
 
@@ -116,9 +117,6 @@ namespace koliop {
                 const auto& B_norm       = an_operator.B_norm_;
                 const auto& T_s          = an_operator.T_s_;
 
-                // TODO(Etienne M): Make sure the accesses are sequential on
-                // CPU.
-
                 const auto team_count = CvCdDriver::kBlockExtentTor1 * CvCdDriver::kBlockExtentTor2 * CvCdDriver::kBlockExtentTor3;
 
                 // Due to the inherent Cuda/HIP thread block limit.
@@ -131,10 +129,9 @@ namespace koliop {
                 const auto a_policy = PolicyType{
                     an_execution_space,
                     static_cast<int>(team_count),
-                    // NOTE: The thread block size and the Nmu benefit from being
-                    // close. This is due to the TeamThreadMDRange which
-                    // parallelizes only the left most index which is Nmu.
-                    koliop::utility::Select<ExecutionSpace>(Kokkos::AUTO, Kokkos::AUTO, 64 /* 128 */, 32)};
+                    // NOTE: See the note in the DoComputeMoments kernel
+                    // regarding thread block size.
+                    koliop::utility::Select<ExecutionSpace>(Kokkos::AUTO, Kokkos::AUTO, 64, 64)};
 
                 const auto kernel = KOKKOS_LAMBDA(const typename PolicyType::member_type& a_team_handle) {
 
@@ -288,7 +285,7 @@ namespace koliop {
 
                 const auto& vparg = an_operator.vparg_;
 
-                const auto kernel = KOKKOS_LAMBDA(OrdinalType ipol, OrdinalType ivpar, OrdinalType itor1, OrdinalType itor2, OrdinalType itor3) {
+                const auto kernel = KOKKOS_LAMBDA(OrdinalType ivpar, OrdinalType ipol, OrdinalType itor1, OrdinalType itor2, OrdinalType itor3) {
 
                     // NOTE: kBlockExtentXXX are constant, the compiler can replace
                     // the modulo with faster instructions.
@@ -329,8 +326,8 @@ namespace koliop {
                                                           block_first_tor1,
                                                           block_first_tor2,
                                                           block_first_tor3},
-                                                         {Constant::kMaximumLaguerrePolynomialDegree,
-                                                          vpar_extent,
+                                                         {vpar_extent,
+                                                          Constant::kMaximumLaguerrePolynomialDegree,
                                                           block_first_tor1 + CvCdDriver::kBlockExtentTor1,
                                                           block_first_tor2 + CvCdDriver::kBlockExtentTor2,
                                                           block_first_tor3 + CvCdDriver::kBlockExtentTor3}};
@@ -366,9 +363,6 @@ namespace koliop {
                 const auto& B_norm = an_operator.B_norm_;
                 const auto& T_s    = an_operator.T_s_;
 
-                // TODO(Etienne M): Make sure the accesses are sequential on
-                // CPU.
-
                 const auto team_count = CvCdDriver::kBlockExtentTor1 * CvCdDriver::kBlockExtentTor2 * CvCdDriver::kBlockExtentTor3;
 
                 // Due to the inherent Cuda/HIP thread block limit.
@@ -381,10 +375,9 @@ namespace koliop {
                 const auto a_policy = PolicyType{
                     an_execution_space,
                     static_cast<int>(team_count),
-                    // NOTE: The thread block size and the Nmu benefit from being
-                    // close. This is due to the TeamThreadMDRange which
-                    // parallelizes only the left most index which is Nmu.
-                    koliop::utility::Select<ExecutionSpace>(Kokkos::AUTO, Kokkos::AUTO, 64 /* 128 */, 32)};
+                    // NOTE: See the note in the DoComputeMoments kernel
+                    // regarding thread block size.
+                    koliop::utility::Select<ExecutionSpace>(Kokkos::AUTO, Kokkos::AUTO, 64, 64)};
 
                 const auto kernel = KOKKOS_LAMBDA(const typename PolicyType::member_type& a_team_handle) {
 
@@ -423,17 +416,15 @@ namespace koliop {
                                                         local_domain_theta_offset + itheta) /
                                                  T_s(itor1, itor2, itor3, species_index);
 
-                    Kokkos::parallel_for(
-                        // NOTE: The explicit Left iteration direction may not benefit
-                        // the CPUs depending on how that is implemented.
-                        Kokkos::TeamThreadMDRange<Kokkos::Rank<2, Kokkos::Iterate::Left, Kokkos::Iterate::Left>,
-                                                  std::remove_reference_t<decltype(a_team_handle)>>(a_team_handle,
-                                                                                                    mu_extent, vpar_extent),
-                        [&](auto imu, auto ivpar) {
+                    using koliop::utility::IntraTeam;
+                    IntraTeam::Iterate2D(
+                        mu_extent, vpar_extent,
+                        a_team_handle, [&](auto imu, auto ivpar) {
                             const ComputeFloatType muBoT       = mug(imu) * BoT;
                             ComputeFloatType       f5d_s_value = 0.0;
 
                             for(OrdinalType ipol = 0; ipol < Constant::kMaximumLaguerrePolynomialDegree; ++ipol) {
+                                // NOTE: large strided loads here.
                                 f5d_s_value += rhs(batch_index, ivpar, ipol, batch_element_index) *
                                                DoComputeLaguerrePol(ipol, muBoT);
                             }
@@ -448,11 +439,42 @@ namespace koliop {
 
         } // namespace detail
 
+        static constexpr OrdinalType
+        CvCdDriverMatrixSize(
+            OrdinalType vpar_extent,
+            OrdinalType block_extent_tor1,
+            OrdinalType block_extent_tor2,
+            OrdinalType block_extent_tor3) {
+            return Constant::kMaximumLaguerrePolynomialDegree *
+                   Constant::kMaximumLaguerrePolynomialDegree *
+                   3 *
+                   vpar_extent *
+                   block_extent_tor1 *
+                   block_extent_tor2 *
+                   block_extent_tor3;
+        }
+
+        static constexpr OrdinalType
+        CvCdDriverVectorSize(
+            OrdinalType vpar_extent,
+            OrdinalType block_extent_tor1,
+            OrdinalType block_extent_tor2,
+            OrdinalType block_extent_tor3) {
+            return Constant::kMaximumLaguerrePolynomialDegree *
+                   vpar_extent *
+                   block_extent_tor1 *
+                   block_extent_tor2 *
+                   block_extent_tor3;
+        }
 
         ////////////////////////////////////////////////////////////////////////
         // CvCdDriver definition
         ////////////////////////////////////////////////////////////////////////
 
+        /// NOTE: The largest part of the computation done by this operator is
+        /// not dependent on the mu_extent! Instead, it depends on Nphi, Ntheta,
+        /// Nr, Nvpar.
+        ///
         template <OrdinalType block_extent_tor1,
                   OrdinalType block_extent_tor2,
                   OrdinalType block_extent_tor3,
@@ -492,6 +514,56 @@ namespace koliop {
                        const koliop::utility::View::InternalInputL1<const Flo64>& vparg,
                        const koliop::utility::View::InternalInputL1<const Flo64>& coeff_intdvpar);
 
+            void AllocateScratchMemory() {
+                // NOTE: No, we are not allocating Najl and co. with only
+                // nvpar*kbatchcount values. In fact some extents are constent
+                // and defined kind.h:BatchedBlockByBlock. Here we only define
+                // the dynamic extents.
+                Najl_ = typename MatrixKindType::ScalarType{Kokkos::view_alloc(Kokkos::WithoutInitializing,
+                                                                               "Najl"),
+                                                            static_cast<std::size_t>(kBatchCount), static_cast<std::size_t>(vpar_extent_)};
+
+                matrix_ = typename MatrixKindType::ScalarType{Kokkos::view_alloc(Kokkos::WithoutInitializing,
+                                                                                 "matrix"),
+                                                              static_cast<std::size_t>(kBatchCount), static_cast<std::size_t>(vpar_extent_)};
+
+                alpha_coefficients_ = typename VectorKindType::ScalarType{Kokkos::view_alloc(Kokkos::WithoutInitializing,
+                                                                                             "alpha_coefficients"),
+                                                                          static_cast<std::size_t>(kBatchCount), static_cast<std::size_t>(vpar_extent_)};
+
+                rhs_ = typename VectorKindType::ScalarType{Kokkos::view_alloc(Kokkos::WithoutInitializing,
+                                                                              "rhs"),
+                                                           static_cast<std::size_t>(kBatchCount), static_cast<std::size_t>(vpar_extent_)};
+
+                if(std::getenv("KOLIOP_DEBUG_ALL") != nullptr ||
+                   std::getenv("KOLIOP_DEBUG_CvCdDriver") != nullptr) {
+                    std::cout << "[KOLIOP][DEBUG] Allocated Najl_               for : " << (Najl_.size() * sizeof(ComputeFloatType)) << " octets\n";
+                    std::cout << "[KOLIOP][DEBUG] Allocated matrix_             for : " << (matrix_.size() * sizeof(ComputeFloatType)) << " octets\n";
+                    std::cout << "[KOLIOP][DEBUG] Allocated alpha_coefficients_ for : " << (alpha_coefficients_.size() * sizeof(ComputeFloatType)) << " octets\n";
+                    std::cout << "[KOLIOP][DEBUG] Allocated rhs_                for : " << (rhs_.size() * sizeof(ComputeFloatType)) << " octets\n";
+
+                    std::cout << std::flush;
+                }
+            }
+
+            void ReleaseScratchMemory() {
+                // NOTE: decrease the ref count.
+                Najl_               = typename MatrixKindType::ScalarType{};
+                matrix_             = typename MatrixKindType::ScalarType{};
+                alpha_coefficients_ = typename VectorKindType::ScalarType{};
+                rhs_                = typename VectorKindType::ScalarType{};
+
+                if(std::getenv("KOLIOP_DEBUG_ALL") != nullptr ||
+                   std::getenv("KOLIOP_DEBUG_CvCdDriver") != nullptr) {
+                    std::cout << "[KOLIOP][DEBUG] Deallocated Najl_\n";
+                    std::cout << "[KOLIOP][DEBUG] Deallocated matrix_\n";
+                    std::cout << "[KOLIOP][DEBUG] Deallocated alpha_coefficients_\n";
+                    std::cout << "[KOLIOP][DEBUG] Deallocated rhs_\n";
+
+                    std::cout << std::flush;
+                }
+            }
+
             template <typename Operator, // Templatized to avoid dependency loops
                       typename ExecutionSpace,
                       typename View6D>
@@ -524,8 +596,9 @@ namespace koliop {
             koliop::blas::BatchedBlockTridiagonalByBlockTRSV<BatchTraitsType, Constant::kMaximumLaguerrePolynomialDegree>             solver_;
             koliop::blas::BatchedMatrixSamplingBlockTridiagonalByBlockMV<BatchTraitsType, Constant::kMaximumLaguerrePolynomialDegree> mv_;
 
-            MatrixSamplerType LHS_matrix_sampler_;
-            MatrixSamplerType RHS_matrix_sampler_;
+            OrdinalType vpar_extent_;
+
+            koliop::utility::View::InternalInputL1<const Flo64> coeff_intdvpar_;
         };
 
 
@@ -551,25 +624,15 @@ namespace koliop {
                              collision_interspecies,
                              hat_As, hat_Zs, vparg}
             , mask_coll_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "mask_coll")}
-            , Najl_{Kokkos::view_alloc(Kokkos::WithoutInitializing,
-                                       "Najl"),
-                    static_cast<std::size_t>(kBatchCount), static_cast<std::size_t>(vpar_extent)}
-            , matrix_{Kokkos::view_alloc(Kokkos::WithoutInitializing,
-                                         "matrix"),
-                      static_cast<std::size_t>(kBatchCount), static_cast<std::size_t>(vpar_extent)}
-            , alpha_coefficients_{Kokkos::view_alloc(Kokkos::WithoutInitializing,
-                                                     "alpha_coefficients"),
-                                  static_cast<std::size_t>(kBatchCount), static_cast<std::size_t>(vpar_extent)}
-            , rhs_{Kokkos::view_alloc(Kokkos::WithoutInitializing,
-                                      "rhs"),
-                   static_cast<std::size_t>(kBatchCount), static_cast<std::size_t>(vpar_extent)}
+            , Najl_{}
+            , matrix_{}
+            , alpha_coefficients_{}
+            , rhs_{}
             , factorizer_{}
             , solver_{}
             , mv_{}
-            , LHS_matrix_sampler_{Najl_,
-                                  coeff_intdvpar}
-            , RHS_matrix_sampler_{Najl_,
-                                  coeff_intdvpar} {
+            , vpar_extent_{vpar_extent}
+            , coeff_intdvpar_{coeff_intdvpar} {
             // EMPTY
         }
 
@@ -635,9 +698,15 @@ namespace koliop {
             KOLIOP_ASSERT((block_first_tor2 + kBlockExtentTor2) <= tor2_extent);
             KOLIOP_ASSERT((block_first_tor3 + kBlockExtentTor3) <= tor3_extent);
 
+            MatrixSamplerType LHS_matrix_sampler{Najl_,
+                                                 coeff_intdvpar_};
+
+            MatrixSamplerType RHS_matrix_sampler{Najl_,
+                                                 coeff_intdvpar_};
+
             // In the future, the time step could vary.
-            LHS_matrix_sampler_.DeltaTime() = static_cast<ComputeFloatType>(-dt / 4.0);
-            RHS_matrix_sampler_.DeltaTime() = static_cast<ComputeFloatType>(dt / 4.0);
+            LHS_matrix_sampler.DeltaTime() = static_cast<ComputeFloatType>(-dt / 4.0);
+            RHS_matrix_sampler.DeltaTime() = static_cast<ComputeFloatType>(dt / 4.0);
 
             // NOTE: If mask_coll depends on r and theta, we could interchange
             // iphi with itheta and ir. that said, this call is so fast compared
@@ -674,7 +743,7 @@ namespace koliop {
                     {
                         detail::DoPrepareMatrix<CvCdDriver>(an_operator,
                                                             an_execution_space,
-                                                            LHS_matrix_sampler_,
+                                                            LHS_matrix_sampler,
                                                             matrix_);
 
                         // L*U = (I - T * dt/4)
@@ -687,7 +756,7 @@ namespace koliop {
                         // rhs = (I + T * dt/4) * alpha(n)
                         mv_.Apply(an_execution_space,
                                   1.0,
-                                  RHS_matrix_sampler_,
+                                  RHS_matrix_sampler,
                                   kFlattenedBlockExtent, vpar_extent,
                                   alpha_coefficients_.data(),
                                   // Discards whatever garbage
@@ -718,7 +787,7 @@ namespace koliop {
                         // rhs = (I + T * dt/4) * alpha~~
                         mv_.Apply(an_execution_space,
                                   1.0,
-                                  RHS_matrix_sampler_,
+                                  RHS_matrix_sampler,
                                   kFlattenedBlockExtent, vpar_extent,
                                   alpha_coefficients_.data(),
                                   0.0,

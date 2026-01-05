@@ -11,6 +11,29 @@
 
 namespace koliop {
     namespace collision {
+        namespace detail {
+            /// See Constant::kDiscardedStreamCount for more detail.
+            ///
+            void GetFreshStreams(OrdinalType                                      discarded_stream_count,
+                                 OrdinalType                                      wanted_stream_count,
+                                 std::vector<Constant::DeviceExecutionSpaceType>& execution_space_pool) {
+                // This represents the null stream.
+                Constant::DeviceExecutionSpaceType default_execution_space{};
+
+                // This represents the streams with weird HW queue mapping. We
+                // keep them in a vector to avoid implicitly freeing them (which
+                // would defeat the purpose).
+                std::vector<Constant::DeviceExecutionSpaceType> unused_streams;
+                for(OrdinalType istream = 0; istream < discarded_stream_count; ++istream) {
+                    unused_streams.push_back(Kokkos::Experimental::partition_space(default_execution_space, 1)[0]);
+                }
+
+                for(OrdinalType istream = 0; istream < wanted_stream_count; ++istream) {
+                    // TODO(Etienne M): Read docs on hipStreamCreateWithPriority.
+                    execution_space_pool.emplace_back(Kokkos::Experimental::partition_space(default_execution_space, 1)[0]);
+                }
+            }
+        } // namespace detail
 
         template <typename View3D,
                   typename View1D>
@@ -30,8 +53,6 @@ namespace koliop {
             const auto& r_extent       = an_operator.r_extent_;
             const auto& species_extent = an_operator.species_extent_;
 
-            const auto& local_domain_r_offset = an_operator.local_domain_r_offset_;
-
             // TODO(Etienne M): LOOP Obvious loop inter exchange optimization ?
             for(OrdinalType ispeciesB = 0; ispeciesB < species_extent; ++ispeciesB) {
                 for(OrdinalType ispeciesA = 0; ispeciesA < species_extent; ++ispeciesA) {
@@ -50,7 +71,7 @@ namespace koliop {
                         // (eps(r) = r/R0_).
                         // AD comprises a mask in r direction to avoid to *
                         // compute collision in the scrape-off layer.
-                        const ComputeFloatType AD = a_host_visible_coeff_AD_r(local_domain_r_offset + ir);
+                        const ComputeFloatType AD = a_host_visible_coeff_AD_r(ir);
 
                         // Computation of nu_ab =
                         //  (AD * hat_Za^2 * hat_Zb^2 * Nb) /
@@ -120,7 +141,7 @@ namespace koliop {
             , vparg_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputL1>(Constant::DeviceExecutionSpaceType{}, vparg, "vparg_", vpar_extent_)}
             , coeff_intdmu_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputL1>(Constant::DeviceExecutionSpaceType{}, coeff_intdmu, "coeff_intdmu_", mu_extent_)}
             , coeff_intdvpar_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputL1>(Constant::DeviceExecutionSpaceType{}, coeff_intdvpar, "coeff_intdvpar_", vpar_extent_)}
-            , coeff_AD_r_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputL1>(Constant::DeviceExecutionSpaceType{}, coeff_AD_r, "coeff_AD_r_", global_domain_r_extent_)}
+            , coeff_AD_r_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputL1>(Constant::DeviceExecutionSpaceType{}, coeff_AD_r, "coeff_AD_r_", r_extent_)}
             , mask_buffer_r_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputL1>(Constant::DeviceExecutionSpaceType{}, mask_buffer_r, "mask_buffer_r_", global_domain_r_extent_)}
             , mask_LIM_{LIM_ ? koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL2<const Flo64>, koliop::utility::View::InternalInputL2>(Constant::DeviceExecutionSpaceType{}, mask_LIM, "mask_LIM_", global_domain_r_extent_, global_domain_theta_extent_) :
                                koliop::utility::View::InternalInputL2<Flo64>{}}
@@ -163,20 +184,19 @@ namespace koliop {
                             hat_Zs_,
                             coeff_AD_r_);
 
-            KOLIOP_ASSERT(execution_space_pool_.empty());
-
-            // We emplace the the default execution space.
-            Constant::DeviceExecutionSpaceType default_execution_space{};
-
-            while(execution_space_pool_.size() != Constant::kDisjointExecutionSpaceCount) {
-                // TODO(Etienne M): See what hipStreamCreateWithPriority can get
-                // reduce the performance.
-                execution_space_pool_.emplace_back(Kokkos::Experimental::partition_space(default_execution_space, 1)[0]);
-            }
+            detail::GetFreshStreams(Constant::kDiscardedStreamCount,
+                                    Constant::kDisjointExecutionSpaceCount,
+                                    execution_space_pool_);
 
             cvcd_drivers_scheduler_.Plan(*this,
                                          Constant::kPresetBlockExtentCount,
                                          Constant::kPresetBlockExtent);
+
+#if defined(KOLIOP_CONSTANT_MEMORY_USAGE)
+            // The memory release is handled thanks to the shared ptr and
+            // the kokkos view reference counting.
+            cvcd_drivers_scheduler_.AllocateScratchMemory(*this);
+#endif
         }
 
         Operator::~Operator() {
@@ -184,7 +204,7 @@ namespace koliop {
         }
 
         void Operator::Fence(OrdinalType execution_space_index) const {
-            KOLIOP_ASSERT(execution_space_index < Constant::kDisjointExecutionSpaceCount);
+            KOLIOP_ASSERT(static_cast<std::size_t>(execution_space_index) < execution_space_pool_.size());
             execution_space_pool_[execution_space_index].fence();
         }
 

@@ -16,6 +16,14 @@ namespace koliop {
                                  std::size_t                                                preset_block_extent_count,
                                  const OrdinalType (*preset_block_extent)[3]) {
 
+                if(!((local_domain_tor1_extent > 0) && ((local_domain_tor1_extent & (local_domain_tor1_extent - 1)) == 0) &&
+                     (local_domain_tor2_extent > 0) && ((local_domain_tor2_extent & (local_domain_tor2_extent - 1)) == 0) &&
+                     (local_domain_tor3_extent > 0) && ((local_domain_tor3_extent & (local_domain_tor3_extent - 1)) == 0))) {
+                    throw std::runtime_error(
+                        "For performance reason, the number of points in "
+                        "each dimension must be a power of 2.");
+                }
+
                 auto       first_block_extent = preset_block_extent;
                 const auto last_block_extent  = first_block_extent + preset_block_extent_count;
 
@@ -38,6 +46,17 @@ namespace koliop {
                        block_count_in_tor2 > 0 &&
                        block_count_in_tor3 > 0) {
 
+                        if(std::getenv("KOLIOP_DEBUG_ALL") != nullptr ||
+                           std::getenv("KOLIOP_DEBUG_PrepareBlockPosition") != nullptr) {
+                            std::cout << "[KOLIOP][DEBUG] current_tor1_block_extent: " << current_tor1_block_extent << "\n";
+                            std::cout << "[KOLIOP][DEBUG] current_tor2_block_extent: " << current_tor2_block_extent << "\n";
+                            std::cout << "[KOLIOP][DEBUG] current_tor3_block_extent: " << current_tor3_block_extent << "\n";
+
+                            std::cout << "[KOLIOP][DEBUG] Block count (for each species): " << (block_count_in_tor1 * block_count_in_tor2 * block_count_in_tor3) << "\n";
+
+                            std::cout << std::flush;
+                        }
+
                         OrdinalType block_first_tor3 = local_domain_tor3_extent;
                         for(OrdinalType block_index_in_tor3 = 0; block_index_in_tor3 < block_count_in_tor3; ++block_index_in_tor3) {
                             block_first_tor3 -= current_tor3_block_extent;
@@ -59,6 +78,18 @@ namespace koliop {
                                     a_driver_configuration.block_tor1_extent_ = current_tor1_block_extent;
                                     a_driver_configuration.block_tor2_extent_ = current_tor2_block_extent;
                                     a_driver_configuration.block_tor3_extent_ = current_tor3_block_extent;
+
+                                    // if(std::getenv("KOLIOP_DEBUG_ALL") != nullptr ||
+                                    //    std::getenv("KOLIOP_DEBUG_PrepareBlockPosition") != nullptr) {
+                                    //     std::cout << "[KOLIOP][DEBUG] a_driver_configuration.block_first_tor1_: " << a_driver_configuration.block_first_tor1_ << "\n";
+                                    //     std::cout << "[KOLIOP][DEBUG] a_driver_configuration.block_first_tor2_: " << a_driver_configuration.block_first_tor2_ << "\n";
+                                    //     std::cout << "[KOLIOP][DEBUG] a_driver_configuration.block_first_tor3_: " << a_driver_configuration.block_first_tor3_ << "\n";
+                                    //     std::cout << "[KOLIOP][DEBUG] a_driver_configuration.block_tor1_extent_: " << a_driver_configuration.block_tor1_extent_ << "\n";
+                                    //     std::cout << "[KOLIOP][DEBUG] a_driver_configuration.block_tor2_extent_: " << a_driver_configuration.block_tor2_extent_ << "\n";
+                                    //     std::cout << "[KOLIOP][DEBUG] a_driver_configuration.block_tor3_extent_: " << a_driver_configuration.block_tor3_extent_ << "\n";
+
+                                    //     std::cout << std::flush;
+                                    // }
                                 }
                             }
                         }
@@ -66,10 +97,10 @@ namespace koliop {
                         // NOTE: Once a block that fits is found, because the domain's dimension are power of two, we
                         // know that we wont need an other block size. We can exit early.
 
-                        KOLIOP_ASSERT((local_domain_tor1_extent - block_count_in_tor1 * current_tor1_block_extent) == 0 &&
-                                      (local_domain_tor2_extent - block_count_in_tor2 * current_tor2_block_extent) == 0 &&
-                                      (local_domain_tor3_extent - block_count_in_tor3 * current_tor3_block_extent) == 0);
-
+                        KOLIOP_ASSERT(((local_domain_tor1_extent - block_count_in_tor1 * current_tor1_block_extent) == 0 &&
+                                       (local_domain_tor2_extent - block_count_in_tor2 * current_tor2_block_extent) == 0 &&
+                                       (local_domain_tor3_extent - block_count_in_tor3 * current_tor3_block_extent) == 0) &&
+                                      "Expecting powers of two as space dimension.");
                         break;
                     }
 
@@ -132,6 +163,8 @@ namespace koliop {
 
             const auto& execution_space_pool = an_operator.execution_space_pool_;
 
+            KOLIOP_ASSERT(!execution_space_pool.empty());
+
             // The first (at most) execution_space_pool.size() get a freshly
             // allocated CvCdDriver and an execution space. The other block will
             // be copies of these ones.
@@ -168,6 +201,27 @@ namespace koliop {
                 // block_first_tor3_. These are and must stay different.
                 a_driver_configuration.cvcd_driver_     = an_original_driver_configuration.cvcd_driver_;
                 a_driver_configuration.execution_space_ = an_original_driver_configuration.execution_space_;
+            }
+        }
+
+        void CvCdDriverScheduler::AllocateScratchMemory(const Operator& an_operator) {
+            const auto&       execution_space_pool = an_operator.execution_space_pool_;
+            const OrdinalType original_block_count = std::min(cvcd_drivers_configurations_.size(),
+                                                              execution_space_pool.size());
+
+            for(OrdinalType i = 0; i < original_block_count; ++i) {
+                auto& a_driver_configuration = cvcd_drivers_configurations_[i];
+                a_driver_configuration.cvcd_driver_->AllocateScratchMemory();
+            }
+        }
+
+        void CvCdDriverScheduler::ReleaseScratchMemory(const Operator& an_operator) {
+            const auto&       execution_space_pool = an_operator.execution_space_pool_;
+            const OrdinalType original_block_count = std::min(cvcd_drivers_configurations_.size(),
+                                                              execution_space_pool.size());
+            for(OrdinalType i = 0; i < original_block_count; ++i) {
+                auto& a_driver_configuration = cvcd_drivers_configurations_[i];
+                a_driver_configuration.cvcd_driver_->ReleaseScratchMemory();
             }
         }
 

@@ -3,7 +3,9 @@
 #include "KOLIOP/koliop.h"
 
 #include <Kokkos_Core.hpp>
+#include <cstdlib>
 #include <iostream>
+#include <string>
 
 #include "KOLIOP/collision/constant.h"
 #include "KOLIOP/collision/operator.h"
@@ -30,23 +32,49 @@
         if(static_cast<bool>(with_verbose_initialization)) {
             std::cout << "Koliop: v" << KOLIOP_VERSION << "\n";
             std::cout << "  KOLIOP_TOOLCHAIN_NAME: " << KOLIOP_TOOLCHAIN_NAME << "\n";
-#if defined(KOLIOP_BUILD_FORTRAN_INTERFACE)
-            std::cout << "  KOLIOP_BUILD_FORTRAN_INTERFACE: true (expecting f5d_s as (mu,vpar),(r,theta,phi),species)\n";
+#if defined(KOLIOP_BACKEND_IS_GPU_LIKE)
+            std::cout << "  KOLIOP_BACKEND_IS_GPU_LIKE: true\n";
 #else
-            std::cout << "  KOLIOP_BUILD_FORTRAN_INTERFACE: false (expecting f5d_s as (mu,vpar),(theta,r,phi),species)\n";
+            std::cout << "  KOLIOP_BACKEND_IS_GPU_LIKE: false\n";
+#endif
+#if defined(KOLIOP_BACKEND_IS_CPU_LIKE)
+            std::cout << "  KOLIOP_BACKEND_IS_CPU_LIKE: true\n";
+#else
+            std::cout << "  KOLIOP_BACKEND_IS_CPU_LIKE: false\n";
+#endif
+#if defined(KOLIOP_ASSERT_ENABLED)
+            std::cout << "  KOLIOP_ASSERT_ENABLED: true\n";
+#else
+            std::cout << "  KOLIOP_ASSERT_ENABLED: false\n";
 #endif
 #if defined(KOLIOP_FENCE_ON_OPERATOR_EXIT)
             std::cout << "  KOLIOP_FENCE_ON_OPERATOR_EXIT: true\n";
 #else
             std::cout << "  KOLIOP_FENCE_ON_OPERATOR_EXIT: false\n";
 #endif
-
 #if defined(KOLIOP_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE)
             std::cout << "  KOLIOP_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE: true\n";
 #else
             std::cout << "  KOLIOP_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE: false\n";
 #endif
+#if defined(KOLIOP_BUILD_FORTRAN_INTERFACE)
+            std::cout << "  KOLIOP_BUILD_FORTRAN_INTERFACE: true (expecting f5d_s as (mu,vpar),(r,theta,phi),species)\n";
+#else
+            std::cout << "  KOLIOP_BUILD_FORTRAN_INTERFACE: false (expecting f5d_s as (mu,vpar),(theta,r,phi),species)\n";
+#endif
+#if defined(KOLIOP_UTILITY_FLATTEN_EXPECT_POW2_EXTENTS)
+            std::cout << "  KOLIOP_UTILITY_FLATTEN_EXPECT_POW2_EXTENTS: true\n";
+#else
+            std::cout << "  KOLIOP_UTILITY_FLATTEN_EXPECT_POW2_EXTENTS: false\n";
+#endif
+#if defined(KOLIOP_CONSTANT_MEMORY_USAGE)
+            std::cout << "  KOLIOP_CONSTANT_MEMORY_USAGE: true\n";
+#else
+            std::cout << "  KOLIOP_CONSTANT_MEMORY_USAGE: false\n";
+#endif
+
             std::cout << "  koliop::collision::Constant::kDisjointExecutionSpaceCount: " << koliop::collision::Constant::kDisjointExecutionSpaceCount << "\n";
+            std::cout << "  koliop::collision::Constant::kDiscardedStreamCount: " << koliop::collision::Constant::kDiscardedStreamCount << "\n";
             std::cout << "  koliop::collision::Constant::kDefaultExecutionSpacePoolIndex: " << koliop::collision::Constant::kDefaultExecutionSpacePoolIndex << "\n";
             std::cout << "  koliop::collision::Constant::kPresetBlockExtent: ";
             for(std::size_t i = 0; i < koliop::collision::Constant::kPresetBlockExtentCount; ++i) {
@@ -59,13 +87,21 @@
         }
 
         if(static_cast<bool>(do_kokkos_initialization)) {
-            Kokkos::initialize(Kokkos::InitializationSettings()
-                                   .set_num_threads(static_cast<int>(a_host_thread_count))
-                                   .set_device_id(static_cast<int>(a_device_index))
-                                   .set_disable_warnings(!static_cast<bool>(with_verbose_initialization))
-                                   // NOTE: As of version 4.0.0
-                                   // set_print_configuration does not work ?
-                                   .set_print_configuration(static_cast<bool>(with_verbose_initialization)));
+            auto the_configuration = Kokkos::InitializationSettings()
+                                         .set_device_id(static_cast<int>(a_device_index))
+                                         .set_disable_warnings(!static_cast<bool>(with_verbose_initialization));
+
+            // If KOLIOP_SET_NUM_THREADS is set, use that value.
+            auto* koliop_set_num_threads_string = std::getenv("KOLIOP_SET_NUM_THREADS");
+            if(koliop_set_num_threads_string) {
+                a_host_thread_count = std::stoi(koliop_set_num_threads_string);
+            }
+
+            if(a_host_thread_count > 0) {
+                the_configuration.set_num_threads(a_host_thread_count);
+            }
+
+            Kokkos::initialize(the_configuration);
         }
 
         if(!Kokkos::is_initialized()) {
@@ -73,7 +109,7 @@
         }
 
         if(static_cast<bool>(with_verbose_initialization)) {
-            Kokkos::print_configuration(std::cout, false);
+            Kokkos::print_configuration(std::cout, true);
         }
 
         std::cout << std::flush;
@@ -84,11 +120,11 @@
 
 ::koliop_Status koliop_Deinitialize(int8_t do_kokkos_deinitialization) {
     return koliop::error::FromException([&]() {
-        if(!Kokkos::is_initialized()) {
-            return KOLIOP_STATUS_DEINITIALIZATION_FAILURE;
-        }
-
         if(static_cast<bool>(do_kokkos_deinitialization)) {
+            if(!Kokkos::is_initialized()) {
+                return KOLIOP_STATUS_DEINITIALIZATION_FAILURE;
+            }
+
             Kokkos::finalize();
 
             if(Kokkos::is_initialized()) {
@@ -131,8 +167,63 @@
             return KOLIOP_STATUS_INITIALIZATION_FAILURE;
         }
 
+        if(std::getenv("KOLIOP_DEBUG_ALL") != nullptr ||
+           std::getenv("KOLIOP_DEBUG_koliop_Create") != nullptr) {
+            std::cout << "[KOLIOP][DEBUG] !(0 <= ir_SOL_separatrix && static_cast<size_t>(ir_SOL_separatrix) <= global_domain_r_extent) : "
+                      << (!(0 <= ir_SOL_separatrix && static_cast<size_t>(ir_SOL_separatrix) <= global_domain_r_extent)) << "\n";
+#if defined(KOLIOP_UTILITY_FLATTEN_EXPECT_POW2_EXTENTS)
+            // Assert for powers of t
+            std::cout << "[KOLIOP][DEBUG] ((mu_extent - 1) & mu_extent) != 0 : " << (((mu_extent - 1) & mu_extent) != 0) << "\n";
+            std::cout << "[KOLIOP][DEBUG] ((vpar_extent - 1) & vpar_extent) != 0 : " << (((vpar_extent - 1) & vpar_extent) != 0) << "\n";
+#endif
+            std::cout << "[KOLIOP][DEBUG] hat_As == nullptr : " << (hat_As == nullptr) << "\n";
+            std::cout << "[KOLIOP][DEBUG] hat_Zs == nullptr : " << (hat_Zs == nullptr) << "\n";
+            std::cout << "[KOLIOP][DEBUG] mug == nullptr : " << (mug == nullptr) << "\n";
+            std::cout << "[KOLIOP][DEBUG] vparg == nullptr : " << (vparg == nullptr) << "\n";
+            std::cout << "[KOLIOP][DEBUG] coeff_intdmu == nullptr : " << (coeff_intdmu == nullptr) << "\n";
+            std::cout << "[KOLIOP][DEBUG] coeff_intdvpar == nullptr : " << (coeff_intdvpar == nullptr) << "\n";
+            std::cout << "[KOLIOP][DEBUG] coeff_AD_r == nullptr : " << (coeff_AD_r == nullptr) << "\n";
+            std::cout << "[KOLIOP][DEBUG] mask_buffer_r == nullptr : " << (mask_buffer_r == nullptr) << "\n";
+            std::cout << "[KOLIOP][DEBUG] (static_cast<bool>(LIM) && (mask_LIM == nullptr)) : " << ((static_cast<bool>(LIM) && (mask_LIM == nullptr))) << "\n";
+            std::cout << "[KOLIOP][DEBUG] B_norm == nullptr : " << (B_norm == nullptr) << "\n";
+            std::cout << "[KOLIOP][DEBUG] Bstar_s == nullptr : " << (Bstar_s == nullptr) << "\n";
+            std::cout << "\n";
+            std::cout << "[KOLIOP][DEBUG] static_cast<uint64_t>(mu_extent) : " << static_cast<uint64_t>(mu_extent) << "\n";
+            std::cout << "[KOLIOP][DEBUG] static_cast<uint64_t>(vpar_extent) : " << static_cast<uint64_t>(vpar_extent) << "\n";
+            std::cout << "[KOLIOP][DEBUG] static_cast<uint64_t>(tor1_extent) : " << static_cast<uint64_t>(tor1_extent) << "\n";
+            std::cout << "[KOLIOP][DEBUG] static_cast<uint64_t>(tor2_extent) : " << static_cast<uint64_t>(tor2_extent) << "\n";
+            std::cout << "[KOLIOP][DEBUG] static_cast<uint64_t>(tor3_extent) : " << static_cast<uint64_t>(tor3_extent) << "\n";
+            std::cout << "[KOLIOP][DEBUG] static_cast<uint64_t>(species_extent) : " << static_cast<uint64_t>(species_extent) << "\n";
+            std::cout << "[KOLIOP][DEBUG] static_cast<uint64_t>(global_domain_r_extent) : " << static_cast<uint64_t>(global_domain_r_extent) << "\n";
+            std::cout << "[KOLIOP][DEBUG] static_cast<uint64_t>(global_domain_theta_extent) : " << static_cast<uint64_t>(global_domain_theta_extent) << "\n";
+            std::cout << "[KOLIOP][DEBUG] static_cast<uint64_t>(local_domain_r_offset) : " << static_cast<uint64_t>(local_domain_r_offset) << "\n";
+            std::cout << "[KOLIOP][DEBUG] static_cast<uint64_t>(local_domain_theta_offset) : " << static_cast<uint64_t>(local_domain_theta_offset) << "\n";
+            std::cout << "[KOLIOP][DEBUG] static_cast<bool>(collision_interspecies) : " << static_cast<bool>(collision_interspecies) << "\n";
+            std::cout << "[KOLIOP][DEBUG] static_cast<bool>(SOL) : " << static_cast<bool>(SOL) << "\n";
+            std::cout << "[KOLIOP][DEBUG] static_cast<bool>(LIM) : " << static_cast<bool>(LIM) << "\n";
+            std::cout << "[KOLIOP][DEBUG] static_cast<uint64_t>(ir_SOL_separatrix) : " << static_cast<uint64_t>(ir_SOL_separatrix) << "\n";
+            std::cout << "[KOLIOP][DEBUG] hat_As : " << hat_As << "\n";
+            std::cout << "[KOLIOP][DEBUG] hat_Zs : " << hat_Zs << "\n";
+            std::cout << "[KOLIOP][DEBUG] mug : " << mug << "\n";
+            std::cout << "[KOLIOP][DEBUG] vparg : " << vparg << "\n";
+            std::cout << "[KOLIOP][DEBUG] coeff_intdmu : " << coeff_intdmu << "\n";
+            std::cout << "[KOLIOP][DEBUG] coeff_intdvpar : " << coeff_intdvpar << "\n";
+            std::cout << "[KOLIOP][DEBUG] coeff_AD_r : " << coeff_AD_r << "\n";
+            std::cout << "[KOLIOP][DEBUG] mask_buffer_r : " << mask_buffer_r << "\n";
+            std::cout << "[KOLIOP][DEBUG] mask_LIM : " << mask_LIM << "\n";
+            std::cout << "[KOLIOP][DEBUG] B_norm : " << B_norm << "\n";
+            std::cout << "[KOLIOP][DEBUG] Bstar_s : " << Bstar_s << "\n";
+
+            std::cout << std::flush;
+        }
+
         if(an_operator_handle == nullptr ||
            !(0 <= ir_SOL_separatrix && static_cast<size_t>(ir_SOL_separatrix) <= global_domain_r_extent) ||
+#if defined(KOLIOP_UTILITY_FLATTEN_EXPECT_POW2_EXTENTS)
+           // Assert for powers of two.
+           ((mu_extent - 1) & mu_extent) != 0 ||
+           ((vpar_extent - 1) & vpar_extent) != 0 ||
+#endif
            hat_As == nullptr ||
            hat_Zs == nullptr ||
            mug == nullptr ||

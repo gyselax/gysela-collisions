@@ -79,6 +79,7 @@ NOTE:
 ## TODOs
 
 - Some tuning:
+    - `Kokkos::IndexType<Index>`;
     - Reduce register usage. Each time you use a view, you consume a LOT of register (dimension/stride storage ?).. much more than a simple pointer;
         - File a bug regarding this issue ?
         - One could construct the view inside the kernel, this would help the compiler factorize the register values.

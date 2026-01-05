@@ -9,6 +9,7 @@
 #include "KOLIOP/internal/configuration.h"
 #include "KOLIOP/portability/cmath.h"
 #include "KOLIOP/utility/copy.h"
+#include "KOLIOP/utility/iterate.h"
 #include "KOLIOP/utility/select.h"
 #include "KOLIOP/utility/tordu.h"
 #include "KOLIOP/utility/view.h"
@@ -17,10 +18,9 @@ namespace koliop {
     namespace collision {
 
         /// @brief Computes the fluid moments:
-        ///   na =  int 2 * Pi * Bstar * dmu * dvpar * Fa
-        ///   Vpara = (1/na) * int 2 * Pi * Bstar * dmu * dvpar * vpar * Fa
-        ///   Ta = (1/(3*na)) * int 2 * Pi * Bstar * dmu * dvpar * Fa * &
-        ///        (2 * mu *B + (vpar-Vpara)^2)
+        ///   na    =                int 2 * Pi * Bstar * dmu * dvpar * Fa
+        ///   Vpara = (1/na)       * int 2 * Pi * Bstar * dmu * dvpar * Fa * vpar
+        ///   Ta    = (1/(3 * na)) * int 2 * Pi * Bstar * dmu * dvpar * Fa * (2 * mu * B + (vpar-Vpara)^2)
         ///
         template <typename ExecutionSpace,
                   typename View6D,
@@ -50,8 +50,6 @@ namespace koliop {
             const auto& B_norm         = an_operator.B_norm_;
             const auto& Bstar_s        = an_operator.Bstar_s_;
 
-            // TODO(Etienne M): Make sure the accesses are sequential on CPU.
-
             const auto team_count = tor1_extent * tor2_extent * tor3_extent * species_extent;
 
             // Due to the inherent Cuda/HIP thread block limit.
@@ -64,8 +62,8 @@ namespace koliop {
             const auto a_policy = PolicyType{
                 an_execution_space,
                 static_cast<int>(team_count),
-                // NOTE: The thread block size and the Nmu benefit from being
-                // close. This is due to the TeamThreadMDRange which
+                // NOTE: PREVIOUSLY, the thread block size and the Nmu benefited
+                // from being close. This was due to the TeamThreadMDRange which
                 // parallelizes only the left most index which is Nmu.
                 // NOTE: In the thread blocks, we parallelize on Nmu. If we have
                 // more thread than Nmu we may be wasting resources.
@@ -87,7 +85,10 @@ namespace koliop {
                 // the cache hits. This is significant if you know for a fact
                 // that few of your kernels are need to reach peak memory
                 // throughput.
-                koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, Kokkos::AUTO, 64 /* 128 */, 32)};
+                // NOTE: NOW, by using koliop::utility::FlattenN, we reduce
+                // that issue allowing the code to strong scale even if the mu
+                // is less than the warp size.
+                koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, Kokkos::AUTO, 128, 128)};
 
             const auto kernel = KOKKOS_LAMBDA(const typename PolicyType::member_type& a_team_handle) {
 
@@ -100,12 +101,6 @@ namespace koliop {
 
                 const OrdinalType ir     = koliop::utility::GetRValue(itor1, itor2, itor3);
                 const OrdinalType itheta = koliop::utility::GetThetaValue(itor1, itor2, itor3);
-
-                // NOTE: The explicit Left iteration direction may not benefit
-                // the CPUs depending on how that is implemented.
-                const auto an_intra_team_policy = Kokkos::TeamThreadMDRange<Kokkos::Rank<2, Kokkos::Iterate::Left, Kokkos::Iterate::Left>,
-                                                                            std::remove_reference_t<decltype(a_team_handle)>>(a_team_handle,
-                                                                                                                              mu_extent, vpar_extent);
 
                 ComputeFloatType na;
                 ComputeFloatType vpara;
@@ -123,13 +118,17 @@ namespace koliop {
                 na_reducer.init(na_reducer.reference());
                 vpara_reducer.init(vpara_reducer.reference());
 
-                // TODO(Etienne M): Is parallel_for + TeamThreadMDRange +
+                // TODO(Etienne M): Is parallel_for + TeamThreadRange +
                 // explicit na_reducer followed by team_reduce, a valid
                 // semantic.
 
-                Kokkos::parallel_for(
-                    an_intra_team_policy,
-                    [&](auto imu, auto ivpar) {
+                using koliop::utility::IntraTeam;
+                IntraTeam::Iterate2D(
+                    mu_extent, vpar_extent,
+                    a_team_handle, [&](auto imu, auto ivpar) {
+                        // NOTE: This is not vectorized on CPU due to the
+                        // reduction.
+
                         const ComputeFloatType f5d_s_value = Kokkos::max(1.0E-40,
                                                                          f5d_s(imu, ivpar, itor1, itor2, itor3, ispecies));
 
@@ -159,9 +158,11 @@ namespace koliop {
                 Kokkos::Sum<ComputeFloatType> Ta_reducer{Ta};
                 Ta_reducer.init(Ta_reducer.reference());
 
-                Kokkos::parallel_for(
-                    an_intra_team_policy,
-                    [&](auto imu, auto ivpar) {
+                const ComputeFloatType B_norm_r_theta = B_norm(local_domain_r_offset + ir, local_domain_theta_offset + itheta);
+
+                IntraTeam::Iterate2D(
+                    mu_extent, vpar_extent,
+                    a_team_handle, [&](auto imu, auto ivpar) {
                         // TODO(Etienne M): Avoid this recomputation ? On
                         // Gysela fortran, a temporary buffer is used but
                         // that would hardly fit on a GPU.
@@ -173,7 +174,7 @@ namespace koliop {
 
                         Ta_reducer.join(Ta_reducer.reference(),
                                         (((vparg(ivpar) - vpara) * (vparg(ivpar) - vpara)) +
-                                         (2.0 * mug(imu) * B_norm(local_domain_r_offset + ir, local_domain_theta_offset + itheta))) *
+                                         (2.0 * mug(imu) * B_norm_r_theta)) *
                                             ftmp);
                     });
 

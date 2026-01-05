@@ -12,6 +12,7 @@ set(Kokkos_ARCH_NATIVE ON CACHE BOOL "")
 set(KokkosKernels_ENABLE_ALL_COMPONENTS OFF CACHE BOOL "")
 set(KokkosKernels_ENABLE_COMPONENT_BATCHED ON CACHE BOOL "")
 set(KokkosKernels_ENABLE_COMPONENT_BLAS ON CACHE BOOL "")
+set(KokkosKernels_ADD_DEFAULT_ETI OFF CACHE BOOL "")
 
 # Koliop options:
 
@@ -23,6 +24,10 @@ set(koliop_FLAGS_BASE -Wall -Wextra -Wpedantic -Wcast-align -Wctor-dtor-privacy 
 
 set(koliop_FLAGS_DEBUG          -g -Og -ggdb -fno-omit-frame-pointer -fno-optimize-sibling-calls)
 set(koliop_FLAGS_MINSIZEREL     -Os)
-#SVML offers AVX512 support but needs to be linked, while libmvec is implicit.
-set(koliop_FLAGS_RELEASE        -g -O3 -fno-math-errno -fno-signed-zeros -fno-trapping-math -fassociative-math -freciprocal-math -fno-rounding-math -ffp-contract=fast -fveclib=libmvec)
-set(koliop_FLAGS_RELWITHDEBINFO -g -O3 -fno-omit-frame-pointer -fno-optimize-sibling-calls)
+set(koliop_FLAGS_RELEASE        -g -O3 -fno-math-errno -march=native -fveclib=libmvec)
+set(koliop_FLAGS_RELWITHDEBINFO -g -O3 -fno-math-errno -march=native -fveclib=libmvec -fno-omit-frame-pointer -fno-optimize-sibling-calls)
+
+set(koliop_LINKER_FLAGS_DEBUG          )
+set(koliop_LINKER_FLAGS_MINSIZEREL     )
+set(koliop_LINKER_FLAGS_RELEASE        -fveclib=libmvec)
+set(koliop_LINKER_FLAGS_RELWITHDEBINFO -fveclib=libmvec)

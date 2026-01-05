@@ -6,6 +6,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <Kokkos_Macros.hpp>
 #include <cstddef>
 
 #include "KOLIOP/internal/buildspecificities.h"
@@ -17,11 +18,9 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////
-/// KOLIOP_COMPILER_IS_ICX
-/// KOLIOP_COMPILER_IS_ICC
+/// KOLIOP_COMPILER_IS_INTEL_LLVM
 /// KOLIOP_COMPILER_IS_CLANG
 /// KOLIOP_COMPILER_IS_GCC
-/// KOLIOP_COMPILER_IS_MSVC
 ///
 /// Use these macros to test for compiler dependant features/source code...
 /// <cpuid.h> (clang/gnu) vs <intrin.h> (msvc)
@@ -98,10 +97,6 @@
     // __INTEL_LLVM_COMPILER would also work.
     #define KOLIOP_COMPILER_MIMICRY_INTEL_LLVM 1
 #endif
-#if defined(__INTEL_COMPILER)
-    // For icc and icpc.
-    #define KOLIOP_COMPILER_MIMICRY_INTEL_CLASSIC 1
-#endif
 #if defined(__clang__)
     // For every Clang *compatible or mimicry* compiler. The order matters,
     // icx/icpx also defines __clang__.
@@ -112,30 +107,22 @@
     // Clang also defines __GNUC__.
     #define KOLIOP_COMPILER_MIMICRY_GCC 1
 #endif
-#if defined(_MSC_VER)
-    // For every MSVC *compatible or mimicry* compiler.
-    #define KOLIOP_COMPILER_MIMICRY_MSVC 1
-#endif
 
 // We now know which "marker" are defined, now we try to determine which
 // compiler is really underneath.
 
 #if defined(KOLIOP_COMPILER_MIMICRY_INTEL_LLVM)
     #define KOLIOP_COMPILER_IS_INTEL_LLVM 1
-#elif defined(KOLIOP_COMPILER_MIMICRY_INTEL_CLASSIC)
-    #define KOLIOP_COMPILER_IS_INTEL_CLASSIC 1
 #elif defined(KOLIOP_COMPILER_MIMICRY_CLANG)
     #define KOLIOP_COMPILER_IS_CLANG 1
 #elif defined(KOLIOP_COMPILER_MIMICRY_GCC)
     #define KOLIOP_COMPILER_IS_GCC 1
-#elif defined(KOLIOP_COMPILER_MIMICRY_MSVC)
-    #define KOLIOP_COMPILER_IS_MSVC 1
 #endif
 
 #if !(defined(KOLIOP_COMPILER_IS_INTEL_LLVM) || \
       defined(KOLIOP_COMPILER_IS_CLANG) ||      \
       defined(KOLIOP_COMPILER_IS_GCC))
-static_assert(false, "This library doesn't support your compiler.");
+    #warning "This library doesn't support your compiler."
 #endif
 
 
@@ -262,6 +249,35 @@ namespace koliop {
 /// also the device.
 ///
 ////////////////////////////////////////
+
+////////////////////////////////////////
+/// KOLIOP_BACKEND_IS_GPU_LIKE
+/// KOLIOP_BACKEND_IS_CPU_LIKE
+///
+/// Factorize/consolidate some often interesting information.
+/// If KOLIOP_BACKEND_IS_GPU_LIKE is defined, this means that at least a backend
+/// that behaves like a GPU is enabled. Its up to you to know if you are indeed
+/// using it through the execution space (or not). Similarly for
+/// KOLIOP_BACKEND_IS_CPU_LIKE.
+///
+//////////////////////////////////////
+
+// NOTE: KOLIOP_BACKEND_IS_CPU_LIKE should always be define true.
+
+#if defined(KOKKOS_ENABLE_SERIAL) || defined(KOKKOS_ENABLE_OPENMP) || \
+    defined(KOKKOS_ENABLE_THREADS) || defined(KOKKOS_ENABLE_HPX)
+    #define KOLIOP_BACKEND_IS_CPU_LIKE
+#endif
+
+#if defined(KOKKOS_ENABLE_OPENACC) || defined(KOKKOS_ENABLE_OPENMPTARGET) || \
+    defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) ||             \
+    defined(KOKKOS_ENABLE_SYCL)
+    #define KOLIOP_BACKEND_IS_GPU_LIKE
+#endif
+
+#if !(defined(KOLIOP_BACKEND_IS_CPU_LIKE) || defined(KOLIOP_BACKEND_IS_GPU_LIKE))
+    #error "We do not known about the current Kokkos backend!"
+#endif
 
 
 ////////////////////////////////////////////////////////////////////////////////

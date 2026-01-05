@@ -28,6 +28,9 @@ namespace koliop {
             class InterfaceType {
             public:
             public:
+                virtual void AllocateScratchMemory() = 0;
+                virtual void ReleaseScratchMemory()  = 0;
+
                 virtual void Apply(const Operator&                                an_operator,
                                    Constant::DeviceExecutionSpaceType             an_execution_space,
                                    OrdinalType                                    block_first_tor1,
@@ -51,6 +54,14 @@ namespace koliop {
                 explicit ImplementationType(value_type&& a_value)
                     : value_{std::move(a_value)} {
                     // EMPTY
+                }
+
+                void AllocateScratchMemory() override {
+                    value_.AllocateScratchMemory();
+                }
+
+                void ReleaseScratchMemory() override {
+                    value_.ReleaseScratchMemory();
                 }
 
                 void Apply(const Operator&                                an_operator,
