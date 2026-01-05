@@ -276,7 +276,7 @@ namespace koliop {
 #endif
 
 #if !(defined(KOLIOP_BACKEND_IS_CPU_LIKE) || defined(KOLIOP_BACKEND_IS_GPU_LIKE))
-    #error "We dont event have a backend we understand!"
+    #error "We do not known about the current Kokkos backend!"
 #endif
 
 
