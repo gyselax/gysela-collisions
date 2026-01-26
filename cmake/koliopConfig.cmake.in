@@ -1,0 +1,13 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+
+find_dependency(Kokkos)
+
+find_dependency(KokkosKernels)
+
+# Import the project's components.
+include("${CMAKE_CURRENT_LIST_DIR}/koliopTargets.cmake")
+
+# Ensure we have exposed the components
+check_required_components(koliop)
