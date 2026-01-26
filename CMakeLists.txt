@@ -1,6 +1,6 @@
 # NOTES: https://gist.github.com/mbinna/c61dbb39bca0e4fb7d1f73b0d66a4fd1
 
-cmake_minimum_required(VERSION 3.22.1)
+cmake_minimum_required(VERSION 3.25)
 
 ################################################################################
 ### Default build type.
@@ -107,23 +107,25 @@ set(koliop_INCLUDE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include")
 configure_file("${koliop_INCLUDE_DIRECTORY}/KOLIOP/internal/buildspecificities.h.in"
                "${CMAKE_CURRENT_BINARY_DIR}/KOLIOP/internal/buildspecificities.h" @ONLY)
 
-target_include_directories(koliop
-                           PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
-
 # NOTE: GLOBing file is not considered good practice. One could instead specify
 # the full, verbose list of headers and sources.
 file(GLOB_RECURSE koliop_SOURCES_GLOB "${koliop_SOURCES_DIRECTORY}/*.cc")
 
 target_sources(koliop
-               PRIVATE ${koliop_SOURCES_GLOB})
+               PRIVATE ${koliop_SOURCES_GLOB}
+               PUBLIC
+                 FILE_SET HEADERS
+                   BASE_DIRS include ${CMAKE_CURRENT_BINARY_DIR}
+                   FILES
+                     ${CMAKE_CURRENT_BINARY_DIR}/KOLIOP/internal/buildspecificities.h
+                     include/KOLIOP/error/status.h
+                     include/KOLIOP/koliop.h
+)
 
 target_include_directories(koliop
                            PRIVATE "${koliop_SOURCES_DIRECTORY}")
 
-target_include_directories(koliop
-                           PUBLIC "$<BUILD_INTERFACE:${koliop_INCLUDE_DIRECTORY}>"
-                                  "$<INSTALL_INTERFACE:include>")
-
+# Be careful, the fortran interface will not be installed.
 if(koliop_BUILD_FORTRAN_INTERFACE)
     message(STATUS "[koliop] Enabling the Fortran interface.")
 
@@ -163,46 +165,27 @@ koliop_target_add_kokkos_kernels(koliop)
 
 koliop_dependent_target_build_options(koliop)
 
+include(CMakePackageConfigHelpers)
+include(GNUInstallDirs)
+
 # ########################################
 # ### Installation rules
 # ########################################
 
-# install(TARGETS koliop
-#         EXPORT KOLIOPTargets)
+install(TARGETS koliop
+        EXPORT koliopTargets
+        FILE_SET HEADERS)
 
-# install(EXPORT KOLIOPTargets
-#         NAMESPACE koliop::
-#         DESTINATION lib/cmake/koliop)
+install(EXPORT koliopTargets
+        NAMESPACE koliop::
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/koliop)
 
-# install(DIRECTORY include/
-#         TYPE INCLUDE)
+configure_package_config_file(cmake/koliopConfig.cmake.in
+                              ${CMAKE_CURRENT_BINARY_DIR}/cmake/koliopConfig.cmake
+                              INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/koliop)
 
-# configure_package_config_file(koliopConfig.cmake.in
-#                               ${CMAKE_CURRENT_BINARY_DIR}/koliopConfig.cmake
-#                               INSTALL_DESTINATION lib/cmake/koliop)
-
-# install(FILES ${CMAKE_CURRENT_BINARY_DIR}/koliopConfig.cmake
-#         DESTINATION lib/cmake/koliop)
-
-# # With koliopConfig.cmake to something like that:
-
-# ```
-# @PACKAGE_INIT@
-
-# include(CMakeFindDependencyMacro)
-
-# # Not we have to ensure the kokkos we find is compatible with the one used by
-# # koliop. Namely the backend and exact options. Any deviation could be a
-# # source of sneaky bug.
-# find_dependency(Kokkos XXX REQUIRED COMPONENTS YY::ZZ)
-
-# # Import the project's components.
-# include("${CMAKE_CURRENT_LIST_DIR}/KOLIOPTargets.cmake")
-
-# # Ensure we have exposed the components
-# check_required_components("koliop")
-# check_required_components("koliop::koliop")
-# ```
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cmake/koliopConfig.cmake
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/koliop)
 
 ################################################################################
 ### Tests
@@ -211,5 +194,3 @@ koliop_dependent_target_build_options(koliop)
 if(koliop_BUILD_TESTING)
     add_subdirectory("tests")
 endif()
-
-# TODO(Etienne M): installation
