@@ -17,7 +17,7 @@ else()
     endif()
 endif()
 
-project("koliop" VERSION 0.0.22 LANGUAGES CXX)
+project("koliop" VERSION 0.1.0 LANGUAGES CXX)
 
 include(CTest)
 
