@@ -59,7 +59,7 @@ endfunction()
 if(NOT koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE)
     # The test's memory is initially on the host, we may have to push it to
     # the GPU, thus the restriction.
-    message(WARNING "[${PROJECT_NAME}] The 'dummy_integration' test requires koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE=ON unless unified memory is available.")
+    message(WARNING "[${PROJECT_NAME}] The 'dummy_integration' test assumes koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE=ON unless unified memory is available.")
 endif()
 
 koliop_add_test("koliop_tests_target_build_options" "demo" "dummy" "dummy_integration")
