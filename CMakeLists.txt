@@ -186,7 +186,7 @@ configure_package_config_file(cmake/koliopConfig.cmake.in
 
 write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/cmake/koliopConfigVersion.cmake
                                  # Compatible only if the major are the same.
-                                 COMPATIBILITY SameMajorVersion)
+                                 COMPATIBILITY SameMinorVersion)
 
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cmake/koliopConfig.cmake
               ${CMAKE_CURRENT_BINARY_DIR}/cmake/koliopConfigVersion.cmake
