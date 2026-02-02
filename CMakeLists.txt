@@ -17,7 +17,7 @@ else()
     endif()
 endif()
 
-project("koliop" VERSION 0.1.1 LANGUAGES CXX)
+project("koliop" VERSION 0.1.2 LANGUAGES CXX)
 
 include(CTest)
 
@@ -184,7 +184,12 @@ configure_package_config_file(cmake/koliopConfig.cmake.in
                               ${CMAKE_CURRENT_BINARY_DIR}/cmake/koliopConfig.cmake
                               INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/koliop)
 
+write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/cmake/koliopConfigVersion.cmake
+                                 # Compatible only if the major are the same.
+                                 COMPATIBILITY SameMinorVersion)
+
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cmake/koliopConfig.cmake
+              ${CMAKE_CURRENT_BINARY_DIR}/cmake/koliopConfigVersion.cmake
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/koliop)
 
 ################################################################################
