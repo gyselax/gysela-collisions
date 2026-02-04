@@ -168,9 +168,9 @@ koliop_dependent_target_build_options(koliop)
 include(CMakePackageConfigHelpers)
 include(GNUInstallDirs)
 
-# ########################################
-# ### Installation rules
-# ########################################
+########################################
+### Installation rules
+########################################
 
 install(TARGETS koliop
         EXPORT koliopTargets
