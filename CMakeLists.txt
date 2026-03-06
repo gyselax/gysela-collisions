@@ -94,11 +94,13 @@ endfunction()
 ### koliop library
 ################################################################################
 
-# NOTE: For now, we force the library to be static. It is often harder to
+# NOTE: We used to force the library to be static. It is often harder to
 # maintain dynamic libraries. Later, we can rely on the BUILD_SHARED_LIBS
 # variable and GenerateExportHeader:
 # https://cmake.org/cmake/help/latest/module/GenerateExportHeader.html
-add_library(koliop STATIC)
+# Now, we let cmake's default which is static unless DBUILD_SHARED_LIBS is
+# defined.
+add_library(koliop) # STATIC)
 add_library("koliop::koliop" ALIAS "koliop")
 
 set(koliop_SOURCES_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/sources")
