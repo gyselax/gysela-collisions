@@ -161,9 +161,12 @@ namespace koliop {
                             // NOTE: this erf() is a pain to vectorize on CPU.
                             // We spend way too much time inside iot if we do
                             // not have it suported by the vectorized libm.
-                            // TODO(Etienne M): take a look at https://codebrowser.dev/glibc/glibc/sysdeps/ieee754/dbl-64/s_erf.c.html
+                            // TODO(Etienne M): take a look at
+                            // https://codebrowser.dev/glibc/glibc/sysdeps/ieee754/dbl-64/s_erf.c.html
                             // to reimplement a simd compatible erf. Also look
-                            // at the llvm implementation.
+                            // at the llvm implementation. A good simple
+                            // approximation is: 2/(1 + exp(-2.5*x)) - 1
+
                             const ComputeFloatType variable0 = ((0.5 * koliop::portability::GyselaConstant<ComputeFloatType>::kConst_theta) / xb_cb) *
                                                                (Kokkos::erf(xb) - xb * koliop::portability::GyselaConstant<ComputeFloatType>::kCst_phiprime * Kokkos::exp(-xb_sq));
 
