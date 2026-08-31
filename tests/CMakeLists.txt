@@ -63,3 +63,5 @@ if(NOT koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE)
 endif()
 
 koliop_add_test("koliop_tests_target_build_options" "demo" "dummy" "dummy_integration")
+
+koliop_add_test("koliop_tests_target_build_options" "test" "dummy" "dummy_small_sanity")
