@@ -1,5 +1,6 @@
 #include <KOLIOP/koliop.h>
 
+#include <Kokkos_Core.hpp>
 #include <algorithm>
 #include <chrono>
 #include <cstdlib>
@@ -9,11 +10,6 @@
 #include "common.h"
 
 int Test1() {
-    // NOTE: This function is used to test the GPU code. We pass the operator
-    // dummy arrays that get copied to the GPU anyway (assuming
-    // koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE=OFF) thus being
-    // disjoint (avoiding cache effects).
-
     ::koliop_Operator an_operator;
 
     static constexpr int8_t  collision_interspecies = true;
@@ -43,23 +39,31 @@ int Test1() {
     static constexpr size_t global_domain_r_offset     = 0;
     static constexpr size_t global_domain_theta_offset = 0;
 
-    std::vector<double> a_big_dummy_array{};
-    a_big_dummy_array.resize(mu_extent *
-                                 vpar_extent *
-                                 tor1_extent *
-                                 tor2_extent *
-                                 tor3_extent *
-                                 species_extent,
-                             1.0);
+    const size_t buffer_size = mu_extent * vpar_extent * tor1_extent * tor2_extent * tor3_extent * species_extent;
 
-    std::vector<double> a_big_dummy_f5d_s{};
-    a_big_dummy_f5d_s.resize(mu_extent *
-                                 vpar_extent *
-                                 tor1_extent *
-                                 tor2_extent *
-                                 tor3_extent *
-                                 species_extent,
-                             1.0);
+    Kokkos::View<double*> a_buffer_0_device_view("device_buffer", buffer_size);
+    const auto            a_buffer_0_host_mirror = Kokkos::create_mirror_view(a_buffer_0_device_view);
+
+    Kokkos::View<double*> a_buffer_1_device_view("device_buffer", buffer_size);
+    const auto            a_buffer_1_host_mirror = Kokkos::create_mirror_view(a_buffer_0_device_view);
+
+    for(size_t i = 0; i < buffer_size; ++i) {
+        a_buffer_0_host_mirror(i) = 1.0;
+        a_buffer_1_host_mirror(i) = 1.0;
+    }
+
+    Kokkos::deep_copy(a_buffer_0_device_view, a_buffer_0_host_mirror);
+    Kokkos::deep_copy(a_buffer_1_device_view, a_buffer_1_host_mirror);
+
+#if defined(KOLIOP_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE)
+    std::cout << "Using device buffers, KOLIOP_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE=ON" << std::endl;
+    auto* a_buffer_0 = a_buffer_0_device_view.data();
+    auto* a_buffer_1 = a_buffer_1_device_view.data();
+#else
+    std::cout << "Using host buffers, KOLIOP_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE=OFF" << std::endl;
+    auto* a_buffer_0 = a_buffer_0_host_mirror.data();
+    auto* a_buffer_1 = a_buffer_1_host_mirror.data();
+#endif
 
     if(::koliop_Create(&an_operator,
                        mu_extent,
@@ -76,17 +80,17 @@ int Test1() {
                        SOL,
                        LIM,
                        ir_SOL_separatrix,
-                       a_big_dummy_array.data(),
-                       a_big_dummy_array.data(),
-                       a_big_dummy_array.data(),
-                       a_big_dummy_array.data(),
-                       a_big_dummy_array.data(),
-                       a_big_dummy_array.data(),
-                       a_big_dummy_array.data(),
-                       a_big_dummy_array.data(),
+                       a_buffer_0,
+                       a_buffer_0,
+                       a_buffer_0,
+                       a_buffer_0,
+                       a_buffer_0,
+                       a_buffer_0,
+                       a_buffer_0,
+                       a_buffer_0,
                        nullptr, // &mask_LIM[0][0],
-                       a_big_dummy_array.data(),
-                       a_big_dummy_array.data()) != KOLIOP_STATUS_SUCCESS) {
+                       a_buffer_0,
+                       a_buffer_0) != KOLIOP_STATUS_SUCCESS) {
         std::cout << "::koliop_Create() failed\n";
         return -1;
     }
@@ -94,43 +98,43 @@ int Test1() {
     std::cout << an_operator << "\n";
 
     ::koliop_ComputeMoments(an_operator,
-                            a_big_dummy_f5d_s.data());
+                            a_buffer_1);
 
     ::koliop_PrecomputeNu(an_operator);
 
     ::koliop_ComputeMaxwellianEvolution(an_operator,
                                         dt,
-                                        a_big_dummy_f5d_s.data());
+                                        a_buffer_1);
 
     ::koliop_ComputeQparOnNT(an_operator,
-                             a_big_dummy_f5d_s.data());
+                             a_buffer_1);
 
     ::koliop_ComputeCpar(an_operator,
                          dt,
-                         a_big_dummy_f5d_s.data());
+                         a_buffer_1);
 
     static constexpr int32_t choice = 4;
 
     ::koliop_ComputeMaxwellianUnshiftedLoc(an_operator,
-                                           a_big_dummy_f5d_s.data(),
+                                           a_buffer_1,
                                            choice);
 
     ::koliop_Apply(an_operator,
                    dt,
-                   a_big_dummy_f5d_s.data());
+                   a_buffer_1);
 
     ::koliop_Fence(an_operator);
 
     ::koliop_ComputeDensityCorrection(an_operator,
-                                      a_big_dummy_f5d_s.data());
+                                      a_buffer_1);
 
     ::koliop_ComputeUparTCorrection(an_operator,
                                     dt,
-                                    a_big_dummy_f5d_s.data());
+                                    a_buffer_1);
 
     ::koliop_ExtractRaw(an_operator,
                         KOLIOP_EXTRACTION_IDENTIFIER_n_s,
-                        a_big_dummy_f5d_s.data());
+                        a_buffer_1);
 
     ::koliop_Fence(an_operator);
 
@@ -142,11 +146,6 @@ int Test1() {
 }
 
 int Test2() {
-    // NOTE: This function is used to test the GPU code. We pass the operator
-    // dummy arrays that get copied to the GPU anyway (assuming
-    // koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE=OFF) thus being
-    // disjoint (avoiding cache effects).
-
     ::koliop_Operator an_operator;
 
     static constexpr int8_t collision_interspecies = true;
@@ -180,23 +179,31 @@ int Test2() {
 
     static constexpr int64_t ir_SOL_separatrix = global_domain_r_extent;
 
-    std::vector<double> a_big_dummy_array{};
-    a_big_dummy_array.resize(mu_extent *
-                                 vpar_extent *
-                                 tor1_extent *
-                                 tor2_extent *
-                                 tor3_extent *
-                                 species_extent,
-                             1.0);
+    const size_t buffer_size = mu_extent * vpar_extent * tor1_extent * tor2_extent * tor3_extent * species_extent;
 
-    std::vector<double> a_big_dummy_f5d_s{};
-    a_big_dummy_f5d_s.resize(mu_extent *
-                                 vpar_extent *
-                                 tor1_extent *
-                                 tor2_extent *
-                                 tor3_extent *
-                                 species_extent,
-                             1.0);
+    Kokkos::View<double*> a_buffer_0_device_view("device_buffer", buffer_size);
+    const auto            a_buffer_0_host_mirror = Kokkos::create_mirror_view(a_buffer_0_device_view);
+
+    Kokkos::View<double*> a_buffer_1_device_view("device_buffer", buffer_size);
+    const auto            a_buffer_1_host_mirror = Kokkos::create_mirror_view(a_buffer_0_device_view);
+
+    for(size_t i = 0; i < buffer_size; ++i) {
+        a_buffer_0_host_mirror(i) = 1.0;
+        a_buffer_1_host_mirror(i) = 1.0;
+    }
+
+    Kokkos::deep_copy(a_buffer_0_device_view, a_buffer_0_host_mirror);
+    Kokkos::deep_copy(a_buffer_1_device_view, a_buffer_1_host_mirror);
+
+#if defined(KOLIOP_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE)
+    std::cout << "Using device buffers, KOLIOP_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE=ON" << std::endl;
+    auto* a_buffer_0 = a_buffer_0_device_view.data();
+    auto* a_buffer_1 = a_buffer_1_device_view.data();
+#else
+    std::cout << "Using host buffers, KOLIOP_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE=OFF" << std::endl;
+    auto* a_buffer_0 = a_buffer_0_host_mirror.data();
+    auto* a_buffer_1 = a_buffer_1_host_mirror.data();
+#endif
 
     if(::koliop_Create(&an_operator,
                        mu_extent,
@@ -215,17 +222,17 @@ int Test2() {
                        ir_SOL_separatrix,
                        // NOTE: the cache locality effect implied by spoofing
                        // all these array as a single ptr is not visible on GPU.
-                       a_big_dummy_array.data(),
-                       a_big_dummy_array.data(),
-                       a_big_dummy_array.data(),
-                       a_big_dummy_array.data(),
-                       a_big_dummy_array.data(),
-                       a_big_dummy_array.data(),
-                       a_big_dummy_array.data(),
-                       a_big_dummy_array.data(),
+                       a_buffer_0,
+                       a_buffer_0,
+                       a_buffer_0,
+                       a_buffer_0,
+                       a_buffer_0,
+                       a_buffer_0,
+                       a_buffer_0,
+                       a_buffer_0,
                        nullptr, // &mask_LIM[0][0],
-                       a_big_dummy_array.data(),
-                       a_big_dummy_array.data()) != KOLIOP_STATUS_SUCCESS) {
+                       a_buffer_0,
+                       a_buffer_0) != KOLIOP_STATUS_SUCCESS) {
         std::cout << "::koliop_Create() failed\n";
         return -1;
     }
@@ -235,7 +242,7 @@ int Test2() {
     NaiveBenchmark([&](auto) {
         if(::koliop_Collision(an_operator,
                               dt,
-                              a_big_dummy_f5d_s.data()) != KOLIOP_STATUS_SUCCESS) {
+                              a_buffer_1) != KOLIOP_STATUS_SUCCESS) {
             std::cout << "::koliop_Collision() failed\n";
             std::exit(-1);
         }

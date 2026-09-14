@@ -51,17 +51,10 @@ function(koliop_tests_target_build_options target_name)
                           PRIVATE "koliop::koliop")
 
     koliop_dependent_target_build_options("${target_name}")
+    koliop_target_add_kokkos("${target_name}")
 endfunction()
 
 ############################## dummy test ######################################
 
-# Dirty un-scalable check that does the trick.
-if(NOT koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE)
-    # The test's memory is initially on the host, we may have to push it to
-    # the GPU, thus the restriction.
-    message(WARNING "[${PROJECT_NAME}] The 'dummy_integration' test assumes koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE=ON unless unified memory is available.")
-endif()
-
 koliop_add_test("koliop_tests_target_build_options" "demo" "dummy" "dummy_integration")
-
 koliop_add_test("koliop_tests_target_build_options" "test" "dummy" "dummy_small_sanity")
