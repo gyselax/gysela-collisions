@@ -68,10 +68,6 @@ namespace koliop {
                     throw std::domain_error{"ExtractRaw: Invalid value_identifier:" + std::to_string(value_identifier)};
                     break;
             }
-
-#if defined(KOLIOP_FENCE_ON_OPERATOR_EXIT)
-            Kokkos::fence();
-#endif
         }
 
     } // namespace collision

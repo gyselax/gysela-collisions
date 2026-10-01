@@ -17,7 +17,7 @@ else()
     endif()
 endif()
 
-project("koliop" VERSION 0.2.2 LANGUAGES CXX)
+project("koliop" VERSION 1.0.0 LANGUAGES CXX)
 
 include(CTest)
 
@@ -30,13 +30,10 @@ endif()
 ### Global options. Dependency specific options are defined in the dependencies.
 ################################################################################
 
-option(koliop_ASSERT_ENABLED                             "Enable assertions. This enable/disable KOLIOP_ASSERT() but not C's assert()." ON)
-option(koliop_FENCE_ON_OPERATOR_EXIT                     "Fences before returning from an operator method." OFF)
-option(koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE "Should koliop assumes the input data can be read or else, intermediate copies are required." ON)
-option(koliop_BUILD_FORTRAN_INTERFACE                    "Enable the koliop::fortran_interface glue code needed to interface koliop from Fortran." OFF)
-option(koliop_BUILD_TESTING                              "Enable test compilation and ctest regardless of BUILD_TESTING's value." "${BUILD_TESTING}")
-option(koliop_UTILITY_FLATTEN_EXPECT_POW2_EXTENTS        "Assumes that mu and vpar are going to be powers of two (speeds up indexing)." OFF)
-option(koliop_CONSTANT_MEMORY_USAGE                      "Koliop will allocate scratch memory, will not release it but will reuse it for the next call." OFF)
+option(koliop_ASSERT_ENABLED                      "Enable assertions. This enable/disable KOLIOP_ASSERT() but not C's assert()." ON)
+option(koliop_BUILD_TESTING                       "Enable test compilation and ctest regardless of BUILD_TESTING's value." "${BUILD_TESTING}")
+option(koliop_UTILITY_FLATTEN_EXPECT_POW2_EXTENTS "Assumes that mu and vpar are going to be powers of two (speeds up indexing)." OFF)
+option(koliop_CONSTANT_MEMORY_USAGE               "Koliop will allocate scratch memory, will not release it but will reuse it for the next call." OFF)
 
 ################################################################################
 ### Dependencies & tooling
@@ -45,7 +42,6 @@ option(koliop_CONSTANT_MEMORY_USAGE                      "Koliop will allocate s
 include("${CMAKE_CURRENT_LIST_DIR}/dependencies/resolver.cmake")
 
 DependencyResolver("${CMAKE_CURRENT_SOURCE_DIR}/dependencies")
-
 
 ################################################################################
 ### Compilation, link flags.
@@ -126,36 +122,6 @@ target_sources(koliop
 
 target_include_directories(koliop
                            PRIVATE "${koliop_SOURCES_DIRECTORY}")
-
-# Be careful, the fortran interface will not be installed.
-if(koliop_BUILD_FORTRAN_INTERFACE)
-    message(STATUS "[koliop] Enabling the Fortran interface.")
-
-    enable_language(C)
-    enable_language(Fortran)
-
-    include(FortranCInterface)
-
-    FortranCInterface_VERIFY(CXX)
-
-    add_library(koliop_fortran_interface STATIC)
-    add_library("koliop::fortran_interface" ALIAS "koliop_fortran_interface")
-
-    target_include_directories(koliop_fortran_interface
-                               INTERFACE "${CMAKE_CURRENT_BINARY_DIR}/koliop_fortran_interface_FMOD")
-
-    set_target_properties(koliop_fortran_interface
-                          PROPERTIES Fortran_MODULE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/koliop_fortran_interface_FMOD")
-
-    target_sources(koliop_fortran_interface
-                   PRIVATE "${koliop_INCLUDE_DIRECTORY}/KOLIOP/koliop.f90")
-
-    target_link_libraries(koliop_fortran_interface
-                          # NOTE: I set it to PRIVATE, but this may cause
-                          # issues:
-                          # https://gitlab.kitware.com/cmake/cmake/-/issues/24402
-                          PRIVATE "koliop::koliop")
-endif()
 
 ########################################
 ### Dependency handling

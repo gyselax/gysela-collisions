@@ -13,13 +13,8 @@ namespace koliop {
             template <int kTorIndex>
             KOKKOS_INLINE_FUNCTION constexpr auto
             GetMapping() {
-#if defined(KOLIOP_BUILD_FORTRAN_INTERFACE)
-                // Gysela fortran
-                constexpr int kMapping[]{0, 1, 2};
-#else
                 // Gyselalib++
                 constexpr int kMapping[]{1, 0, 2};
-#endif
 
                 return kMapping[kTorIndex];
             }

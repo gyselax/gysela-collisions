@@ -24,13 +24,8 @@ int Test1() {
     static constexpr size_t r_extent     = 64;
     static constexpr size_t theta_extent = 128;
 
-#if defined(KOLIOP_BUILD_FORTRAN_INTERFACE)
-    static constexpr size_t tor1_extent = r_extent;
-    static constexpr size_t tor2_extent = theta_extent;
-#else
-    static constexpr size_t tor1_extent = theta_extent;
-    static constexpr size_t tor2_extent = r_extent;
-#endif
+    static constexpr size_t tor1_extent    = theta_extent;
+    static constexpr size_t tor2_extent    = r_extent;
     static constexpr size_t tor3_extent    = 1;
     static constexpr size_t species_extent = 1;
 
@@ -55,15 +50,9 @@ int Test1() {
     Kokkos::deep_copy(a_buffer_0_device_view, a_buffer_0_host_mirror);
     Kokkos::deep_copy(a_buffer_1_device_view, a_buffer_1_host_mirror);
 
-#if defined(KOLIOP_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE)
-    std::cout << "Using device buffers, KOLIOP_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE=ON" << std::endl;
+    std::cout << "Using device buffers." << std::endl;
     auto* a_buffer_0 = a_buffer_0_device_view.data();
     auto* a_buffer_1 = a_buffer_1_device_view.data();
-#else
-    std::cout << "Using host buffers, KOLIOP_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE=OFF" << std::endl;
-    auto* a_buffer_0 = a_buffer_0_host_mirror.data();
-    auto* a_buffer_1 = a_buffer_1_host_mirror.data();
-#endif
 
     if(::koliop_Create(&an_operator,
                        mu_extent,
@@ -163,13 +152,8 @@ int Test2() {
     // static constexpr size_t theta_extent = 32;
     // static constexpr size_t tor3_extent  = 2;
 
-#if defined(KOLIOP_BUILD_FORTRAN_INTERFACE)
-    static constexpr size_t tor1_extent = r_extent;
-    static constexpr size_t tor2_extent = theta_extent;
-#else
-    static constexpr size_t tor1_extent = theta_extent;
-    static constexpr size_t tor2_extent = r_extent;
-#endif
+    static constexpr size_t tor1_extent    = theta_extent;
+    static constexpr size_t tor2_extent    = r_extent;
     static constexpr size_t species_extent = 2;
 
     static constexpr size_t global_domain_r_extent     = r_extent;
@@ -195,15 +179,9 @@ int Test2() {
     Kokkos::deep_copy(a_buffer_0_device_view, a_buffer_0_host_mirror);
     Kokkos::deep_copy(a_buffer_1_device_view, a_buffer_1_host_mirror);
 
-#if defined(KOLIOP_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE)
-    std::cout << "Using device buffers, KOLIOP_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE=ON" << std::endl;
+    std::cout << "Using device buffers." << std::endl;
     auto* a_buffer_0 = a_buffer_0_device_view.data();
     auto* a_buffer_1 = a_buffer_1_device_view.data();
-#else
-    std::cout << "Using host buffers, KOLIOP_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE=OFF" << std::endl;
-    auto* a_buffer_0 = a_buffer_0_host_mirror.data();
-    auto* a_buffer_1 = a_buffer_1_host_mirror.data();
-#endif
 
     if(::koliop_Create(&an_operator,
                        mu_extent,

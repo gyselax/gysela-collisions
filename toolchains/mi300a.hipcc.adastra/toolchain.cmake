@@ -1,5 +1,4 @@
 set(CMAKE_CXX_COMPILER hipcc)
-set(CMAKE_Fortran_COMPILER amdflang)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -22,7 +21,6 @@ set(KokkosKernels_ADD_DEFAULT_ETI OFF CACHE BOOL "")
 
 set(koliop_TOOLCHAIN_NAME "mi300a.hipcc.adastra")
 
-set(koliop_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE OFF CACHE BOOL "")
 set(koliop_CONSTANT_MEMORY_USAGE ON CACHE BOOL "")
 
 # The rest is optional:

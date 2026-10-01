@@ -149,10 +149,6 @@ namespace koliop {
 
             DoPrecomputeNu(*this, execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],
                            nu_ab_);
-
-#if defined(KOLIOP_FENCE_ON_OPERATOR_EXIT)
-            Kokkos::fence();
-#endif
         }
 
     } // namespace collision

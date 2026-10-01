@@ -45,10 +45,6 @@ namespace koliop {
                                                                                                 mu_extent_, vpar_extent_,
                                                                                                 tor1_extent_, tor2_extent_, tor3_extent_,
                                                                                                 species_extent_);
-
-#if defined(KOLIOP_FENCE_ON_OPERATOR_EXIT)
-            Kokkos::fence();
-#endif
         }
 
     } // namespace collision

@@ -152,10 +152,6 @@ namespace koliop {
 
             DoComputeQparOnNT(*this, execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],
                               a_device_visible_f5d_s, q_par_on_nT_s_);
-
-#if defined(KOLIOP_FENCE_ON_OPERATOR_EXIT)
-            Kokkos::fence();
-#endif
         }
 
     } // namespace collision

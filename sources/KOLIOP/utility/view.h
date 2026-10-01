@@ -142,22 +142,12 @@ namespace koliop {
             template <typename T>
             using MDD6 = MDD<T******>;
 
-
-#if defined(KOLIOP_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE)
             // TODO(Etienne M): Make sure the copies are elided (that is, Gysela
             // validates)
             template <typename Extent>
             using ExternalInputL = UDL<Extent>;
             template <typename Extent>
             using InternalInputL = UDL<Extent>;
-#else
-            // The inputs MUST come from the host memory.
-
-            template <typename Extent>
-            using ExternalInputL = UHL<Extent>;
-            template <typename Extent>
-            using InternalInputL = MDL<Extent>;
-#endif
 
             template <typename T>
             using ExternalInputL1 = ExternalInputL<T*>;

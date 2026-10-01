@@ -193,25 +193,6 @@ namespace koliop {
 
 
 ////////////////////////////////////////
-/// KOLIOP_FORCE_INLINE
-/// KOLIOP_FORCE_NOINLINE
-///
-/// Example usage:
-///     KOLIOP_FORCE_INLINE inline int
-///     foo(float* magic) { /* stuff */ return 1;}
-///
-////////////////////////////////////////
-
-#if defined(KOLIOP_COMPILER_MIMICRY_GCC)
-    #define KOLIOP_FORCE_INLINE   __attribute__((always_inline))
-    #define KOLIOP_FORCE_NOINLINE __attribute__((noinline))
-#elif defined(KOLIOP_COMPILER_IS_MSVC)
-    #define KOLIOP_FORCE_INLINE   __forceinline
-    #define KOLIOP_FORCE_NOINLINE __declspec(noinline)
-#endif
-
-
-////////////////////////////////////////
 /// KOLIOP_ASSERT_ENABLED
 ///
 /// If not defined, disable assertion, else, enable them.
@@ -226,29 +207,6 @@ namespace koliop {
 ///
 ////////////////////////////////////////
 
-
-////////////////////////////////////////
-/// KOLIOP_FENCE_ON_OPERATOR_EXIT
-///
-/// Forces the operator to kokkos::fence after each Operator::XXX method call.
-///
-////////////////////////////////////////
-
-
-////////////////////////////////////////
-/// KOLIOP_ASSUME_INPUT_BUFFERS_ARE_DEVICE_COMPATIBLE
-///
-/// Suppose that the memory input to the operator through pointers resides on a
-/// memory space *compatible* with the Kokkos device memory space.
-///
-/// Kokkos compiled for: | CPU        | CPU+GPU
-/// Input are on:    CPU | UDL->UDL   | UHL->MDL
-///                  GPU | No support | UDL->UDL
-/// If the space is the same, we can elide copies. If not, deep copies are made.
-/// Note that if Kokkos is compiled for CPU without GPU support, the host is
-/// also the device.
-///
-////////////////////////////////////////
 
 ////////////////////////////////////////
 /// KOLIOP_BACKEND_IS_GPU_LIKE
