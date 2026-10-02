@@ -6,11 +6,20 @@
 #include <iostream>
 #include <vector>
 
-void Initialize(bool   do_kokkos_initialization,
-                       size_t a_host_thread_count,
-                       size_t a_device_index,
-                       bool   with_verbose_initialization) {
-    if(do_kokkos_initialization == Kokkos::is_initialized()) {
+/// Has to be called before any other koliop function is called.
+/// @param a_host_thread_count The host threads to use to drive the device or to
+/// do the computation. Depending on how koliop was built.
+/// NOTE: Under the hood, we call ::omp_set_num_threads(a_host_thread_count). So
+/// make sure you pass a correct value.
+/// @param a_device_index The device koliop will use to offload the work. The
+/// value as no meaning if koliop was not built with device support enabled.
+/// @param with_verbose_initialization KOLIOP_FALSE to disable or KOLIOP_TRUE to
+/// present additional information.
+///
+void Initialize(size_t a_host_thread_count,
+                size_t a_device_index,
+                bool   with_verbose_initialization) {
+    if(Kokkos::is_initialized()) {
         // Either we are asked to initialize Kokkos and it is already
         // initialized or we are asked not to initialize kokkos and it was
         // done already (XNOR).
@@ -58,20 +67,18 @@ void Initialize(bool   do_kokkos_initialization,
         }
         std::cout << "\n";
     }
-    if(do_kokkos_initialization) {
-        auto the_configuration = Kokkos::InitializationSettings()
-                                     .set_device_id(static_cast<int>(a_device_index))
-                                     .set_disable_warnings(!with_verbose_initialization);
-        // If KOLIOP_SET_NUM_THREADS is set, use that value.
-        auto* koliop_set_num_threads_string = std::getenv("KOLIOP_SET_NUM_THREADS");
-        if(koliop_set_num_threads_string) {
-            a_host_thread_count = std::stoi(koliop_set_num_threads_string);
-        }
-        if(a_host_thread_count > 0) {
-            the_configuration.set_num_threads(a_host_thread_count);
-        }
-        Kokkos::initialize(the_configuration);
+    auto the_configuration = Kokkos::InitializationSettings()
+                                 .set_device_id(static_cast<int>(a_device_index))
+                                 .set_disable_warnings(!with_verbose_initialization);
+    // If KOLIOP_SET_NUM_THREADS is set, use that value.
+    auto* koliop_set_num_threads_string = std::getenv("KOLIOP_SET_NUM_THREADS");
+    if(koliop_set_num_threads_string) {
+        a_host_thread_count = std::stoi(koliop_set_num_threads_string);
     }
+    if(a_host_thread_count > 0) {
+        the_configuration.set_num_threads(a_host_thread_count);
+    }
+    Kokkos::initialize(the_configuration);
     if(!Kokkos::is_initialized()) {
         throw std::runtime_error("KOLIOP_STATUS_INITIALIZATION_FAILURE");
     }
@@ -81,15 +88,13 @@ void Initialize(bool   do_kokkos_initialization,
     std::cout << std::flush;
 }
 
-void Deinitialize(bool do_kokkos_deinitialization) {
-    if(do_kokkos_deinitialization) {
-        if(!Kokkos::is_initialized()) {
-            throw std::runtime_error("KOLIOP_STATUS_DEINITIALIZATION_FAILURE");
-        }
-        Kokkos::finalize();
-        if(Kokkos::is_initialized()) {
-            throw std::runtime_error("KOLIOP_STATUS_DEINITIALIZATION_FAILURE");
-        }
+void Deinitialize() {
+    if(!Kokkos::is_initialized()) {
+        throw std::runtime_error("KOLIOP_STATUS_DEINITIALIZATION_FAILURE");
+    }
+    Kokkos::finalize();
+    if(Kokkos::is_initialized()) {
+        throw std::runtime_error("KOLIOP_STATUS_DEINITIALIZATION_FAILURE");
     }
 }
 
