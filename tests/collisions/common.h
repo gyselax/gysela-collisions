@@ -1,10 +1,97 @@
-#include <KOLIOP/koliop.h>
+#include <KOLIOP/collisions.h>
 
 #include <algorithm>
 #include <chrono>
 #include <cstdlib>
 #include <iostream>
 #include <vector>
+
+void Initialize(bool   do_kokkos_initialization,
+                       size_t a_host_thread_count,
+                       size_t a_device_index,
+                       bool   with_verbose_initialization) {
+    if(do_kokkos_initialization == Kokkos::is_initialized()) {
+        // Either we are asked to initialize Kokkos and it is already
+        // initialized or we are asked not to initialize kokkos and it was
+        // done already (XNOR).
+        throw std::runtime_error("KOLIOP_STATUS_INITIALIZATION_FAILURE");
+    }
+    if(with_verbose_initialization) {
+        std::cout << "Koliop: v" << KOLIOP_VERSION << "\n";
+        std::cout << "  KOLIOP_TOOLCHAIN_NAME: " << KOLIOP_TOOLCHAIN_NAME << "\n";
+#if defined(KOLIOP_BACKEND_IS_GPU_LIKE)
+        std::cout << "  KOLIOP_BACKEND_IS_GPU_LIKE: true\n";
+#else
+        std::cout << "  KOLIOP_BACKEND_IS_GPU_LIKE: false\n";
+#endif
+#if defined(KOLIOP_BACKEND_IS_CPU_LIKE)
+        std::cout << "  KOLIOP_BACKEND_IS_CPU_LIKE: true\n";
+#else
+        std::cout << "  KOLIOP_BACKEND_IS_CPU_LIKE: false\n";
+#endif
+#if defined(KOLIOP_ASSERT_ENABLED)
+        std::cout << "  KOLIOP_ASSERT_ENABLED: true\n";
+#else
+        std::cout << "  KOLIOP_ASSERT_ENABLED: false\n";
+#endif
+        std::cout << "  Expecting f5d_s as (mu,vpar),(theta,r,phi),species\n";
+        std::cout << "  Expecting input buffers on device\n";
+#if defined(KOLIOP_UTILITY_FLATTEN_EXPECT_POW2_EXTENTS)
+        std::cout << "  KOLIOP_UTILITY_FLATTEN_EXPECT_POW2_EXTENTS: true\n";
+#else
+        std::cout << "  KOLIOP_UTILITY_FLATTEN_EXPECT_POW2_EXTENTS: false\n";
+#endif
+#if defined(KOLIOP_CONSTANT_MEMORY_USAGE)
+        std::cout << "  KOLIOP_CONSTANT_MEMORY_USAGE: true\n";
+#else
+        std::cout << "  KOLIOP_CONSTANT_MEMORY_USAGE: false\n";
+#endif
+        std::cout << "  koliop::collisions::Constant::kDisjointExecutionSpaceCount: " << koliop::collisions::Constant::kDisjointExecutionSpaceCount << "\n";
+        std::cout << "  koliop::collisions::Constant::kDiscardedStreamCount: " << koliop::collisions::Constant::kDiscardedStreamCount << "\n";
+        std::cout << "  koliop::collisions::Constant::kDefaultExecutionSpacePoolIndex: " << koliop::collisions::Constant::kDefaultExecutionSpacePoolIndex << "\n";
+        std::cout << "  koliop::collisions::Constant::kPresetBlockExtent: ";
+        for(std::size_t i = 0; i < koliop::collisions::Constant::kPresetBlockExtentCount; ++i) {
+            std::cout << "[" << koliop::collisions::Constant::kPresetBlockExtent[i][0]
+                      << "," << koliop::collisions::Constant::kPresetBlockExtent[i][1]
+                      << "," << koliop::collisions::Constant::kPresetBlockExtent[i][2]
+                      << "] ";
+        }
+        std::cout << "\n";
+    }
+    if(do_kokkos_initialization) {
+        auto the_configuration = Kokkos::InitializationSettings()
+                                     .set_device_id(static_cast<int>(a_device_index))
+                                     .set_disable_warnings(!with_verbose_initialization);
+        // If KOLIOP_SET_NUM_THREADS is set, use that value.
+        auto* koliop_set_num_threads_string = std::getenv("KOLIOP_SET_NUM_THREADS");
+        if(koliop_set_num_threads_string) {
+            a_host_thread_count = std::stoi(koliop_set_num_threads_string);
+        }
+        if(a_host_thread_count > 0) {
+            the_configuration.set_num_threads(a_host_thread_count);
+        }
+        Kokkos::initialize(the_configuration);
+    }
+    if(!Kokkos::is_initialized()) {
+        throw std::runtime_error("KOLIOP_STATUS_INITIALIZATION_FAILURE");
+    }
+    if(with_verbose_initialization) {
+        Kokkos::print_configuration(std::cout, true);
+    }
+    std::cout << std::flush;
+}
+
+void Deinitialize(bool do_kokkos_deinitialization) {
+    if(do_kokkos_deinitialization) {
+        if(!Kokkos::is_initialized()) {
+            throw std::runtime_error("KOLIOP_STATUS_DEINITIALIZATION_FAILURE");
+        }
+        Kokkos::finalize();
+        if(Kokkos::is_initialized()) {
+            throw std::runtime_error("KOLIOP_STATUS_DEINITIALIZATION_FAILURE");
+        }
+    }
+}
 
 template <typename Callable>
 auto NaiveBenchmark(Callable&& a_callable,

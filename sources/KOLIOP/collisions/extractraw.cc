@@ -12,18 +12,18 @@
 namespace koliop {
     namespace collisions {
 
-        void Operator::ExtractRaw(uint32_t value_identifier,
-                                  void*    an_output_buffer) const {
+        void Operator::ExtractRaw(Diagnostics value_identifier,
+                                  void*       an_output_buffer) const {
 
             switch(value_identifier) {
-                case KOLIOP_EXTRACTION_IDENTIFIER_nustar_coeff: {
+                case Diagnostics::k_nustar_coeff: {
                     koliop::utility::Copy::Deep(execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],
                                                 nustar_coeff_,
                                                 koliop::utility::View::ExternalInputL3<Flo64>{static_cast<Flo64*>(an_output_buffer),
                                                                                               static_cast<std::size_t>(species_extent_), static_cast<std::size_t>(species_extent_), static_cast<std::size_t>(r_extent_)});
                     break;
                 }
-                case KOLIOP_EXTRACTION_IDENTIFIER_n_s: {
+                case Diagnostics::k_n_s: {
                     koliop::utility::Copy::Deep(execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],
                                                 n_s_,
                                                 koliop::utility::View::ExternalInputL4<Flo64>{static_cast<Flo64*>(an_output_buffer),
@@ -31,7 +31,7 @@ namespace koliop {
                                                                                               static_cast<std::size_t>(species_extent_)});
                     break;
                 }
-                case KOLIOP_EXTRACTION_IDENTIFIER_U_par_s: {
+                case Diagnostics::k_U_par_s: {
                     koliop::utility::Copy::Deep(execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],
                                                 U_par_s_,
                                                 koliop::utility::View::ExternalInputL4<Flo64>{static_cast<Flo64*>(an_output_buffer),
@@ -39,14 +39,14 @@ namespace koliop {
                                                                                               static_cast<std::size_t>(species_extent_)});
                     break;
                 }
-                case KOLIOP_EXTRACTION_IDENTIFIER_T_s: {
+                case Diagnostics::k_T_s: {
                     koliop::utility::Copy::Deep(execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex], T_s_,
                                                 koliop::utility::View::ExternalInputL4<Flo64>{static_cast<Flo64*>(an_output_buffer),
                                                                                               static_cast<std::size_t>(tor1_extent_), static_cast<std::size_t>(tor2_extent_), static_cast<std::size_t>(tor3_extent_),
                                                                                               static_cast<std::size_t>(species_extent_)});
                     break;
                 }
-                case KOLIOP_EXTRACTION_IDENTIFIER_nu_ab: {
+                case Diagnostics::k_nu_ab: {
                     koliop::utility::Copy::Deep(execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],
                                                 nu_ab_,
                                                 koliop::utility::View::ExternalInputL5<Flo64>{static_cast<Flo64*>(an_output_buffer),
@@ -54,7 +54,7 @@ namespace koliop {
                                                                                               static_cast<std::size_t>(species_extent_), static_cast<std::size_t>(species_extent_)});
                     break;
                 }
-                case KOLIOP_EXTRACTION_IDENTIFIER_q_par_on_nT_s: {
+                case Diagnostics::k_q_par_on_nT_s: {
                     koliop::utility::Copy::Deep(execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],
                                                 q_par_on_nT_s_,
                                                 koliop::utility::View::ExternalInputL4<Flo64>{static_cast<Flo64*>(an_output_buffer),
@@ -64,7 +64,7 @@ namespace koliop {
                 }
 
                 default:
-                    throw std::domain_error{"ExtractRaw: Invalid value_identifier:" + std::to_string(value_identifier)};
+                    throw std::domain_error{"ExtractRaw: Invalid value_identifier:" + std::to_string(static_cast<int>(value_identifier))};
                     break;
             }
         }

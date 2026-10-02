@@ -13,20 +13,21 @@
 namespace koliop {
     namespace collisions {
 
-        // TODO(Etienne M): Into enums.
-#define KOLIOP_EXTRACTION_IDENTIFIER_nustar_coeff  1
-#define KOLIOP_EXTRACTION_IDENTIFIER_n_s           2
-#define KOLIOP_EXTRACTION_IDENTIFIER_U_par_s       3
-#define KOLIOP_EXTRACTION_IDENTIFIER_T_s           4
-#define KOLIOP_EXTRACTION_IDENTIFIER_nu_ab         5
-#define KOLIOP_EXTRACTION_IDENTIFIER_q_par_on_nT_s 6
-
         ////////////////////////////////////////////////////////////////////////
         // Operator definition
         ////////////////////////////////////////////////////////////////////////
 
         class Operator {
         public:
+            enum class Diagnostics {
+                k_nustar_coeff  = 1,
+                k_n_s           = 2,
+                k_U_par_s       = 3,
+                k_T_s           = 4,
+                k_nu_ab         = 5,
+                k_q_par_on_nT_s = 6,
+            };
+
         protected:
         public:
             Operator(uint64_t     mu_extent,
@@ -84,8 +85,8 @@ namespace koliop {
             void ComputeUparTCorrection(ComputeFloatType dt,
                                         Flo64*           f5d_s);
 
-            void ExtractRaw(uint32_t value_identifier,
-                            void*    an_output_buffer) const;
+            void ExtractRaw(Diagnostics value_identifier,
+                            void*       an_output_buffer) const;
 
             /// Compute the evolution of the distribution function due to
             /// collisions. The collision are applied to all the species in the

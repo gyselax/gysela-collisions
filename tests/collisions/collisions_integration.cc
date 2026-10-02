@@ -10,8 +10,6 @@
 #include "common.h"
 
 int Test1() {
-    ::koliop_Operator an_operator;
-
     static constexpr int8_t  collision_interspecies = true;
     static constexpr int8_t  SOL                    = false;
     static constexpr int8_t  LIM                    = false;
@@ -54,89 +52,50 @@ int Test1() {
     auto* a_buffer_0 = a_buffer_0_device_view.data();
     auto* a_buffer_1 = a_buffer_1_device_view.data();
 
-    if(::koliop_Create(&an_operator,
-                       mu_extent,
-                       vpar_extent,
-                       tor1_extent,
-                       tor2_extent,
-                       tor3_extent,
-                       species_extent,
-                       global_domain_r_extent,
-                       global_domain_theta_extent,
-                       global_domain_r_offset,
-                       global_domain_theta_offset,
-                       collision_interspecies,
-                       SOL,
-                       LIM,
-                       ir_SOL_separatrix,
-                       a_buffer_0,
-                       a_buffer_0,
-                       a_buffer_0,
-                       a_buffer_0,
-                       a_buffer_0,
-                       a_buffer_0,
-                       a_buffer_0,
-                       a_buffer_0,
-                       nullptr, // &mask_LIM[0][0],
-                       a_buffer_0,
-                       a_buffer_0) != KOLIOP_STATUS_SUCCESS) {
-        std::cout << "::koliop_Create() failed\n";
-        return -1;
-    }
+    koliop::collisions::Operator an_operator{
+        mu_extent,
+        vpar_extent,
+        tor1_extent,
+        tor2_extent,
+        tor3_extent,
+        species_extent,
+        global_domain_r_extent,
+        global_domain_theta_extent,
+        global_domain_r_offset,
+        global_domain_theta_offset,
+        collision_interspecies,
+        SOL,
+        LIM,
+        ir_SOL_separatrix,
+        a_buffer_0,
+        a_buffer_0,
+        a_buffer_0,
+        a_buffer_0,
+        a_buffer_0,
+        a_buffer_0,
+        a_buffer_0,
+        a_buffer_0,
+        nullptr, // &mask_LIM[0][0],
+        a_buffer_0,
+        a_buffer_0,
+    };
 
-    std::cout << an_operator << "\n";
-
-    ::koliop_ComputeMoments(an_operator,
-                            a_buffer_1);
-
-    ::koliop_PrecomputeNu(an_operator);
-
-    ::koliop_ComputeMaxwellianEvolution(an_operator,
-                                        dt,
-                                        a_buffer_1);
-
-    ::koliop_ComputeQparOnNT(an_operator,
-                             a_buffer_1);
-
-    ::koliop_ComputeCpar(an_operator,
-                         dt,
-                         a_buffer_1);
-
-    static constexpr int32_t choice = 4;
-
-    ::koliop_ComputeMaxwellianUnshiftedLoc(an_operator,
-                                           a_buffer_1,
-                                           choice);
-
-    ::koliop_Apply(an_operator,
-                   dt,
-                   a_buffer_1);
-
-    ::koliop_Fence(an_operator);
-
-    ::koliop_ComputeDensityCorrection(an_operator,
-                                      a_buffer_1);
-
-    ::koliop_ComputeUparTCorrection(an_operator,
-                                    dt,
-                                    a_buffer_1);
-
-    ::koliop_ExtractRaw(an_operator,
-                        KOLIOP_EXTRACTION_IDENTIFIER_n_s,
-                        a_buffer_1);
-
-    ::koliop_Fence(an_operator);
-
-    if(::koliop_Release(an_operator) != KOLIOP_STATUS_SUCCESS) {
-        std::cout << "::koliop_Release() failed\n";
-    }
-
+    an_operator.ComputeMoments(a_buffer_1);
+    an_operator.PrecomputeNu();
+    an_operator.ComputeMaxwellianEvolution(dt, a_buffer_1);
+    an_operator.ComputeQparOnNT(a_buffer_1);
+    an_operator.ComputeCpar(dt, a_buffer_1);
+    an_operator.ComputeMaxwellianUnshiftedLoc(4, a_buffer_1);
+    an_operator.Apply(dt, a_buffer_1);
+    an_operator.FenceAll();
+    an_operator.ComputeDensityCorrection(a_buffer_1);
+    an_operator.ComputeUparTCorrection(dt, a_buffer_1);
+    an_operator.ExtractRaw(koliop::collisions::Operator::Diagnostics::k_n_s, a_buffer_1);
+    an_operator.FenceAll();
     return 0;
 }
 
 int Test2() {
-    ::koliop_Operator an_operator;
-
     static constexpr int8_t collision_interspecies = true;
     static constexpr int8_t SOL                    = false;
     static constexpr int8_t LIM                    = false;
@@ -183,85 +142,59 @@ int Test2() {
     auto* a_buffer_0 = a_buffer_0_device_view.data();
     auto* a_buffer_1 = a_buffer_1_device_view.data();
 
-    if(::koliop_Create(&an_operator,
-                       mu_extent,
-                       vpar_extent,
-                       tor1_extent,
-                       tor2_extent,
-                       tor3_extent,
-                       species_extent,
-                       global_domain_r_extent,
-                       global_domain_theta_extent,
-                       global_domain_r_offset,
-                       global_domain_theta_offset,
-                       collision_interspecies,
-                       SOL,
-                       LIM,
-                       ir_SOL_separatrix,
-                       // NOTE: the cache locality effect implied by spoofing
-                       // all these array as a single ptr is not visible on GPU.
-                       a_buffer_0,
-                       a_buffer_0,
-                       a_buffer_0,
-                       a_buffer_0,
-                       a_buffer_0,
-                       a_buffer_0,
-                       a_buffer_0,
-                       a_buffer_0,
-                       nullptr, // &mask_LIM[0][0],
-                       a_buffer_0,
-                       a_buffer_0) != KOLIOP_STATUS_SUCCESS) {
-        std::cout << "::koliop_Create() failed\n";
-        return -1;
-    }
-
-    std::cout << an_operator << "\n";
+    koliop::collisions::Operator an_operator{
+        mu_extent,
+        vpar_extent,
+        tor1_extent,
+        tor2_extent,
+        tor3_extent,
+        species_extent,
+        global_domain_r_extent,
+        global_domain_theta_extent,
+        global_domain_r_offset,
+        global_domain_theta_offset,
+        collision_interspecies,
+        SOL,
+        LIM,
+        ir_SOL_separatrix,
+        // NOTE: the cache locality effect implied by spoofing
+        // all these array as a single ptr is not visible on GPU.
+        a_buffer_0,
+        a_buffer_0,
+        a_buffer_0,
+        a_buffer_0,
+        a_buffer_0,
+        a_buffer_0,
+        a_buffer_0,
+        a_buffer_0,
+        nullptr, // &mask_LIM[0][0],
+        a_buffer_0,
+        a_buffer_0,
+    };
 
     NaiveBenchmark([&](auto) {
-        if(::koliop_Collision(an_operator,
-                              dt,
-                              a_buffer_1) != KOLIOP_STATUS_SUCCESS) {
-            std::cout << "::koliop_Collision() failed\n";
-            std::exit(-1);
-        }
-
-        ::koliop_Fence(an_operator);
+        an_operator.Collision(dt, a_buffer_1);
+        an_operator.FenceAll();
     });
-
-    if(::koliop_Release(an_operator) != KOLIOP_STATUS_SUCCESS) {
-        std::cout << "::koliop_Release() failed\n";
-    }
 
     return 0;
 }
 
 int main(int, char**) {
-    if(::koliop_Initialize(KOLIOP_TRUE, 8, 0, KOLIOP_TRUE) != KOLIOP_STATUS_SUCCESS) {
-        std::cout << "::koliop_Initialize() failed\n";
-        return -1;
-    }
-
+    Initialize(true, 8, 0, true);
     // NOTE: Makes sure the kernel are on the device. Indeed the initial kernel
     // launch has a huge latency due to the kernel needing to be copied to the
     // GPU's memory.
     if(Test1() < 0) {
         return -1;
     }
-
     if(Test1() < 0) {
         return -1;
     }
-
     if(Test2() < 0) {
         return -1;
     }
-
-    if(::koliop_Deinitialize(KOLIOP_TRUE) != KOLIOP_STATUS_SUCCESS) {
-        std::cout << "::koliop_Deinitialize() failed\n";
-        return -1;
-    }
-
+    Deinitialize(true);
     std::cout << "Deinitialized()\n";
-
     return 0;
 }
