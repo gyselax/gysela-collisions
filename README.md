@@ -52,35 +52,3 @@ Test project /lus/home/BCINES/dci/malaboeuf/repos/gysela-gpu-porting/koliop/buil
 Total Test time (real) =   0.63 sec
 ```
 
-Note that to run the tests on Unix systems, one may need to run the following
-command :
-```
-$ ulimit -s unlimited
-```
-
-This is due to our usage of of stack allocated (constant) buffer representing
-the input to the operator. This stack issue could be avoided with the use of
-dynamic allocation. The operator itself is not limited by the stack like the
-test case is, thus, there is not need to `ulimit` to be called.
-
-## Ideology
-
-Generally, Keeping the interface (It) Simple (and Stupid) (KISS) is a good advice, though never remove necessary complexity (do not make it simpler, stupider that it should). An other view would be to try to use the weakest (less powerful) tool that satisfies the need (it requires that you know what you need, potentially months or years in advance).
-
-## Coding style
-
-<!--
-TODO(): [LOOP|LOAD|SIMPLIFY|INDEX|ASYNC|COPY]
-NOTE:
--->
-
-## TODOs
-
-- Some tuning:
-    - `Kokkos::IndexType<Index>`;
-    - Reduce register usage. Each time you use a view, you consume a LOT of register (dimension/stride storage ?).. much more than a simple pointer;
-        - File a bug regarding this issue ?
-        - One could construct the view inside the kernel, this would help the compiler factorize the register values.
-    - Reduced precision ?:
-        - NOTE: that the fact that we do not have pivoting for the LU factorization *could* reduce the precision more when treating Flo32 matrices.
-    - operator fusing.

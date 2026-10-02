@@ -256,20 +256,7 @@ namespace koliop {
             void Collision(ComputeFloatType dt,
                            Flo64*           f5d_s);
 
-        protected:
-            /// Compute the evolution of the distribution function due to
-            /// collisions. The collision are applied to all the species in the
-            /// [first_species, last_species) range.
-            ///
-            template <typename ForwardIterator>
-            void CollisionFor(ComputeFloatType dt,
-                              Flo64*           f5d_s,
-                              ForwardIterator  first_species,
-                              ForwardIterator  last_species);
-
         public:
-            // TODO(Etienne M): protected:
-
             // Constant, externally computed values
             OrdinalType mu_extent_;
             OrdinalType vpar_extent_;
