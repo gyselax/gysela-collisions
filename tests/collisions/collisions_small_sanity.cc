@@ -92,11 +92,11 @@ int Test2() {
 }
 
 int main(int, char**) {
-    Initialize(true, 8, 0, true);
+    Initialize(8, 0, true);
     if(Test2() < 0) {
         return -1;
     }
-    Deinitialize(true);
+    Deinitialize();
     std::cout << "Deinitialized()\n";
     return 0;
 }

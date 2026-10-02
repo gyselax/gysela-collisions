@@ -181,7 +181,7 @@ int Test2() {
 }
 
 int main(int, char**) {
-    Initialize(true, 8, 0, true);
+    Initialize(8, 0, true);
     // NOTE: Makes sure the kernel are on the device. Indeed the initial kernel
     // launch has a huge latency due to the kernel needing to be copied to the
     // GPU's memory.
@@ -194,7 +194,7 @@ int main(int, char**) {
     if(Test2() < 0) {
         return -1;
     }
-    Deinitialize(true);
+    Deinitialize();
     std::cout << "Deinitialized()\n";
     return 0;
 }

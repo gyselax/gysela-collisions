@@ -200,6 +200,10 @@ namespace koliop {
         void Operator::ComputeMaxwellianUnshiftedLoc(uint32_t choice,
                                                      Flo64*   f5d_s) const {
 
+            if(!(choice == 3 || choice == 4)) {
+                throw std::runtime_error("KOLIOP_STATUS_INVALID_VALUE");
+            }
+
             auto a_device_visible_f5d_s = koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL6<Flo64>,
                                                                                koliop::utility::View::InternalInputL6>(execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],
                                                                                                                        f5d_s, "f5d_s",
