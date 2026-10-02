@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 
-#include "KOLIOP/collision/cvcddrivereraser.h"
+#include "KOLIOP/collisions/cvcddrivereraser.h"
 
 namespace koliop {
-    namespace collision {
+    namespace collisions {
 
         ////////////////////////////////////////////////////////////////////////
         // CvCdDriverEraser methods definition
@@ -39,5 +39,5 @@ namespace koliop {
             return get() != nullptr;
         }
 
-    } // namespace collision
+    } // namespace collisions
 } // namespace koliop

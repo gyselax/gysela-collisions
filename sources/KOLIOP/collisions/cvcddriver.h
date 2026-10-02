@@ -6,14 +6,14 @@
 #include "KOLIOP/blas/mv.h"
 #include "KOLIOP/blas/trf.h"
 #include "KOLIOP/blas/trsv.h"
-#include "KOLIOP/collision/matrixsampler.h"
-#include "KOLIOP/collision/najl.h"
+#include "KOLIOP/collisions/matrixsampler.h"
+#include "KOLIOP/collisions/najl.h"
 #include "KOLIOP/utility/iterate.h"
 #include "KOLIOP/utility/select.h"
 #include "KOLIOP/utility/tordu.h"
 
 namespace koliop {
-    namespace collision {
+    namespace collisions {
         namespace detail {
             namespace {
                 // NOTE: I use an unamed namespace because it is unknown to me if
@@ -689,7 +689,7 @@ namespace koliop {
             // coefs and overwrite the f5d_s with the matrix/alpha coef/najl ?
 
             // NOTE: If you have an issue with these assertions, checkout the
-            // constant.h file and tune kBlockExtent[Tor1|Tor2|Tor3].
+            // constants.h file and tune kBlockExtent[Tor1|Tor2|Tor3].
             KOLIOP_ASSERT(tor1_extent % kBlockExtentTor1 == 0);
             KOLIOP_ASSERT(tor2_extent % kBlockExtentTor2 == 0);
             KOLIOP_ASSERT(tor3_extent % kBlockExtentTor3 == 0);
@@ -813,7 +813,7 @@ namespace koliop {
             }
         }
 
-    } // namespace collision
+    } // namespace collisions
 } // namespace koliop
 
 #endif

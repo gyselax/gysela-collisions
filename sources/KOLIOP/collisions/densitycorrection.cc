@@ -4,8 +4,8 @@
 #include <limits>
 #include <type_traits>
 
-#include "KOLIOP/collision/constant.h"
-#include "KOLIOP/collision/operator.h"
+#include "KOLIOP/collisions.h"
+#include "KOLIOP/collisions/constants.h"
 #include "KOLIOP/internal/configuration.h"
 #include "KOLIOP/portability/cmath.h"
 #include "KOLIOP/utility/copy.h"
@@ -15,7 +15,7 @@
 #include "KOLIOP/utility/view.h"
 
 namespace koliop {
-    namespace collision {
+    namespace collisions {
 
         /// Correction to keep the local density constant
         /// After the main part of the collisions, the distribution function has
@@ -144,5 +144,5 @@ namespace koliop {
                                                                                                 species_extent_);
         }
 
-    } // namespace collision
+    } // namespace collisions
 } // namespace koliop

@@ -3,14 +3,14 @@
 #include <Kokkos_Core.hpp>
 #include <limits>
 
-#include "KOLIOP/collision/constant.h"
-#include "KOLIOP/collision/operator.h"
+#include "KOLIOP/collisions.h"
+#include "KOLIOP/collisions/constants.h"
 #include "KOLIOP/internal/configuration.h"
 #include "KOLIOP/utility/select.h"
 #include "KOLIOP/utility/tordu.h"
 
 namespace koliop {
-    namespace collision {
+    namespace collisions {
 
         namespace {
             // NOTE: I use an unamed namespace because it is unknown to me if
@@ -151,5 +151,5 @@ namespace koliop {
                            nu_ab_);
         }
 
-    } // namespace collision
+    } // namespace collisions
 } // namespace koliop

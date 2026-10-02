@@ -1,4 +1,4 @@
-#include <KOLIOP/koliop.h>
+#include <KOLIOP/collisions.h>
 
 #include <Kokkos_Core.hpp>
 #include <algorithm>

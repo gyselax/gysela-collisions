@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 
-#include "KOLIOP/collision/cvcddriver.h"
-#include "KOLIOP/collision/cvcddrivereraser.h"
-#include "KOLIOP/collision/operator.h"
+#include "KOLIOP/collisions.h"
+#include "KOLIOP/collisions/cvcddriver.h"
+#include "KOLIOP/collisions/cvcddrivereraser.h"
 #include "KOLIOP/internal/configuration.h"
 
 namespace koliop {
-    namespace collision {
+    namespace collisions {
         namespace detail {
 
             void CreateCvCdDriver(const Operator&   an_operator,
@@ -93,5 +93,5 @@ namespace koliop {
             }
 
         } // namespace detail
-    }     // namespace collision
+    } // namespace collisions
 } // namespace koliop

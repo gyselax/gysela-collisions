@@ -1,16 +1,15 @@
 // SPDX-License-Identifier: MIT
 
-#include "KOLIOP/collision/operator.h"
-
 #include <Kokkos_Core.hpp>
 
+#include "KOLIOP/collisions.h"
 #include "KOLIOP/internal/configuration.h"
 #include "KOLIOP/portability/cmath.h"
 #include "KOLIOP/utility/copy.h"
 #include "KOLIOP/utility/tordu.h"
 
 namespace koliop {
-    namespace collision {
+    namespace collisions {
         namespace detail {
             /// See Constant::kDiscardedStreamCount for more detail.
             ///
@@ -269,5 +268,5 @@ namespace koliop {
             // Necessary user Fence(Constant::kDefaultExecutionSpacePoolIndex);
         }
 
-    } // namespace collision
+    } // namespace collisions
 } // namespace koliop

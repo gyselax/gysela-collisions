@@ -2,14 +2,14 @@
 
 #include <Kokkos_Core.hpp>
 
-#include "KOLIOP/collision/constant.h"
-#include "KOLIOP/collision/operator.h"
+#include "KOLIOP/collisions.h"
+#include "KOLIOP/collisions/constants.h"
 #include "KOLIOP/internal/configuration.h"
 #include "KOLIOP/utility/copy.h"
 #include "KOLIOP/utility/view.h"
 
 namespace koliop {
-    namespace collision {
+    namespace collisions {
 
         void Operator::Apply(ComputeFloatType dt,
                              Flo64*           f5d_s) {
@@ -47,5 +47,5 @@ namespace koliop {
                                                                                                 species_extent_);
         }
 
-    } // namespace collision
+    } // namespace collisions
 } // namespace koliop

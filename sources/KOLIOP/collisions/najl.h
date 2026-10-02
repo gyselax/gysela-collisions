@@ -3,13 +3,13 @@
 #ifndef KOLIOP_COLLISION_NAJL_H
 #define KOLIOP_COLLISION_NAJL_H
 
-#include "KOLIOP/collision/constant.h"
+#include "KOLIOP/collisions/constants.h"
 #include "KOLIOP/portability/cmath.h"
 #include "KOLIOP/utility/copy.h"
 #include "KOLIOP/utility/view.h"
 
 namespace koliop {
-    namespace collision {
+    namespace collisions {
         namespace detail {
 
             /// Computation of the coefficient C(i,j,l) corresponding to
@@ -793,7 +793,7 @@ namespace koliop {
                                   Najl_view);
         }
 
-    } // namespace collision
+    } // namespace collisions
 } // namespace koliop
 
 #endif

@@ -7,7 +7,7 @@
 #include "KOLIOP/blas/kind.h"
 
 namespace koliop {
-    namespace collision {
+    namespace collisions {
 
         ////////////////////////////////////////////////////////////////////////
         // Constant definition
@@ -139,7 +139,7 @@ namespace koliop {
                                                                           sizeof(kPresetBlockExtent[0]);
         };
 
-    } // namespace collision
+    } // namespace collisions
 } // namespace koliop
 
 #endif

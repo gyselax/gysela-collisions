@@ -116,8 +116,11 @@ target_sources(koliop
                    BASE_DIRS include ${CMAKE_CURRENT_BINARY_DIR}
                    FILES
                      ${CMAKE_CURRENT_BINARY_DIR}/KOLIOP/internal/buildspecificities.h
-                     include/KOLIOP/error/status.h
-                     include/KOLIOP/koliop.h
+                     include/KOLIOP/blas
+                     include/KOLIOP/collisions
+                     include/KOLIOP/internal
+                     include/KOLIOP/utility
+                     include/KOLIOP/collisions.h
 )
 
 target_include_directories(koliop

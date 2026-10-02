@@ -1,8 +1,7 @@
 module purge
 
-module load cpe/24.07
-module load rocm/6.3.3
-
-module load cmake
+module load cpe/25.09
+module load rocm
+module load cmake ninja
 
 module list

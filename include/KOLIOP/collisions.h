@@ -6,125 +6,29 @@
 #include <Kokkos_Core.hpp>
 #include <vector>
 
-#include "KOLIOP/collision/constant.h"
-#include "KOLIOP/collision/cvcddriverscheduler.h"
+#include "KOLIOP/collisions/cvcddriverscheduler.h"
 #include "KOLIOP/internal/configuration.h"
 #include "KOLIOP/utility/view.h"
 
 namespace koliop {
-    namespace collision {
+    namespace collisions {
+
+        // TODO(Etienne M): Into enums.
+#define KOLIOP_EXTRACTION_IDENTIFIER_nustar_coeff  1
+#define KOLIOP_EXTRACTION_IDENTIFIER_n_s           2
+#define KOLIOP_EXTRACTION_IDENTIFIER_U_par_s       3
+#define KOLIOP_EXTRACTION_IDENTIFIER_T_s           4
+#define KOLIOP_EXTRACTION_IDENTIFIER_nu_ab         5
+#define KOLIOP_EXTRACTION_IDENTIFIER_q_par_on_nT_s 6
 
         ////////////////////////////////////////////////////////////////////////
         // Operator definition
         ////////////////////////////////////////////////////////////////////////
 
-        /// TODO(Etienne M): INDEX We have a dilemma. CPU allows for large
-        /// temporary, per thread, buffers. GPU do not (at least for LDS). Due
-        /// to caches hierarchy, CPU like per thread, contiguous memory
-        /// accesses. GPU do not because this kind of access leads to wastes in
-        /// the memory transactions (notion of un-coalesced accesses). Using
-        /// Kokkos, we hope to attain decent performance on both GPU and CPU.
-        ///
-        /// Assuming the following example, all arrays with layout left
-        /// (Fortran).
-        ///
-        ///     collapse(3)
-        ///     for(uint64_t iphi = 0; iphi <= phimax; ++iphi) {
-        ///         for(uint64_t itheta = 0; itheta <= thetamax; ++itheta) {
-        ///             for(uint64_t ir = 0; ir <= rmax; ++ir) {
-        ///                 const Flo64 a = A(ir, itheta);
-        ///                 const Flo64 b = B(ir, itheta, iphi);
-        ///                 for(uint64_t ivpar = 0; ivpar <= vparmax; ++ivpar) {
-        ///                     const Flo64 c = C(ivpar);
-        ///                     for(uint64_t imu = 0; imu <= mumax; ++imu) {
-        ///                         const Flo64 d = D(imu);
-        ///                         E(imu, ivpar, ir, itheta, iphi) *= a + b + c + d;
-        ///                     }
-        ///                 }
-        ///             }
-        ///         }
-        ///     }
-        ///
-        /// Collapsing on the first 3 loops would lead to decent performance on
-        /// CPU. On GPU though, this would be crappy as each thread would do
-        /// linear access in C, D and E. Access in C and D are *ok* that bad,
-        /// because, out of one memory transaction, conceptualize it as a cache
-        /// line, only 8 bytes will be kept but the next fetch will be likely to
-        /// hit the cache. Except that on MI250X cards, we have very few cache
-        /// (8 Mio per GCD!). Access in E are bad because each thread gets a
-        /// different ir value which means, thread n+1 will access memory in a
-        /// stride of mumax*vparmax (strongly un-coalesced).
-        ///
-        /// We could try to inter-exchange the loops but this would then work
-        /// badly on CPU.
-        ///
-        ///     collapse(3)
-        ///     for(uint64_t itheta = 0; itheta <= thetamax; ++itheta) {
-        ///         for(uint64_t ivpar = 0; ivpar <= vparmax; ++ivpar) {
-        ///             for(uint64_t imu = 0; imu <= mumax; ++imu) {
-        ///                 const Flo64 a = A(ir, itheta);
-        ///                 const Flo64 c = C(ivpar);
-        ///                 const Flo64 d = D(imu);
-        ///                 for(uint64_t iphi = 0; iphi <= phimax; ++iphi) {
-        ///                     for(uint64_t ir = 0; ir <= rmax; ++ir) {
-        ///                         const Flo64 b = B(ir, itheta, iphi);
-        ///                         E(imu, ivpar, ir, itheta, iphi) *= a + b + c + d;
-        ///                     }
-        ///                 }
-        ///             }
-        ///         }
-        ///     }
-        ///
-        /// In the end, the most versatile is to collapse everything, do
-        /// redundant computation on GPU but dont waste what you bring from
-        /// global memory and hope that the compiler will optimize the redundant
-        /// loads and computations computation on CPU.
-        ///
-        ///     collapse(5)
-        ///     for(uint64_t itheta = 0; itheta <= thetamax; ++itheta) {
-        ///         for(uint64_t iphi = 0; iphi <= phimax; ++iphi) {
-        ///             for(uint64_t ir = 0; ir <= rmax; ++ir) {
-        ///                 for(uint64_t ivpar = 0; ivpar <= vparmax; ++ivpar) {
-        ///                     for(uint64_t imu = 0; imu <= mumax; ++imu) {
-        ///                         const Flo64 a = A(ir, itheta);
-        ///                         const Flo64 c = C(ivpar);
-        ///                         const Flo64 d = D(imu);
-        ///                         const Flo64 b = B(ir, itheta, iphi);
-        ///                         E(imu, ivpar, ir, itheta, iphi) *= a + b + c + d;
-        ///                     }
-        ///                 }
-        ///             }
-        ///         }
-        ///     }
-        ///
-        ///
         class Operator {
         public:
         protected:
         public:
-            /// @brief
-            /// @param mu_extent
-            /// @param vpar_extent
-            /// @param tor1_extent
-            /// @param tor2_extent
-            /// @param tor3_extent
-            /// @param species_extent
-            /// @param collision_interspecies
-            /// @param SOL
-            /// @param LIM
-            /// @param ir_SOL_separatrix We do not need to shift it by -istart
-            /// because we do not parallelize on ir across ranks.
-            /// @param hat_As
-            /// @param hat_Zs
-            /// @param mug
-            /// @param vparg
-            /// @param coeff_intdmu
-            /// @param coeff_intdvpar
-            /// @param coeff_AD_r
-            /// @param mask_buffer_r
-            /// @param mask_LIM
-            /// @param B_norm
-            /// @param Bstar_s
             Operator(uint64_t     mu_extent,
                      uint64_t     vpar_extent,
                      uint64_t     tor1_extent,
@@ -202,13 +106,9 @@ namespace koliop {
                               ForwardIterator  last_species);
 
         public:
-            // Could be protected but we would have to use friend functions.
-            // protected:
+            // TODO(Etienne M): protected:
 
-            //
             // Constant, externally computed values
-            //
-
             OrdinalType mu_extent_;
             OrdinalType vpar_extent_;
             OrdinalType tor1_extent_;
@@ -244,16 +144,10 @@ namespace koliop {
             koliop::utility::View::InternalInputL2<const Flo64> B_norm_;
             koliop::utility::View::InternalInputL4<const Flo64> Bstar_s_;
 
-            //
             // Constant, internally computed values
-            //
-
             koliop::utility::View::MDL3<ComputeFloatType> nustar_coeff_;
 
-            //
             // Variable, internally computed values
-            //
-
             koliop::utility::View::MDL4<ComputeFloatType> n_s_;
             koliop::utility::View::MDL4<ComputeFloatType> U_par_s_;
             koliop::utility::View::MDL4<ComputeFloatType> U_par_s_input_;
@@ -261,20 +155,14 @@ namespace koliop {
             koliop::utility::View::MDL5<ComputeFloatType> nu_ab_;
             koliop::utility::View::MDL4<ComputeFloatType> q_par_on_nT_s_;
 
-            //
             // Miscellaneous tooling
-            //
-
             std::vector<Constant::DeviceExecutionSpaceType> execution_space_pool_;
 
-            //
             // Miscellaneous numerical tooling
-            //
-
             CvCdDriverScheduler cvcd_drivers_scheduler_;
         };
 
-    } // namespace collision
+    } // namespace collisions
 } // namespace koliop
 
 #endif

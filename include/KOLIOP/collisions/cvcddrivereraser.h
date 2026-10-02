@@ -5,14 +5,13 @@
 
 #include <memory>
 
-#include "KOLIOP/collision/constant.h"
+#include "KOLIOP/collisions/constants.h"
 #include "KOLIOP/internal/configuration.h"
 #include "KOLIOP/utility/view.h"
 
 namespace koliop {
-    namespace collision {
+    namespace collisions {
 
-        // NOTE: Ugly declaration..
         class Operator;
 
         ////////////////////////////////////////////////////////////////////////
@@ -117,7 +116,7 @@ namespace koliop {
             return *this;
         }
 
-    } // namespace collision
+    } // namespace collisions
 } // namespace koliop
 
 #endif

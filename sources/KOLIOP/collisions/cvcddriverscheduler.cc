@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 
-#include "KOLIOP/collision/cvcddriverscheduler.h"
+#include "KOLIOP/collisions/cvcddriverscheduler.h"
 
-#include "KOLIOP/collision/operator.h"
+#include "KOLIOP/collisions.h"
 
 namespace koliop {
-    namespace collision {
+    namespace collisions {
         namespace detail {
 
             static inline void
@@ -241,5 +241,5 @@ namespace koliop {
             }
         }
 
-    } // namespace collision
+    } // namespace collisions
 } // namespace koliop

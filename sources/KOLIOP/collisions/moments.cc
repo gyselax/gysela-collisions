@@ -4,8 +4,8 @@
 #include <limits>
 #include <type_traits>
 
-#include "KOLIOP/collision/constant.h"
-#include "KOLIOP/collision/operator.h"
+#include "KOLIOP/collisions.h"
+#include "KOLIOP/collisions/constants.h"
 #include "KOLIOP/internal/configuration.h"
 #include "KOLIOP/portability/cmath.h"
 #include "KOLIOP/utility/copy.h"
@@ -15,7 +15,7 @@
 #include "KOLIOP/utility/view.h"
 
 namespace koliop {
-    namespace collision {
+    namespace collisions {
 
         /// @brief Computes the fluid moments:
         ///   na    =                int 2 * Pi * Bstar * dmu * dvpar * Fa
@@ -223,5 +223,5 @@ namespace koliop {
                                                                                                 species_extent_);
         }
 
-    } // namespace collision
+    } // namespace collisions
 } // namespace koliop

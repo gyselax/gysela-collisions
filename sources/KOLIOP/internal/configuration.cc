@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-#include "KOLIOP/error/exception.h"
+#include "KOLIOP/internal/configuration.h"
 
 #include <cstdio>
 

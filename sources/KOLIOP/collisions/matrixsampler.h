@@ -8,7 +8,7 @@
 #include "KOLIOP/internal/configuration.h"
 
 namespace koliop {
-    namespace collision {
+    namespace collisions {
 
         ////////////////////////////////////////////////////////////////////////
         // MatrixSampler definition
@@ -222,7 +222,7 @@ namespace koliop {
                                            batch_element_index);
         }
 
-    } // namespace collision
+    } // namespace collisions
 } // namespace koliop
 
 #endif

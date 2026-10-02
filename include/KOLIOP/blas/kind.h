@@ -96,8 +96,8 @@ namespace koliop {
                 };
 
             } // namespace matrix
-        }     // namespace kind
-    }         // namespace blas
+        } // namespace kind
+    } // namespace blas
 } // namespace koliop
 
 #endif

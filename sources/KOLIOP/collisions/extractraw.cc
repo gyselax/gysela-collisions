@@ -3,15 +3,14 @@
 #include <stdexcept>
 #include <string>
 
-#include "KOLIOP/collision/constant.h"
-#include "KOLIOP/collision/operator.h"
+#include "KOLIOP/collisions.h"
+#include "KOLIOP/collisions/constants.h"
 #include "KOLIOP/internal/configuration.h"
-#include "KOLIOP/koliop.h"
 #include "KOLIOP/utility/copy.h"
 #include "KOLIOP/utility/view.h"
 
 namespace koliop {
-    namespace collision {
+    namespace collisions {
 
         void Operator::ExtractRaw(uint32_t value_identifier,
                                   void*    an_output_buffer) const {
@@ -70,5 +69,5 @@ namespace koliop {
             }
         }
 
-    } // namespace collision
+    } // namespace collisions
 } // namespace koliop

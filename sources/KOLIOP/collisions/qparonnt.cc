@@ -4,8 +4,8 @@
 #include <limits>
 #include <type_traits>
 
-#include "KOLIOP/collision/constant.h"
-#include "KOLIOP/collision/operator.h"
+#include "KOLIOP/collisions.h"
+#include "KOLIOP/collisions/constants.h"
 #include "KOLIOP/internal/configuration.h"
 #include "KOLIOP/portability/cmath.h"
 #include "KOLIOP/utility/copy.h"
@@ -15,7 +15,7 @@
 #include "KOLIOP/utility/view.h"
 
 namespace koliop {
-    namespace collision {
+    namespace collisions {
 
         /// @brief Computation of q_para/(na*Ta):
         ///   q_par_on_nT = 0.5*int (2 * Pi * Bstar) *  dmu * dvpar * &
@@ -154,5 +154,5 @@ namespace koliop {
                               a_device_visible_f5d_s, q_par_on_nT_s_);
         }
 
-    } // namespace collision
+    } // namespace collisions
 } // namespace koliop

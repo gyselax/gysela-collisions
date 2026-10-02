@@ -6,8 +6,8 @@
 #include <string>
 #include <type_traits>
 
-#include "KOLIOP/collision/constant.h"
-#include "KOLIOP/collision/operator.h"
+#include "KOLIOP/collisions.h"
+#include "KOLIOP/collisions/constants.h"
 #include "KOLIOP/internal/configuration.h"
 #include "KOLIOP/portability/cmath.h"
 #include "KOLIOP/utility/copy.h"
@@ -17,7 +17,7 @@
 #include "KOLIOP/utility/view.h"
 
 namespace koliop {
-    namespace collision {
+    namespace collisions {
 
         /// @brief This routine compute one of the following operation on the
         /// distribution function:
@@ -222,5 +222,5 @@ namespace koliop {
                                                                                                 species_extent_);
         }
 
-    } // namespace collision
+    } // namespace collisions
 } // namespace koliop

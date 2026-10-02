@@ -22,10 +22,10 @@ DependencyResolver_Resolve(KokkosKernels
 
 function(${PROJECT_NAME}_target_add_kokkos target_name)
     target_link_libraries("${target_name}"
-                          PRIVATE Kokkos::kokkos)
+                          PUBLIC Kokkos::kokkos)
 endfunction()
 
 function(${PROJECT_NAME}_target_add_kokkos_kernels target_name)
     target_link_libraries("${target_name}"
-                          PRIVATE Kokkos::kokkoskernels)
+                          PUBLIC Kokkos::kokkoskernels)
 endfunction()

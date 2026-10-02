@@ -5,14 +5,13 @@
 
 #include <vector>
 
-#include "KOLIOP/collision/cvcddrivereraser.h"
+#include "KOLIOP/collisions/cvcddrivereraser.h"
 #include "KOLIOP/internal/configuration.h"
 #include "KOLIOP/utility/view.h"
 
 namespace koliop {
-    namespace collision {
+    namespace collisions {
 
-        // NOTE: Ugly declaration..
         class Operator;
 
         ////////////////////////////////////////////////////////////////////////
@@ -50,7 +49,7 @@ namespace koliop {
             std::vector<CvCdDriverConfiguration> cvcd_drivers_configurations_;
         };
 
-    } // namespace collision
+    } // namespace collisions
 } // namespace koliop
 
 #endif
