@@ -503,16 +503,16 @@ namespace koliop {
 
         protected:
             using MatrixSamplerType = MatrixSampler<typename MatrixKindType::ScalarType,
-                                                    koliop::utility::View::InternalInputL1<const Flo64>>;
+                                                    koliop::utility::View::MDL1<const Flo64>>;
 
         public:
-            CvCdDriver(OrdinalType                                                vpar_extent,
-                       OrdinalType                                                species_extent,
-                       bool                                                       collision_interspecies,
-                       const koliop::utility::View::InternalInputL1<const Flo64>& hat_As,
-                       const koliop::utility::View::InternalInputL1<const Flo64>& hat_Zs,
-                       const koliop::utility::View::InternalInputL1<const Flo64>& vparg,
-                       const koliop::utility::View::InternalInputL1<const Flo64>& coeff_intdvpar);
+            CvCdDriver(OrdinalType                                     vpar_extent,
+                       OrdinalType                                     species_extent,
+                       bool                                            collision_interspecies,
+                       const koliop::utility::View::MDL1<const Flo64>& hat_As,
+                       const koliop::utility::View::MDL1<const Flo64>& hat_Zs,
+                       const koliop::utility::View::MDL1<const Flo64>& vparg,
+                       const koliop::utility::View::MDL1<const Flo64>& coeff_intdvpar);
 
             void AllocateScratchMemory() {
                 // NOTE: No, we are not allocating Najl and co. with only
@@ -574,7 +574,7 @@ namespace koliop {
                        OrdinalType      block_first_tor3,
                        ComputeFloatType dt,
                        OrdinalType      species_index,
-                       View6D&&         f5d_s);
+                       const View6D&    f5d_s);
 
         protected:
             // Miscellaneous numerical tooling
@@ -598,7 +598,7 @@ namespace koliop {
 
             OrdinalType vpar_extent_;
 
-            koliop::utility::View::InternalInputL1<const Flo64> coeff_intdvpar_;
+            koliop::utility::View::MDL1<const Flo64> coeff_intdvpar_;
         };
 
 
@@ -613,13 +613,13 @@ namespace koliop {
         CvCdDriver<block_extent_tor1,
                    block_extent_tor2,
                    block_extent_tor3,
-                   BatchTraits>::CvCdDriver(OrdinalType                                                vpar_extent,
-                                            OrdinalType                                                species_extent,
-                                            bool                                                       collision_interspecies,
-                                            const koliop::utility::View::InternalInputL1<const Flo64>& hat_As,
-                                            const koliop::utility::View::InternalInputL1<const Flo64>& hat_Zs,
-                                            const koliop::utility::View::InternalInputL1<const Flo64>& vparg,
-                                            const koliop::utility::View::InternalInputL1<const Flo64>& coeff_intdvpar)
+                   BatchTraits>::CvCdDriver(OrdinalType                                     vpar_extent,
+                                            OrdinalType                                     species_extent,
+                                            bool                                            collision_interspecies,
+                                            const koliop::utility::View::MDL1<const Flo64>& hat_As,
+                                            const koliop::utility::View::MDL1<const Flo64>& hat_Zs,
+                                            const koliop::utility::View::MDL1<const Flo64>& vparg,
+                                            const koliop::utility::View::MDL1<const Flo64>& coeff_intdvpar)
             : najl_provider_{vpar_extent, species_extent,
                              collision_interspecies,
                              hat_As, hat_Zs, vparg}
@@ -653,7 +653,7 @@ namespace koliop {
                                             OrdinalType      block_first_tor3,
                                             ComputeFloatType dt,
                                             OrdinalType      species_index,
-                                            View6D&&         f5d_s) {
+                                            const View6D&    f5d_s) {
 
             // try {
             //     koliop::blas::detail::DoResidualTest(an_execution_space,

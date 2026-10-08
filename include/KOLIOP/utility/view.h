@@ -141,39 +141,6 @@ namespace koliop {
             using MDD5 = MDD<T*****>;
             template <typename T>
             using MDD6 = MDD<T******>;
-
-            // TODO(Etienne M): Make sure the copies are elided (that is, Gysela
-            // validates)
-            template <typename Extent>
-            using ExternalInputL = UDL<Extent>;
-            template <typename Extent>
-            using InternalInputL = UDL<Extent>;
-
-            template <typename T>
-            using ExternalInputL1 = ExternalInputL<T*>;
-            template <typename T>
-            using ExternalInputL2 = ExternalInputL<T**>;
-            template <typename T>
-            using ExternalInputL3 = ExternalInputL<T***>;
-            template <typename T>
-            using ExternalInputL4 = ExternalInputL<T****>;
-            template <typename T>
-            using ExternalInputL5 = ExternalInputL<T*****>;
-            template <typename T>
-            using ExternalInputL6 = ExternalInputL<T******>;
-
-            template <typename T>
-            using InternalInputL1 = InternalInputL<T*>;
-            template <typename T>
-            using InternalInputL2 = InternalInputL<T**>;
-            template <typename T>
-            using InternalInputL3 = InternalInputL<T***>;
-            template <typename T>
-            using InternalInputL4 = InternalInputL<T****>;
-            template <typename T>
-            using InternalInputL5 = InternalInputL<T*****>;
-            template <typename T>
-            using InternalInputL6 = InternalInputL<T******>;
         };
 
     } // namespace utility

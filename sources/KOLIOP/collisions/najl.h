@@ -681,12 +681,12 @@ namespace koliop {
             using MatrixKindType = typename CvCdDriverType::MatrixKindType;
 
         public:
-            Najl(OrdinalType                                                vpar_extent,
-                 OrdinalType                                                species_extent,
-                 bool                                                       collision_interspecies,
-                 const koliop::utility::View::InternalInputL1<const Flo64>& hat_As,
-                 const koliop::utility::View::InternalInputL1<const Flo64>& hat_Zs,
-                 const koliop::utility::View::InternalInputL1<const Flo64>& vparg);
+            Najl(OrdinalType                                     vpar_extent,
+                 OrdinalType                                     species_extent,
+                 bool                                            collision_interspecies,
+                 const koliop::utility::View::MDL1<const Flo64>& hat_As,
+                 const koliop::utility::View::MDL1<const Flo64>& hat_Zs,
+                 const koliop::utility::View::MDL1<const Flo64>& vparg);
 
             template <typename ExecutionSpace>
             void Compute(ExecutionSpace                                       an_execution_space,
@@ -709,9 +709,9 @@ namespace koliop {
             OrdinalType species_extent_;
             bool        collision_interspecies_;
 
-            koliop::utility::View::InternalInputL1<const Flo64> hat_As_;
-            koliop::utility::View::InternalInputL1<const Flo64> hat_Zs_;
-            koliop::utility::View::InternalInputL1<const Flo64> vparg_;
+            koliop::utility::View::MDL1<const Flo64> hat_As_;
+            koliop::utility::View::MDL1<const Flo64> hat_Zs_;
+            koliop::utility::View::MDL1<const Flo64> vparg_;
 
             // Constant, internally computed values
 
@@ -727,12 +727,12 @@ namespace koliop {
         ////////////////////////////////////////////////////////////////////////
 
         template <typename CvCdDriver>
-        Najl<CvCdDriver>::Najl(OrdinalType                                                vpar_extent,
-                               OrdinalType                                                species_extent,
-                               bool                                                       collision_interspecies,
-                               const koliop::utility::View::InternalInputL1<const Flo64>& hat_As,
-                               const koliop::utility::View::InternalInputL1<const Flo64>& hat_Zs,
-                               const koliop::utility::View::InternalInputL1<const Flo64>& vparg)
+        Najl<CvCdDriver>::Najl(OrdinalType                                     vpar_extent,
+                               OrdinalType                                     species_extent,
+                               bool                                            collision_interspecies,
+                               const koliop::utility::View::MDL1<const Flo64>& hat_As,
+                               const koliop::utility::View::MDL1<const Flo64>& hat_Zs,
+                               const koliop::utility::View::MDL1<const Flo64>& vparg)
             : vpar_extent_{vpar_extent}
             , species_extent_{species_extent}
             , collision_interspecies_{collision_interspecies}

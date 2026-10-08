@@ -197,33 +197,14 @@ namespace koliop {
             }
         }
 
-        void Operator::ComputeMaxwellianUnshiftedLoc(uint32_t choice,
-                                                     Flo64*   f5d_s) const {
-
+        void Operator::ComputeMaxwellianUnshiftedLoc(uint32_t                                  choice,
+                                                     const koliop::utility::View::MDL6<Flo64>& f5d_s) const {
             if(!(choice == 3 || choice == 4)) {
                 throw std::runtime_error("KOLIOP_STATUS_INVALID_VALUE");
             }
-
-            auto a_device_visible_f5d_s = koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL6<Flo64>,
-                                                                               koliop::utility::View::InternalInputL6>(execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],
-                                                                                                                       f5d_s, "f5d_s",
-                                                                                                                       mu_extent_, vpar_extent_,
-                                                                                                                       tor1_extent_, tor2_extent_, tor3_extent_,
-                                                                                                                       species_extent_);
-
-            {
-                DoComputeMaxwellianUnshiftedLoc(*this, execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],
-                                                choice,
-                                                a_device_visible_f5d_s);
-            }
-
-            koliop::utility::Copy::ViewToRawData<koliop::utility::View::InternalInputL6<Flo64>,
-                                                 koliop::utility::View::ExternalInputL6<Flo64>>(execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],
-                                                                                                a_device_visible_f5d_s,
-                                                                                                f5d_s,
-                                                                                                mu_extent_, vpar_extent_,
-                                                                                                tor1_extent_, tor2_extent_, tor3_extent_,
-                                                                                                species_extent_);
+            DoComputeMaxwellianUnshiftedLoc(*this, execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],
+                                            choice,
+                                            f5d_s);
         }
 
     } // namespace collisions

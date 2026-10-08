@@ -18,12 +18,9 @@ int Test2() {
     static constexpr size_t mu_extent   = 64;
     static constexpr size_t vpar_extent = 128;
 
-    static constexpr size_t r_extent     = 16;
-    static constexpr size_t theta_extent = 8;
-    static constexpr size_t tor3_extent  = 4;
-
-    static constexpr size_t tor1_extent    = theta_extent;
-    static constexpr size_t tor2_extent    = r_extent;
+    static constexpr size_t r_extent       = 16;
+    static constexpr size_t theta_extent   = 8;
+    static constexpr size_t phi_extent     = 4;
     static constexpr size_t species_extent = 2;
 
     static constexpr size_t global_domain_r_extent     = r_extent;
@@ -33,7 +30,7 @@ int Test2() {
 
     static constexpr int64_t ir_SOL_separatrix = global_domain_r_extent;
 
-    const size_t buffer_size = mu_extent * vpar_extent * tor1_extent * tor2_extent * tor3_extent * species_extent;
+    const size_t buffer_size = mu_extent * vpar_extent * theta_extent * r_extent * phi_extent * species_extent;
 
     Kokkos::View<double*> a_buffer_0_device_view("device_buffer", buffer_size);
     const auto            a_buffer_0_host_mirror = Kokkos::create_mirror_view(a_buffer_0_device_view);
@@ -49,16 +46,27 @@ int Test2() {
     Kokkos::deep_copy(a_buffer_0_device_view, a_buffer_0_host_mirror);
     Kokkos::deep_copy(a_buffer_1_device_view, a_buffer_1_host_mirror);
 
-    std::cout << "Using device buffers." << std::endl;
     auto* a_buffer_0 = a_buffer_0_device_view.data();
     auto* a_buffer_1 = a_buffer_1_device_view.data();
+
+    koliop::utility::View::UDL1<const double> hat_As{a_buffer_0, species_extent};
+    koliop::utility::View::UDL1<const double> hat_Zs{a_buffer_0, species_extent};
+    koliop::utility::View::UDL1<const double> mug{a_buffer_0, mu_extent};
+    koliop::utility::View::UDL1<const double> vparg{a_buffer_0, vpar_extent};
+    koliop::utility::View::UDL1<const double> coeff_intdmu{a_buffer_0, mu_extent};
+    koliop::utility::View::UDL1<const double> coeff_intdvpar{a_buffer_0, vpar_extent};
+    koliop::utility::View::UDL1<const double> coeff_AD_r{a_buffer_0, r_extent};
+    koliop::utility::View::UDL1<const double> mask_buffer_r{a_buffer_0, global_domain_r_extent};
+    koliop::utility::View::UDL2<const double> mask_LIM{a_buffer_0, global_domain_r_extent, global_domain_theta_extent};
+    koliop::utility::View::UDL2<const double> B_norm{a_buffer_0, global_domain_r_extent, global_domain_theta_extent};
+    koliop::utility::View::UDL4<const double> Bstar_s{a_buffer_0, vpar_extent, r_extent, theta_extent, species_extent};
 
     koliop::collisions::Operator an_operator{
         mu_extent,
         vpar_extent,
-        tor1_extent,
-        tor2_extent,
-        tor3_extent,
+        theta_extent,
+        r_extent,
+        phi_extent,
         species_extent,
         global_domain_r_extent,
         global_domain_theta_extent,
@@ -68,23 +76,22 @@ int Test2() {
         SOL,
         LIM,
         ir_SOL_separatrix,
-        // NOTE: the cache locality effect implied by spoofing
-        // all these array as a single ptr is not visible on GPU.
-        a_buffer_0,
-        a_buffer_0,
-        a_buffer_0,
-        a_buffer_0,
-        a_buffer_0,
-        a_buffer_0,
-        a_buffer_0,
-        a_buffer_0,
-        nullptr, // &mask_LIM[0][0],
-        a_buffer_0,
-        a_buffer_0,
-    };
+        hat_As,
+        hat_Zs,
+        mug,
+        vparg,
+        coeff_intdmu,
+        coeff_intdvpar,
+        coeff_AD_r,
+        mask_buffer_r,
+        mask_LIM,
+        B_norm,
+        Bstar_s};
+
+    koliop::utility::View::UDL6<double> f5d_s{a_buffer_1, mu_extent, vpar_extent, theta_extent, r_extent, phi_extent, species_extent};
 
     NaiveBenchmark([&](auto) {
-        an_operator.Collision(dt, a_buffer_1);
+        an_operator.Collisions(dt, f5d_s);
         an_operator.FenceAll();
     });
 

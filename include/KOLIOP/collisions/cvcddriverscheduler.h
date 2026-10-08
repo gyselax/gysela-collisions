@@ -40,10 +40,10 @@ namespace koliop {
             void AllocateScratchMemory(const Operator& an_operator);
             void ReleaseScratchMemory(const Operator& an_operator);
 
-            void ScheduleExecution(const Operator&                                an_operator,
-                                   ComputeFloatType                               dt,
-                                   OrdinalType                                    species_index,
-                                   koliop::utility::View::InternalInputL6<Flo64>& f5d_s);
+            void ScheduleExecution(const Operator&                           an_operator,
+                                   ComputeFloatType                          dt,
+                                   OrdinalType                               species_index,
+                                   const koliop::utility::View::MDL6<Flo64>& f5d_s);
 
         protected:
             std::vector<CvCdDriverConfiguration> cvcd_drivers_configurations_;

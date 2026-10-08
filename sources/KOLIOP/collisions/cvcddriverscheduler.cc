@@ -225,10 +225,10 @@ namespace koliop {
             }
         }
 
-        void CvCdDriverScheduler::ScheduleExecution(const Operator&                                an_operator,
-                                                    ComputeFloatType                               dt,
-                                                    OrdinalType                                    species_index,
-                                                    koliop::utility::View::InternalInputL6<Flo64>& f5d_s) {
+        void CvCdDriverScheduler::ScheduleExecution(const Operator&                           an_operator,
+                                                    ComputeFloatType                          dt,
+                                                    OrdinalType                               species_index,
+                                                    const koliop::utility::View::MDL6<Flo64>& f5d_s) {
             for(auto&& a_driver_configuration : cvcd_drivers_configurations_) {
                 a_driver_configuration.cvcd_driver_->Apply(an_operator,
                                                            a_driver_configuration.execution_space_,

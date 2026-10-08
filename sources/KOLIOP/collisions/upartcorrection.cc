@@ -219,41 +219,22 @@ namespace koliop {
                                  a_policy, kernel);
         }
 
-        void Operator::ComputeUparTCorrection(ComputeFloatType dt,
-                                              Flo64*           f5d_s) {
+        void Operator::ComputeUparTCorrection(ComputeFloatType                          dt,
+                                              const koliop::utility::View::MDL6<Flo64>& f5d_s) {
+            // ComputeUparTCorrection reads U_par_s_input_ and outputs to
+            // U_par_s_. This is required if more than 1 species is used, we
+            // can not write in U_par_s_ while it is still being read (by
+            // other threads, species, thread block, etc.).
 
-            auto a_device_visible_f5d_s = koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL6<Flo64>,
-                                                                               koliop::utility::View::InternalInputL6>(execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],
-                                                                                                                       f5d_s, "f5d_s",
-                                                                                                                       mu_extent_, vpar_extent_,
-                                                                                                                       tor1_extent_, tor2_extent_, tor3_extent_,
-                                                                                                                       species_extent_);
-
-            {
-                // ComputeUparTCorrection reads U_par_s_input_ and outputs to
-                // U_par_s_. This is required if more than 1 species is used, we
-                // can not write in U_par_s_ while it is still being read (by
-                // other threads, species, thread block, etc.).
-
-                // We will not have a race when swapping the buffer just below
-                // because when a kernel is launched, and we have the guarantee
-                // that the previous are in queue their respective streams and
-                // that they carry their state which in this case, would be a
-                // copy of U_par_s_ before the swap.
-                std::swap(U_par_s_, U_par_s_input_);
-
-                DoComputeUparTCorrection(*this, execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],
-                                         dt,
-                                         U_par_s_input_, a_device_visible_f5d_s, U_par_s_);
-            }
-
-            koliop::utility::Copy::ViewToRawData<koliop::utility::View::InternalInputL6<Flo64>,
-                                                 koliop::utility::View::ExternalInputL6<Flo64>>(execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],
-                                                                                                a_device_visible_f5d_s,
-                                                                                                f5d_s,
-                                                                                                mu_extent_, vpar_extent_,
-                                                                                                tor1_extent_, tor2_extent_, tor3_extent_,
-                                                                                                species_extent_);
+            // We will not have a race when swapping the buffer just below
+            // because when a kernel is launched, and we have the guarantee
+            // that the previous are in queue their respective streams and
+            // that they carry their state which in this case, would be a
+            // copy of U_par_s_ before the swap.
+            std::swap(U_par_s_, U_par_s_input_);
+            DoComputeUparTCorrection(*this, execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],
+                                     dt,
+                                     U_par_s_input_, f5d_s, U_par_s_);
         }
 
     } // namespace collisions

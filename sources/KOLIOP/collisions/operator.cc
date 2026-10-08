@@ -91,31 +91,32 @@ namespace koliop {
         // Operator methods definition
         ////////////////////////////////////////////////////////////////////////
 
-        Operator::Operator(uint64_t     mu_extent,
-                           uint64_t     vpar_extent,
-                           uint64_t     tor1_extent,
-                           uint64_t     tor2_extent,
-                           uint64_t     tor3_extent,
-                           uint64_t     species_extent,
-                           uint64_t     global_domain_r_extent,
-                           uint64_t     global_domain_theta_extent,
-                           uint64_t     local_domain_r_offset,
-                           uint64_t     local_domain_theta_offset,
-                           bool         collision_interspecies,
-                           bool         SOL,
-                           bool         LIM,
-                           uint64_t     ir_SOL_separatrix,
-                           const Flo64* hat_As,
-                           const Flo64* hat_Zs,
-                           const Flo64* mug,
-                           const Flo64* vparg,
-                           const Flo64* coeff_intdmu,
-                           const Flo64* coeff_intdvpar,
-                           const Flo64* coeff_AD_r,
-                           const Flo64* mask_buffer_r,
-                           const Flo64* mask_LIM,
-                           const Flo64* B_norm,
-                           const Flo64* Bstar_s)
+        Operator::Operator(uint64_t mu_extent,
+                           uint64_t vpar_extent,
+                           uint64_t tor1_extent,
+                           uint64_t tor2_extent,
+                           uint64_t tor3_extent,
+                           uint64_t species_extent,
+                           uint64_t global_domain_r_extent,
+                           uint64_t global_domain_theta_extent,
+                           uint64_t local_domain_r_offset,
+                           uint64_t local_domain_theta_offset,
+                           bool     collision_interspecies,
+                           bool     SOL,
+                           bool     LIM,
+                           uint64_t ir_SOL_separatrix,
+                           // NOTE: in practice, this hat_Xs contains 3 values. The size being hardcoded in global::Nspecies_max = 2
+                           const koliop::utility::View::MDL1<const Flo64>& hat_As,
+                           const koliop::utility::View::MDL1<const Flo64>& hat_Zs,
+                           const koliop::utility::View::MDL1<const Flo64>& mug,
+                           const koliop::utility::View::MDL1<const Flo64>& vparg,
+                           const koliop::utility::View::MDL1<const Flo64>& coeff_intdmu,
+                           const koliop::utility::View::MDL1<const Flo64>& coeff_intdvpar,
+                           const koliop::utility::View::MDL1<const Flo64>& coeff_AD_r,
+                           const koliop::utility::View::MDL1<const Flo64>& mask_buffer_r,
+                           const koliop::utility::View::MDL2<const Flo64>& mask_LIM,
+                           const koliop::utility::View::MDL2<const Flo64>& B_norm,
+                           const koliop::utility::View::MDL4<const Flo64>& Bstar_s)
             // Constant, externally computed values
             : mu_extent_{static_cast<OrdinalType>(mu_extent)}
             , vpar_extent_{static_cast<OrdinalType>(vpar_extent)}
@@ -134,18 +135,17 @@ namespace koliop {
             , SOL_{SOL}
             , LIM_{LIM}
             , ir_SOL_separatrix_{static_cast<OrdinalType>(ir_SOL_separatrix)}
-            , hat_As_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputL1>(Constant::DeviceExecutionSpaceType{}, hat_As, "hat_As_", species_extent_)} // NOTE: in practice, this hat_Xs contains 3 values. The size being hardcoded in global::Nspecies_max = 2
-            , hat_Zs_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputL1>(Constant::DeviceExecutionSpaceType{}, hat_Zs, "hat_Zs_", species_extent_)} // NOTE: in practice, this hat_Xs contains 3 values. The size being hardcoded in global::Nspecies_max = 2
-            , mug_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputL1>(Constant::DeviceExecutionSpaceType{}, mug, "mug_", mu_extent_)}
-            , vparg_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputL1>(Constant::DeviceExecutionSpaceType{}, vparg, "vparg_", vpar_extent_)}
-            , coeff_intdmu_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputL1>(Constant::DeviceExecutionSpaceType{}, coeff_intdmu, "coeff_intdmu_", mu_extent_)}
-            , coeff_intdvpar_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputL1>(Constant::DeviceExecutionSpaceType{}, coeff_intdvpar, "coeff_intdvpar_", vpar_extent_)}
-            , coeff_AD_r_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputL1>(Constant::DeviceExecutionSpaceType{}, coeff_AD_r, "coeff_AD_r_", r_extent_)}
-            , mask_buffer_r_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL1<const Flo64>, koliop::utility::View::InternalInputL1>(Constant::DeviceExecutionSpaceType{}, mask_buffer_r, "mask_buffer_r_", global_domain_r_extent_)}
-            , mask_LIM_{LIM_ ? koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL2<const Flo64>, koliop::utility::View::InternalInputL2>(Constant::DeviceExecutionSpaceType{}, mask_LIM, "mask_LIM_", global_domain_r_extent_, global_domain_theta_extent_) :
-                               koliop::utility::View::InternalInputL2<Flo64>{}}
-            , B_norm_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL2<const Flo64>, koliop::utility::View::InternalInputL2>(Constant::DeviceExecutionSpaceType{}, B_norm, "B_norm_", global_domain_r_extent_, global_domain_theta_extent_)}
-            , Bstar_s_{koliop::utility::Copy::RawDataToView<koliop::utility::View::ExternalInputL4<const Flo64>, koliop::utility::View::InternalInputL4>(Constant::DeviceExecutionSpaceType{}, Bstar_s, "Bstar_s_", vpar_extent_, r_extent_, theta_extent_, species_extent_)}
+            , hat_As_{hat_As}
+            , hat_Zs_{hat_Zs}
+            , mug_{mug}
+            , vparg_{vparg}
+            , coeff_intdmu_{coeff_intdmu}
+            , coeff_intdvpar_{coeff_intdvpar}
+            , coeff_AD_r_{coeff_AD_r}
+            , mask_buffer_r_{mask_buffer_r}
+            , mask_LIM_{mask_LIM}
+            , B_norm_{B_norm}
+            , Bstar_s_{Bstar_s}
 
             // Constant, internally computed values
 
@@ -172,26 +172,46 @@ namespace koliop {
 
             // Miscellaneous numerical tooling
             , cvcd_drivers_scheduler_{} {
+            KOLIOP_ASSERT(static_cast<OrdinalType>(hat_As_.extent(0)) == species_extent_);
+            KOLIOP_ASSERT(static_cast<OrdinalType>(hat_Zs_.extent(0)) == species_extent_);
+            KOLIOP_ASSERT(static_cast<OrdinalType>(mug_.extent(0)) == mu_extent_);
+            KOLIOP_ASSERT(static_cast<OrdinalType>(vparg_.extent(0)) == vpar_extent_);
+            KOLIOP_ASSERT(static_cast<OrdinalType>(coeff_intdmu_.extent(0)) == mu_extent_);
+            KOLIOP_ASSERT(static_cast<OrdinalType>(coeff_intdvpar_.extent(0)) == vpar_extent_);
+            KOLIOP_ASSERT(static_cast<OrdinalType>(coeff_AD_r_.extent(0)) == r_extent_);
+            KOLIOP_ASSERT(static_cast<OrdinalType>(mask_buffer_r_.extent(0)) == global_domain_r_extent_);
+            if(LIM_) {
+                KOLIOP_ASSERT(mask_LIM_.data() != nullptr);
+                KOLIOP_ASSERT(static_cast<OrdinalType>(mask_LIM_.extent(0)) == global_domain_r_extent_);
+                KOLIOP_ASSERT(static_cast<OrdinalType>(mask_LIM_.extent(1)) == global_domain_theta_extent_);
+            }
+            KOLIOP_ASSERT(static_cast<OrdinalType>(B_norm_.extent(0)) == global_domain_r_extent_);
+            KOLIOP_ASSERT(static_cast<OrdinalType>(B_norm_.extent(1)) == global_domain_theta_extent_);
+            KOLIOP_ASSERT(static_cast<OrdinalType>(Bstar_s_.extent(0)) == vpar_extent_);
+            KOLIOP_ASSERT(static_cast<OrdinalType>(Bstar_s_.extent(1)) == r_extent_);
+            KOLIOP_ASSERT(static_cast<OrdinalType>(Bstar_s_.extent(2)) == theta_extent_);
+            KOLIOP_ASSERT(static_cast<OrdinalType>(Bstar_s_.extent(3)) == species_extent_);
+
             if(std::getenv("KOLIOP_DEBUG_ALL") != nullptr ||
                std::getenv("KOLIOP_DEBUG_koliop_Create") != nullptr) {
                 std::cout << "[KOLIOP][DEBUG] global_domain_r_extent < static_cast<size_t>(ir_SOL_separatrix) : "
-                          << (global_domain_r_extent < static_cast<size_t>(ir_SOL_separatrix))  << "\n";
+                          << (global_domain_r_extent < static_cast<size_t>(ir_SOL_separatrix)) << "\n";
 #if defined(KOLIOP_UTILITY_FLATTEN_EXPECT_POW2_EXTENTS)
                 // Assert for powers of t
                 std::cout << "[KOLIOP][DEBUG] ((mu_extent - 1) & mu_extent) != 0 : " << (((mu_extent - 1) & mu_extent) != 0) << "\n";
                 std::cout << "[KOLIOP][DEBUG] ((vpar_extent - 1) & vpar_extent) != 0 : " << (((vpar_extent - 1) & vpar_extent) != 0) << "\n";
 #endif
-                std::cout << "[KOLIOP][DEBUG] hat_As == nullptr : " << (hat_As == nullptr) << "\n";
-                std::cout << "[KOLIOP][DEBUG] hat_Zs == nullptr : " << (hat_Zs == nullptr) << "\n";
-                std::cout << "[KOLIOP][DEBUG] mug == nullptr : " << (mug == nullptr) << "\n";
-                std::cout << "[KOLIOP][DEBUG] vparg == nullptr : " << (vparg == nullptr) << "\n";
-                std::cout << "[KOLIOP][DEBUG] coeff_intdmu == nullptr : " << (coeff_intdmu == nullptr) << "\n";
-                std::cout << "[KOLIOP][DEBUG] coeff_intdvpar == nullptr : " << (coeff_intdvpar == nullptr) << "\n";
-                std::cout << "[KOLIOP][DEBUG] coeff_AD_r == nullptr : " << (coeff_AD_r == nullptr) << "\n";
-                std::cout << "[KOLIOP][DEBUG] mask_buffer_r == nullptr : " << (mask_buffer_r == nullptr) << "\n";
-                std::cout << "[KOLIOP][DEBUG] (static_cast<bool>(LIM) && (mask_LIM == nullptr)) : " << ((static_cast<bool>(LIM) && (mask_LIM == nullptr))) << "\n";
-                std::cout << "[KOLIOP][DEBUG] B_norm == nullptr : " << (B_norm == nullptr) << "\n";
-                std::cout << "[KOLIOP][DEBUG] Bstar_s == nullptr : " << (Bstar_s == nullptr) << "\n";
+                std::cout << "[KOLIOP][DEBUG] hat_As.data() == nullptr : " << (hat_As.data() == nullptr) << "\n";
+                std::cout << "[KOLIOP][DEBUG] hat_Zs.data() == nullptr : " << (hat_Zs.data() == nullptr) << "\n";
+                std::cout << "[KOLIOP][DEBUG] mug.data() == nullptr : " << (mug.data() == nullptr) << "\n";
+                std::cout << "[KOLIOP][DEBUG] vparg.data() == nullptr : " << (vparg.data() == nullptr) << "\n";
+                std::cout << "[KOLIOP][DEBUG] coeff_intdmu.data() == nullptr : " << (coeff_intdmu.data() == nullptr) << "\n";
+                std::cout << "[KOLIOP][DEBUG] coeff_intdvpar.data() == nullptr : " << (coeff_intdvpar.data() == nullptr) << "\n";
+                std::cout << "[KOLIOP][DEBUG] coeff_AD_r.data() == nullptr : " << (coeff_AD_r.data() == nullptr) << "\n";
+                std::cout << "[KOLIOP][DEBUG] mask_buffer_r.data() == nullptr : " << (mask_buffer_r.data() == nullptr) << "\n";
+                std::cout << "[KOLIOP][DEBUG] (static_cast<bool>(LIM) && (mask_LIM.data() == nullptr)) : " << ((static_cast<bool>(LIM) && (mask_LIM.data() == nullptr))) << "\n";
+                std::cout << "[KOLIOP][DEBUG] B_norm.data() == nullptr : " << (B_norm.data() == nullptr) << "\n";
+                std::cout << "[KOLIOP][DEBUG] Bstar_s.data() == nullptr : " << (Bstar_s.data() == nullptr) << "\n";
                 std::cout << "\n";
                 std::cout << "[KOLIOP][DEBUG] static_cast<uint64_t>(mu_extent) : " << static_cast<uint64_t>(mu_extent) << "\n";
                 std::cout << "[KOLIOP][DEBUG] static_cast<uint64_t>(vpar_extent) : " << static_cast<uint64_t>(vpar_extent) << "\n";
@@ -207,17 +227,17 @@ namespace koliop {
                 std::cout << "[KOLIOP][DEBUG] static_cast<bool>(SOL) : " << static_cast<bool>(SOL) << "\n";
                 std::cout << "[KOLIOP][DEBUG] static_cast<bool>(LIM) : " << static_cast<bool>(LIM) << "\n";
                 std::cout << "[KOLIOP][DEBUG] static_cast<uint64_t>(ir_SOL_separatrix) : " << static_cast<uint64_t>(ir_SOL_separatrix) << "\n";
-                std::cout << "[KOLIOP][DEBUG] hat_As : " << hat_As << "\n";
-                std::cout << "[KOLIOP][DEBUG] hat_Zs : " << hat_Zs << "\n";
-                std::cout << "[KOLIOP][DEBUG] mug : " << mug << "\n";
-                std::cout << "[KOLIOP][DEBUG] vparg : " << vparg << "\n";
-                std::cout << "[KOLIOP][DEBUG] coeff_intdmu : " << coeff_intdmu << "\n";
-                std::cout << "[KOLIOP][DEBUG] coeff_intdvpar : " << coeff_intdvpar << "\n";
-                std::cout << "[KOLIOP][DEBUG] coeff_AD_r : " << coeff_AD_r << "\n";
-                std::cout << "[KOLIOP][DEBUG] mask_buffer_r : " << mask_buffer_r << "\n";
-                std::cout << "[KOLIOP][DEBUG] mask_LIM : " << mask_LIM << "\n";
-                std::cout << "[KOLIOP][DEBUG] B_norm : " << B_norm << "\n";
-                std::cout << "[KOLIOP][DEBUG] Bstar_s : " << Bstar_s << "\n";
+                std::cout << "[KOLIOP][DEBUG] hat_As.data() : " << hat_As.data() << "\n";
+                std::cout << "[KOLIOP][DEBUG] hat_Zs.data() : " << hat_Zs.data() << "\n";
+                std::cout << "[KOLIOP][DEBUG] mug.data() : " << mug.data() << "\n";
+                std::cout << "[KOLIOP][DEBUG] vparg.data() : " << vparg.data() << "\n";
+                std::cout << "[KOLIOP][DEBUG] coeff_intdmu.data() : " << coeff_intdmu.data() << "\n";
+                std::cout << "[KOLIOP][DEBUG] coeff_intdvpar.data() : " << coeff_intdvpar.data() << "\n";
+                std::cout << "[KOLIOP][DEBUG] coeff_AD_r.data() : " << coeff_AD_r.data() << "\n";
+                std::cout << "[KOLIOP][DEBUG] mask_buffer_r.data() : " << mask_buffer_r.data() << "\n";
+                std::cout << "[KOLIOP][DEBUG] mask_LIM.data() : " << mask_LIM.data() << "\n";
+                std::cout << "[KOLIOP][DEBUG] B_norm.data() : " << B_norm.data() << "\n";
+                std::cout << "[KOLIOP][DEBUG] Bstar_s.data() : " << Bstar_s.data() << "\n";
                 std::cout << std::flush;
             }
 
@@ -227,17 +247,17 @@ namespace koliop {
                ((mu_extent - 1) & mu_extent) != 0 ||
                ((vpar_extent - 1) & vpar_extent) != 0 ||
 #endif
-               hat_As == nullptr ||
-               hat_Zs == nullptr ||
-               mug == nullptr ||
-               vparg == nullptr ||
-               coeff_intdmu == nullptr ||
-               coeff_intdvpar == nullptr ||
-               coeff_AD_r == nullptr ||
-               mask_buffer_r == nullptr ||
-               (static_cast<bool>(LIM) && (mask_LIM == nullptr)) ||
-               B_norm == nullptr ||
-               Bstar_s == nullptr) {
+               hat_As.data() == nullptr ||
+               hat_Zs.data() == nullptr ||
+               mug.data() == nullptr ||
+               vparg.data() == nullptr ||
+               coeff_intdmu.data() == nullptr ||
+               coeff_intdvpar.data() == nullptr ||
+               coeff_AD_r.data() == nullptr ||
+               mask_buffer_r.data() == nullptr ||
+               (static_cast<bool>(LIM) && (mask_LIM.data() == nullptr)) ||
+               B_norm.data() == nullptr ||
+               Bstar_s.data() == nullptr) {
                 throw std::runtime_error("KOLIOP_STATUS_INVALID_VALUE");
             }
 
@@ -285,8 +305,8 @@ namespace koliop {
             // GPU kernel while koliop works, this could slow things down.
         }
 
-        void Operator::Collision(ComputeFloatType dt,
-                                 Flo64*           f5d_s) {
+        void Operator::Collisions(ComputeFloatType                          dt,
+                                  const koliop::utility::View::MDL6<Flo64>& f5d_s) {
             // Assume all our streams are empty.
 
             ComputeMoments(f5d_s);

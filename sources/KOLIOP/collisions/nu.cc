@@ -146,7 +146,6 @@ namespace koliop {
         }
 
         void Operator::PrecomputeNu() {
-
             DoPrecomputeNu(*this, execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],
                            nu_ab_);
         }
