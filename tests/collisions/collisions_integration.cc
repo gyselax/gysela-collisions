@@ -111,7 +111,6 @@ int Test2() {
     Kokkos::deep_copy(a_buffer_0_device_view, a_buffer_0_host_mirror);
     Kokkos::deep_copy(a_buffer_1_device_view, a_buffer_1_host_mirror);
 
-    std::cout << "Using device buffers." << std::endl;
     auto* a_buffer_0 = a_buffer_0_device_view.data();
     auto* a_buffer_1 = a_buffer_1_device_view.data();
 
