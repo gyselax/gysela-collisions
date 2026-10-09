@@ -11,7 +11,6 @@
 #include "KOLIOP/utility/copy.h"
 #include "KOLIOP/utility/iterate.h"
 #include "KOLIOP/utility/select.h"
-#include "KOLIOP/utility/tordu.h"
 #include "KOLIOP/utility/view.h"
 
 namespace koliop {
@@ -39,9 +38,6 @@ namespace koliop {
             const auto& tor2_extent    = an_operator.tor2_extent_;
             const auto& tor3_extent    = an_operator.tor3_extent_;
             const auto& species_extent = an_operator.species_extent_;
-
-            const auto& local_domain_r_offset     = an_operator.local_domain_r_offset_;
-            const auto& local_domain_theta_offset = an_operator.local_domain_theta_offset_;
 
             const auto& mug            = an_operator.mug_;
             const auto& vparg          = an_operator.vparg_;
@@ -99,9 +95,6 @@ namespace koliop {
                 const OrdinalType itor3    = (team_index / (tor1_extent * tor2_extent)) % tor3_extent;
                 const OrdinalType ispecies = (team_index / (tor1_extent * tor2_extent * tor3_extent)) /* % species_extent */;
 
-                const OrdinalType ir     = koliop::utility::GetRValue(itor1, itor2, itor3);
-                const OrdinalType itheta = koliop::utility::GetThetaValue(itor1, itor2, itor3);
-
                 ComputeFloatType na;
                 ComputeFloatType vpara;
 
@@ -132,7 +125,7 @@ namespace koliop {
                         const ComputeFloatType f5d_s_value = Kokkos::max(1.0E-40,
                                                                          f5d_s(imu, ivpar, itor1, itor2, itor3, ispecies));
 
-                        const ComputeFloatType ftmp = Bstar_s(ivpar, ir, itheta, ispecies) *
+                        const ComputeFloatType ftmp = Bstar_s(ivpar, itor2, itor1, ispecies) *
                                                       coeff_intdmu(imu) *
                                                       coeff_intdvpar(ivpar) *
                                                       f5d_s_value;
@@ -158,7 +151,7 @@ namespace koliop {
                 Kokkos::Sum<ComputeFloatType> Ta_reducer{Ta};
                 Ta_reducer.init(Ta_reducer.reference());
 
-                const ComputeFloatType B_norm_r_theta = B_norm(local_domain_r_offset + ir, local_domain_theta_offset + itheta);
+                const ComputeFloatType B_norm_r_theta = B_norm(itor2, itor1);
 
                 IntraTeam::Iterate2D(
                     mu_extent, vpar_extent,
@@ -167,7 +160,7 @@ namespace koliop {
                         // Gysela fortran, a temporary buffer is used but
                         // that would hardly fit on a GPU.
                         // TODO(Etienne M): LOAD Hoist the invariant load.
-                        const ComputeFloatType ftmp = Bstar_s(ivpar, ir, itheta, ispecies) *
+                        const ComputeFloatType ftmp = Bstar_s(ivpar, itor2, itor1, ispecies) *
                                                       coeff_intdmu(imu) *
                                                       coeff_intdvpar(ivpar) *
                                                       f5d_s(imu, ivpar, itor1, itor2, itor3, ispecies);

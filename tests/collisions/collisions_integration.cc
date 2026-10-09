@@ -10,24 +10,19 @@
 #include "common.h"
 
 int Test1() {
-    static constexpr int8_t  collision_interspecies = true;
-    static constexpr int8_t  SOL                    = false;
-    static constexpr int8_t  LIM                    = false;
-    static constexpr int64_t ir_SOL_separatrix      = 32;
-    static constexpr double  dt                     = 50.0;
+    static constexpr int8_t collision_interspecies = true;
+    static constexpr int8_t SOL                    = false;
+    static constexpr int8_t LIM                    = false;
+    static constexpr double dt                     = 50.0;
 
-    static constexpr size_t mu_extent   = 64;
-    static constexpr size_t vpar_extent = 128;
-
+    static constexpr size_t mu_extent      = 64;
+    static constexpr size_t vpar_extent    = 128;
     static constexpr size_t r_extent       = 64;
     static constexpr size_t theta_extent   = 128;
     static constexpr size_t phi_extent     = 1;
     static constexpr size_t species_extent = 1;
 
-    static constexpr size_t global_domain_r_extent     = r_extent;
-    static constexpr size_t global_domain_theta_extent = theta_extent + 1;
-    static constexpr size_t global_domain_r_offset     = 0;
-    static constexpr size_t global_domain_theta_offset = 0;
+    static constexpr int64_t ir_SOL_separatrix = 32;
 
     const size_t buffer_size = mu_extent * vpar_extent * theta_extent * r_extent * phi_extent * species_extent;
 
@@ -58,22 +53,15 @@ int Test1() {
     koliop::utility::View::UDL1<const double> coeff_intdmu{a_buffer_0, mu_extent};
     koliop::utility::View::UDL1<const double> coeff_intdvpar{a_buffer_0, vpar_extent};
     koliop::utility::View::UDL1<const double> coeff_AD_r{a_buffer_0, r_extent};
-    koliop::utility::View::UDL1<const double> mask_buffer_r{a_buffer_0, global_domain_r_extent};
-    koliop::utility::View::UDL2<const double> mask_LIM{a_buffer_0, global_domain_r_extent, global_domain_theta_extent};
-    koliop::utility::View::UDL2<const double> B_norm{a_buffer_0, global_domain_r_extent, global_domain_theta_extent};
+    koliop::utility::View::UDL1<const double> mask_buffer_r{a_buffer_0, r_extent};
+    koliop::utility::View::UDL2<const double> mask_LIM{a_buffer_0, r_extent, theta_extent};
+    koliop::utility::View::UDL2<const double> B_norm{a_buffer_0, r_extent, theta_extent};
     koliop::utility::View::UDL4<const double> Bstar_s{a_buffer_0, vpar_extent, r_extent, theta_extent, species_extent};
 
     koliop::collisions::Operator an_operator{
-        mu_extent,
-        vpar_extent,
         theta_extent,
         r_extent,
         phi_extent,
-        species_extent,
-        global_domain_r_extent,
-        global_domain_theta_extent,
-        global_domain_r_offset,
-        global_domain_theta_offset,
         collision_interspecies,
         SOL,
         LIM,
@@ -113,20 +101,14 @@ int Test2() {
     static constexpr int8_t LIM                    = false;
     static constexpr double dt                     = 50.0;
 
-    static constexpr size_t mu_extent   = 64;
-    static constexpr size_t vpar_extent = 128;
-
+    static constexpr size_t mu_extent      = 64;
+    static constexpr size_t vpar_extent    = 128;
     static constexpr size_t r_extent       = 64;
     static constexpr size_t theta_extent   = 128;
     static constexpr size_t phi_extent     = 32;
     static constexpr size_t species_extent = 2;
 
-    static constexpr size_t global_domain_r_extent     = r_extent;
-    static constexpr size_t global_domain_theta_extent = theta_extent + 1;
-    static constexpr size_t global_domain_r_offset     = 0;
-    static constexpr size_t global_domain_theta_offset = 0;
-
-    static constexpr int64_t ir_SOL_separatrix = global_domain_r_extent;
+    static constexpr int64_t ir_SOL_separatrix = r_extent;
 
     const size_t buffer_size = mu_extent * vpar_extent * theta_extent * r_extent * phi_extent * species_extent;
 
@@ -155,22 +137,15 @@ int Test2() {
     koliop::utility::View::UDL1<const double> coeff_intdmu{a_buffer_0, mu_extent};
     koliop::utility::View::UDL1<const double> coeff_intdvpar{a_buffer_0, vpar_extent};
     koliop::utility::View::UDL1<const double> coeff_AD_r{a_buffer_0, r_extent};
-    koliop::utility::View::UDL1<const double> mask_buffer_r{a_buffer_0, global_domain_r_extent};
-    koliop::utility::View::UDL2<const double> mask_LIM{a_buffer_0, global_domain_r_extent, global_domain_theta_extent};
-    koliop::utility::View::UDL2<const double> B_norm{a_buffer_0, global_domain_r_extent, global_domain_theta_extent};
+    koliop::utility::View::UDL1<const double> mask_buffer_r{a_buffer_0, r_extent};
+    koliop::utility::View::UDL2<const double> mask_LIM{a_buffer_0, r_extent, theta_extent};
+    koliop::utility::View::UDL2<const double> B_norm{a_buffer_0, r_extent, theta_extent};
     koliop::utility::View::UDL4<const double> Bstar_s{a_buffer_0, vpar_extent, r_extent, theta_extent, species_extent};
 
     koliop::collisions::Operator an_operator{
-        mu_extent,
-        vpar_extent,
         theta_extent,
         r_extent,
         phi_extent,
-        species_extent,
-        global_domain_r_extent,
-        global_domain_theta_extent,
-        global_domain_r_offset,
-        global_domain_theta_offset,
         collision_interspecies,
         SOL,
         LIM,

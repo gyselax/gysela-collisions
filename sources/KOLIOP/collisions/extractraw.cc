@@ -20,7 +20,7 @@ namespace koliop {
                     koliop::utility::Copy::Deep(execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],
                                                 nustar_coeff_,
                                                 koliop::utility::View::UDL3<Flo64>{static_cast<Flo64*>(an_output_buffer),
-                                                                                   static_cast<std::size_t>(species_extent_), static_cast<std::size_t>(species_extent_), static_cast<std::size_t>(r_extent_)});
+                                                                                   static_cast<std::size_t>(species_extent_), static_cast<std::size_t>(species_extent_), static_cast<std::size_t>(tor2_extent_)});
                     break;
                 }
                 case Diagnostics::k_n_s: {

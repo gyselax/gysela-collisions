@@ -11,7 +11,6 @@
 #include "KOLIOP/utility/copy.h"
 #include "KOLIOP/utility/iterate.h"
 #include "KOLIOP/utility/select.h"
-#include "KOLIOP/utility/tordu.h"
 #include "KOLIOP/utility/view.h"
 
 namespace koliop {
@@ -37,9 +36,6 @@ namespace koliop {
             const auto& tor2_extent    = an_operator.tor2_extent_;
             const auto& tor3_extent    = an_operator.tor3_extent_;
             const auto& species_extent = an_operator.species_extent_;
-
-            const auto& local_domain_r_offset     = an_operator.local_domain_r_offset_;
-            const auto& local_domain_theta_offset = an_operator.local_domain_theta_offset_;
 
             const auto& mug            = an_operator.mug_;
             const auto& vparg          = an_operator.vparg_;
@@ -76,13 +72,9 @@ namespace koliop {
                 const OrdinalType itor3    = (team_index / (tor1_extent * tor2_extent)) % tor3_extent;
                 const OrdinalType ispecies = (team_index / (tor1_extent * tor2_extent * tor3_extent)) /* % species_extent */;
 
-                const OrdinalType ir     = koliop::utility::GetRValue(itor1, itor2, itor3);
-                const OrdinalType itheta = koliop::utility::GetThetaValue(itor1, itor2, itor3);
-
                 static constexpr auto k2Pi = koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi;
 
-                const ComputeFloatType Bij   = B_norm(local_domain_r_offset + ir,
-                                                      local_domain_theta_offset + itheta);
+                const ComputeFloatType Bij   = B_norm(itor2, itor1);
                 const ComputeFloatType na    = n_s(itor1, itor2, itor3, ispecies);
                 const ComputeFloatType Vpara = U_par_s(itor1, itor2, itor3, ispecies);
                 const ComputeFloatType Ta    = T_s(itor1, itor2, itor3, ispecies);
@@ -105,7 +97,7 @@ namespace koliop {
                         // reduction.
 
                         const ComputeFloatType jac = k2Pi *
-                                                     Bstar_s(ivpar, ir, itheta, ispecies);
+                                                     Bstar_s(ivpar, itor2, itor1, ispecies);
 
                         const ComputeFloatType vparg_minus_vpara         = vparg(ivpar) - Vpara;
                         const ComputeFloatType vparg_minus_vpara_squared = vparg_minus_vpara * vparg_minus_vpara;

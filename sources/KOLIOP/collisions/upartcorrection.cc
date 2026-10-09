@@ -12,7 +12,6 @@
 #include "KOLIOP/utility/copy.h"
 #include "KOLIOP/utility/iterate.h"
 #include "KOLIOP/utility/select.h"
-#include "KOLIOP/utility/tordu.h"
 #include "KOLIOP/utility/view.h"
 
 namespace koliop {
@@ -41,9 +40,6 @@ namespace koliop {
             const auto& tor2_extent    = an_operator.tor2_extent_;
             const auto& tor3_extent    = an_operator.tor3_extent_;
             const auto& species_extent = an_operator.species_extent_;
-
-            const auto& local_domain_r_offset     = an_operator.local_domain_r_offset_;
-            const auto& local_domain_theta_offset = an_operator.local_domain_theta_offset_;
 
             const auto& hat_As         = an_operator.hat_As_;
             const auto& mug            = an_operator.mug_;
@@ -84,17 +80,13 @@ namespace koliop {
                 const OrdinalType itor3     = (team_index / (tor1_extent * tor2_extent)) % tor3_extent;
                 const OrdinalType ispeciesA = (team_index / (tor1_extent * tor2_extent * tor3_extent)) /* % species_extent */;
 
-                const OrdinalType ir     = koliop::utility::GetRValue(itor1, itor2, itor3);
-                const OrdinalType itheta = koliop::utility::GetThetaValue(itor1, itor2, itor3);
-
                 static constexpr auto k2Pi = koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi;
 
                 ComputeFloatType              impulsion_coll;
                 Kokkos::Sum<ComputeFloatType> impulsion_coll_reducer{impulsion_coll};
                 impulsion_coll_reducer.init(impulsion_coll_reducer.reference());
 
-                const ComputeFloatType Bij = B_norm(local_domain_r_offset + ir,
-                                                    local_domain_theta_offset + itheta);
+                const ComputeFloatType Bij = B_norm(itor2, itor1);
                 const ComputeFloatType na  = n_s(itor1, itor2, itor3, ispeciesA);
 
                 // TODO(Etienne M): Is parallel_for + TeamThreadRange +
@@ -109,7 +101,7 @@ namespace koliop {
                         // reduction.
 
                         const ComputeFloatType jacob_vel = k2Pi *
-                                                           Bstar_s(ivpar, ir, itheta, ispeciesA);
+                                                           Bstar_s(ivpar, itor2, itor1, ispeciesA);
 
                         impulsion_coll_reducer.join(impulsion_coll_reducer.reference(),
                                                     coeff_intdvpar(ivpar) *
@@ -135,7 +127,7 @@ namespace koliop {
                     mu_extent, vpar_extent,
                     a_team_handle, [&](auto imu, auto ivpar) {
                         const ComputeFloatType jacob_vel = (k2Pi / na) *
-                                                           Bstar_s(ivpar, ir, itheta, ispeciesA);
+                                                           Bstar_s(ivpar, itor2, itor1, ispeciesA);
 
                         T_coll_reducer.join(T_coll_reducer.reference(),
                                             coeff_intdvpar(ivpar) *

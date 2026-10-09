@@ -10,7 +10,6 @@
 #include "KOLIOP/collisions/najl.h"
 #include "KOLIOP/utility/iterate.h"
 #include "KOLIOP/utility/select.h"
-#include "KOLIOP/utility/tordu.h"
 
 namespace koliop {
     namespace collisions {
@@ -50,26 +49,21 @@ namespace koliop {
             static inline void
             DoPrepareCollisionMask(const Operator& an_operator,
                                    ExecutionSpace  an_execution_space,
-                                   OrdinalType     block_first_r,
-                                   OrdinalType     block_first_theta,
+                                   OrdinalType     block_first_tor2,
+                                   OrdinalType     block_first_tor1,
                                    View2D&&        mask_coll) {
-
-                const auto& local_domain_r_offset     = an_operator.local_domain_r_offset_;
-                const auto& local_domain_theta_offset = an_operator.local_domain_theta_offset_;
-
                 const auto& LIM = an_operator.LIM_;
 
                 const auto& mask_buffer_r = an_operator.mask_buffer_r_;
                 const auto& mask_LIM      = an_operator.mask_LIM_;
 
                 const auto kernel = KOKKOS_LAMBDA(OrdinalType ir, OrdinalType itheta) {
-                    const bool mask_value = static_cast<OrdinalType>(mask_buffer_r(local_domain_r_offset + ir) < 0.99) |
+                    const bool mask_value = static_cast<OrdinalType>(mask_buffer_r(ir) < 0.99) |
                                             // NOTE: mask_lim may not be allocated ! We need the && first.
-                                            static_cast<OrdinalType>(LIM && (mask_LIM(local_domain_r_offset + ir,
-                                                                                      local_domain_theta_offset + itheta) < 0.99));
+                                            static_cast<OrdinalType>(LIM && (mask_LIM(ir, itheta) < 0.99));
 
-                    mask_coll(ir - block_first_r,
-                              itheta - block_first_theta) = mask_value;
+                    mask_coll(ir - block_first_tor2,
+                              itheta - block_first_tor1) = mask_value;
                 };
 
                 const auto a_policy = Kokkos::MDRangePolicy<
@@ -78,10 +72,10 @@ namespace koliop {
                     Kokkos::Rank<2,
                                  Kokkos::Iterate::Left,
                                  Kokkos::Iterate::Left>>{an_execution_space,
-                                                         {block_first_r,
-                                                          block_first_theta},
-                                                         {block_first_r + CvCdDriver::kBlockExtentR,
-                                                          block_first_theta + CvCdDriver::kBlockExtentTheta}};
+                                                         {block_first_tor2,
+                                                          block_first_tor1},
+                                                         {block_first_tor2 + CvCdDriver::kBlockExtentTor2,
+                                                          block_first_tor1 + CvCdDriver::kBlockExtentTor1}};
 
                 Kokkos::parallel_for("DoPrepareCollisionMask",
                                      a_policy, kernel);
@@ -108,9 +102,6 @@ namespace koliop {
 
                 const auto& mu_extent   = an_operator.mu_extent_;
                 const auto& vpar_extent = an_operator.vpar_extent_;
-
-                const auto& local_domain_r_offset     = an_operator.local_domain_r_offset_;
-                const auto& local_domain_theta_offset = an_operator.local_domain_theta_offset_;
 
                 const auto& mug          = an_operator.mug_;
                 const auto& coeff_intdmu = an_operator.coeff_intdmu_;
@@ -143,9 +134,6 @@ namespace koliop {
                     const OrdinalType block_local_index_itor2 = (team_index / (CvCdDriver::kBlockExtentTor1)) % CvCdDriver::kBlockExtentTor2;
                     const OrdinalType block_local_index_itor3 = (team_index / (CvCdDriver::kBlockExtentTor1 * CvCdDriver::kBlockExtentTor2)) /* % CvCdDriver::kBlockExtentTor3 */;
 
-                    const OrdinalType block_local_index_ir     = koliop::utility::GetRValue(block_local_index_itor1, block_local_index_itor2, block_local_index_itor3);
-                    const OrdinalType block_local_index_itheta = koliop::utility::GetThetaValue(block_local_index_itor1, block_local_index_itor2, block_local_index_itor3);
-
                     const OffsetType flattened_index = team_index;
 
                     const OrdinalType batch_element_index = (flattened_index) % CvCdDriver::BatchTraitsType::kBatchSize;
@@ -155,14 +143,10 @@ namespace koliop {
                     const OrdinalType itor2 = block_first_tor2 + block_local_index_itor2;
                     const OrdinalType itor3 = block_first_tor3 + block_local_index_itor3;
 
-                    const OrdinalType ir     = koliop::utility::GetRValue(itor1, itor2, itor3);
-                    const OrdinalType itheta = koliop::utility::GetThetaValue(itor1, itor2, itor3);
+                    if(mask_coll(block_local_index_itor2,
+                                 block_local_index_itor1)) {
 
-                    if(mask_coll(block_local_index_ir,
-                                 block_local_index_itheta)) {
-
-                        const ComputeFloatType BoT = B_norm(local_domain_r_offset + ir,
-                                                            local_domain_theta_offset + itheta) /
+                        const ComputeFloatType BoT = B_norm(itor2, itor1) /
                                                      T_s(itor1, itor2, itor3, species_index);
 
                         for(OrdinalType ivpar = 0; ivpar < vpar_extent; ++ivpar) {
@@ -356,9 +340,6 @@ namespace koliop {
                 const auto& mu_extent   = an_operator.mu_extent_;
                 const auto& vpar_extent = an_operator.vpar_extent_;
 
-                const auto& local_domain_r_offset     = an_operator.local_domain_r_offset_;
-                const auto& local_domain_theta_offset = an_operator.local_domain_theta_offset_;
-
                 const auto& mug    = an_operator.mug_;
                 const auto& B_norm = an_operator.B_norm_;
                 const auto& T_s    = an_operator.T_s_;
@@ -389,11 +370,8 @@ namespace koliop {
                     const OrdinalType block_local_index_itor2 = (team_index / (CvCdDriver::kBlockExtentTor1)) % CvCdDriver::kBlockExtentTor2;
                     const OrdinalType block_local_index_itor3 = (team_index / (CvCdDriver::kBlockExtentTor1 * CvCdDriver::kBlockExtentTor2)) /* % CvCdDriver::kBlockExtentTor3 */;
 
-                    const OrdinalType block_local_index_ir     = koliop::utility::GetRValue(block_local_index_itor1, block_local_index_itor2, block_local_index_itor3);
-                    const OrdinalType block_local_index_itheta = koliop::utility::GetThetaValue(block_local_index_itor1, block_local_index_itor2, block_local_index_itor3);
-
-                    if(!mask_coll(block_local_index_ir,
-                                  block_local_index_itheta)) {
+                    if(!mask_coll(block_local_index_itor2,
+                                  block_local_index_itor1)) {
                         // NOTE: this return does not break the rest of the function
                         // as all the thread of the team will execute the same
                         // branch.
@@ -409,11 +387,7 @@ namespace koliop {
                     const OrdinalType itor2 = block_first_tor2 + block_local_index_itor2;
                     const OrdinalType itor3 = block_first_tor3 + block_local_index_itor3;
 
-                    const OrdinalType ir     = koliop::utility::GetRValue(itor1, itor2, itor3);
-                    const OrdinalType itheta = koliop::utility::GetThetaValue(itor1, itor2, itor3);
-
-                    const ComputeFloatType BoT = B_norm(local_domain_r_offset + ir,
-                                                        local_domain_theta_offset + itheta) /
+                    const ComputeFloatType BoT = B_norm(itor2, itor1) /
                                                  T_s(itor1, itor2, itor3, species_index);
 
                     using koliop::utility::IntraTeam;
@@ -484,9 +458,6 @@ namespace koliop {
             static inline constexpr OrdinalType kBlockExtentTor1 = block_extent_tor1;
             static inline constexpr OrdinalType kBlockExtentTor2 = block_extent_tor2;
             static inline constexpr OrdinalType kBlockExtentTor3 = block_extent_tor3;
-
-            static inline constexpr OrdinalType kBlockExtentR     = koliop::utility::GetRValue(kBlockExtentTor1, kBlockExtentTor2, kBlockExtentTor3);
-            static inline constexpr OrdinalType kBlockExtentTheta = koliop::utility::GetThetaValue(kBlockExtentTor1, kBlockExtentTor2, kBlockExtentTor3);
 
             static inline constexpr OffsetType kFlattenedBlockExtent = kBlockExtentTor1 * kBlockExtentTor2 * kBlockExtentTor3;
 
@@ -581,7 +552,7 @@ namespace koliop {
 
             Najl<CvCdDriver> najl_provider_;
 
-            koliop::utility::View::MDL<bool[kBlockExtentR][kBlockExtentTheta]> mask_coll_;
+            koliop::utility::View::MDL<bool[kBlockExtentTor2][kBlockExtentTor1]> mask_coll_;
 
             // NOTE: We know of an additional constant extent, the batch count
             // but we cannot exploit it due to kokkos enforcing that constant
@@ -673,9 +644,6 @@ namespace koliop {
             const auto& T_s   = an_operator.T_s_;
             const auto& nu_ab = an_operator.nu_ab_;
 
-            const auto block_first_r     = koliop::utility::GetRValue(block_first_tor1, block_first_tor2, block_first_tor3);
-            const auto block_first_theta = koliop::utility::GetThetaValue(block_first_tor1, block_first_tor2, block_first_tor3);
-
             // TODO(Etienne M): Extent standardization global_domain, vs
             // local_domain vs block:
             // global_domain_[r|theta]_extent
@@ -713,7 +681,7 @@ namespace koliop {
             // to the rest that it does not seem useful.
             detail::DoPrepareCollisionMask<CvCdDriver>(an_operator,
                                                        an_execution_space,
-                                                       block_first_r, block_first_theta,
+                                                       block_first_tor2, block_first_tor1,
                                                        mask_coll_);
 
             // NOTE: Skipping would create imbalance and because we

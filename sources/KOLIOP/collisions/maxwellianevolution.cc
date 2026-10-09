@@ -11,7 +11,6 @@
 #include "KOLIOP/utility/copy.h"
 #include "KOLIOP/utility/iterate.h"
 #include "KOLIOP/utility/select.h"
-#include "KOLIOP/utility/tordu.h"
 #include "KOLIOP/utility/view.h"
 
 namespace koliop {
@@ -42,9 +41,6 @@ namespace koliop {
             const auto& tor2_extent    = an_operator.tor2_extent_;
             const auto& tor3_extent    = an_operator.tor3_extent_;
             const auto& species_extent = an_operator.species_extent_;
-
-            const auto& local_domain_r_offset     = an_operator.local_domain_r_offset_;
-            const auto& local_domain_theta_offset = an_operator.local_domain_theta_offset_;
 
             const auto& hat_As  = an_operator.hat_As_;
             const auto& mug     = an_operator.mug_;
@@ -91,9 +87,6 @@ namespace koliop {
                 const OrdinalType itor2 = (team_index / (tor1_extent)) % tor2_extent;
                 const OrdinalType itor3 = (team_index / (tor1_extent * tor2_extent)) /* % tor3_extent */;
 
-                const OrdinalType ir     = koliop::utility::GetRValue(itor1, itor2, itor3);
-                const OrdinalType itheta = koliop::utility::GetThetaValue(itor1, itor2, itor3);
-
                 // TODO(Etienne M): Should we use a_team_handle.team_barrier() ?
                 ScratchMemory Ta_tmp{a_team_handle.thread_scratch(0),
                                      static_cast<std::size_t>(species_extent)};
@@ -136,9 +129,7 @@ namespace koliop {
                     const ComputeFloatType coeff_old = na / (k2Pi * Ta * Kokkos::sqrt(k2Pi * Ta));
                     const ComputeFloatType coeff_new = na / (k2Pi * Ta_new * Kokkos::sqrt(k2Pi * Ta_new));
 
-                    const ComputeFloatType Bij = B_norm(local_domain_r_offset + ir,
-                                                        local_domain_theta_offset + itheta);
-
+                    const ComputeFloatType Bij     = B_norm(itor2, itor1);
                     const ComputeFloatType bot_old = Bij / Ta;
                     const ComputeFloatType bot_new = Bij / Ta_new;
 

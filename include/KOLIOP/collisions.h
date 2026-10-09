@@ -35,27 +35,18 @@ namespace koliop {
             /// right will work fine. We take a view (reference) of the input arrays, you may not deallocate them while
             /// the operator is not released. The values given below are expected NOT to change during the lifetime of
             /// the operator.
-            /// @param mu_extent The rank's Mu domain extent in grid point.
-            /// @param vpar_extent The rank's Vpar domain extent in grid point.
-            /// @param tor1_extent The rank's R domain extent in grid point (theta for the gyselalib++ version).
-            /// @param tor2_extent The rank's Theta domain extent in grid point (r for the gyselalib++ version).
-            /// @param tor3_extent The rank's Phi domain extent in grid point.
-            /// @param species_extent The rank's Species domain extent (aka number of species).
-            /// @param global_domain_r_extent The simulation's R domain extent in grid point.
-            /// @param global_domain_theta_extent The simulation's Theta domain extent in grid point.
-            /// @param local_domain_r_offset The rank's R offset in the simulation's domain.
-            /// @param local_domain_theta_offset The rank's R offset in the simulation's domain.
+            /// @param tor1_extent The rank's theta domain extent in grid point.
+            /// @param tor2_extent The rank's r domain extent in grid point.
+            /// @param tor3_extent The rank's phi domain extent in grid point.
             /// @param collision_interspecies Boolean as type int8_t (0 = false, else true) describing if a species
             /// collision with itself.
             /// @param SOL Boolean as type int8_t (0 = false, else true) used in the Nu* computation.
             /// @param LIM Boolean as type int8_t (0 = false, else true) set to true to tell the operator to apply a
             /// limiter mask.
             /// @param ir_SOL_separatrix Fix the collisionality past ir_SOL_separatrix to the value at
-            /// ir_SOL_separatrix. Must respect the following constraint: 0 <= ir_SOL_separatrix <
-            /// global_domain_r_extent. In Gysela fortran, ir_SOL_separatrix must respect the following constraint:
-            /// MAX_R_START <= ir_SOL_separatrix <= global_domain_r_extent where MAX_R_START is the
-            /// local_domain_r_offset of a rank processing the most outer subdomain in R. Used in the Nu computation.
-            /// Used for a specific treatment of the SOL.
+            /// ir_SOL_separatrix. Must respect the following constraint: 0 <= ir_SOL_separatrix < r. In Gysela fortran,
+            /// ir_SOL_separatrix must respect the following constraint: 0 <= ir_SOL_separatrix <= r where MAX_R_START.
+            /// Used in the Nu computation. Used for a specific treatment of the SOL.
             /// @param hat_As An array of double with extents ([0, species_extent) ).
             /// @param hat_Zs An array of double with extents ([0, species_extent) ).
             /// @param mug An array of double with extents ([0, mu_extent) ) representing the coordinate of the Mu grid
@@ -67,26 +58,16 @@ namespace koliop {
             /// @param coeff_intdvpar An array of double with extents ([0, vpar_extent) ) representing the coefficients
             /// for the integral of the coordinates in Vpar (generally using the simpson).
             /// @param coeff_AD_r An array of double with extents ([0, r) ) representing the AD coefficients.
-            /// @param mask_buffer_r An array of double with extents ([0, global_domain_r_extent) ) representing an
-            /// operator mask in R.
-            /// @param mask_LIM An array of double with extents ([0, global_domain_r_extent), [0,
-            /// global_domain_theta_extent) ) representing an operator's limiter mask. Must be set if LIM is true else,
-            /// it may be a NULL.
-            /// @param B_norm An array of double with extents ([0, global_domain_r_extent), [0,
-            /// global_domain_theta_extent) ).
+            /// @param mask_buffer_r An array of double with extents ([0, r) ) representing an operator mask in R.
+            /// @param mask_LIM An array of double with extents ([0, r), [0, theta) ) representing an operator's limiter
+            /// mask. Must be set if LIM is true else, it may be a NULL.
+            /// @param B_norm An array of double with extents ([0, r), [0, theta) ).
             /// @param Bstar_s An array of double with extents ([0, vpar_extent), [0, r), [0, theta), [0,
             /// species_extent) ), note that we do not use torN_extent as these may change depending on library calling
             /// Koliop.
-            Operator(uint64_t                                        mu_extent,
-                     uint64_t                                        vpar_extent,
-                     uint64_t                                        tor1_extent,
+            Operator(uint64_t                                        tor1_extent,
                      uint64_t                                        tor2_extent,
                      uint64_t                                        tor3_extent,
-                     uint64_t                                        species_extent,
-                     uint64_t                                        global_domain_r_extent,
-                     uint64_t                                        global_domain_theta_extent,
-                     uint64_t                                        local_domain_r_offset,
-                     uint64_t                                        local_domain_theta_offset,
                      bool                                            collision_interspecies,
                      bool                                            SOL,
                      bool                                            LIM,
@@ -263,14 +244,7 @@ namespace koliop {
             OrdinalType tor1_extent_;
             OrdinalType tor2_extent_;
             OrdinalType tor3_extent_;
-            OrdinalType r_extent_;
-            OrdinalType theta_extent_;
-            OrdinalType phi_extent_;
             OrdinalType species_extent_;
-            OrdinalType global_domain_r_extent_;
-            OrdinalType global_domain_theta_extent_;
-            OrdinalType local_domain_r_offset_;
-            OrdinalType local_domain_theta_offset_;
             bool        collision_interspecies_;
             bool        SOL_;
             bool        LIM_;

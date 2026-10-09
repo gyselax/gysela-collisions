@@ -11,7 +11,6 @@
 #include "KOLIOP/utility/copy.h"
 #include "KOLIOP/utility/iterate.h"
 #include "KOLIOP/utility/select.h"
-#include "KOLIOP/utility/tordu.h"
 #include "KOLIOP/utility/view.h"
 
 namespace koliop {
@@ -69,9 +68,6 @@ namespace koliop {
                 const OrdinalType itor3     = (team_index / (tor1_extent * tor2_extent)) % tor3_extent;
                 const OrdinalType ispeciesA = (team_index / (tor1_extent * tor2_extent * tor3_extent)) /* % species_extent */;
 
-                const OrdinalType ir     = koliop::utility::GetRValue(itor1, itor2, itor3);
-                const OrdinalType itheta = koliop::utility::GetThetaValue(itor1, itor2, itor3);
-
                 ComputeFloatType              na;
                 Kokkos::Sum<ComputeFloatType> na_reducer{na};
                 na_reducer.init(na_reducer.reference());
@@ -90,7 +86,7 @@ namespace koliop {
                         const ComputeFloatType f5d_s_value = Kokkos::max(f5d_s(imu, ivpar, itor1, itor2, itor3, ispeciesA),
                                                                          0.0);
 
-                        const ComputeFloatType ftmp = Bstar_s(ivpar, ir, itheta, ispeciesA) *
+                        const ComputeFloatType ftmp = Bstar_s(ivpar, itor2, itor1, ispeciesA) *
                                                       coeff_intdmu(imu) *
                                                       coeff_intdvpar(ivpar) *
                                                       f5d_s_value;
