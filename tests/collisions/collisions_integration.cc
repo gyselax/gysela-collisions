@@ -11,7 +11,6 @@
 
 int Test1() {
     static constexpr int8_t collision_interspecies = true;
-    static constexpr int8_t SOL                    = false;
     static constexpr int8_t LIM                    = false;
     static constexpr double dt                     = 50.0;
 
@@ -63,7 +62,6 @@ int Test1() {
         r_extent,
         phi_extent,
         collision_interspecies,
-        SOL,
         LIM,
         ir_SOL_separatrix,
         hat_As,
@@ -97,7 +95,6 @@ int Test1() {
 
 int Test2() {
     static constexpr int8_t collision_interspecies = true;
-    static constexpr int8_t SOL                    = false;
     static constexpr int8_t LIM                    = false;
     static constexpr double dt                     = 50.0;
 
@@ -147,7 +144,6 @@ int Test2() {
         r_extent,
         phi_extent,
         collision_interspecies,
-        SOL,
         LIM,
         ir_SOL_separatrix,
         hat_As,

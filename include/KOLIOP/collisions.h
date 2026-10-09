@@ -28,7 +28,6 @@ namespace koliop {
                 k_q_par_on_nT_s = 6,
             };
 
-        protected:
         public:
             /// @brief Instantiate an operator state. All the input are expected in layout left. Meaning an_array(i,j,k)
             /// is expected to be iterated quickly on the left most dimension. Equivalently, an_array(k,j,i) in layout
@@ -40,7 +39,6 @@ namespace koliop {
             /// @param tor3_extent The rank's phi domain extent in grid point.
             /// @param collision_interspecies Boolean as type int8_t (0 = false, else true) describing if a species
             /// collision with itself.
-            /// @param SOL Boolean as type int8_t (0 = false, else true) used in the Nu* computation.
             /// @param LIM Boolean as type int8_t (0 = false, else true) set to true to tell the operator to apply a
             /// limiter mask.
             /// @param ir_SOL_separatrix Fix the collisionality past ir_SOL_separatrix to the value at
@@ -69,7 +67,6 @@ namespace koliop {
                      uint64_t                                        tor2_extent,
                      uint64_t                                        tor3_extent,
                      bool                                            collision_interspecies,
-                     bool                                            SOL,
                      bool                                            LIM,
                      uint64_t                                        ir_SOL_separatrix,
                      const koliop::utility::View::MDL1<const Flo64>& hat_As,
@@ -246,7 +243,6 @@ namespace koliop {
             OrdinalType tor3_extent_;
             OrdinalType species_extent_;
             bool        collision_interspecies_;
-            bool        SOL_;
             bool        LIM_;
             OrdinalType ir_SOL_separatrix_;
 

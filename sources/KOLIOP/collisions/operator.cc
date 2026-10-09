@@ -94,7 +94,6 @@ namespace koliop {
                            uint64_t tor2_extent,
                            uint64_t tor3_extent,
                            bool     collision_interspecies,
-                           bool     SOL,
                            bool     LIM,
                            uint64_t ir_SOL_separatrix,
                            // NOTE: in practice, this hat_Xs contains 3 values. The size being hardcoded in global::Nspecies_max = 2
@@ -117,7 +116,6 @@ namespace koliop {
             , tor3_extent_{static_cast<OrdinalType>(tor3_extent)}
             , species_extent_{static_cast<OrdinalType>(hat_As.extent(0))}
             , collision_interspecies_{collision_interspecies}
-            , SOL_{SOL}
             , LIM_{LIM}
             , ir_SOL_separatrix_{static_cast<OrdinalType>(ir_SOL_separatrix)}
             , hat_As_{hat_As}
@@ -205,7 +203,6 @@ namespace koliop {
                 std::cout << "[KOLIOP][DEBUG] static_cast<uint64_t>(tor3_extent) : " << static_cast<uint64_t>(tor3_extent_) << "\n";
                 std::cout << "[KOLIOP][DEBUG] static_cast<uint64_t>(species_extent) : " << static_cast<uint64_t>(species_extent_) << "\n";
                 std::cout << "[KOLIOP][DEBUG] static_cast<bool>(collision_interspecies) : " << static_cast<bool>(collision_interspecies_) << "\n";
-                std::cout << "[KOLIOP][DEBUG] static_cast<bool>(SOL) : " << static_cast<bool>(SOL_) << "\n";
                 std::cout << "[KOLIOP][DEBUG] static_cast<bool>(LIM) : " << static_cast<bool>(LIM_) << "\n";
                 std::cout << "[KOLIOP][DEBUG] static_cast<uint64_t>(ir_SOL_separatrix) : " << static_cast<uint64_t>(ir_SOL_separatrix_) << "\n";
                 std::cout << "[KOLIOP][DEBUG] hat_As.data() : " << hat_As_.data() << "\n";
