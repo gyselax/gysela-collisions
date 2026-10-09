@@ -187,6 +187,8 @@ namespace koliop {
 
         void Operator::ComputeMaxwellianUnshiftedLoc(uint32_t                                  choice,
                                                      const koliop::utility::View::MDL6<Flo64>& f5d_s) const {
+            KOLIOP_COLLISIONS_CHECK_DISTRIBUTION_EXTENTS(f5d_s);
+
             if(!(choice == 3 || choice == 4)) {
                 throw std::runtime_error("KOLIOP_STATUS_INVALID_VALUE");
             }

@@ -118,6 +118,8 @@ namespace koliop {
         }
 
         void Operator::ComputeDensityCorrection(const koliop::utility::View::MDL6<Flo64>& f5d_s) const {
+            KOLIOP_COLLISIONS_CHECK_DISTRIBUTION_EXTENTS(f5d_s);
+
             DoComputeDensityCorrection(*this, execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],
                                        f5d_s);
         }

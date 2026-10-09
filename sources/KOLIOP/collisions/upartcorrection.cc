@@ -213,6 +213,8 @@ namespace koliop {
 
         void Operator::ComputeUparTCorrection(ComputeFloatType                          dt,
                                               const koliop::utility::View::MDL6<Flo64>& f5d_s) {
+            KOLIOP_COLLISIONS_CHECK_DISTRIBUTION_EXTENTS(f5d_s);
+
             // ComputeUparTCorrection reads U_par_s_input_ and outputs to
             // U_par_s_. This is required if more than 1 species is used, we
             // can not write in U_par_s_ while it is still being read (by

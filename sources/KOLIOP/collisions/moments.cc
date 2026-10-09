@@ -196,6 +196,8 @@ namespace koliop {
         }
 
         void Operator::ComputeMoments(const koliop::utility::View::MDL6<Flo64>& f5d_s) {
+            KOLIOP_COLLISIONS_CHECK_DISTRIBUTION_EXTENTS(f5d_s);
+
             DoComputeMoments(*this, execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],
                              f5d_s, n_s_, U_par_s_, T_s_);
         }

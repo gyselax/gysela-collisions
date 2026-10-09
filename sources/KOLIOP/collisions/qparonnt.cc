@@ -134,6 +134,8 @@ namespace koliop {
         }
 
         void Operator::ComputeQparOnNT(const koliop::utility::View::MDL6<const Flo64>& f5d_s) {
+            KOLIOP_COLLISIONS_CHECK_DISTRIBUTION_EXTENTS(f5d_s);
+
             DoComputeQparOnNT(*this, execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],
                               f5d_s, q_par_on_nT_s_);
         }

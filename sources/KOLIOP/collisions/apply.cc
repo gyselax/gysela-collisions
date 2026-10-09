@@ -13,6 +13,8 @@ namespace koliop {
 
         void Operator::Apply(ComputeFloatType                          dt,
                              const koliop::utility::View::MDL6<Flo64>& f5d_s) {
+            KOLIOP_COLLISIONS_CHECK_DISTRIBUTION_EXTENTS(f5d_s);
+
             // NOTE: Stream usage semantic change
             Fence(Constant::kDefaultExecutionSpacePoolIndex);
 #if !defined(KOLIOP_CONSTANT_MEMORY_USAGE)

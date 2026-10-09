@@ -309,6 +309,5 @@ namespace koliop {
 
             // Necessary user Fence(Constant::kDefaultExecutionSpacePoolIndex);
         }
-
     } // namespace collisions
 } // namespace koliop

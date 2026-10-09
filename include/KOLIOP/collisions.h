@@ -13,6 +13,14 @@
 namespace koliop {
     namespace collisions {
 
+#define KOLIOP_COLLISIONS_CHECK_DISTRIBUTION_EXTENTS(f5d_s)                   \
+    KOLIOP_ASSERT(static_cast<OrdinalType>(f5d_s.extent(0)) == mu_extent_);   \
+    KOLIOP_ASSERT(static_cast<OrdinalType>(f5d_s.extent(1)) == vpar_extent_); \
+    KOLIOP_ASSERT(static_cast<OrdinalType>(f5d_s.extent(2)) == tor1_extent_); \
+    KOLIOP_ASSERT(static_cast<OrdinalType>(f5d_s.extent(3)) == tor2_extent_); \
+    KOLIOP_ASSERT(static_cast<OrdinalType>(f5d_s.extent(4)) == tor3_extent_); \
+    KOLIOP_ASSERT(static_cast<OrdinalType>(f5d_s.extent(5)) == species_extent_);
+
         ////////////////////////////////////////////////////////////////////////
         // Operator definition
         ////////////////////////////////////////////////////////////////////////

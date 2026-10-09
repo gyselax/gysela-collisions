@@ -629,6 +629,7 @@ namespace koliop {
                     }
                 };
 
+                // TODO(Etienne M): Use launch bounds and a team policy flatting the block.
                 const auto a_policy = Kokkos::MDRangePolicy<
                     // Kokkos::LaunchBounds<256, 1>, Kokkos::IndexType<OrdinalType>,
                     ExecutionSpace,
