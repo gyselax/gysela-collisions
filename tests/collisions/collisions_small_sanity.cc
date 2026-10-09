@@ -11,7 +11,6 @@
 
 int Test2() {
     static constexpr int8_t collision_interspecies = true;
-    static constexpr int8_t LIM                    = false;
     static constexpr double dt                     = 50.0;
 
     static constexpr size_t mu_extent      = 64;
@@ -20,8 +19,6 @@ int Test2() {
     static constexpr size_t theta_extent   = 8;
     static constexpr size_t phi_extent     = 4;
     static constexpr size_t species_extent = 2;
-
-    static constexpr int64_t ir_SOL_separatrix = r_extent;
 
     const size_t buffer_size = mu_extent * vpar_extent * theta_extent * r_extent * phi_extent * species_extent;
 
@@ -49,8 +46,6 @@ int Test2() {
     koliop::utility::View::UDL1<const double> coeff_intdmu{a_buffer_0, mu_extent};
     koliop::utility::View::UDL1<const double> coeff_intdvpar{a_buffer_0, vpar_extent};
     koliop::utility::View::UDL1<const double> coeff_AD_r{a_buffer_0, r_extent};
-    koliop::utility::View::UDL1<const double> mask_buffer_r{a_buffer_0, r_extent};
-    koliop::utility::View::UDL2<const double> mask_LIM{a_buffer_0, r_extent, theta_extent};
     koliop::utility::View::UDL2<const double> B_norm{a_buffer_0, r_extent, theta_extent};
     koliop::utility::View::UDL4<const double> Bstar_s{a_buffer_0, vpar_extent, r_extent, theta_extent, species_extent};
 
@@ -59,8 +54,6 @@ int Test2() {
         r_extent,
         phi_extent,
         collision_interspecies,
-        LIM,
-        ir_SOL_separatrix,
         hat_As,
         hat_Zs,
         mug,
@@ -68,8 +61,6 @@ int Test2() {
         coeff_intdmu,
         coeff_intdvpar,
         coeff_AD_r,
-        mask_buffer_r,
-        mask_LIM,
         B_norm,
         Bstar_s};
 

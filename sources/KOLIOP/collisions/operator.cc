@@ -94,8 +94,6 @@ namespace koliop {
                            uint64_t tor2_extent,
                            uint64_t tor3_extent,
                            bool     collision_interspecies,
-                           bool     LIM,
-                           uint64_t ir_SOL_separatrix,
                            // NOTE: in practice, this hat_Xs contains 3 values. The size being hardcoded in global::Nspecies_max = 2
                            const koliop::utility::View::MDL1<const Flo64>& hat_As,
                            const koliop::utility::View::MDL1<const Flo64>& hat_Zs,
@@ -104,8 +102,6 @@ namespace koliop {
                            const koliop::utility::View::MDL1<const Flo64>& coeff_intdmu,
                            const koliop::utility::View::MDL1<const Flo64>& coeff_intdvpar,
                            const koliop::utility::View::MDL1<const Flo64>& coeff_AD_r,
-                           const koliop::utility::View::MDL1<const Flo64>& mask_buffer_r,
-                           const koliop::utility::View::MDL2<const Flo64>& mask_LIM,
                            const koliop::utility::View::MDL2<const Flo64>& B_norm,
                            const koliop::utility::View::MDL4<const Flo64>& Bstar_s)
             // Constant, externally computed values
@@ -116,8 +112,6 @@ namespace koliop {
             , tor3_extent_{static_cast<OrdinalType>(tor3_extent)}
             , species_extent_{static_cast<OrdinalType>(hat_As.extent(0))}
             , collision_interspecies_{collision_interspecies}
-            , LIM_{LIM}
-            , ir_SOL_separatrix_{static_cast<OrdinalType>(ir_SOL_separatrix)}
             , hat_As_{hat_As}
             , hat_Zs_{hat_Zs}
             , mug_{mug}
@@ -125,8 +119,6 @@ namespace koliop {
             , coeff_intdmu_{coeff_intdmu}
             , coeff_intdvpar_{coeff_intdvpar}
             , coeff_AD_r_{coeff_AD_r}
-            , mask_buffer_r_{mask_buffer_r}
-            , mask_LIM_{mask_LIM}
             , B_norm_{B_norm}
             , Bstar_s_{Bstar_s}
 
@@ -162,12 +154,6 @@ namespace koliop {
             KOLIOP_ASSERT(static_cast<OrdinalType>(coeff_intdmu_.extent(0)) == mu_extent_);
             KOLIOP_ASSERT(static_cast<OrdinalType>(coeff_intdvpar_.extent(0)) == vpar_extent_);
             KOLIOP_ASSERT(static_cast<OrdinalType>(coeff_AD_r_.extent(0)) == tor2_extent_);
-            KOLIOP_ASSERT(static_cast<OrdinalType>(mask_buffer_r_.extent(0)) == tor2_extent_);
-            if(LIM_) {
-                KOLIOP_ASSERT(mask_LIM_.data() != nullptr);
-                KOLIOP_ASSERT(static_cast<OrdinalType>(mask_LIM_.extent(0)) == tor2_extent_);
-                KOLIOP_ASSERT(static_cast<OrdinalType>(mask_LIM_.extent(1)) == tor1_extent_);
-            }
             KOLIOP_ASSERT(static_cast<OrdinalType>(B_norm_.extent(0)) == tor2_extent_);
             KOLIOP_ASSERT(static_cast<OrdinalType>(B_norm_.extent(1)) == tor1_extent_);
             KOLIOP_ASSERT(static_cast<OrdinalType>(Bstar_s_.extent(0)) == vpar_extent_);
@@ -177,8 +163,6 @@ namespace koliop {
 
             if(std::getenv("KOLIOP_DEBUG_ALL") != nullptr ||
                std::getenv("KOLIOP_DEBUG_koliop_Create") != nullptr) {
-                std::cout << "[KOLIOP][DEBUG] tor2_extent_ < static_cast<size_t>(ir_SOL_separatrix) : "
-                          << (tor2_extent_ < ir_SOL_separatrix_) << "\n";
 #if defined(KOLIOP_UTILITY_FLATTEN_EXPECT_POW2_EXTENTS)
                 // Assert for powers of t
                 std::cout << "[KOLIOP][DEBUG] ((mu_extent - 1) & mu_extent) != 0 : " << (((mu_extent_ - 1) & mu_extent_) != 0) << "\n";
@@ -191,8 +175,6 @@ namespace koliop {
                 std::cout << "[KOLIOP][DEBUG] coeff_intdmu.data() == nullptr : " << (coeff_intdmu_.data() == nullptr) << "\n";
                 std::cout << "[KOLIOP][DEBUG] coeff_intdvpar.data() == nullptr : " << (coeff_intdvpar_.data() == nullptr) << "\n";
                 std::cout << "[KOLIOP][DEBUG] coeff_AD_r.data() == nullptr : " << (coeff_AD_r_.data() == nullptr) << "\n";
-                std::cout << "[KOLIOP][DEBUG] mask_buffer_r.data() == nullptr : " << (mask_buffer_r_.data() == nullptr) << "\n";
-                std::cout << "[KOLIOP][DEBUG] (static_cast<bool>(LIM) && (mask_LIM.data() == nullptr)) : " << ((static_cast<bool>(LIM_) && (mask_LIM_.data() == nullptr))) << "\n";
                 std::cout << "[KOLIOP][DEBUG] B_norm.data() == nullptr : " << (B_norm_.data() == nullptr) << "\n";
                 std::cout << "[KOLIOP][DEBUG] Bstar_s.data() == nullptr : " << (Bstar_s_.data() == nullptr) << "\n";
                 std::cout << "\n";
@@ -203,8 +185,6 @@ namespace koliop {
                 std::cout << "[KOLIOP][DEBUG] static_cast<uint64_t>(tor3_extent) : " << static_cast<uint64_t>(tor3_extent_) << "\n";
                 std::cout << "[KOLIOP][DEBUG] static_cast<uint64_t>(species_extent) : " << static_cast<uint64_t>(species_extent_) << "\n";
                 std::cout << "[KOLIOP][DEBUG] static_cast<bool>(collision_interspecies) : " << static_cast<bool>(collision_interspecies_) << "\n";
-                std::cout << "[KOLIOP][DEBUG] static_cast<bool>(LIM) : " << static_cast<bool>(LIM_) << "\n";
-                std::cout << "[KOLIOP][DEBUG] static_cast<uint64_t>(ir_SOL_separatrix) : " << static_cast<uint64_t>(ir_SOL_separatrix_) << "\n";
                 std::cout << "[KOLIOP][DEBUG] hat_As.data() : " << hat_As_.data() << "\n";
                 std::cout << "[KOLIOP][DEBUG] hat_Zs.data() : " << hat_Zs_.data() << "\n";
                 std::cout << "[KOLIOP][DEBUG] mug.data() : " << mug_.data() << "\n";
@@ -212,30 +192,26 @@ namespace koliop {
                 std::cout << "[KOLIOP][DEBUG] coeff_intdmu.data() : " << coeff_intdmu_.data() << "\n";
                 std::cout << "[KOLIOP][DEBUG] coeff_intdvpar.data() : " << coeff_intdvpar_.data() << "\n";
                 std::cout << "[KOLIOP][DEBUG] coeff_AD_r.data() : " << coeff_AD_r_.data() << "\n";
-                std::cout << "[KOLIOP][DEBUG] mask_buffer_r.data() : " << mask_buffer_r_.data() << "\n";
-                std::cout << "[KOLIOP][DEBUG] mask_LIM.data() : " << mask_LIM_.data() << "\n";
                 std::cout << "[KOLIOP][DEBUG] B_norm.data() : " << B_norm_.data() << "\n";
                 std::cout << "[KOLIOP][DEBUG] Bstar_s.data() : " << Bstar_s_.data() << "\n";
                 std::cout << std::flush;
             }
 
-            if(tor2_extent_ < ir_SOL_separatrix_ ||
+            if(
 #if defined(KOLIOP_UTILITY_FLATTEN_EXPECT_POW2_EXTENTS)
-               // Assert for powers of two.
-               ((mu_extent_ - 1) & mu_extent_) != 0 ||
-               ((vpar_extent_ - 1) & vpar_extent_) != 0 ||
+                // Assert for powers of two.
+                ((mu_extent_ - 1) & mu_extent_) != 0 ||
+                ((vpar_extent_ - 1) & vpar_extent_) != 0 ||
 #endif
-               hat_As_.data() == nullptr ||
-               hat_Zs_.data() == nullptr ||
-               mug_.data() == nullptr ||
-               vparg_.data() == nullptr ||
-               coeff_intdmu_.data() == nullptr ||
-               coeff_intdvpar_.data() == nullptr ||
-               coeff_AD_r_.data() == nullptr ||
-               mask_buffer_r_.data() == nullptr ||
-               (static_cast<bool>(LIM_) && (mask_LIM_.data() == nullptr)) ||
-               B_norm_.data() == nullptr ||
-               Bstar_s_.data() == nullptr) {
+                hat_As_.data() == nullptr ||
+                hat_Zs_.data() == nullptr ||
+                mug_.data() == nullptr ||
+                vparg_.data() == nullptr ||
+                coeff_intdmu_.data() == nullptr ||
+                coeff_intdvpar_.data() == nullptr ||
+                coeff_AD_r_.data() == nullptr ||
+                B_norm_.data() == nullptr ||
+                Bstar_s_.data() == nullptr) {
                 throw std::runtime_error("KOLIOP_STATUS_INVALID_VALUE");
             }
 

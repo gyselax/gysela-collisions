@@ -42,53 +42,13 @@ namespace koliop {
 
             } // namespace
 
-            template <typename CvCdDriver,
-                      typename Operator,
-                      typename ExecutionSpace,
-                      typename View2D>
-            static inline void
-            DoPrepareCollisionMask(const Operator& an_operator,
-                                   ExecutionSpace  an_execution_space,
-                                   OrdinalType     block_first_tor2,
-                                   OrdinalType     block_first_tor1,
-                                   View2D&&        mask_coll) {
-                const auto& LIM = an_operator.LIM_;
-
-                const auto& mask_buffer_r = an_operator.mask_buffer_r_;
-                const auto& mask_LIM      = an_operator.mask_LIM_;
-
-                const auto kernel = KOKKOS_LAMBDA(OrdinalType ir, OrdinalType itheta) {
-                    const bool mask_value = static_cast<OrdinalType>(mask_buffer_r(ir) < 0.99) |
-                                            // NOTE: mask_lim may not be allocated ! We need the && first.
-                                            static_cast<OrdinalType>(LIM && (mask_LIM(ir, itheta) < 0.99));
-
-                    mask_coll(ir - block_first_tor2,
-                              itheta - block_first_tor1) = mask_value;
-                };
-
-                const auto a_policy = Kokkos::MDRangePolicy<
-                    // Kokkos::LaunchBounds<256, 1>, Kokkos::IndexType<OrdinalType>,
-                    ExecutionSpace,
-                    Kokkos::Rank<2,
-                                 Kokkos::Iterate::Left,
-                                 Kokkos::Iterate::Left>>{an_execution_space,
-                                                         {block_first_tor2,
-                                                          block_first_tor1},
-                                                         {block_first_tor2 + CvCdDriver::kBlockExtentTor2,
-                                                          block_first_tor1 + CvCdDriver::kBlockExtentTor1}};
-
-                Kokkos::parallel_for("DoPrepareCollisionMask",
-                                     a_policy, kernel);
-            }
-
             /// Store the current alpha coefficient in rhs.
             ///
             template <typename CvCdDriver,
                       typename Operator,
                       typename ExecutionSpace,
                       typename View6D,
-                      typename View4D,
-                      typename View2D>
+                      typename View4D>
             static inline void
             DoComputeAlphaProjection(const Operator& an_operator,
                                      ExecutionSpace  an_execution_space,
@@ -96,7 +56,6 @@ namespace koliop {
                                      OrdinalType     block_first_tor2,
                                      OrdinalType     block_first_tor3,
                                      OrdinalType     species_index,
-                                     const View2D&   mask_coll,
                                      const View6D&   f5d_s,
                                      View4D&&        rhs) {
 
@@ -143,52 +102,38 @@ namespace koliop {
                     const OrdinalType itor2 = block_first_tor2 + block_local_index_itor2;
                     const OrdinalType itor3 = block_first_tor3 + block_local_index_itor3;
 
-                    if(mask_coll(block_local_index_itor2,
-                                 block_local_index_itor1)) {
+                    const ComputeFloatType BoT = B_norm(itor2, itor1) /
+                                                 T_s(itor1, itor2, itor3, species_index);
 
-                        const ComputeFloatType BoT = B_norm(itor2, itor1) /
-                                                     T_s(itor1, itor2, itor3, species_index);
+                    for(OrdinalType ivpar = 0; ivpar < vpar_extent; ++ivpar) {
+                        for(OrdinalType ipol = 0; ipol < Constant::kMaximumLaguerrePolynomialDegree; ++ipol) {
 
-                        for(OrdinalType ivpar = 0; ivpar < vpar_extent; ++ivpar) {
-                            for(OrdinalType ipol = 0; ipol < Constant::kMaximumLaguerrePolynomialDegree; ++ipol) {
+                            ComputeFloatType              rhs_value;
+                            Kokkos::Sum<ComputeFloatType> rhs_value_reducer{rhs_value};
+                            rhs_value_reducer.init(rhs_value_reducer.reference());
 
-                                ComputeFloatType              rhs_value;
-                                Kokkos::Sum<ComputeFloatType> rhs_value_reducer{rhs_value};
-                                rhs_value_reducer.init(rhs_value_reducer.reference());
+                            Kokkos::parallel_for(
+                                Kokkos::TeamThreadRange(a_team_handle,
+                                                        mu_extent),
+                                [&](auto imu) {
+                                    const ComputeFloatType muBoT     = mug(imu) * BoT;
+                                    const ComputeFloatType coeff_tot = DoComputeLaguerrePol(ipol, muBoT) * BoT * coeff_intdmu(imu) * Kokkos::exp(-muBoT);
 
-                                Kokkos::parallel_for(
-                                    Kokkos::TeamThreadRange(a_team_handle,
-                                                            mu_extent),
-                                    [&](auto imu) {
-                                        const ComputeFloatType muBoT     = mug(imu) * BoT;
-                                        const ComputeFloatType coeff_tot = DoComputeLaguerrePol(ipol, muBoT) * BoT * coeff_intdmu(imu) * Kokkos::exp(-muBoT);
+                                    rhs_value_reducer.join(rhs_value_reducer.reference(),
+                                                           coeff_tot * f5d_s(imu, ivpar, itor1, itor2, itor3, species_index));
+                                });
 
-                                        rhs_value_reducer.join(rhs_value_reducer.reference(),
-                                                               coeff_tot * f5d_s(imu, ivpar, itor1, itor2, itor3, species_index));
-                                    });
+                            a_team_handle.team_reduce(rhs_value_reducer);
 
-                                a_team_handle.team_reduce(rhs_value_reducer);
+                            // NOTE: This should be a no-op.
+                            rhs_value = rhs_value_reducer.reference();
 
-                                // NOTE: This should be a no-op.
-                                rhs_value = rhs_value_reducer.reference();
-
-                                Kokkos::single(
-                                    Kokkos::PerTeam(a_team_handle),
-                                    [&]() {
-                                        rhs(batch_index, ivpar, ipol, batch_element_index) = rhs_value;
-                                    });
-                            }
+                            Kokkos::single(
+                                Kokkos::PerTeam(a_team_handle),
+                                [&]() {
+                                    rhs(batch_index, ivpar, ipol, batch_element_index) = rhs_value;
+                                });
                         }
-                    } else {
-                        Kokkos::parallel_for(
-                            Kokkos::TeamThreadRange(a_team_handle,
-                                                    vpar_extent),
-                            [&](auto ivpar) {
-                                for(OrdinalType ipol = 0; ipol < Constant::kMaximumLaguerrePolynomialDegree; ++ipol) {
-                                    // NOTE: These accesses are .. bad.
-                                    rhs(batch_index, ivpar, ipol, batch_element_index) = 0.0;
-                                }
-                            });
                     }
                 };
 
@@ -324,8 +269,7 @@ namespace koliop {
                       typename Operator,
                       typename ExecutionSpace,
                       typename View6D,
-                      typename View4D,
-                      typename View2D>
+                      typename View4D>
             static inline void
             DoComputeReconstruction(const Operator& an_operator,
                                     ExecutionSpace  an_execution_space,
@@ -333,7 +277,6 @@ namespace koliop {
                                     OrdinalType     block_first_tor2,
                                     OrdinalType     block_first_tor3,
                                     OrdinalType     species_index,
-                                    const View2D&   mask_coll,
                                     const View4D&   rhs,
                                     View6D&&        f5d_s) {
 
@@ -369,14 +312,6 @@ namespace koliop {
                     const OrdinalType block_local_index_itor1 = (team_index) % CvCdDriver::kBlockExtentTor1;
                     const OrdinalType block_local_index_itor2 = (team_index / (CvCdDriver::kBlockExtentTor1)) % CvCdDriver::kBlockExtentTor2;
                     const OrdinalType block_local_index_itor3 = (team_index / (CvCdDriver::kBlockExtentTor1 * CvCdDriver::kBlockExtentTor2)) /* % CvCdDriver::kBlockExtentTor3 */;
-
-                    if(!mask_coll(block_local_index_itor2,
-                                  block_local_index_itor1)) {
-                        // NOTE: this return does not break the rest of the function
-                        // as all the thread of the team will execute the same
-                        // branch.
-                        return;
-                    }
 
                     const OffsetType flattened_index = team_index;
 
@@ -552,8 +487,6 @@ namespace koliop {
 
             Najl<CvCdDriver> najl_provider_;
 
-            koliop::utility::View::MDL<bool[kBlockExtentTor2][kBlockExtentTor1]> mask_coll_;
-
             // NOTE: We know of an additional constant extent, the batch count
             // but we cannot exploit it due to kokkos enforcing that constant
             // extent must be placed after dynamic extent. vpar is non constant
@@ -594,7 +527,6 @@ namespace koliop {
             : najl_provider_{vpar_extent, species_extent,
                              collision_interspecies,
                              hat_As, hat_Zs, vparg}
-            , mask_coll_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "mask_coll")}
             , Najl_{}
             , matrix_{}
             , alpha_coefficients_{}
@@ -676,29 +608,13 @@ namespace koliop {
             LHS_matrix_sampler.DeltaTime() = static_cast<ComputeFloatType>(-dt / 4.0);
             RHS_matrix_sampler.DeltaTime() = static_cast<ComputeFloatType>(dt / 4.0);
 
-            // NOTE: If mask_coll depends on r and theta, we could interchange
-            // iphi with itheta and ir. that said, this call is so fast compared
-            // to the rest that it does not seem useful.
-            detail::DoPrepareCollisionMask<CvCdDriver>(an_operator,
-                                                       an_execution_space,
-                                                       block_first_tor2, block_first_tor1,
-                                                       mask_coll_);
-
-            // NOTE: Skipping would create imbalance and because we
-            // use large blocks, assuming the resolution is not too
-            // large, we are pretty much assured that we get at
-            // least one point we need to process.
-            // if(all boolean in mask_coll are false) {
-            //     continue;
-            // }
-
             {
                 // Projection of f on Laguerre Polynomials.
                 detail::DoComputeAlphaProjection<CvCdDriver>(an_operator,
                                                              an_execution_space,
                                                              block_first_tor1, block_first_tor2, block_first_tor3,
                                                              species_index,
-                                                             mask_coll_, f5d_s, alpha_coefficients_);
+                                                             f5d_s, alpha_coefficients_);
 
                 {
                     // Computation of the N_i,a ^ jl = sum_b M_i,ab ^ jl.
@@ -777,7 +693,7 @@ namespace koliop {
                                                             an_execution_space,
                                                             block_first_tor1, block_first_tor2, block_first_tor3,
                                                             species_index,
-                                                            mask_coll_, alpha_coefficients_, f5d_s);
+                                                            alpha_coefficients_, f5d_s);
             }
         }
 
