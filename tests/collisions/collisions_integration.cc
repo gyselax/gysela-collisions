@@ -25,20 +25,14 @@ int Test1() {
     Kokkos::View<double*> a_buffer_0_device_view("device_buffer", buffer_size);
     const auto            a_buffer_0_host_mirror = Kokkos::create_mirror_view(a_buffer_0_device_view);
 
-    Kokkos::View<double*> a_buffer_1_device_view("device_buffer", buffer_size);
-    const auto            a_buffer_1_host_mirror = Kokkos::create_mirror_view(a_buffer_0_device_view);
-
     for(size_t i = 0; i < buffer_size; ++i) {
         a_buffer_0_host_mirror(i) = 1.0;
-        a_buffer_1_host_mirror(i) = 1.0;
     }
 
     Kokkos::deep_copy(a_buffer_0_device_view, a_buffer_0_host_mirror);
-    Kokkos::deep_copy(a_buffer_1_device_view, a_buffer_1_host_mirror);
 
     std::cout << "Using device buffers." << std::endl;
     auto* a_buffer_0 = a_buffer_0_device_view.data();
-    auto* a_buffer_1 = a_buffer_1_device_view.data();
 
     // NOTE: the cache locality effect implied by spoofing
     // all these array as a single ptr is not visible on GPU.
@@ -67,7 +61,7 @@ int Test1() {
         B_norm,
         Bstar_s};
 
-    koliop::utility::View::UDL6<double> f5d_s{a_buffer_1, mu_extent, vpar_extent, theta_extent, r_extent, phi_extent, species_extent};
+    koliop::utility::View::UDL6<double> f5d_s{a_buffer_0, mu_extent, vpar_extent, theta_extent, r_extent, phi_extent, species_extent};
 
     an_operator.ComputeMoments(f5d_s);
     an_operator.PrecomputeNu();
@@ -79,7 +73,7 @@ int Test1() {
     an_operator.FenceAll();
     an_operator.ComputeDensityCorrection(f5d_s);
     an_operator.ComputeUparTCorrection(dt, f5d_s);
-    an_operator.ExtractRaw(koliop::collisions::Operator::Diagnostics::k_n_s, a_buffer_1);
+    an_operator.ExtractRaw(koliop::collisions::Operator::Diagnostics::k_n_s, a_buffer_0);
     an_operator.FenceAll();
     return 0;
 }
@@ -100,19 +94,13 @@ int Test2() {
     Kokkos::View<double*> a_buffer_0_device_view("device_buffer", buffer_size);
     const auto            a_buffer_0_host_mirror = Kokkos::create_mirror_view(a_buffer_0_device_view);
 
-    Kokkos::View<double*> a_buffer_1_device_view("device_buffer", buffer_size);
-    const auto            a_buffer_1_host_mirror = Kokkos::create_mirror_view(a_buffer_0_device_view);
-
     for(size_t i = 0; i < buffer_size; ++i) {
         a_buffer_0_host_mirror(i) = 1.0;
-        a_buffer_1_host_mirror(i) = 1.0;
     }
 
     Kokkos::deep_copy(a_buffer_0_device_view, a_buffer_0_host_mirror);
-    Kokkos::deep_copy(a_buffer_1_device_view, a_buffer_1_host_mirror);
 
     auto* a_buffer_0 = a_buffer_0_device_view.data();
-    auto* a_buffer_1 = a_buffer_1_device_view.data();
 
     koliop::utility::View::UDL1<const double> hat_As{a_buffer_0, species_extent};
     koliop::utility::View::UDL1<const double> hat_Zs{a_buffer_0, species_extent};
@@ -139,7 +127,7 @@ int Test2() {
         B_norm,
         Bstar_s};
 
-    koliop::utility::View::UDL6<double> f5d_s{a_buffer_1, mu_extent, vpar_extent, theta_extent, r_extent, phi_extent, species_extent};
+    koliop::utility::View::UDL6<double> f5d_s{a_buffer_0, mu_extent, vpar_extent, theta_extent, r_extent, phi_extent, species_extent};
 
     NaiveBenchmark([&](auto) {
         an_operator.Collisions(dt, f5d_s);
