@@ -95,15 +95,15 @@ namespace koliop {
                            uint64_t tor3_extent,
                            bool     collision_interspecies,
                            // NOTE: in practice, this hat_Xs contains 3 values. The size being hardcoded in global::Nspecies_max = 2
-                           const koliop::utility::View::MDL1<const Flo64>& hat_As,
-                           const koliop::utility::View::MDL1<const Flo64>& hat_Zs,
-                           const koliop::utility::View::MDL1<const Flo64>& mug,
-                           const koliop::utility::View::MDL1<const Flo64>& vparg,
-                           const koliop::utility::View::MDL1<const Flo64>& coeff_intdmu,
-                           const koliop::utility::View::MDL1<const Flo64>& coeff_intdvpar,
-                           const koliop::utility::View::MDL1<const Flo64>& coeff_AD_r,
-                           const koliop::utility::View::MDL2<const Flo64>& B_norm,
-                           const koliop::utility::View::MDL4<const Flo64>& Bstar_s)
+                           const koliop::utility::View::UDL1<const Flo64>& hat_As,
+                           const koliop::utility::View::UDL1<const Flo64>& hat_Zs,
+                           const koliop::utility::View::UDL1<const Flo64>& mug,
+                           const koliop::utility::View::UDL1<const Flo64>& vparg,
+                           const koliop::utility::View::UDL1<const Flo64>& coeff_intdmu,
+                           const koliop::utility::View::UDL1<const Flo64>& coeff_intdvpar,
+                           const koliop::utility::View::UDL1<const Flo64>& coeff_AD_r,
+                           const koliop::utility::View::UDL2<const Flo64>& B_norm,
+                           const koliop::utility::View::UDL4<const Flo64>& Bstar_s)
             // Constant, externally computed values
             : mu_extent_{static_cast<OrdinalType>(mug.extent(0))}
             , vpar_extent_{static_cast<OrdinalType>(vparg.extent(0))}
@@ -260,7 +260,7 @@ namespace koliop {
         }
 
         void Operator::Collisions(ComputeFloatType                          dt,
-                                  const koliop::utility::View::MDL6<Flo64>& f5d_s) {
+                                  const koliop::utility::View::UDL6<Flo64>& f5d_s) {
             // Assume all our streams are empty.
 
             ComputeMoments(f5d_s);

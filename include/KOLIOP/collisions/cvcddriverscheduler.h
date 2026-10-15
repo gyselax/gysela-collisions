@@ -43,7 +43,7 @@ namespace koliop {
             void ScheduleExecution(const Operator&                           an_operator,
                                    ComputeFloatType                          dt,
                                    OrdinalType                               species_index,
-                                   const koliop::utility::View::MDL6<Flo64>& f5d_s);
+                                   const koliop::utility::View::UDL6<Flo64>& f5d_s);
 
         protected:
             std::vector<CvCdDriverConfiguration> cvcd_drivers_configurations_;

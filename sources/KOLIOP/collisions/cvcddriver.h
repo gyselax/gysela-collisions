@@ -107,7 +107,6 @@ namespace koliop {
 
                     for(OrdinalType ivpar = 0; ivpar < vpar_extent; ++ivpar) {
                         for(OrdinalType ipol = 0; ipol < Constant::kMaximumLaguerrePolynomialDegree; ++ipol) {
-
                             ComputeFloatType              rhs_value;
                             Kokkos::Sum<ComputeFloatType> rhs_value_reducer{rhs_value};
                             rhs_value_reducer.init(rhs_value_reducer.reference());
@@ -409,16 +408,16 @@ namespace koliop {
 
         protected:
             using MatrixSamplerType = MatrixSampler<typename MatrixKindType::ScalarType,
-                                                    koliop::utility::View::MDL1<const Flo64>>;
+                                                    koliop::utility::View::UDL1<const Flo64>>;
 
         public:
             CvCdDriver(OrdinalType                                     vpar_extent,
                        OrdinalType                                     species_extent,
                        bool                                            collision_interspecies,
-                       const koliop::utility::View::MDL1<const Flo64>& hat_As,
-                       const koliop::utility::View::MDL1<const Flo64>& hat_Zs,
-                       const koliop::utility::View::MDL1<const Flo64>& vparg,
-                       const koliop::utility::View::MDL1<const Flo64>& coeff_intdvpar);
+                       const koliop::utility::View::UDL1<const Flo64>& hat_As,
+                       const koliop::utility::View::UDL1<const Flo64>& hat_Zs,
+                       const koliop::utility::View::UDL1<const Flo64>& vparg,
+                       const koliop::utility::View::UDL1<const Flo64>& coeff_intdvpar);
 
             void AllocateScratchMemory() {
                 // NOTE: No, we are not allocating Najl and co. with only
@@ -520,10 +519,10 @@ namespace koliop {
                    BatchTraits>::CvCdDriver(OrdinalType                                     vpar_extent,
                                             OrdinalType                                     species_extent,
                                             bool                                            collision_interspecies,
-                                            const koliop::utility::View::MDL1<const Flo64>& hat_As,
-                                            const koliop::utility::View::MDL1<const Flo64>& hat_Zs,
-                                            const koliop::utility::View::MDL1<const Flo64>& vparg,
-                                            const koliop::utility::View::MDL1<const Flo64>& coeff_intdvpar)
+                                            const koliop::utility::View::UDL1<const Flo64>& hat_As,
+                                            const koliop::utility::View::UDL1<const Flo64>& hat_Zs,
+                                            const koliop::utility::View::UDL1<const Flo64>& vparg,
+                                            const koliop::utility::View::UDL1<const Flo64>& coeff_intdvpar)
             : najl_provider_{vpar_extent, species_extent,
                              collision_interspecies,
                              hat_As, hat_Zs, vparg}

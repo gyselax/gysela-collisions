@@ -714,9 +714,9 @@ namespace koliop {
             Najl(OrdinalType                                     vpar_extent,
                  OrdinalType                                     species_extent,
                  bool                                            collision_interspecies,
-                 const koliop::utility::View::MDL1<const Flo64>& hat_As,
-                 const koliop::utility::View::MDL1<const Flo64>& hat_Zs,
-                 const koliop::utility::View::MDL1<const Flo64>& vparg);
+                 const koliop::utility::View::UDL1<const Flo64>& hat_As,
+                 const koliop::utility::View::UDL1<const Flo64>& hat_Zs,
+                 const koliop::utility::View::UDL1<const Flo64>& vparg);
 
             template <typename ExecutionSpace>
             void Compute(ExecutionSpace                                       an_execution_space,
@@ -724,9 +724,9 @@ namespace koliop {
                          OrdinalType                                          block_first_tor2,
                          OrdinalType                                          block_first_tor3,
                          OrdinalType                                          species_index,
-                         const koliop::utility::View::MDL4<ComputeFloatType>& n_s,
-                         const koliop::utility::View::MDL4<ComputeFloatType>& T_s,
-                         const koliop::utility::View::MDL5<ComputeFloatType>& nu_ab,
+                         const koliop::utility::View::UDL4<ComputeFloatType>& n_s,
+                         const koliop::utility::View::UDL4<ComputeFloatType>& T_s,
+                         const koliop::utility::View::UDL5<ComputeFloatType>& nu_ab,
                          typename MatrixKindType::ScalarType&                 Najl) const;
 
         public:
@@ -739,9 +739,9 @@ namespace koliop {
             OrdinalType species_extent_;
             bool        collision_interspecies_;
 
-            koliop::utility::View::MDL1<const Flo64> hat_As_;
-            koliop::utility::View::MDL1<const Flo64> hat_Zs_;
-            koliop::utility::View::MDL1<const Flo64> vparg_;
+            koliop::utility::View::UDL1<const Flo64> hat_As_;
+            koliop::utility::View::UDL1<const Flo64> hat_Zs_;
+            koliop::utility::View::UDL1<const Flo64> vparg_;
 
             // Constant, internally computed values
 
@@ -760,9 +760,9 @@ namespace koliop {
         Najl<CvCdDriver>::Najl(OrdinalType                                     vpar_extent,
                                OrdinalType                                     species_extent,
                                bool                                            collision_interspecies,
-                               const koliop::utility::View::MDL1<const Flo64>& hat_As,
-                               const koliop::utility::View::MDL1<const Flo64>& hat_Zs,
-                               const koliop::utility::View::MDL1<const Flo64>& vparg)
+                               const koliop::utility::View::UDL1<const Flo64>& hat_As,
+                               const koliop::utility::View::UDL1<const Flo64>& hat_Zs,
+                               const koliop::utility::View::UDL1<const Flo64>& vparg)
             : vpar_extent_{vpar_extent}
             , species_extent_{species_extent}
             , collision_interspecies_{collision_interspecies}
@@ -784,9 +784,9 @@ namespace koliop {
                                        OrdinalType                                          block_first_tor2,
                                        OrdinalType                                          block_first_tor3,
                                        OrdinalType                                          species_index,
-                                       const koliop::utility::View::MDL4<ComputeFloatType>& n_s,
-                                       const koliop::utility::View::MDL4<ComputeFloatType>& T_s,
-                                       const koliop::utility::View::MDL5<ComputeFloatType>& nu_ab,
+                                       const koliop::utility::View::UDL4<ComputeFloatType>& n_s,
+                                       const koliop::utility::View::UDL4<ComputeFloatType>& T_s,
+                                       const koliop::utility::View::UDL5<ComputeFloatType>& nu_ab,
                                        typename MatrixKindType::ScalarType&                 Najl) const {
 
             KOLIOP_ASSERT(Najl.size() != 0);

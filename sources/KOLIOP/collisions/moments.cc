@@ -195,7 +195,7 @@ namespace koliop {
                                  a_policy, kernel);
         }
 
-        void Operator::ComputeMoments(const koliop::utility::View::MDL6<Flo64>& f5d_s) {
+        void Operator::ComputeMoments(const koliop::utility::View::UDL6<Flo64>& f5d_s) {
             KOLIOP_COLLISIONS_CHECK_DISTRIBUTION_EXTENTS(f5d_s);
 
             DoComputeMoments(*this, execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],

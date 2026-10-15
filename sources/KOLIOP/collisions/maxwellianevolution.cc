@@ -172,7 +172,7 @@ namespace koliop {
         }
 
         void Operator::ComputeMaxwellianEvolution(ComputeFloatType                          dt,
-                                                  const koliop::utility::View::MDL6<Flo64>& f5d_s) {
+                                                  const koliop::utility::View::UDL6<Flo64>& f5d_s) {
             KOLIOP_COLLISIONS_CHECK_DISTRIBUTION_EXTENTS(f5d_s);
 
             DoComputeMaxwellianEvolution(*this, execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],

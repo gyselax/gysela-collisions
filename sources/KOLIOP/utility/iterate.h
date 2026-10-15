@@ -22,18 +22,16 @@ namespace koliop {
                       Callable&&  a_callable) {
 #if defined(KOLIOP_BACKEND_IS_GPU_LIKE)
                 const koliop::utility::Flatten2D flattened_range{extent_1, extent_2};
-
-                const auto an_intra_team_policy = Kokkos::TeamThreadRange(a_team_handle,
-                                                                          flattened_range.forward());
-                Kokkos::parallel_for(an_intra_team_policy,
-                                     [&](auto flattened_index) {
-                                         flattened_range.Call(flattened_index, a_callable);
-                                     });
+                Kokkos::parallel_for(
+                    Kokkos::TeamThreadRange(a_team_handle,
+                                            flattened_range.forward()),
+                    [&](auto flattened_index) {
+                        flattened_range.Call(flattened_index, a_callable);
+                    });
 #else
-                const auto an_intra_team_policy = Kokkos::TeamThreadMDRange<Kokkos::Rank<2, Kokkos::Iterate::Left, Kokkos::Iterate::Left>,
-                                                                            std::remove_reference_t<decltype(a_team_handle)> >(a_team_handle,
-                                                                                                                               extent_1, extent_2);
-                Kokkos::parallel_for(an_intra_team_policy,
+                Kokkos::parallel_for(Kokkos::TeamThreadMDRange<Kokkos::Rank<2, Kokkos::Iterate::Left, Kokkos::Iterate::Left>,
+                                                               std::remove_reference_t<decltype(a_team_handle)> >(a_team_handle,
+                                                                                                                  extent_1, extent_2),
                                      a_callable);
 #endif
             }

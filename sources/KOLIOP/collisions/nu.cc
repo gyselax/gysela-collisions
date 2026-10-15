@@ -76,15 +76,16 @@ namespace koliop {
                 const OrdinalType ispeciesA = (team_index / (tor2_extent * tor3_extent)) % species_extent;
                 const OrdinalType ispeciesB = (team_index / (tor2_extent * tor3_extent * species_extent)) /* % species_extent */;
 
-                Kokkos::parallel_for(Kokkos::TeamThreadRange(a_team_handle,
-                                                             0, tor1_extent),
-                                     [&](auto itor1) {
-                                         nu_ab(itor1, itor2, itor3, ispeciesA, ispeciesB) = DoComputeFrequencyNuab(nustar_coeff(ispeciesA, ispeciesB, itor2),
-                                                                                                                   hat_As(ispeciesA), hat_As(ispeciesB),
-                                                                                                                   T_s(itor1, itor2, itor3, ispeciesA),
-                                                                                                                   n_s(itor1, itor2, itor3, ispeciesB),
-                                                                                                                   T_s(itor1, itor2, itor3, ispeciesB));
-                                     });
+                Kokkos::parallel_for(
+                    Kokkos::TeamThreadRange(a_team_handle,
+                                            0, tor1_extent),
+                    [&](auto itor1) {
+                        nu_ab(itor1, itor2, itor3, ispeciesA, ispeciesB) = DoComputeFrequencyNuab(nustar_coeff(ispeciesA, ispeciesB, itor2),
+                                                                                                  hat_As(ispeciesA), hat_As(ispeciesB),
+                                                                                                  T_s(itor1, itor2, itor3, ispeciesA),
+                                                                                                  n_s(itor1, itor2, itor3, ispeciesB),
+                                                                                                  T_s(itor1, itor2, itor3, ispeciesB));
+                    });
             };
 
             Kokkos::parallel_for("DoPrecomputeNu",

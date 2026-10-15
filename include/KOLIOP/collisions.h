@@ -66,15 +66,15 @@ namespace koliop {
                      uint64_t                                        tor2_extent,
                      uint64_t                                        tor3_extent,
                      bool                                            collision_interspecies,
-                     const koliop::utility::View::MDL1<const Flo64>& hat_As,
-                     const koliop::utility::View::MDL1<const Flo64>& hat_Zs,
-                     const koliop::utility::View::MDL1<const Flo64>& mug,
-                     const koliop::utility::View::MDL1<const Flo64>& vparg,
-                     const koliop::utility::View::MDL1<const Flo64>& coeff_intdmu,
-                     const koliop::utility::View::MDL1<const Flo64>& coeff_intdvpar,
-                     const koliop::utility::View::MDL1<const Flo64>& coeff_AD_r,
-                     const koliop::utility::View::MDL2<const Flo64>& B_norm,
-                     const koliop::utility::View::MDL4<const Flo64>& Bstar_s);
+                     const koliop::utility::View::UDL1<const Flo64>& hat_As,
+                     const koliop::utility::View::UDL1<const Flo64>& hat_Zs,
+                     const koliop::utility::View::UDL1<const Flo64>& mug,
+                     const koliop::utility::View::UDL1<const Flo64>& vparg,
+                     const koliop::utility::View::UDL1<const Flo64>& coeff_intdmu,
+                     const koliop::utility::View::UDL1<const Flo64>& coeff_intdvpar,
+                     const koliop::utility::View::UDL1<const Flo64>& coeff_AD_r,
+                     const koliop::utility::View::UDL2<const Flo64>& B_norm,
+                     const koliop::utility::View::UDL4<const Flo64>& Bstar_s);
 
             ~Operator();
 
@@ -93,7 +93,7 @@ namespace koliop {
             /// still may have to fence after the last operation.
             /// @param f5d_s An array of double with extents ([0, mu_extent), [0, vpar_extent), [0, tor1_extent), [0,
             /// tor2_extent), [0, tor3_extent), [0, species_extent)).
-            void ComputeMoments(const koliop::utility::View::MDL6<Flo64>& f5d_s);
+            void ComputeMoments(const koliop::utility::View::UDL6<Flo64>& f5d_s);
 
             /// @brief Collisionality
             ///
@@ -116,7 +116,7 @@ namespace koliop {
             /// @param f5d_s An array of double with extents ([0, mu_extent), [0, vpar_extent), [0, tor1_extent), [0,
             /// tor2_extent), [0, tor3_extent), [0, species_extent)).
             void ComputeMaxwellianEvolution(ComputeFloatType                          dt,
-                                            const koliop::utility::View::MDL6<Flo64>& f5d_s);
+                                            const koliop::utility::View::UDL6<Flo64>& f5d_s);
 
             /// @brief Computation of q_para/(na*Ta):
             ///   q_par_on_nT = 0.5*int (2 * Pi * Bstar) *  dmu * dvpar * &
@@ -128,7 +128,7 @@ namespace koliop {
             /// operation.
             /// @param f5d_s An array of double with extents ([0, mu_extent), [0, vpar_extent), [0, tor1_extent), [0,
             /// tor2_extent), [0, tor3_extent), [0, species_extent)).
-            void ComputeQparOnNT(const koliop::utility::View::MDL6<const Flo64>& f5d_s);
+            void ComputeQparOnNT(const koliop::utility::View::UDL6<const Flo64>& f5d_s);
 
             /// @brief Make Fa evolve:
             ///   f = f + dt * sum_b (nu_sab(xb) * vpar / Ta) * F_M0a * &
@@ -144,7 +144,7 @@ namespace koliop {
             /// @param f5d_s An array of double with extents ([0, mu_extent), [0, vpar_extent), [0, tor1_extent), [0,
             /// tor2_extent), [0, tor3_extent), [0, species_extent)).
             void ComputeCpar(ComputeFloatType                          dt,
-                             const koliop::utility::View::MDL6<Flo64>& f5d_s) const;
+                             const koliop::utility::View::UDL6<Flo64>& f5d_s) const;
 
             /// @brief This routine compute one of the following operation on the
             /// distribution function:
@@ -157,7 +157,7 @@ namespace koliop {
             /// tor2_extent), [0, tor3_extent), [0, species_extent)).
             /// @param choice [3, 4]
             void ComputeMaxwellianUnshiftedLoc(uint32_t                                  choice,
-                                               const koliop::utility::View::MDL6<Flo64>& f5d_s) const;
+                                               const koliop::utility::View::UDL6<Flo64>& f5d_s) const;
 
             /// @brief Compute alpha, make alpha evolve and reconstruct Fa.
             ///
@@ -167,7 +167,7 @@ namespace koliop {
             /// @param f5d_s An array of double with extents ([0, mu_extent), [0, vpar_extent), [0, tor1_extent), [0,
             /// tor2_extent), [0, tor3_extent), [0, species_extent)).
             void Apply(ComputeFloatType                          dt,
-                       const koliop::utility::View::MDL6<Flo64>& f5d_s);
+                       const koliop::utility::View::UDL6<Flo64>& f5d_s);
 
             /// @brief Correction to keep the local density constant. After the main part of the collisions, the
             /// distribution function has evolved:
@@ -179,7 +179,7 @@ namespace koliop {
             /// still may have to fence after the last operation.
             /// @param f5d_s An array of double with extents ([0, mu_extent), [0, vpar_extent), [0, tor1_extent), [0,
             /// tor2_extent), [0, tor3_extent), [0, species_extent)).
-            void ComputeDensityCorrection(const koliop::utility::View::MDL6<Flo64>& f5d_s) const;
+            void ComputeDensityCorrection(const koliop::utility::View::UDL6<Flo64>& f5d_s) const;
 
             /// @brief Correction to keep the local fluid moments constant. init corresponds to values before
             /// collisions. old corresponds to values after collisions but before correction. new corresponds to
@@ -191,7 +191,7 @@ namespace koliop {
             /// @param f5d_s An array of double with extents ([0, mu_extent), [0, vpar_extent), [0, tor1_extent), [0,
             /// tor2_extent), [0, tor3_extent), [0, species_extent)).
             void ComputeUparTCorrection(ComputeFloatType                          dt,
-                                        const koliop::utility::View::MDL6<Flo64>& f5d_s);
+                                        const koliop::utility::View::UDL6<Flo64>& f5d_s);
 
             /// @brief Extract an internal buffer into output_buffer. The buffer in question is specified using
             /// value_identifier and the operator::Diagnostics enumerations.
@@ -227,7 +227,7 @@ namespace koliop {
             /// @param f5d_s An array of double with extents ([0, mu_extent), [0, vpar_extent), [0, tor1_extent), [0,
             /// tor2_extent), [0, tor3_extent), [0, species_extent)).
             void Collisions(ComputeFloatType                          dt,
-                            const koliop::utility::View::MDL6<Flo64>& f5d_s);
+                            const koliop::utility::View::UDL6<Flo64>& f5d_s);
 
         public:
             // Constant, externally computed values
@@ -239,15 +239,15 @@ namespace koliop {
             OrdinalType species_extent_;
             bool        collision_interspecies_;
 
-            koliop::utility::View::MDL1<const Flo64> hat_As_;
-            koliop::utility::View::MDL1<const Flo64> hat_Zs_;
-            koliop::utility::View::MDL1<const Flo64> mug_;
-            koliop::utility::View::MDL1<const Flo64> vparg_;
-            koliop::utility::View::MDL1<const Flo64> coeff_intdmu_;
-            koliop::utility::View::MDL1<const Flo64> coeff_intdvpar_;
-            koliop::utility::View::MDL1<const Flo64> coeff_AD_r_;
-            koliop::utility::View::MDL2<const Flo64> B_norm_;
-            koliop::utility::View::MDL4<const Flo64> Bstar_s_;
+            koliop::utility::View::UDL1<const Flo64> hat_As_;
+            koliop::utility::View::UDL1<const Flo64> hat_Zs_;
+            koliop::utility::View::UDL1<const Flo64> mug_;
+            koliop::utility::View::UDL1<const Flo64> vparg_;
+            koliop::utility::View::UDL1<const Flo64> coeff_intdmu_;
+            koliop::utility::View::UDL1<const Flo64> coeff_intdvpar_;
+            koliop::utility::View::UDL1<const Flo64> coeff_AD_r_;
+            koliop::utility::View::UDL2<const Flo64> B_norm_;
+            koliop::utility::View::UDL4<const Flo64> Bstar_s_;
 
             // Constant, internally computed values
             koliop::utility::View::MDL3<ComputeFloatType> nustar_coeff_;

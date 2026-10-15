@@ -177,7 +177,7 @@ namespace koliop {
         }
 
         void Operator::ComputeCpar(ComputeFloatType                          dt,
-                                   const koliop::utility::View::MDL6<Flo64>& f5d_s) const {
+                                   const koliop::utility::View::UDL6<Flo64>& f5d_s) const {
             KOLIOP_COLLISIONS_CHECK_DISTRIBUTION_EXTENTS(f5d_s);
 
             DoComputeCpar(*this, execution_space_pool_[Constant::kDefaultExecutionSpacePoolIndex],

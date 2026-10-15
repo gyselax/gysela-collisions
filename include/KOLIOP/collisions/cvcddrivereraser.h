@@ -37,7 +37,7 @@ namespace koliop {
                                    OrdinalType                               block_first_tor3,
                                    ComputeFloatType                          dt,
                                    OrdinalType                               species_index,
-                                   const koliop::utility::View::MDL6<Flo64>& f5d_s) = 0;
+                                   const koliop::utility::View::UDL6<Flo64>& f5d_s) = 0;
 
                 virtual ~InterfaceType() = default;
 
@@ -71,7 +71,7 @@ namespace koliop {
                            OrdinalType                               block_first_tor3,
                            ComputeFloatType                          dt,
                            OrdinalType                               species_index,
-                           const koliop::utility::View::MDL6<Flo64>& f5d_s) override {
+                           const koliop::utility::View::UDL6<Flo64>& f5d_s) override {
                     value_.Apply(an_operator,
                                  an_execution_space,
                                  block_first_tor1,
