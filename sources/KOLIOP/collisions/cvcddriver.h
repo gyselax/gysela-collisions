@@ -213,7 +213,7 @@ namespace koliop {
 
                 const auto& vparg = an_operator.vparg_;
 
-                const auto kernel = KOKKOS_LAMBDA(OrdinalType ivpar, OrdinalType ipol, OrdinalType itor1, OrdinalType itor2, OrdinalType itor3) {
+                const auto kernel = KOKKOS_LAMBDA(OrdinalType itor1, OrdinalType ipol, OrdinalType ivpar, OrdinalType itor2, OrdinalType itor3) {
 
                     // NOTE: kBlockExtentXXX are constant, the compiler can replace
                     // the modulo with faster instructions.
@@ -241,27 +241,41 @@ namespace koliop {
                                                                            2.0 * q_para_on_naTa * (3.0 * vpar_tmp / Ta * Najl(batch_index, ivpar, 2, ipol, 0, batch_element_index) - vpar_tmp * Najl(batch_index, ivpar, 0, ipol, 1, batch_element_index) - Najl(batch_index, ivpar, 1, ipol, 1, batch_element_index)));
                 };
 
+#if 0
                 const auto a_policy = Kokkos::MDRangePolicy<
-                    // NOTE: Weird stuff happens when I set LaunchBounds <64,1>.
-                    // Notably, the kernel is not launched ??
-                    // Kokkos::LaunchBounds<64, 1>, Kokkos::IndexType<OrdinalType>,
                     ExecutionSpace,
                     Kokkos::Rank<5,
                                  Kokkos::Iterate::Left,
                                  Kokkos::Iterate::Left>>{an_execution_space,
-                                                         {0,
+                                                         {block_first_tor1,
                                                           0,
-                                                          block_first_tor1,
+                                                          0,
                                                           block_first_tor2,
                                                           block_first_tor3},
-                                                         {vpar_extent,
+                                                         {block_first_tor1 + CvCdDriver::kBlockExtentTor1,
                                                           Constant::kMaximumLaguerrePolynomialDegree,
-                                                          block_first_tor1 + CvCdDriver::kBlockExtentTor1,
+                                                          vpar_extent,
                                                           block_first_tor2 + CvCdDriver::kBlockExtentTor2,
                                                           block_first_tor3 + CvCdDriver::kBlockExtentTor3}};
 
                 Kokkos::parallel_for("DoComputeCvCdSource",
                                      a_policy, kernel);
+#else
+                const auto wrapped_kernel = KOKKOS_LAMBDA(OrdinalType flattened_index) {
+                    kernel(static_cast<OrdinalType>(block_first_tor1 + (flattened_index) % CvCdDriver::kBlockExtentTor1),
+                           static_cast<OrdinalType>(0 /*          */ + (flattened_index / (CvCdDriver::kBlockExtentTor1)) % Constant::kMaximumLaguerrePolynomialDegree),
+                           static_cast<OrdinalType>(0 /*          */ + (flattened_index / (CvCdDriver::kBlockExtentTor1 * Constant::kMaximumLaguerrePolynomialDegree)) % vpar_extent),
+                           static_cast<OrdinalType>(block_first_tor2 + (flattened_index / (CvCdDriver::kBlockExtentTor1 * Constant::kMaximumLaguerrePolynomialDegree * vpar_extent)) % CvCdDriver::kBlockExtentTor2),
+                           static_cast<OrdinalType>(block_first_tor3 + (flattened_index / (CvCdDriver::kBlockExtentTor1 * Constant::kMaximumLaguerrePolynomialDegree * vpar_extent * CvCdDriver::kBlockExtentTor2)) /*% CvCdDriver::kBlockExtentTor3*/));
+                };
+                const auto a_policy = Kokkos::RangePolicy<ExecutionSpace, Kokkos::IndexType<OrdinalType>>{
+                    an_execution_space, 0,
+                    static_cast<OrdinalType>(CvCdDriver::kBlockExtentTor1 * Constant::kMaximumLaguerrePolynomialDegree *
+                                             vpar_extent * CvCdDriver::kBlockExtentTor2 * CvCdDriver::kBlockExtentTor3)};
+                Kokkos::parallel_for(
+                    "DoComputeCvCdSource",
+                    a_policy, wrapped_kernel);
+#endif
             }
 
             template <typename CvCdDriver,
