@@ -7,8 +7,10 @@ set -eu
 
 DEVICE_INDEX="4"
 export ROCR_VISIBLE_DEVICES="${DEVICE_INDEX}"
+export KOLIOP_DEBUG_ALL="1"
 
 PROFILE_COMMAND=""
+# PROFILE_COMMAND="rocprofv3 --output-format=csv --stats --hip-trace --kernel-trace -- "
 # PROFILE_COMMAND="rocprofv3 --output-format=pftrace --hip-runtime-trace --kernel-trace -- "
 
 ENERGY0="$(cat "/sys/cray/pm_counters/accel$((DEVICE_INDEX / 2))_energy" | awk '{ print $1 }')"

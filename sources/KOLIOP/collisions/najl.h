@@ -213,7 +213,7 @@ namespace koliop {
                         const ValueType sqrtXtr_inv_on_exp_Xtr = sqrtXtr_inv / exp_Xtr;
                         const ValueType erfc_sqrt_Xtr          = Kokkos::erfc(sqrtXtr);
 
-                        static constexpr auto kSqrtPi = koliop::portability::MathematicalConstant<ComputeFloatType>::kSqrtPi;
+                        static constexpr ValueType kSqrtPi = koliop::portability::MathematicalConstant<ComputeFloatType>::kSqrtPi;
 
                         J_vec[1] = kSqrtPi * erfc_sqrt_Xtr;
                         J_vec[0] = 2.0 * (sqrtXtr_inv_on_exp_Xtr - J_vec[1]);
@@ -382,9 +382,9 @@ namespace koliop {
                         const ValueType hat_Ab = hat_As(ispeciesB);
                         const ValueType hat_Zb = hat_Zs(ispeciesB);
 
-                        static constexpr auto kSqrtPi = koliop::portability::MathematicalConstant<ValueType>::kSqrtPi;
-                        static constexpr auto kSqrt2  = koliop::portability::MathematicalConstant<ValueType>::kSqrt2;
-                        static constexpr auto kPi     = koliop::portability::MathematicalConstant<ValueType>::kPi;
+                        static constexpr ValueType kSqrtPi = koliop::portability::MathematicalConstant<ValueType>::kSqrtPi;
+                        static constexpr ValueType kSqrt2  = koliop::portability::MathematicalConstant<ValueType>::kSqrt2;
+                        static constexpr ValueType kPi     = koliop::portability::MathematicalConstant<ValueType>::kPi;
 
                         const ValueType coeff_L = (0.75 * kSqrtPi * kSqrt2) *
                                                   nu * (hat_Zb * hat_Zb * local_n_s(ispeciesB)) / (hat_Za * hat_Za * local_n_s(species_index));
@@ -489,7 +489,7 @@ namespace koliop {
 
                 const auto& collision_interspecies = najl_provider.collision_interspecies_;
 
-                const auto kernel = KOKKOS_LAMBDA(OrdinalType ivpar, OrdinalType itor1, OrdinalType itor2, OrdinalType itor3) {
+                const auto kernel = KOKKOS_LAMBDA(OrdinalType itor1, OrdinalType ivpar, OrdinalType itor2, OrdinalType itor3) {
 
                     // NOTE: kBlockExtentXXX are constant, the compiler can replace
                     // the modulo with faster instructions.
@@ -540,8 +540,6 @@ namespace koliop {
                                                            itor3,
                                                            Kokkos::ALL());
 
-                    // NOTE: The memset(0) of the local_Nn used to be done in
-                    // Najl::Compute via a deep_copy.
                     for(OrdinalType l = 0; l < Constant::kMaximumLaguerrePolynomialDegree; ++l) {
                         for(OrdinalType j = 0; j < Constant::kMaximumLaguerrePolynomialDegree; ++j) {
                             local_N0(l, j) = static_cast<ValueType>(0.0);
@@ -550,7 +548,8 @@ namespace koliop {
                         }
                     }
 
-                    const ValueType vpar2_on_Ta = vparg(ivpar) * vparg(ivpar) / local_T_s(species_index);
+                    const ValueType vparg_value = vparg(ivpar);
+                    const ValueType vpar2_on_Ta = (vparg_value * vparg_value) / local_T_s(species_index);
 
                     // NOTE: We could reduce the size of L_mat by using some
                     // condition. For instance:
@@ -601,16 +600,16 @@ namespace koliop {
 
                         if(ind_i != Constant::kIndexMax) {
                             for(OrdinalType l = 0; l < Constant::kMaximumLaguerrePolynomialDegree; ++l) {
-                                local_N1(l, 0) += vparg(ivpar) * C_jl(ind_i, 0, l) * N_coeff;
+                                local_N1(l, 0) += vparg_value * C_jl(ind_i, 0, l) * N_coeff;
                                 for(OrdinalType j = 1; j < Constant::kMaximumLaguerrePolynomialDegree; ++j) {
-                                    local_N1(l, j) += vparg(ivpar) * (C_jl(ind_i, j, l) * N_coeff +
-                                                                      2.0 * static_cast<ValueType>(j) * L_mat[2][ind_i] * (C_jl(ind_i, j, l) - C_jl(ind_i, j - 1, l)));
+                                    local_N1(l, j) += vparg_value * (C_jl(ind_i, j, l) * N_coeff +
+                                                                     2.0 * static_cast<ValueType>(j) * L_mat[2][ind_i] * (C_jl(ind_i, j, l) - C_jl(ind_i, j - 1, l)));
                                 }
                             }
                         } else {
                             for(OrdinalType l = 0; l < Constant::kMaximumLaguerrePolynomialDegree; ++l) {
                                 for(OrdinalType j = 0; j < Constant::kMaximumLaguerrePolynomialDegree; ++j) {
-                                    local_N1(l, j) += vparg(ivpar) *
+                                    local_N1(l, j) += vparg_value *
                                                       C_jl(Constant::kIndexMax, j, l) *
                                                       (N_coeff +
                                                        2.0 * static_cast<ValueType>(j) * L_mat[2][Constant::kIndexMax]);
@@ -629,24 +628,54 @@ namespace koliop {
                     }
                 };
 
-                // TODO(Etienne M): Use launch bounds and a team policy flatting the block.
+#if 0
                 const auto a_policy = Kokkos::MDRangePolicy<
                     // Kokkos::LaunchBounds<256, 1>, Kokkos::IndexType<OrdinalType>,
                     ExecutionSpace,
                     Kokkos::Rank<4,
                                  Kokkos::Iterate::Left,
                                  Kokkos::Iterate::Left>>{an_execution_space,
-                                                         {0,
-                                                          block_first_tor1,
+                                                         {block_first_tor1,
+                                                          0,
                                                           block_first_tor2,
                                                           block_first_tor3},
-                                                         {vpar_extent,
-                                                          block_first_tor1 + Najl::CvCdDriverType::kBlockExtentTor1,
+                                                         {block_first_tor1 + Najl::CvCdDriverType::kBlockExtentTor1,
+                                                          vpar_extent,
                                                           block_first_tor2 + Najl::CvCdDriverType::kBlockExtentTor2,
-                                                          block_first_tor3 + Najl::CvCdDriverType::kBlockExtentTor3}};
-
+                                                          block_first_tor3 + Najl::CvCdDriverType::kBlockExtentTor3},
+                                                         {256, 1, 1, 1}};
                 Kokkos::parallel_for("DoComputeNajl",
                                      a_policy, kernel);
+#else
+                const auto wrapped_kernel = KOKKOS_LAMBDA(OrdinalType flattened_index) {
+                    // NOTE: The tor1,2,3 dimension are flattened modulo BatchTraitsType::kBatchSize an as such is
+                    // contiguous in ~~block_first_tor1, then in vpar.
+                    kernel(static_cast<OrdinalType>(block_first_tor1 + (flattened_index) % Najl::CvCdDriverType::kBlockExtentTor1),
+                           static_cast<OrdinalType>(0 /*vpar offst*/ + (flattened_index / (Najl::CvCdDriverType::kBlockExtentTor1)) % vpar_extent),
+                           static_cast<OrdinalType>(block_first_tor2 + (flattened_index / (Najl::CvCdDriverType::kBlockExtentTor1 * vpar_extent)) % Najl::CvCdDriverType::kBlockExtentTor2),
+                           static_cast<OrdinalType>(block_first_tor3 + (flattened_index / (Najl::CvCdDriverType::kBlockExtentTor1 * vpar_extent * Najl::CvCdDriverType::kBlockExtentTor2)) /*% Najl::CvCdDriverType::kBlockExtentTor3*/));
+                };
+                const auto a_policy = Kokkos::RangePolicy<ExecutionSpace, Kokkos::IndexType<OrdinalType>
+    #if KOKKOS_VERSION_MAJOR >= 5
+                                                          ,
+                                                          Kokkos::Experimental::StaticBatchSize<2>
+    #endif
+                                                          >{
+                    an_execution_space, 0,
+                    static_cast<OrdinalType>(Najl::CvCdDriverType::kBlockExtentTor1 *
+                                             vpar_extent *
+                                             Najl::CvCdDriverType::kBlockExtentTor2 *
+                                             Najl::CvCdDriverType::kBlockExtentTor3)};
+                Kokkos::parallel_for(
+                    "DoComputeNajl",
+    #if 0
+                    a_policy,
+    #else
+                    Kokkos::Experimental::require(a_policy,
+                                                  Kokkos::Experimental::WorkItemProperty::HintLightWeight),
+    #endif
+                    wrapped_kernel);
+#endif
             }
 
         } // namespace detail

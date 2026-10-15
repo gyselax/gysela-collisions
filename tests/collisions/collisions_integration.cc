@@ -139,9 +139,8 @@ int Test2() {
 
 int main(int, char**) {
     Initialize(8, 0, true);
-    // NOTE: Makes sure the kernel are on the device. Indeed the initial kernel
-    // launch has a huge latency due to the kernel needing to be copied to the
-    // GPU's memory.
+    // NOTE: Makes sure the kernel are on the device. Indeed the initial kernel launch has a huge latency due to the
+    // kernel needing to be copied to the GPU's memory.
     if(Test1() < 0) {
         return -1;
     }
