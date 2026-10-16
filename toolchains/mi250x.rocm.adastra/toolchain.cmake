@@ -10,8 +10,8 @@ set(Kokkos_ARCH_VEGA90A ON CACHE BOOL "Enable support for AMD GPU MI200 series (
 
 set(Kokkos_ENABLE_OPENMP ON CACHE BOOL "Defined if the OpenMP execution space is enabled.")
 set(Kokkos_ARCH_ZEN3 ON CACHE BOOL "Optimize for AMD Zen3 architecture (HOST).")
-# Workaround a huge (x2.7 on najl kernel especially) performance regression due to mdspan now being the default.
-set(Kokkos_ENABLE_IMPL_VIEW_LEGACY ON CACHE BOOL "")
+# # Workaround a huge (x2.7 on najl kernel especially) performance regression due to mdspan now being the default.
+# set(Kokkos_ENABLE_IMPL_VIEW_LEGACY ON CACHE BOOL "")
 
 # Kokkos kernels options:
 
