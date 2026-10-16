@@ -207,23 +207,17 @@ namespace koliop {
                                                               static_cast<std::size_t>(kBatchCount),
                                                               static_cast<std::size_t>(kBigBlockExtent)};
 
-            // TODO(Etienne M): Check that we do not benefit from using
-            // TeamLU/TRSM/GEMM. This require a trick with vector threads.
-
-            // NOTE:
-            // Due to memory consumption issues (storing the whole system), we
-            // have to do blocking. Due to the blocking we may not be able to
-            // utilize the GPU enough. Say 64 t/wavefront * 32 wavefront/cu *
-            // 110 cu for a total of 225280 potential in flight workitem per
-            // MI250 GCD. This means, assuming 1024 nvpar and Flo64:
+            // NOTE: Due to memory consumption issues (storing the whole system), we have to do blocking. Due to the
+            // blocking we may not be able to utilize the GPU enough. Say 64 t/wavefront * 32 wavefront/cu * 110 cu for
+            // a total of 225280 potential in flight workitem per MI250 GCD. This means, assuming 1024 nvpar and Flo64:
             // (8 * 1024 * (3 * (3*3))) * 225280 = 49'828'331'520 o.
 
             const auto kernel = KOKKOS_LAMBDA(OrdinalType batch_element_index, OrdinalType batch_index) {
 
                 auto batch_element = Kokkos::subview(A_matrix_view,
                                                      batch_index,
-                                                     // TODO(Etienne M): These ALL() are constant, should we
-                                                     // hardcode them to facilitate the compiler's work ?
+                                                     // TODO(Etienne M): These ALL() are constant, should we hardcode
+                                                     // them to facilitate the compiler's work ?
                                                      Kokkos::ALL(), // kBigBlockExtent
                                                      Kokkos::ALL(), // kDiagonalCount
                                                      Kokkos::ALL(), // kSmallBlockExtent
@@ -246,11 +240,9 @@ namespace koliop {
                     small_block_index < (kBigBlockExtent - 1);
                     ++small_block_index) {
 
-                    // TODO(Etienne M): Recreate view or assign ? Which is
-                    // faster ?
-                    // NOTE: Is using restricted view correct here ? While none
-                    // of the B, C, A_next and B_next alias in a given iteration
-                    // if there is unrolling then B_next becomes B.
+                    // TODO(Etienne M): Recreate view or assign ? Which is faster ?
+                    // NOTE: Is using restricted view correct here ? While none of the B, C, A_next and B_next alias in
+                    // a given iteration if there is unrolling then B_next becomes B.
 
                     B.assign_data(&batch_element(small_block_index, 1, 0, 0));
                     C.assign_data(&batch_element(small_block_index, 2, 0, 0));
@@ -267,6 +259,7 @@ namespace koliop {
                 LU::invoke(B_next);
             };
 
+#if 0
             const auto a_policy = Kokkos::MDRangePolicy<
                 // Kokkos::LaunchBounds<64, 1>, Kokkos::IndexType<OrdinalType>,
                 ExecutionSpaceType,
@@ -275,10 +268,28 @@ namespace koliop {
                              Kokkos::Iterate::Left,
                              Kokkos::Iterate::Left>>{an_execution_space,
                                                      {0, 0},
-                                                     {BatchTraitsType::kVectorPerBatch, kBatchCount}};
+                                                     {BatchTraitsType::kVectorPerBatch, kBatchCount},
+                                                     {BatchTraitsType::kVectorPerBatch, 4}};
 
             Kokkos::parallel_for("BatchedBlockTridiagonalByBlockTRF::Factorize",
                                  a_policy, kernel);
+#else
+            const auto wrapped_kernel = KOKKOS_LAMBDA(OrdinalType flattened_index) {
+                kernel(static_cast<OrdinalType>((flattened_index) % BatchTraitsType::kVectorPerBatch),
+                       static_cast<OrdinalType>((flattened_index / (BatchTraitsType::kVectorPerBatch)) /*% kBatchCount*/));
+            };
+            const auto a_policy = Kokkos::RangePolicy<ExecutionSpaceType, Kokkos::IndexType<OrdinalType>
+    #if KOKKOS_VERSION_MAJOR >= 5
+                                                      ,
+                                                      Kokkos::Experimental::StaticBatchSize<1>
+    #endif
+                                                      >{
+                an_execution_space, 0,
+                static_cast<OrdinalType>(BatchTraitsType::kVectorPerBatch *
+                                         kBatchCount)};
+            Kokkos::parallel_for("BatchedBlockTridiagonalByBlockTRF::Factorize",
+                                 a_policy, wrapped_kernel);
+#endif
         }
 
     } // namespace blas

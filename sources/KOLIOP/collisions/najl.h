@@ -615,12 +615,7 @@ namespace koliop {
                            static_cast<OrdinalType>(block_first_tor2 + (flattened_index / (Najl::CvCdDriverType::kBlockExtentTor1 * vpar_extent)) % Najl::CvCdDriverType::kBlockExtentTor2),
                            static_cast<OrdinalType>(block_first_tor3 + (flattened_index / (Najl::CvCdDriverType::kBlockExtentTor1 * vpar_extent * Najl::CvCdDriverType::kBlockExtentTor2)) /*% Najl::CvCdDriverType::kBlockExtentTor3*/));
                 };
-                const auto a_policy = Kokkos::RangePolicy<ExecutionSpace, Kokkos::IndexType<OrdinalType>
-    #if KOKKOS_VERSION_MAJOR >= 5
-                                                          ,
-                                                          Kokkos::Experimental::StaticBatchSize<2>
-    #endif
-                                                          >{
+                const auto a_policy = Kokkos::RangePolicy<ExecutionSpace, Kokkos::IndexType<OrdinalType>>{
                     an_execution_space, 0,
                     static_cast<OrdinalType>(Najl::CvCdDriverType::kBlockExtentTor1 *
                                              vpar_extent *
