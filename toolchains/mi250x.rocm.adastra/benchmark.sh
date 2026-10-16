@@ -2,6 +2,7 @@
 
 set -eu
 
+date
 hostname
 /usr/bin/rocm-smi --resetclocks
 /usr/bin/rocm-smi

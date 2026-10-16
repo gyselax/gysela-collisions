@@ -143,6 +143,12 @@ namespace koliop {
                             // const ComputeFloatType nu_sab = (AD * hat_Za * hat_Za * hat_Zb * hat_Zb * nb) * inv_hat_Aa * (inv_hat_Aa + inv_hat_Ab) * Theta_func_tmp / (vTb * vTb * vTb);
                             // f5d_s(imu, ivpar, itor1, itor2, itor3, ispeciesA) += half_dt * FM0a * nu_sab * coeff5 * (Rat * Vparb - Vpara + q_par_on_nT * (1.0 - 2.0 * xa * xa * 0.2) - coeff4);
 
+                            // NOTE: this erf() is a pain to vectorize on CPU. We spend way too much time inside iot if we
+                            // do not have it suported by the vectorized libm. Take a look at
+                            // https://codebrowser.dev/glibc/glibc/sysdeps/ieee754/dbl-64/s_erf.c.html to reimplement a simd
+                            // compatible erf. Also look at the llvm implementation. A good simple approximation is: 2/(1 +
+                            // exp(-2.5*x)) - 1
+
                             const ComputeFloatType vparg_value = vparg(ivpar);
                             const ComputeFloatType xa_sq       = parameter1 * (parameter2 * mug(imu) + vparg_value * vparg_value);
                             const ComputeFloatType xa          = Kokkos::sqrt(xa_sq);
@@ -150,20 +156,18 @@ namespace koliop {
                             const ComputeFloatType xb_sq       = xb * xb; // = xa_sq * coeff2^2
                             const ComputeFloatType xb_cb       = xb_sq * xb;
 
-                            // NOTE: this erf() is a pain to vectorize on CPU.
-                            // We spend way too much time inside iot if we do
-                            // not have it suported by the vectorized libm.
-                            // TODO(Etienne M): take a look at
-                            // https://codebrowser.dev/glibc/glibc/sysdeps/ieee754/dbl-64/s_erf.c.html
-                            // to reimplement a simd compatible erf. Also look
-                            // at the llvm implementation. A good simple
-                            // approximation is: 2/(1 + exp(-2.5*x)) - 1
-
+#if 0
+                            ComputeFloatType Theta_func_tmp = 1.0;
+                            if(xb > 1E-15) {
+                                Theta_func_tmp = (0.5 * koliop::portability::GyselaConstant<ComputeFloatType>::kConst_theta / (xb_sq * xb)) *
+                                                 (Kokkos::erf(xb) - xb * koliop::portability::GyselaConstant<ComputeFloatType>::kCst_phiprime * Kokkos::exp(-xb_sq));
+                            }
+#else
                             const ComputeFloatType variable0 = ((0.5 * koliop::portability::GyselaConstant<ComputeFloatType>::kConst_theta) / xb_cb) *
                                                                (Kokkos::erf(xb) - xb * koliop::portability::GyselaConstant<ComputeFloatType>::kCst_phiprime * Kokkos::exp(-xb_sq));
 
                             const ComputeFloatType Theta_func_tmp = xb > 1E-15 ? variable0 : 1.0;
-
+#endif
                             const ComputeFloatType variable1 = parameter0 * Kokkos::exp(-xa_sq) * Theta_func_tmp * vparg_value;
 
                             f5d_s(imu, ivpar, itor1, itor2, itor3, ispeciesA) += variable1 * (parameter3 -
