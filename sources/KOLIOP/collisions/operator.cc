@@ -261,6 +261,14 @@ namespace koliop {
 
         void Operator::Collisions(ComputeFloatType                          dt,
                                   const koliop::utility::View::UDL6<Flo64>& f5d_s) {
+
+            KOLIOP_ASSERT(static_cast<OrdinalType>(f5d_s.extent(0)) == mu_extent_);
+            KOLIOP_ASSERT(static_cast<OrdinalType>(f5d_s.extent(1)) == vpar_extent_);
+            KOLIOP_ASSERT(static_cast<OrdinalType>(f5d_s.extent(2)) == tor1_extent_);
+            KOLIOP_ASSERT(static_cast<OrdinalType>(f5d_s.extent(3)) == tor2_extent_);
+            KOLIOP_ASSERT(static_cast<OrdinalType>(f5d_s.extent(4)) == tor3_extent_);
+            KOLIOP_ASSERT(static_cast<OrdinalType>(f5d_s.extent(5)) == species_extent_);
+
             // Assume all our streams are empty.
 
             ComputeMoments(f5d_s);
