@@ -66,7 +66,6 @@ namespace koliop {
                     const Holder coordinates_array{static_cast<IndexType>(coordinates)...};
                     IndexType    offset  = 0;
                     const auto   strides = Strides();
-#pragma unroll
                     for(int idim = 0; idim < kDimensions; ++idim) {
                         offset += coordinates_array[idim] * strides[idim];
                     }
