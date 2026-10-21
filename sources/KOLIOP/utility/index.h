@@ -19,23 +19,23 @@ namespace koliop {
             /// for(i1,i2)
             ///     dynmic_offset=dynmic(i1, i2)
             ///     data[static_offset+dynmic_offset]
-            template <typename OrdinalType,
+            template <typename IndexType,
                       int kDimensions>
             struct Strided {
             protected:
-                using Holder = std::array<OrdinalType, kDimensions>;
+                using Holder = std::array<IndexType, kDimensions>;
 
             public:
                 template <typename... OrdinalArgs>
                 constexpr Strided(OrdinalArgs... strides)
-                    : strides_{static_cast<OrdinalType>(strides)...} {
+                    : strides_{static_cast<IndexType>(strides)...} {
                     static_assert(sizeof...(strides) == kDimensions);
                 }
                 template <typename... OrdinalArgs>
-                constexpr OrdinalType operator()(OrdinalArgs... coordinates) const {
+                constexpr IndexType operator()(OrdinalArgs... coordinates) const {
                     static_assert(sizeof...(coordinates) == kDimensions);
-                    const Holder coordinates_array{static_cast<OrdinalType>(coordinates)...};
-                    OrdinalType  offset = 0;
+                    const Holder coordinates_array{static_cast<IndexType>(coordinates)...};
+                    IndexType    offset = 0;
                     for(int idim = 0; idim < kDimensions; ++idim) {
                         offset += coordinates_array[idim] * strides_[idim];
                     }
@@ -48,30 +48,31 @@ namespace koliop {
 
             /// Offset computation with strides build from left to right prefix.
             ///
-            template <typename OrdinalType,
+            template <typename IndexType,
                       int kDimensions>
             class Cartesian {
             protected:
-                using Holder = std::array<OrdinalType, kDimensions>;
+                using Holder = std::array<IndexType, kDimensions>;
 
             public:
                 template <typename... OrdinalArgs>
                 constexpr Cartesian(OrdinalArgs... extents)
-                    : extents_{static_cast<OrdinalType>(extents)...} {
+                    : extents_{static_cast<IndexType>(extents)...} {
                     static_assert(sizeof...(extents) == kDimensions);
                 }
                 template <typename... OrdinalArgs>
-                constexpr OrdinalType operator()(OrdinalArgs... coordinates) const {
+                constexpr IndexType operator()(OrdinalArgs... coordinates) const {
                     static_assert(sizeof...(coordinates) == kDimensions);
-                    const Holder coordinates_array{static_cast<OrdinalType>(coordinates)...};
-                    OrdinalType  offset  = 0;
+                    const Holder coordinates_array{static_cast<IndexType>(coordinates)...};
+                    IndexType    offset  = 0;
                     const auto   strides = Strides();
+#pragma unroll
                     for(int idim = 0; idim < kDimensions; ++idim) {
                         offset += coordinates_array[idim] * strides[idim];
                     }
                     return offset;
                 }
-                constexpr auto Inverse(OrdinalType flat_index) const {
+                constexpr auto Inverse(IndexType flat_index) const {
                     Holder     coordinates{};
                     const auto strides = Strides();
 
@@ -84,10 +85,10 @@ namespace koliop {
                 }
                 template <typename... IndiciesArgs>
                 constexpr auto Swizzle(IndiciesArgs... dimension_indicies) const {
-                    return Cartesian<OrdinalType, sizeof...(dimension_indicies)>{
+                    return Cartesian<IndexType, sizeof...(dimension_indicies)>{
                         Extent(dimension_indicies)...};
                 }
-                constexpr OrdinalType Extent(int idim) const {
+                constexpr IndexType Extent(int idim) const {
                     return extents_[idim];
                 }
                 constexpr Holder Strides() const {
@@ -98,8 +99,8 @@ namespace koliop {
                     }
                     return strides;
                 }
-                constexpr OrdinalType Cardinality() const {
-                    OrdinalType cardinality = 1;
+                constexpr IndexType Cardinality() const {
+                    IndexType cardinality = 1;
                     for(int idim = 0; idim < kDimensions; ++idim) {
                         cardinality *= Extent(idim);
                     }
@@ -108,7 +109,7 @@ namespace koliop {
                 template <typename... IndiciesArgs>
                 constexpr auto Slice(IndiciesArgs... dimension_indicies) const {
                     const auto strides = Strides();
-                    return Strided<OrdinalType, sizeof...(dimension_indicies)>{
+                    return Strided<IndexType, sizeof...(dimension_indicies)>{
                         strides[dimension_indicies]...};
                 }
 

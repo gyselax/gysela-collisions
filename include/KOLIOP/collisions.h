@@ -47,6 +47,7 @@ namespace koliop {
             /// @param tor3_extent The rank's phi domain extent in grid point.
             /// @param collision_interspecies Boolean as type int8_t (0 = false, else true) describing if a species
             /// collision with itself.
+            /// @param nu_ref A scalar representing the collisionality.
             /// @param hat_As An array of double with extents ([0, species_extent) ).
             /// @param hat_Zs An array of double with extents ([0, species_extent) ).
             /// @param mug An array of double with extents ([0, mu_extent) ) representing the coordinate of the Mu grid
@@ -57,7 +58,6 @@ namespace koliop {
             /// the integral of the coordinates in Mu.
             /// @param coeff_intdvpar An array of double with extents ([0, vpar_extent) ) representing the coefficients
             /// for the integral of the coordinates in Vpar (generally using the simpson).
-            /// @param coeff_AD_r An array of double with extents ([0, r) ) representing the AD coefficients.
             /// @param B_norm An array of double with extents ([0, r), [0, theta) ).
             /// @param Bstar_s An array of double with extents ([0, vpar_extent), [0, r), [0, theta), [0,
             /// species_extent) ), note that we do not use torN_extent as these may change depending on library calling
@@ -66,13 +66,13 @@ namespace koliop {
                      uint64_t                                        tor2_extent,
                      uint64_t                                        tor3_extent,
                      bool                                            collision_interspecies,
+                     Flo64                                           nu_ref,
                      const koliop::utility::View::UDL1<const Flo64>& hat_As,
                      const koliop::utility::View::UDL1<const Flo64>& hat_Zs,
                      const koliop::utility::View::UDL1<const Flo64>& mug,
                      const koliop::utility::View::UDL1<const Flo64>& vparg,
                      const koliop::utility::View::UDL1<const Flo64>& coeff_intdmu,
                      const koliop::utility::View::UDL1<const Flo64>& coeff_intdvpar,
-                     const koliop::utility::View::UDL1<const Flo64>& coeff_AD_r,
                      const koliop::utility::View::UDL2<const Flo64>& B_norm,
                      const koliop::utility::View::UDL4<const Flo64>& Bstar_s);
 
@@ -239,18 +239,19 @@ namespace koliop {
             OrdinalType species_extent_;
             bool        collision_interspecies_;
 
+            ComputeFloatType coeff_AD_;
+
             koliop::utility::View::UDL1<const Flo64> hat_As_;
             koliop::utility::View::UDL1<const Flo64> hat_Zs_;
             koliop::utility::View::UDL1<const Flo64> mug_;
             koliop::utility::View::UDL1<const Flo64> vparg_;
             koliop::utility::View::UDL1<const Flo64> coeff_intdmu_;
             koliop::utility::View::UDL1<const Flo64> coeff_intdvpar_;
-            koliop::utility::View::UDL1<const Flo64> coeff_AD_r_;
             koliop::utility::View::UDL2<const Flo64> B_norm_;
             koliop::utility::View::UDL4<const Flo64> Bstar_s_;
 
             // Constant, internally computed values
-            koliop::utility::View::MDL3<ComputeFloatType> nustar_coeff_;
+            koliop::utility::View::MDL2<ComputeFloatType> nustar_coeff_;
 
             // Variable, internally computed values
             koliop::utility::View::MDL4<ComputeFloatType> n_s_;

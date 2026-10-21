@@ -42,7 +42,6 @@ int Test1() {
     koliop::utility::View::UDL1<const double> vparg{a_buffer_0, vpar_extent};
     koliop::utility::View::UDL1<const double> coeff_intdmu{a_buffer_0, mu_extent};
     koliop::utility::View::UDL1<const double> coeff_intdvpar{a_buffer_0, vpar_extent};
-    koliop::utility::View::UDL1<const double> coeff_AD_r{a_buffer_0, r_extent};
     koliop::utility::View::UDL2<const double> B_norm{a_buffer_0, r_extent, theta_extent};
     koliop::utility::View::UDL4<const double> Bstar_s{a_buffer_0, vpar_extent, r_extent, theta_extent, species_extent};
 
@@ -51,13 +50,13 @@ int Test1() {
         r_extent,
         phi_extent,
         collision_interspecies,
+        1.0,
         hat_As,
         hat_Zs,
         mug,
         vparg,
         coeff_intdmu,
         coeff_intdvpar,
-        coeff_AD_r,
         B_norm,
         Bstar_s};
 
@@ -108,7 +107,6 @@ int Test2() {
     koliop::utility::View::UDL1<const double> vparg{a_buffer_0, vpar_extent};
     koliop::utility::View::UDL1<const double> coeff_intdmu{a_buffer_0, mu_extent};
     koliop::utility::View::UDL1<const double> coeff_intdvpar{a_buffer_0, vpar_extent};
-    koliop::utility::View::UDL1<const double> coeff_AD_r{a_buffer_0, r_extent};
     koliop::utility::View::UDL2<const double> B_norm{a_buffer_0, r_extent, theta_extent};
     koliop::utility::View::UDL4<const double> Bstar_s{a_buffer_0, vpar_extent, r_extent, theta_extent, species_extent};
 
@@ -117,13 +115,13 @@ int Test2() {
         r_extent,
         phi_extent,
         collision_interspecies,
+        1.0,
         hat_As,
         hat_Zs,
         mug,
         vparg,
         coeff_intdmu,
         coeff_intdvpar,
-        coeff_AD_r,
         B_norm,
         Bstar_s};
 

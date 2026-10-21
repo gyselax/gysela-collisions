@@ -33,20 +33,19 @@ namespace koliop {
             }
         } // namespace detail
 
-        template <typename View3D,
+        template <typename View2D,
                   typename View1D>
         static inline void
-        DoPrepareNuStar(const Operator& an_operator,
-                        View3D&&        nustar_coeff,
-                        const View1D&   hat_As,
-                        const View1D&   hat_Zs,
-                        const View1D&   coeff_AD_r) {
+        DoPrepareNuStar(const Operator&  an_operator,
+                        View2D&&         nustar_coeff,
+                        const View1D&    hat_As,
+                        const View1D&    hat_Zs,
+                        ComputeFloatType coeff_AD) {
 
             const auto a_host_visible_nustar_coeff = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{}, Kokkos::WithoutInitializing), nustar_coeff);
 
             const auto a_host_visible_hat_As     = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{}, Kokkos::WithoutInitializing), hat_As);
             const auto a_host_visible_hat_Zs     = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{}, Kokkos::WithoutInitializing), hat_Zs);
-            const auto a_host_visible_coeff_AD_r = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{}, Kokkos::WithoutInitializing), coeff_AD_r);
 
             const auto& tor2_extent    = an_operator.tor2_extent_;
             const auto& species_extent = an_operator.species_extent_;
@@ -61,22 +60,10 @@ namespace koliop {
 
                     const ComputeFloatType AD_factor = ((hat_Za * hat_Za) * (hat_Zb * hat_Zb)) *
                                                        (static_cast<ComputeFloatType>(1.0) / hat_Aa) *
-                                                       (static_cast<ComputeFloatType>(1.0) / hat_Aa + static_cast<ComputeFloatType>(1.0) / hat_Ab);
+                                                       (static_cast<ComputeFloatType>(1.0) / hat_Aa +
+                                                        static_cast<ComputeFloatType>(1.0) / hat_Ab);
 
-                    for(OrdinalType ir = 0; ir < tor2_extent; ++ir) {
-                        // AD(r) = sqrt(2)*eps(r)^(3/2)/(q(r) R0_)*nustaR0_(r) which
-                        // is independent on the species considered
-                        // (eps(r) = r/R0_).
-                        // AD comprises a mask in r direction to avoid to *
-                        // compute collision in the scrape-off layer.
-                        const ComputeFloatType AD = a_host_visible_coeff_AD_r(ir);
-
-                        // Computation of nu_ab =
-                        //  (AD * hat_Za^2 * hat_Zb^2 * Nb) /
-                        //  (vTa^2 + vTb^2)^(3/2) *
-                        //  (1/hat_Aa) * (1/hat_Aa + 1/hat_Ab)
-                        a_host_visible_nustar_coeff(ispeciesA, ispeciesB, ir) = AD * AD_factor;
-                    }
+                    a_host_visible_nustar_coeff(ispeciesA, ispeciesB) = coeff_AD * AD_factor;
                 }
             }
 
@@ -94,6 +81,7 @@ namespace koliop {
                            uint64_t tor2_extent,
                            uint64_t tor3_extent,
                            bool     collision_interspecies,
+                           Flo64    nu_ref,
                            // NOTE: in practice, this hat_Xs contains 3 values. The size being hardcoded in global::Nspecies_max = 2
                            const koliop::utility::View::UDL1<const Flo64>& hat_As,
                            const koliop::utility::View::UDL1<const Flo64>& hat_Zs,
@@ -101,7 +89,6 @@ namespace koliop {
                            const koliop::utility::View::UDL1<const Flo64>& vparg,
                            const koliop::utility::View::UDL1<const Flo64>& coeff_intdmu,
                            const koliop::utility::View::UDL1<const Flo64>& coeff_intdvpar,
-                           const koliop::utility::View::UDL1<const Flo64>& coeff_AD_r,
                            const koliop::utility::View::UDL2<const Flo64>& B_norm,
                            const koliop::utility::View::UDL4<const Flo64>& Bstar_s)
             // Constant, externally computed values
@@ -112,20 +99,20 @@ namespace koliop {
             , tor3_extent_{static_cast<OrdinalType>(tor3_extent)}
             , species_extent_{static_cast<OrdinalType>(hat_As.extent(0))}
             , collision_interspecies_{collision_interspecies}
+            , coeff_AD_{std::sqrt(2.0) * nu_ref}
             , hat_As_{hat_As}
             , hat_Zs_{hat_Zs}
             , mug_{mug}
             , vparg_{vparg}
             , coeff_intdmu_{coeff_intdmu}
             , coeff_intdvpar_{coeff_intdvpar}
-            , coeff_AD_r_{coeff_AD_r}
             , B_norm_{B_norm}
             , Bstar_s_{Bstar_s}
 
             // Constant, internally computed values
 
             , nustar_coeff_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "nustar_coeff_"),
-                            static_cast<std::size_t>(species_extent_), static_cast<std::size_t>(species_extent_), static_cast<std::size_t>(tor2_extent_)}
+                            static_cast<std::size_t>(species_extent_), static_cast<std::size_t>(species_extent_)}
 
             // Variable, internally computed values
 
@@ -153,7 +140,6 @@ namespace koliop {
             KOLIOP_ASSERT(static_cast<OrdinalType>(vparg_.extent(0)) == vpar_extent_);
             KOLIOP_ASSERT(static_cast<OrdinalType>(coeff_intdmu_.extent(0)) == mu_extent_);
             KOLIOP_ASSERT(static_cast<OrdinalType>(coeff_intdvpar_.extent(0)) == vpar_extent_);
-            KOLIOP_ASSERT(static_cast<OrdinalType>(coeff_AD_r_.extent(0)) == tor2_extent_);
             KOLIOP_ASSERT(static_cast<OrdinalType>(B_norm_.extent(0)) == tor2_extent_);
             KOLIOP_ASSERT(static_cast<OrdinalType>(B_norm_.extent(1)) == tor1_extent_);
             KOLIOP_ASSERT(static_cast<OrdinalType>(Bstar_s_.extent(0)) == vpar_extent_);
@@ -174,7 +160,6 @@ namespace koliop {
                 std::cout << "[KOLIOP][DEBUG] vparg.data() == nullptr : " << (vparg_.data() == nullptr) << "\n";
                 std::cout << "[KOLIOP][DEBUG] coeff_intdmu.data() == nullptr : " << (coeff_intdmu_.data() == nullptr) << "\n";
                 std::cout << "[KOLIOP][DEBUG] coeff_intdvpar.data() == nullptr : " << (coeff_intdvpar_.data() == nullptr) << "\n";
-                std::cout << "[KOLIOP][DEBUG] coeff_AD_r.data() == nullptr : " << (coeff_AD_r_.data() == nullptr) << "\n";
                 std::cout << "[KOLIOP][DEBUG] B_norm.data() == nullptr : " << (B_norm_.data() == nullptr) << "\n";
                 std::cout << "[KOLIOP][DEBUG] Bstar_s.data() == nullptr : " << (Bstar_s_.data() == nullptr) << "\n";
                 std::cout << "\n";
@@ -191,7 +176,6 @@ namespace koliop {
                 std::cout << "[KOLIOP][DEBUG] vparg.data() : " << vparg_.data() << "\n";
                 std::cout << "[KOLIOP][DEBUG] coeff_intdmu.data() : " << coeff_intdmu_.data() << "\n";
                 std::cout << "[KOLIOP][DEBUG] coeff_intdvpar.data() : " << coeff_intdvpar_.data() << "\n";
-                std::cout << "[KOLIOP][DEBUG] coeff_AD_r.data() : " << coeff_AD_r_.data() << "\n";
                 std::cout << "[KOLIOP][DEBUG] B_norm.data() : " << B_norm_.data() << "\n";
                 std::cout << "[KOLIOP][DEBUG] Bstar_s.data() : " << Bstar_s_.data() << "\n";
                 std::cout << std::flush;
@@ -209,7 +193,6 @@ namespace koliop {
                 vparg_.data() == nullptr ||
                 coeff_intdmu_.data() == nullptr ||
                 coeff_intdvpar_.data() == nullptr ||
-                coeff_AD_r_.data() == nullptr ||
                 B_norm_.data() == nullptr ||
                 Bstar_s_.data() == nullptr) {
                 throw std::runtime_error("KOLIOP_STATUS_INVALID_VALUE");
@@ -223,7 +206,7 @@ namespace koliop {
                             nustar_coeff_,
                             hat_As_,
                             hat_Zs_,
-                            coeff_AD_r_);
+                            coeff_AD_);
 
             detail::GetFreshStreams(Constant::kDiscardedStreamCount,
                                     Constant::kDisjointExecutionSpaceCount,
@@ -309,7 +292,7 @@ namespace koliop {
                 PrecomputeNu();
             }
 
-            // Necessary user Fence(Constant::kDefaultExecutionSpacePoolIndex);
+            Fence(Constant::kDefaultExecutionSpacePoolIndex);
         }
     } // namespace collisions
 } // namespace koliop
