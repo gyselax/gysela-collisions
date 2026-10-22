@@ -47,7 +47,6 @@ namespace koliop {
             const auto a_host_visible_hat_As     = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{}, Kokkos::WithoutInitializing), hat_As);
             const auto a_host_visible_hat_Zs     = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{}, Kokkos::WithoutInitializing), hat_Zs);
 
-            const auto& tor2_extent    = an_operator.tor2_extent_;
             const auto& species_extent = an_operator.species_extent_;
 
             // TODO(Etienne M): LOOP Obvious loop inter exchange optimization ?
