@@ -54,7 +54,7 @@ function(koliop_tests_target_build_options target_name)
     koliop_target_add_kokkos("${target_name}")
 endfunction()
 
-############################## dummy test ######################################
+############################## collisions test #################################
 
-koliop_add_test("koliop_tests_target_build_options" "demo" "dummy" "dummy_integration")
-koliop_add_test("koliop_tests_target_build_options" "test" "dummy" "dummy_small_sanity")
+koliop_add_test("koliop_tests_target_build_options" "demo" "collisions" "collisions_integration")
+koliop_add_test("koliop_tests_target_build_options" "test" "collisions" "collisions_small_sanity")
