@@ -491,9 +491,9 @@ namespace koliop {
                     const auto static_najl_slice = najl_mapper.Slice(0, 3, 4, 5);
                     const auto dynmic_najl_slice = najl_mapper.Slice(1, 2);
 
-                    auto* local_N0 = najl + static_najl_slice(batch_index, ivpar, 0, batch_element_index);
-                    auto* local_N1 = najl + static_najl_slice(batch_index, ivpar, 1, batch_element_index);
-                    auto* local_N2 = najl + static_najl_slice(batch_index, ivpar, 2, batch_element_index);
+                    auto* KOLIOP_RESTRICT local_N0 = najl + static_najl_slice(batch_element_index, 0, ivpar, batch_index);
+                    auto* KOLIOP_RESTRICT local_N1 = najl + static_najl_slice(batch_element_index, 1, ivpar, batch_index);
+                    auto* KOLIOP_RESTRICT local_N2 = najl + static_najl_slice(batch_element_index, 2, ivpar, batch_index);
 
                     const auto local_n_s = Kokkos::subview(n_s, itor1, itor2, itor3, Kokkos::ALL());
                     const auto local_T_s = Kokkos::subview(T_s, itor1, itor2, itor3, Kokkos::ALL());
@@ -559,7 +559,7 @@ namespace koliop {
                             for(OrdinalType l = 0; l < Constant::kMaximumLaguerrePolynomialDegree; ++l) {
                                 for(OrdinalType j = 0; j < Constant::kMaximumLaguerrePolynomialDegree; ++j) {
                                     if(j == 0) {
-                                        local_N1[dynmic_najl_slice(j, l)] += vparg_value * (C_jl(ind_i, j, l) * N_coeff);
+                                        local_N1[dynmic_najl_slice(0, l)] += vparg_value * (C_jl(ind_i, 0, l) * N_coeff);
                                     } else {
                                         local_N1[dynmic_najl_slice(j, l)] += vparg_value * (C_jl(ind_i, j, l) * N_coeff +
                                                                                             2.0 * static_cast<ValueType>(j) * L_mat[2][ind_i] * (C_jl(ind_i, j, l) - C_jl(ind_i, j - 1, l)));

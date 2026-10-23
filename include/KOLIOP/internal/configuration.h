@@ -237,6 +237,19 @@ namespace koliop {
     #error "We dont event have a backend we understand!"
 #endif
 
+//////////////////////////////////////
+/// @def KOLIOP_RESTRICT
+///
+//////////////////////////////////////
+
+#if defined(SPLB2_COMPILER_MIMICRY_GCC)
+    #define KOLIOP_RESTRICT __restrict // or __restrict__
+#elif defined(SPLB2_COMPILER_IS_MSVC)
+    #define KOLIOP_RESTRICT __restrict // __declspec(restrict)
+#else
+    #define KOLIOP_RESTRICT
+#endif
+
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Types
