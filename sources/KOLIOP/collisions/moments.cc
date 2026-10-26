@@ -125,7 +125,7 @@ namespace koliop {
                         const ComputeFloatType f5d_s_value = Kokkos::max(1.0E-40,
                                                                          f5d_s(imu, ivpar, itor1, itor2, itor3, ispecies));
 
-                        const ComputeFloatType ftmp = Bstar_s(ivpar, itor2, itor1, ispecies) *
+                        const ComputeFloatType ftmp = Bstar_s(ivpar, itor2, itor1, itor3, ispecies) *
                                                       coeff_intdmu(imu) *
                                                       coeff_intdvpar(ivpar) *
                                                       f5d_s_value;
@@ -151,7 +151,7 @@ namespace koliop {
                 Kokkos::Sum<ComputeFloatType> Ta_reducer{Ta};
                 Ta_reducer.init(Ta_reducer.reference());
 
-                const ComputeFloatType B_norm_r_theta = B_norm(itor2, itor1);
+                const ComputeFloatType B_norm_r_theta = B_norm(itor2, itor1, itor3);
 
                 IntraTeam::Iterate2D(
                     mu_extent, vpar_extent,
@@ -160,7 +160,7 @@ namespace koliop {
                         // Gysela fortran, a temporary buffer is used but
                         // that would hardly fit on a GPU.
                         // TODO(Etienne M): LOAD Hoist the invariant load.
-                        const ComputeFloatType ftmp = Bstar_s(ivpar, itor2, itor1, ispecies) *
+                        const ComputeFloatType ftmp = Bstar_s(ivpar, itor2, itor1, itor3, ispecies) *
                                                       coeff_intdmu(imu) *
                                                       coeff_intdvpar(ivpar) *
                                                       f5d_s(imu, ivpar, itor1, itor2, itor3, ispecies);

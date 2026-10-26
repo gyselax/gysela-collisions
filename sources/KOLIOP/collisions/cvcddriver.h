@@ -102,7 +102,7 @@ namespace koliop {
                     const OrdinalType itor2 = block_first_tor2 + block_local_index_itor2;
                     const OrdinalType itor3 = block_first_tor3 + block_local_index_itor3;
 
-                    const ComputeFloatType BoT = B_norm(itor2, itor1) /
+                    const ComputeFloatType BoT = B_norm(itor2, itor1, itor3) /
                                                  T_s(itor1, itor2, itor3, species_index);
 
                     for(OrdinalType ivpar = 0; ivpar < vpar_extent; ++ivpar) {
@@ -335,7 +335,7 @@ namespace koliop {
                     const OrdinalType itor2 = block_first_tor2 + block_local_index_itor2;
                     const OrdinalType itor3 = block_first_tor3 + block_local_index_itor3;
 
-                    const ComputeFloatType BoT = B_norm(itor2, itor1) /
+                    const ComputeFloatType BoT = B_norm(itor2, itor1, itor3) /
                                                  T_s(itor1, itor2, itor3, species_index);
 
                     using koliop::utility::IntraTeam;

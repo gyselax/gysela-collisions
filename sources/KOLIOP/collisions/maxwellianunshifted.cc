@@ -88,7 +88,7 @@ namespace koliop {
 
                         static constexpr auto k2Pi = koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi;
 
-                        const ComputeFloatType Bij    = B_norm(itor2, itor1);
+                        const ComputeFloatType Bij    = B_norm(itor2, itor1, itor3);
                         const ComputeFloatType na     = n_s(itor1, itor2, itor3, ispeciesA);
                         const ComputeFloatType Ta     = T_s(itor1, itor2, itor3, ispeciesA);
                         const ComputeFloatType BijoTa = Bij / Ta;
@@ -140,7 +140,7 @@ namespace koliop {
 
                         static constexpr auto k2Pi = koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi;
 
-                        const ComputeFloatType Bij    = B_norm(itor2, itor1);
+                        const ComputeFloatType Bij    = B_norm(itor2, itor1, itor3);
                         const ComputeFloatType na     = n_s(itor1, itor2, itor3, ispeciesA);
                         const ComputeFloatType Ta     = T_s(itor1, itor2, itor3, ispeciesA);
                         const ComputeFloatType BijoTa = Bij / Ta;

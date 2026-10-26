@@ -86,7 +86,7 @@ namespace koliop {
                 Kokkos::Sum<ComputeFloatType> impulsion_coll_reducer{impulsion_coll};
                 impulsion_coll_reducer.init(impulsion_coll_reducer.reference());
 
-                const ComputeFloatType Bij = B_norm(itor2, itor1);
+                const ComputeFloatType Bij = B_norm(itor2, itor1, itor3);
                 const ComputeFloatType na  = n_s(itor1, itor2, itor3, ispeciesA);
 
                 // TODO(Etienne M): Is parallel_for + TeamThreadRange +
@@ -101,7 +101,7 @@ namespace koliop {
                         // reduction.
 
                         const ComputeFloatType jacob_vel = k2Pi *
-                                                           Bstar_s(ivpar, itor2, itor1, ispeciesA);
+                                                           Bstar_s(ivpar, itor2, itor1, itor3, ispeciesA);
 
                         impulsion_coll_reducer.join(impulsion_coll_reducer.reference(),
                                                     coeff_intdvpar(ivpar) *
@@ -127,7 +127,7 @@ namespace koliop {
                     mu_extent, vpar_extent,
                     a_team_handle, [&](auto imu, auto ivpar) {
                         const ComputeFloatType jacob_vel = (k2Pi / na) *
-                                                           Bstar_s(ivpar, itor2, itor1, ispeciesA);
+                                                           Bstar_s(ivpar, itor2, itor1, itor3, ispeciesA);
 
                         T_coll_reducer.join(T_coll_reducer.reference(),
                                             coeff_intdvpar(ivpar) *

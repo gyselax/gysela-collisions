@@ -74,7 +74,7 @@ namespace koliop {
 
                 static constexpr auto k2Pi = koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi;
 
-                const ComputeFloatType Bij   = B_norm(itor2, itor1);
+                const ComputeFloatType Bij   = B_norm(itor2, itor1, itor3);
                 const ComputeFloatType na    = n_s(itor1, itor2, itor3, ispecies);
                 const ComputeFloatType Vpara = U_par_s(itor1, itor2, itor3, ispecies);
                 const ComputeFloatType Ta    = T_s(itor1, itor2, itor3, ispecies);
@@ -97,7 +97,7 @@ namespace koliop {
                         // reduction.
 
                         const ComputeFloatType jac = k2Pi *
-                                                     Bstar_s(ivpar, itor2, itor1, ispecies);
+                                                     Bstar_s(ivpar, itor2, itor1, itor3, ispecies);
 
                         const ComputeFloatType vparg_minus_vpara         = vparg(ivpar) - Vpara;
                         const ComputeFloatType vparg_minus_vpara_squared = vparg_minus_vpara * vparg_minus_vpara;

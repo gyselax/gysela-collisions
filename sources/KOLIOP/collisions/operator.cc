@@ -102,8 +102,8 @@ namespace koliop {
                            const koliop::utility::View::UDL1<const Flo64>& coeff_intdmu,
                            const koliop::utility::View::UDL1<const Flo64>& coeff_intdvpar,
                            const koliop::utility::View::UDL1<const Flo64>& coeff_AD_r,
-                           const koliop::utility::View::UDL2<const Flo64>& B_norm,
-                           const koliop::utility::View::UDL4<const Flo64>& Bstar_s)
+                           const koliop::utility::View::UDL3<const Flo64>& B_norm,
+                           const koliop::utility::View::UDL5<const Flo64>& Bstar_s)
             // Constant, externally computed values
             : mu_extent_{static_cast<OrdinalType>(mug.extent(0))}
             , vpar_extent_{static_cast<OrdinalType>(vparg.extent(0))}
@@ -156,10 +156,12 @@ namespace koliop {
             KOLIOP_ASSERT(static_cast<OrdinalType>(coeff_AD_r_.extent(0)) == tor2_extent_);
             KOLIOP_ASSERT(static_cast<OrdinalType>(B_norm_.extent(0)) == tor2_extent_);
             KOLIOP_ASSERT(static_cast<OrdinalType>(B_norm_.extent(1)) == tor1_extent_);
+            KOLIOP_ASSERT(static_cast<OrdinalType>(B_norm_.extent(2)) == tor3_extent_);
             KOLIOP_ASSERT(static_cast<OrdinalType>(Bstar_s_.extent(0)) == vpar_extent_);
             KOLIOP_ASSERT(static_cast<OrdinalType>(Bstar_s_.extent(1)) == tor2_extent_);
             KOLIOP_ASSERT(static_cast<OrdinalType>(Bstar_s_.extent(2)) == tor1_extent_);
-            KOLIOP_ASSERT(static_cast<OrdinalType>(Bstar_s_.extent(3)) == species_extent_);
+            KOLIOP_ASSERT(static_cast<OrdinalType>(Bstar_s_.extent(3)) == tor3_extent_);
+            KOLIOP_ASSERT(static_cast<OrdinalType>(Bstar_s_.extent(4)) == species_extent_);
 
             if(std::getenv("KOLIOP_DEBUG_ALL") != nullptr ||
                std::getenv("KOLIOP_DEBUG_koliop_Create") != nullptr) {

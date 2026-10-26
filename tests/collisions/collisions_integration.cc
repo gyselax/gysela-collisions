@@ -43,8 +43,8 @@ int Test1() {
     koliop::utility::View::UDL1<const double> coeff_intdmu{a_buffer_0, mu_extent};
     koliop::utility::View::UDL1<const double> coeff_intdvpar{a_buffer_0, vpar_extent};
     koliop::utility::View::UDL1<const double> coeff_AD_r{a_buffer_0, r_extent};
-    koliop::utility::View::UDL2<const double> B_norm{a_buffer_0, r_extent, theta_extent};
-    koliop::utility::View::UDL4<const double> Bstar_s{a_buffer_0, vpar_extent, r_extent, theta_extent, species_extent};
+    koliop::utility::View::UDL3<const double> B_norm{a_buffer_0, r_extent, theta_extent, phi_extent};
+    koliop::utility::View::UDL5<const double> Bstar_s{a_buffer_0, vpar_extent, r_extent, theta_extent, phi_extent, species_extent};
 
     koliop::collisions::Operator an_operator{
         theta_extent,
@@ -109,8 +109,8 @@ int Test2() {
     koliop::utility::View::UDL1<const double> coeff_intdmu{a_buffer_0, mu_extent};
     koliop::utility::View::UDL1<const double> coeff_intdvpar{a_buffer_0, vpar_extent};
     koliop::utility::View::UDL1<const double> coeff_AD_r{a_buffer_0, r_extent};
-    koliop::utility::View::UDL2<const double> B_norm{a_buffer_0, r_extent, theta_extent};
-    koliop::utility::View::UDL4<const double> Bstar_s{a_buffer_0, vpar_extent, r_extent, theta_extent, species_extent};
+    koliop::utility::View::UDL3<const double> B_norm{a_buffer_0, r_extent, theta_extent, phi_extent};
+    koliop::utility::View::UDL5<const double> Bstar_s{a_buffer_0, vpar_extent, r_extent, theta_extent, phi_extent, species_extent};
 
     koliop::collisions::Operator an_operator{
         theta_extent,

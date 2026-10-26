@@ -86,7 +86,7 @@ namespace koliop {
                         const ComputeFloatType f5d_s_value = Kokkos::max(f5d_s(imu, ivpar, itor1, itor2, itor3, ispeciesA),
                                                                          0.0);
 
-                        const ComputeFloatType ftmp = Bstar_s(ivpar, itor2, itor1, ispeciesA) *
+                        const ComputeFloatType ftmp = Bstar_s(ivpar, itor2, itor1, itor3, ispeciesA) *
                                                       coeff_intdmu(imu) *
                                                       coeff_intdvpar(ivpar) *
                                                       f5d_s_value;

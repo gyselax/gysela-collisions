@@ -129,7 +129,7 @@ namespace koliop {
                     const ComputeFloatType coeff_old = na / (k2Pi * Ta * Kokkos::sqrt(k2Pi * Ta));
                     const ComputeFloatType coeff_new = na / (k2Pi * Ta_new * Kokkos::sqrt(k2Pi * Ta_new));
 
-                    const ComputeFloatType Bij     = B_norm(itor2, itor1);
+                    const ComputeFloatType Bij     = B_norm(itor2, itor1, itor3);
                     const ComputeFloatType bot_old = Bij / Ta;
                     const ComputeFloatType bot_new = Bij / Ta_new;
 

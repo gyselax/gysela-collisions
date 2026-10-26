@@ -81,7 +81,7 @@ namespace koliop {
                 const ComputeFloatType hat_Za     = hat_Zs(ispeciesA);
                 const ComputeFloatType inv_hat_Aa = 1.0 / hat_Aa;
 
-                const ComputeFloatType Bij = B_norm(itor2, itor1);
+                const ComputeFloatType Bij = B_norm(itor2, itor1, itor3);
 
                 const ComputeFloatType na          = n_s(itor1, itor2, itor3, ispeciesA);
                 const ComputeFloatType Vpara       = U_par_s(itor1, itor2, itor3, ispeciesA);
