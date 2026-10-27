@@ -6,7 +6,7 @@ DependencyResolver_Resolve(Kokkos
                            # downloading the product.
                            PROVIDERS        SYSTEM
                                             ARCHIVE
-                           PROVIDERS_SOURCE "https://github.com/kokkos/kokkos/releases/download/4.6.00/kokkos-4.6.00.tar.gz"
+                           PROVIDERS_SOURCE "https://github.com/kokkos/kokkos/releases/download/5.2.2/kokkos-5.2.2.tar.gz"
                            )
 
 DependencyResolver_Resolve(KokkosKernels
@@ -17,15 +17,15 @@ DependencyResolver_Resolve(KokkosKernels
                            # downloading the product.
                            PROVIDERS        SYSTEM
                                             ARCHIVE
-                           PROVIDERS_SOURCE "https://github.com/kokkos/kokkos-kernels/releases/download/4.6.00/kokkos-kernels-4.6.00.tar.gz"
+                           PROVIDERS_SOURCE "https://github.com/kokkos/kokkos-kernels/releases/download/5.2.2/kokkos-kernels-5.2.2.tar.gz"
                            )
 
 function(${PROJECT_NAME}_target_add_kokkos target_name)
     target_link_libraries("${target_name}"
-                          PRIVATE Kokkos::kokkos)
+                          PUBLIC Kokkos::kokkos)
 endfunction()
 
 function(${PROJECT_NAME}_target_add_kokkos_kernels target_name)
     target_link_libraries("${target_name}"
-                          PRIVATE Kokkos::kokkoskernels)
+                          PUBLIC Kokkos::kokkoskernels)
 endfunction()
