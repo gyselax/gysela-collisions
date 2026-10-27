@@ -34,17 +34,17 @@ namespace koliop {
                                                                     Kokkos::DefaultExecutionSpace::memory_space,
                                                                     Kokkos::MemoryTraits<Kokkos::Unmanaged | Kokkos::Restrict>>>;
             template <typename T>
-            using UDL1 = UDL<T, Kokkos::dextents<OrdinalType, 1>>;
+            using UDL1 = UDL<T, Kokkos::dextents<unsigned, 1>>;
             template <typename T>
-            using UDL2 = UDL<T, Kokkos::dextents<OrdinalType, 2>>;
+            using UDL2 = UDL<T, Kokkos::dextents<unsigned, 2>>;
             template <typename T>
-            using UDL3 = UDL<T, Kokkos::dextents<OrdinalType, 3>>;
+            using UDL3 = UDL<T, Kokkos::dextents<unsigned, 3>>;
             template <typename T>
-            using UDL4 = UDL<T, Kokkos::dextents<OrdinalType, 4>>;
+            using UDL4 = UDL<T, Kokkos::dextents<unsigned, 4>>;
             template <typename T>
-            using UDL5 = UDL<T, Kokkos::dextents<OrdinalType, 5>>;
+            using UDL5 = UDL<T, Kokkos::dextents<unsigned, 5>>;
             template <typename T>
-            using UDL6 = UDL<T, Kokkos::dextents<OrdinalType, 6>>;
+            using UDL6 = UDL<T, Kokkos::dextents<unsigned, 6>>;
 
             /// @brief Managed Host layout Left
             /// @tparam Extent
@@ -56,17 +56,17 @@ namespace koliop {
                                                                     Kokkos::DefaultHostExecutionSpace::memory_space,
                                                                     Kokkos::MemoryTraits<Kokkos::Restrict>>>;
             template <typename T>
-            using MHL1 = MHL<T, Kokkos::dextents<OrdinalType, 1>>;
+            using MHL1 = MHL<T, Kokkos::dextents<unsigned, 1>>;
             template <typename T>
-            using MHL2 = MHL<T, Kokkos::dextents<OrdinalType, 2>>;
+            using MHL2 = MHL<T, Kokkos::dextents<unsigned, 2>>;
             template <typename T>
-            using MHL3 = MHL<T, Kokkos::dextents<OrdinalType, 3>>;
+            using MHL3 = MHL<T, Kokkos::dextents<unsigned, 3>>;
             template <typename T>
-            using MHL4 = MHL<T, Kokkos::dextents<OrdinalType, 4>>;
+            using MHL4 = MHL<T, Kokkos::dextents<unsigned, 4>>;
             template <typename T>
-            using MHL5 = MHL<T, Kokkos::dextents<OrdinalType, 5>>;
+            using MHL5 = MHL<T, Kokkos::dextents<unsigned, 5>>;
             template <typename T>
-            using MHL6 = MHL<T, Kokkos::dextents<OrdinalType, 6>>;
+            using MHL6 = MHL<T, Kokkos::dextents<unsigned, 6>>;
 
             /// @brief Managed Device layout Left
             /// @tparam Extent
@@ -78,17 +78,17 @@ namespace koliop {
                                                                     Kokkos::DefaultExecutionSpace::memory_space,
                                                                     Kokkos::MemoryTraits<Kokkos::Restrict>>>;
             template <typename T>
-            using MDL1 = MDL<T, Kokkos::dextents<OrdinalType, 1>>;
+            using MDL1 = MDL<T, Kokkos::dextents<unsigned, 1>>;
             template <typename T>
-            using MDL2 = MDL<T, Kokkos::dextents<OrdinalType, 2>>;
+            using MDL2 = MDL<T, Kokkos::dextents<unsigned, 2>>;
             template <typename T>
-            using MDL3 = MDL<T, Kokkos::dextents<OrdinalType, 3>>;
+            using MDL3 = MDL<T, Kokkos::dextents<unsigned, 3>>;
             template <typename T>
-            using MDL4 = MDL<T, Kokkos::dextents<OrdinalType, 4>>;
+            using MDL4 = MDL<T, Kokkos::dextents<unsigned, 4>>;
             template <typename T>
-            using MDL5 = MDL<T, Kokkos::dextents<OrdinalType, 5>>;
+            using MDL5 = MDL<T, Kokkos::dextents<unsigned, 5>>;
             template <typename T>
-            using MDL6 = MDL<T, Kokkos::dextents<OrdinalType, 6>>;
+            using MDL6 = MDL<T, Kokkos::dextents<unsigned, 6>>;
         };
 
     } // namespace utility

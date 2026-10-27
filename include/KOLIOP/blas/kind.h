@@ -80,7 +80,7 @@ namespace koliop {
                                                                             Kokkos::MemoryTraits<Kokkos::Restrict>>>;
 
                     using ScalarType = MDL<value_type,
-                                           Kokkos::extents<OrdinalType,
+                                           Kokkos::extents<unsigned,
                                                            Kokkos::dynamic_extent,
                                                            Kokkos::dynamic_extent,
                                                            kDiagonalCount,
@@ -92,7 +92,7 @@ namespace koliop {
                     /// but the batch potentially gets subdivided in vectors.
                     /// NOTE: We changed the View's type.
                     using VectorType = MDL<typename BatchTraitsType::ThreadVectorType,
-                                           Kokkos::extents<OrdinalType,
+                                           Kokkos::extents<unsigned,
                                                            Kokkos::dynamic_extent,
                                                            Kokkos::dynamic_extent,
                                                            kDiagonalCount,
@@ -101,7 +101,7 @@ namespace koliop {
                                                            BatchTraitsType::kVectorPerBatch>>;
 
                     using ConstScalarType = MDL<const value_type,
-                                                Kokkos::extents<OrdinalType,
+                                                Kokkos::extents<unsigned,
                                                                 Kokkos::dynamic_extent,
                                                                 Kokkos::dynamic_extent,
                                                                 kDiagonalCount,
@@ -110,7 +110,7 @@ namespace koliop {
                                                                 BatchTraitsType::kBatchSize>>;
 
                     using ConstVectorType = MDL<const typename BatchTraitsType::ThreadVectorType,
-                                                Kokkos::extents<OrdinalType,
+                                                Kokkos::extents<unsigned,
                                                                 Kokkos::dynamic_extent,
                                                                 Kokkos::dynamic_extent,
                                                                 kDiagonalCount,
