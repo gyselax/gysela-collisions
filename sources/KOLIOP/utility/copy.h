@@ -74,8 +74,7 @@ namespace koliop {
             /// as the one of the returned view.
             ///
             template <typename UnmanagedView,
-                      template <typename>
-                      typename DestinationViewTemplate,
+                      template <typename> typename DestinationViewTemplate,
                       typename ExecutionSpace,
                       typename... Indicies>
             static auto
@@ -183,8 +182,7 @@ namespace koliop {
         }
 
         template <typename UnmanagedView,
-                  template <typename>
-                  typename DestinationViewTemplate,
+                  template <typename> typename DestinationViewTemplate,
                   typename ExecutionSpace,
                   typename... Indicies>
         auto Copy::RawDataToView(ExecutionSpace&&                    an_execution_space,

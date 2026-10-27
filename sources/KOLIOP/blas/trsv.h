@@ -234,6 +234,7 @@ namespace koliop {
                 }
             };
 
+#if 0
             const auto a_policy = Kokkos::MDRangePolicy<
                 // Kokkos::LaunchBounds<64, 1>, Kokkos::IndexType<OrdinalType>,
                 ExecutionSpaceType,
@@ -246,6 +247,19 @@ namespace koliop {
 
             Kokkos::parallel_for("BatchedBlockTridiagonalByBlockTRSV::Solve",
                                  a_policy, kernel);
+#else
+            const auto wrapped_kernel = KOKKOS_LAMBDA(OrdinalType flattened_index) {
+                kernel(static_cast<OrdinalType>((flattened_index) % BatchTraitsType::kVectorPerBatch),
+                       static_cast<OrdinalType>((flattened_index / (BatchTraitsType::kVectorPerBatch)) /*% kBatchCount*/));
+            };
+            const auto a_policy = Kokkos::RangePolicy<ExecutionSpaceType, Kokkos::IndexType<OrdinalType>>{
+                an_execution_space, 0,
+                static_cast<OrdinalType>(BatchTraitsType::kVectorPerBatch *
+                                         kBatchCount)};
+            Kokkos::parallel_for(
+                "BatchedBlockTridiagonalByBlockTRSV::Solve",
+                a_policy, wrapped_kernel);
+#endif
         }
 
     } // namespace blas
