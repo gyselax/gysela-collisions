@@ -5,6 +5,8 @@
 
 #include <Kokkos_Core.hpp>
 
+#include "KOLIOP/internal/configuration.h"
+
 namespace koliop {
     namespace utility {
 
@@ -21,126 +23,72 @@ namespace koliop {
         ///
         struct View {
         public:
-            /// @brief Unmanaged Host layout Left
-            /// @tparam Extent
-            template <typename Extent>
-            using UHL = Kokkos::View<Extent,
-                                     Kokkos::LayoutLeft,
-                                     Kokkos::DefaultHostExecutionSpace::memory_space,
-                                     Kokkos::MemoryTraits<Kokkos::Unmanaged | Kokkos::Restrict>>;
-            template <typename T>
-            using UHL1 = UHL<T*>;
-            template <typename T>
-            using UHL2 = UHL<T**>;
-            template <typename T>
-            using UHL3 = UHL<T***>;
-            template <typename T>
-            using UHL4 = UHL<T****>;
-            template <typename T>
-            using UHL5 = UHL<T*****>;
-            template <typename T>
-            using UHL6 = UHL<T******>;
-
             /// @brief Unmanaged Device layout Left
             /// May be similar to UHL if the device is the CPU.
             /// @tparam Extent
-            template <typename Extent>
-            using UDL = Kokkos::View<Extent,
-                                     Kokkos::LayoutLeft,
-                                     Kokkos::DefaultExecutionSpace::memory_space,
-                                     Kokkos::MemoryTraits<Kokkos::Unmanaged | Kokkos::Restrict>>;
+            template <typename T, typename Extents>
+            using UDL = Kokkos::View<T,
+                                     Extents,
+                                     Kokkos::layout_left,
+                                     Kokkos::Experimental::Accessor<T,
+                                                                    Kokkos::DefaultExecutionSpace::memory_space,
+                                                                    Kokkos::MemoryTraits<Kokkos::Unmanaged | Kokkos::Restrict>>>;
             template <typename T>
-            using UDL1 = UDL<T*>;
+            using UDL1 = UDL<T, Kokkos::dextents<OrdinalType, 1>>;
             template <typename T>
-            using UDL2 = UDL<T**>;
+            using UDL2 = UDL<T, Kokkos::dextents<OrdinalType, 2>>;
             template <typename T>
-            using UDL3 = UDL<T***>;
+            using UDL3 = UDL<T, Kokkos::dextents<OrdinalType, 3>>;
             template <typename T>
-            using UDL4 = UDL<T****>;
+            using UDL4 = UDL<T, Kokkos::dextents<OrdinalType, 4>>;
             template <typename T>
-            using UDL5 = UDL<T*****>;
+            using UDL5 = UDL<T, Kokkos::dextents<OrdinalType, 5>>;
             template <typename T>
-            using UDL6 = UDL<T******>;
-
-            /// @brief Unmanaged Device layout Default for device
-            /// @tparam Extent
-            template <typename Extent>
-            using UDD = Kokkos::View<Extent,
-                                     Kokkos::DefaultExecutionSpace::array_layout,
-                                     Kokkos::DefaultExecutionSpace::memory_space,
-                                     Kokkos::MemoryTraits<Kokkos::Unmanaged | Kokkos::Restrict>>;
-            template <typename T>
-            using UDD1 = UDD<T*>;
-            template <typename T>
-            using UDD2 = UDD<T**>;
-            template <typename T>
-            using UDD3 = UDD<T***>;
-            template <typename T>
-            using UDD4 = UDD<T****>;
-            template <typename T>
-            using UDD5 = UDD<T*****>;
-            template <typename T>
-            using UDD6 = UDD<T******>;
+            using UDL6 = UDL<T, Kokkos::dextents<OrdinalType, 6>>;
 
             /// @brief Managed Host layout Left
             /// @tparam Extent
-            template <typename Extent>
-            using MHL = Kokkos::View<Extent,
-                                     Kokkos::LayoutLeft,
-                                     Kokkos::DefaultHostExecutionSpace::memory_space,
-                                     Kokkos::MemoryTraits<Kokkos::Restrict>>;
+            template <typename T, typename Extents>
+            using MHL = Kokkos::View<T,
+                                     Extents,
+                                     Kokkos::layout_left,
+                                     Kokkos::Experimental::Accessor<T,
+                                                                    Kokkos::DefaultHostExecutionSpace::memory_space,
+                                                                    Kokkos::MemoryTraits<Kokkos::Restrict>>>;
             template <typename T>
-            using MHL1 = MHL<T*>;
+            using MHL1 = MHL<T, Kokkos::dextents<OrdinalType, 1>>;
             template <typename T>
-            using MHL2 = MHL<T**>;
+            using MHL2 = MHL<T, Kokkos::dextents<OrdinalType, 2>>;
             template <typename T>
-            using MHL3 = MHL<T***>;
+            using MHL3 = MHL<T, Kokkos::dextents<OrdinalType, 3>>;
             template <typename T>
-            using MHL4 = MHL<T****>;
+            using MHL4 = MHL<T, Kokkos::dextents<OrdinalType, 4>>;
             template <typename T>
-            using MHL5 = MHL<T*****>;
+            using MHL5 = MHL<T, Kokkos::dextents<OrdinalType, 5>>;
             template <typename T>
-            using MHL6 = MHL<T******>;
+            using MHL6 = MHL<T, Kokkos::dextents<OrdinalType, 6>>;
 
             /// @brief Managed Device layout Left
             /// @tparam Extent
-            template <typename Extent>
-            using MDL = Kokkos::View<Extent,
-                                     Kokkos::LayoutLeft,
-                                     Kokkos::DefaultExecutionSpace::memory_space,
-                                     Kokkos::MemoryTraits<Kokkos::Restrict>>;
+            template <typename T, typename Extents>
+            using MDL = Kokkos::View<T,
+                                     Extents,
+                                     Kokkos::layout_left,
+                                     Kokkos::Experimental::Accessor<T,
+                                                                    Kokkos::DefaultExecutionSpace::memory_space,
+                                                                    Kokkos::MemoryTraits<Kokkos::Restrict>>>;
             template <typename T>
-            using MDL1 = MDL<T*>;
+            using MDL1 = MDL<T, Kokkos::dextents<OrdinalType, 1>>;
             template <typename T>
-            using MDL2 = MDL<T**>;
+            using MDL2 = MDL<T, Kokkos::dextents<OrdinalType, 2>>;
             template <typename T>
-            using MDL3 = MDL<T***>;
+            using MDL3 = MDL<T, Kokkos::dextents<OrdinalType, 3>>;
             template <typename T>
-            using MDL4 = MDL<T****>;
+            using MDL4 = MDL<T, Kokkos::dextents<OrdinalType, 4>>;
             template <typename T>
-            using MDL5 = MDL<T*****>;
+            using MDL5 = MDL<T, Kokkos::dextents<OrdinalType, 5>>;
             template <typename T>
-            using MDL6 = MDL<T******>;
-
-            /// @brief Managed Device layout Default for device
-            /// @tparam Extent
-            template <typename Extent>
-            using MDD = Kokkos::View<Extent,
-                                     Kokkos::DefaultExecutionSpace::array_layout,
-                                     Kokkos::DefaultExecutionSpace::memory_space,
-                                     Kokkos::MemoryTraits<Kokkos::Restrict>>;
-            template <typename T>
-            using MDD1 = MDD<T*>;
-            template <typename T>
-            using MDD2 = MDD<T**>;
-            template <typename T>
-            using MDD3 = MDD<T***>;
-            template <typename T>
-            using MDD4 = MDD<T****>;
-            template <typename T>
-            using MDD5 = MDD<T*****>;
-            template <typename T>
-            using MDD6 = MDD<T******>;
+            using MDL6 = MDL<T, Kokkos::dextents<OrdinalType, 6>>;
         };
 
     } // namespace utility

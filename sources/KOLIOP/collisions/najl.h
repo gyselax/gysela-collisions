@@ -697,9 +697,11 @@ namespace koliop {
 
             // Constant, internally computed values
 
-            koliop::utility::View::MDL<ComputeFloatType[2 * Constant::kMaximumLaguerrePolynomialDegree - 1]
-                                                       [Constant::kMaximumLaguerrePolynomialDegree]
-                                                       [Constant::kMaximumLaguerrePolynomialDegree]>
+            koliop::utility::View::MDL<ComputeFloatType,
+                                       Kokkos::extents<OrdinalType,
+                                                       2 * Constant::kMaximumLaguerrePolynomialDegree - 1,
+                                                       Constant::kMaximumLaguerrePolynomialDegree,
+                                                       Constant::kMaximumLaguerrePolynomialDegree>>
                 C_jl_;
         };
 

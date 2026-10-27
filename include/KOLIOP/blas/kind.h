@@ -71,28 +71,52 @@ namespace koliop {
                     /// this is fixed to 3.
                     static inline constexpr OrdinalType kDiagonalCount = 3;
 
-                    using ScalarType = Kokkos::View<value_type** [kDiagonalCount][kSmallBlockExtent][kSmallBlockExtent][BatchTraitsType::kBatchSize],
-                                                    Kokkos::LayoutRight,
-                                                    ExecutionSpaceType,
-                                                    Kokkos::MemoryTraits<Kokkos::Restrict>>;
+                    template <typename T, typename Extents>
+                    using MDL = Kokkos::View<T,
+                                             Extents,
+                                             Kokkos::layout_right,
+                                             Kokkos::Experimental::Accessor<T,
+                                                                            Kokkos::DefaultExecutionSpace::memory_space,
+                                                                            Kokkos::MemoryTraits<Kokkos::Restrict>>>;
+
+                    using ScalarType = MDL<value_type,
+                                           Kokkos::extents<OrdinalType,
+                                                           Kokkos::dynamic_extent,
+                                                           Kokkos::dynamic_extent,
+                                                           kDiagonalCount,
+                                                           kSmallBlockExtent,
+                                                           kSmallBlockExtent,
+                                                           BatchTraitsType::kBatchSize>>;
 
                     /// The batch count did not changed compared to ScalarType
                     /// but the batch potentially gets subdivided in vectors.
                     /// NOTE: We changed the View's type.
-                    using VectorType = Kokkos::View<typename BatchTraitsType::ThreadVectorType** [kDiagonalCount][kSmallBlockExtent][kSmallBlockExtent][BatchTraitsType::kVectorPerBatch],
-                                                    Kokkos::LayoutRight,
-                                                    ExecutionSpaceType,
-                                                    Kokkos::MemoryTraits<Kokkos::Restrict>>;
+                    using VectorType = MDL<typename BatchTraitsType::ThreadVectorType,
+                                           Kokkos::extents<OrdinalType,
+                                                           Kokkos::dynamic_extent,
+                                                           Kokkos::dynamic_extent,
+                                                           kDiagonalCount,
+                                                           kSmallBlockExtent,
+                                                           kSmallBlockExtent,
+                                                           BatchTraitsType::kVectorPerBatch>>;
 
-                    using ConstScalarType = Kokkos::View<const value_type** [kDiagonalCount][kSmallBlockExtent][kSmallBlockExtent][BatchTraitsType::kBatchSize],
-                                                         Kokkos::LayoutRight,
-                                                         ExecutionSpaceType,
-                                                         Kokkos::MemoryTraits<Kokkos::Restrict>>;
+                    using ConstScalarType = MDL<const value_type,
+                                                Kokkos::extents<OrdinalType,
+                                                                Kokkos::dynamic_extent,
+                                                                Kokkos::dynamic_extent,
+                                                                kDiagonalCount,
+                                                                kSmallBlockExtent,
+                                                                kSmallBlockExtent,
+                                                                BatchTraitsType::kBatchSize>>;
 
-                    using ConstVectorType = Kokkos::View<const typename BatchTraitsType::ThreadVectorType** [kDiagonalCount][kSmallBlockExtent][kSmallBlockExtent][BatchTraitsType::kVectorPerBatch],
-                                                         Kokkos::LayoutRight,
-                                                         ExecutionSpaceType,
-                                                         Kokkos::MemoryTraits<Kokkos::Restrict>>;
+                    using ConstVectorType = MDL<const typename BatchTraitsType::ThreadVectorType,
+                                                Kokkos::extents<OrdinalType,
+                                                                Kokkos::dynamic_extent,
+                                                                Kokkos::dynamic_extent,
+                                                                kDiagonalCount,
+                                                                kSmallBlockExtent,
+                                                                kSmallBlockExtent,
+                                                                BatchTraitsType::kVectorPerBatch>>;
                 };
 
             } // namespace matrix
