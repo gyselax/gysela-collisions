@@ -60,7 +60,7 @@ namespace koliop {
 
             const uint64_t scratch_memory_bytes_per_thread = species_extent * sizeof(ComputeFloatType);
 
-            const auto team_count = tor1_extent * tor2_extent * tor3_extent;
+            const auto team_count = tor2_extent * tor1_extent * tor3_extent;
 
             // Due to the inherent Cuda/HIP thread block limit.
             KOLIOP_ASSERT(team_count <= std::numeric_limits<int>::max());
@@ -83,9 +83,9 @@ namespace koliop {
 
                 const OrdinalType team_index = a_team_handle.league_rank();
 
-                const OrdinalType itor1 = (team_index) % tor1_extent;
-                const OrdinalType itor2 = (team_index / (tor1_extent)) % tor2_extent;
-                const OrdinalType itor3 = (team_index / (tor1_extent * tor2_extent)) /* % tor3_extent */;
+                const OrdinalType itor2 = (team_index) % tor2_extent;
+                const OrdinalType itor1 = (team_index / (tor2_extent)) % tor1_extent;
+                const OrdinalType itor3 = (team_index / (tor2_extent * tor1_extent)) /* % tor3_extent */;
 
                 // TODO(Etienne M): Should we use a_team_handle.team_barrier() ?
                 ScratchMemory Ta_tmp{a_team_handle.thread_scratch(0),
@@ -97,8 +97,8 @@ namespace koliop {
 
                 for(OrdinalType ispeciesA = 0; ispeciesA < species_extent; ++ispeciesA) {
                     const ComputeFloatType hat_Aa = hat_As(ispeciesA);
-                    const ComputeFloatType Vpara  = U_par_s(itor1, itor2, itor3, ispeciesA);
-                    const ComputeFloatType Ta     = T_s(itor1, itor2, itor3, ispeciesA);
+                    const ComputeFloatType Vpara  = U_par_s(itor2, itor1, itor3, ispeciesA);
+                    const ComputeFloatType Ta     = T_s(itor2, itor1, itor3, ispeciesA);
 
                     ComputeFloatType Ta_new = Ta;
 
@@ -110,10 +110,10 @@ namespace koliop {
                         }
 
                         const ComputeFloatType hat_Ab = hat_As(ispeciesB);
-                        const ComputeFloatType Vparb  = U_par_s(itor1, itor2, itor3, ispeciesB);
-                        const ComputeFloatType Tb     = T_s(itor1, itor2, itor3, ispeciesB);
+                        const ComputeFloatType Vparb  = U_par_s(itor2, itor1, itor3, ispeciesB);
+                        const ComputeFloatType Tb     = T_s(itor2, itor1, itor3, ispeciesB);
 
-                        const ComputeFloatType nu = nu_ab(itor1, itor2, itor3, ispeciesA, ispeciesB);
+                        const ComputeFloatType nu = nu_ab(itor2, itor1, itor3, ispeciesA, ispeciesB);
 
                         Ta_new += half_dt * nu * (2.0 * hat_Aa * (Tb - Ta) / (hat_Aa + hat_Ab) + (2.0 / 3.0) * Vpara * (Vpara - Kokkos::sqrt(hat_Aa / hat_Ab) * Vparb));
                     }
@@ -122,7 +122,7 @@ namespace koliop {
                     // T_s are computed.
                     Ta_tmp(ispeciesA) = Ta_new;
 
-                    const ComputeFloatType na = n_s(itor1, itor2, itor3, ispeciesA);
+                    const ComputeFloatType na = n_s(itor2, itor1, itor3, ispeciesA);
 
                     static constexpr auto k2Pi = koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi;
 
@@ -152,7 +152,7 @@ namespace koliop {
                             // significant digits. When compared to the Fortran
                             // code we observe absolute error of 10^-25 and
                             // relative error of 10^-4 !
-                            f5d_s(imu, ivpar, itor1, itor2, itor3, ispeciesA) = f5d_s(imu, ivpar, itor1, itor2, itor3, ispeciesA) -
+                            f5d_s(imu, ivpar, itor2, itor1, itor3, ispeciesA) = f5d_s(imu, ivpar, itor2, itor1, itor3, ispeciesA) -
                                                                                 coeff_old * Kokkos::exp(-bot_old * mug(imu) - vp2_old) +
                                                                                 coeff_new * Kokkos::exp(-bot_new * mug(imu) - vp2_new);
                         });
@@ -162,7 +162,7 @@ namespace koliop {
                     Kokkos::PerTeam(a_team_handle),
                     [&]() {
                         for(OrdinalType ispeciesA = 0; ispeciesA < species_extent; ++ispeciesA) {
-                            T_s(itor1, itor2, itor3, ispeciesA) = Ta_tmp(ispeciesA);
+                            T_s(itor2, itor1, itor3, ispeciesA) = Ta_tmp(ispeciesA);
                         }
                     });
             };
