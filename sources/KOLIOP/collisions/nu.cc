@@ -53,7 +53,7 @@ namespace koliop {
             const auto& T_s          = an_operator.T_s_;
 
             // TODO(Etienne M): Just use a range policy.
-            const auto team_count = tor2_extent * tor3_extent * species_extent * species_extent;
+            const auto team_count = tor1_extent * tor3_extent * species_extent * species_extent;
 
             // Due to the inherent Cuda/HIP thread block limit.
             KOLIOP_ASSERT(team_count <= std::numeric_limits<int>::max());
@@ -71,20 +71,20 @@ namespace koliop {
 
                 const OrdinalType team_index = a_team_handle.league_rank();
 
-                const OrdinalType itor2     = (team_index) % tor2_extent;
-                const OrdinalType itor3     = (team_index / (tor2_extent)) % tor3_extent;
-                const OrdinalType ispeciesA = (team_index / (tor2_extent * tor3_extent)) % species_extent;
-                const OrdinalType ispeciesB = (team_index / (tor2_extent * tor3_extent * species_extent)) /* % species_extent */;
+                const OrdinalType itor1     = (team_index) % tor1_extent;
+                const OrdinalType itor3     = (team_index / (tor1_extent)) % tor3_extent;
+                const OrdinalType ispeciesA = (team_index / (tor1_extent * tor3_extent)) % species_extent;
+                const OrdinalType ispeciesB = (team_index / (tor1_extent * tor3_extent * species_extent)) /* % species_extent */;
 
                 Kokkos::parallel_for(
                     Kokkos::TeamThreadRange(a_team_handle,
-                                            0, tor1_extent),
-                    [&](auto itor1) {
-                        nu_ab(itor1, itor2, itor3, ispeciesA, ispeciesB) = DoComputeFrequencyNuab(nustar_coeff(ispeciesA, ispeciesB, itor2),
+                                            0, tor2_extent),
+                    [&](auto itor2) {
+                        nu_ab(itor2, itor1, itor3, ispeciesA, ispeciesB) = DoComputeFrequencyNuab(nustar_coeff(ispeciesA, ispeciesB, itor2),
                                                                                                   hat_As(ispeciesA), hat_As(ispeciesB),
-                                                                                                  T_s(itor1, itor2, itor3, ispeciesA),
-                                                                                                  n_s(itor1, itor2, itor3, ispeciesB),
-                                                                                                  T_s(itor1, itor2, itor3, ispeciesB));
+                                                                                                  T_s(itor2, itor1, itor3, ispeciesA),
+                                                                                                  n_s(itor2, itor1, itor3, ispeciesB),
+                                                                                                  T_s(itor2, itor1, itor3, ispeciesB));
                     });
             };
 
