@@ -3,18 +3,141 @@
 #include "KOLIOP/collisions/cvcddriverscheduler.h"
 
 #include "KOLIOP/collisions.h"
+#include "KOLIOP/collisions/cvcddriver.h"
+#include "KOLIOP/collisions/cvcddrivereraser.h"
+#include "KOLIOP/internal/configuration.h"
 
 namespace koliop {
     namespace collisions {
         namespace detail {
+            // NOTE: The amount of memory used internally by the operator
+            // depends on the number of disjoint execution space allowing
+            // asynchronous blocked CvCd computation and on the maximum block
+            // size that can be used to fill the rank local domain.
+            // For a fixed kDisjointExecutionSpaceCount lowering the block size
+            // wont have an impact on the memory consumption until all the
+            // kDisjointExecutionSpaceCount have at least a block each to
+            // process. Else, lowering either kDisjointExecutionSpaceCount (down
+            // to 1) and lowering the block size can help reduce the memory
+            // consumption.
+            // The CvCdDriver memory we allocate is:
+            //  CvCdDriverVectorSize() * CvCdDriverMatrixSize() * CvCdDriverInstance
+            //      Where CvCdDriverInstance = min(kDisjointExecutionSpaceCount,
+            //                                     (itor1*itor2*itor3)/(itor1_block*itor2_block*itor3_block))
+            //          Where itor*_block are the extent of the largest
+            //          kPresetBlockExtent we could use.
+            //      For instance, with a domain of (64, 128, 1):
+            //          kDisjointExecutionSpaceCount = 2, blocking of (r,theta,phi) = (64, 128, 1)
+            //              CvCdDriverInstance = min(2, 8192/8192=1)
+            //          kDisjointExecutionSpaceCount = 2, blocking of (r,theta,phi) = (64, 32, 1)
+            //              CvCdDriverInstance = min(2, 8192/2048=4)
+
+            /// {Tor1, Tor2, Tor3} block extents.
+            /// NOTE: As GPUs get bigger, we also need more parallelism. So
+            /// maybe in two years, increase the block size to unlock
+            /// Nspace = 32768.
+            /// For instance, if an MI300X has 304 CUs. Each CU can take 32
+            /// wavefronts (of 64 threads) but we may only be able to fit half.
+            /// So 16 * 304 = 4864 waves must be in flight at a given time.
+            /// Because we tend to have small workgroups (64 or 128 threads) we
+            /// should strive to have bigger CvCd blocks to fill all theses CUs.
+            ///
+            static inline constexpr OrdinalType kPresetBlockExtent[][3] = {
+                // Nspace = 65536
+                // {256, 128, 2},
+                // {128, 256, 2},
+                // Nspace = 32768
+                {128, 256, 1},
+                {256, 128, 1},
+                {128, 128, 2},
+                {64, 128, 4},
+                {128, 64, 4},
+                {32, 128, 8},
+                // Nspace = 16384
+                {128, 128, 1},
+                {64, 128, 2},
+                {32, 128, 4},
+                {128, 64, 2},
+                // Nspace = 8192
+                {64, 128, 1},
+                {32, 128, 2},
+                {128, 64, 1},
+                {64, 64, 2},
+                {128, 32, 2},
+                // Nspace = 4096
+                {32, 128, 1},
+                {64, 64, 1},
+                {32, 64, 2},
+                {128, 32, 1},
+                {64, 32, 2},
+                // Nspace = 2048
+                {32, 64, 1},
+                {64, 32, 1},
+                {32, 32, 2},
+                // Nspace = 1024
+                {32, 32, 1},
+                // Nspace = 1
+                // NOTE: Degraded operation performance is expected for 1x1x1
+                // blocks.
+                {1, 1, 1}};
+
+            static inline constexpr std::size_t kPresetBlockExtentCount = sizeof(kPresetBlockExtent) /
+                                                                          sizeof(kPresetBlockExtent[0]);
+
+            template <std::size_t I = 0, typename Driver, typename... Args>
+            void DispatchCvCdDriver(Driver&     a_cvcd_driver,
+                                    OrdinalType block_tor1_extent,
+                                    OrdinalType block_tor2_extent,
+                                    OrdinalType block_tor3_extent,
+                                    Args&&... args) {
+                if constexpr(I < std::size(kPresetBlockExtent)) {
+                    constexpr auto kExtentBlockTor1 = kPresetBlockExtent[I][0];
+                    constexpr auto kExtentBlockTor2 = kPresetBlockExtent[I][1];
+                    constexpr auto kExtentBlockTor3 = kPresetBlockExtent[I][2];
+                    if(block_tor1_extent == kExtentBlockTor1 && block_tor2_extent == kExtentBlockTor2 && block_tor3_extent == kExtentBlockTor3) {
+                        if constexpr(kExtentBlockTor1 == 1 && kExtentBlockTor2 == 1 && kExtentBlockTor3 == 1) {
+                            // NOTE: the FakeBatchTraitsType is important for the 1x1x1 fallback.
+                            a_cvcd_driver.Set(CvCdDriver<kExtentBlockTor1, kExtentBlockTor2, kExtentBlockTor3, Constant::FakeBatchTraitsType>{std::forward<Args>(args)...});
+                        } else {
+                            a_cvcd_driver.Set(CvCdDriver<kExtentBlockTor1, kExtentBlockTor2, kExtentBlockTor3, Constant::BatchTraitsType>{std::forward<Args>(args)...});
+                        }
+                    } else {
+                        DispatchCvCdDriver<I + 1>(a_cvcd_driver, block_tor1_extent, block_tor2_extent, block_tor3_extent, std::forward<Args>(args)...);
+                    }
+                } else {
+                    // The block size is registered in
+                    // preset_block_extent but we are not able to build
+                    // such block of this size.
+                    KOLIOP_ASSERT(false && "For some reason, the CvCd operator blocking configuration you choose is not part of the factory.");
+                }
+            }
+
+            void CreateCvCdDriver(const Operator&   an_operator,
+                                  CvCdDriverEraser& a_cvcd_driver,
+                                  OrdinalType       block_tor1_extent,
+                                  OrdinalType       block_tor2_extent,
+                                  OrdinalType       block_tor3_extent) {
+
+                const auto& vpar_extent    = an_operator.vpar_extent_;
+                const auto& species_extent = an_operator.species_extent_;
+
+                const auto& hat_As         = an_operator.hat_As_;
+                const auto& hat_Zs         = an_operator.hat_Zs_;
+                const auto& coeff_intdvpar = an_operator.coeff_intdvpar_;
+                const auto& vparg          = an_operator.vparg_;
+
+                const auto& collision_interspecies = an_operator.collision_interspecies_;
+
+                DispatchCvCdDriver(a_cvcd_driver,
+                                   block_tor1_extent, block_tor2_extent, block_tor3_extent,
+                                   vpar_extent, species_extent, collision_interspecies, hat_As, hat_Zs, vparg, coeff_intdvpar);
+            }
 
             static inline void
             PrepareBlockPosition(const OrdinalType                                          local_domain_tor1_extent,
                                  const OrdinalType                                          local_domain_tor2_extent,
                                  const OrdinalType                                          local_domain_tor3_extent,
-                                 std::vector<CvCdDriverScheduler::CvCdDriverConfiguration>& cvcd_drivers_configurations,
-                                 std::size_t                                                preset_block_extent_count,
-                                 const OrdinalType (*preset_block_extent)[3]) {
+                                 std::vector<CvCdDriverScheduler::CvCdDriverConfiguration>& cvcd_drivers_configurations) {
 
                 if(!((local_domain_tor1_extent > 0) && ((local_domain_tor1_extent & (local_domain_tor1_extent - 1)) == 0) &&
                      (local_domain_tor2_extent > 0) && ((local_domain_tor2_extent & (local_domain_tor2_extent - 1)) == 0) &&
@@ -24,8 +147,8 @@ namespace koliop {
                         "each dimension must be a power of 2.");
                 }
 
-                auto       first_block_extent = preset_block_extent;
-                const auto last_block_extent  = first_block_extent + preset_block_extent_count;
+                auto       first_block_extent = kPresetBlockExtent;
+                const auto last_block_extent  = first_block_extent + kPresetBlockExtentCount;
 
                 for(; first_block_extent != last_block_extent; ++first_block_extent) {
                     const auto& current_block_extent = *first_block_extent;
@@ -125,9 +248,7 @@ namespace koliop {
         // CvCdDriverScheduler methods definition
         ////////////////////////////////////////////////////////////////////////
 
-        void CvCdDriverScheduler::Plan(const Operator& an_operator,
-                                       std::size_t     preset_block_extent_count,
-                                       const OrdinalType (*preset_block_extent)[3]) {
+        void CvCdDriverScheduler::Plan(const Operator& an_operator) {
 
             // NOTE: We assume preset_block_extent are sorted from larger to
             // smaller. This will not affect the correctness of the algorithm as
@@ -141,9 +262,7 @@ namespace koliop {
             detail::PrepareBlockPosition(an_operator.tor1_extent_,
                                          an_operator.tor2_extent_,
                                          an_operator.tor3_extent_,
-                                         cvcd_drivers_configurations_,
-                                         preset_block_extent_count,
-                                         preset_block_extent);
+                                         cvcd_drivers_configurations_);
 
             // NOTE:
             // - A larger block take more memory.

@@ -46,7 +46,7 @@ namespace koliop {
             const auto& B_norm         = an_operator.B_norm_;
             const auto& Bstar_s        = an_operator.Bstar_s_;
 
-            const auto team_count = tor1_extent * tor2_extent * tor3_extent * species_extent;
+            const auto team_count = tor2_extent * tor1_extent * tor3_extent * species_extent;
 
             // Due to the inherent Cuda/HIP thread block limit.
             KOLIOP_ASSERT(team_count <= std::numeric_limits<int>::max());
@@ -90,10 +90,10 @@ namespace koliop {
 
                 const OrdinalType team_index = a_team_handle.league_rank();
 
-                const OrdinalType itor1    = (team_index) % tor1_extent;
-                const OrdinalType itor2    = (team_index / (tor1_extent)) % tor2_extent;
-                const OrdinalType itor3    = (team_index / (tor1_extent * tor2_extent)) % tor3_extent;
-                const OrdinalType ispecies = (team_index / (tor1_extent * tor2_extent * tor3_extent)) /* % species_extent */;
+                const OrdinalType itor2    = (team_index) % tor2_extent;
+                const OrdinalType itor1    = (team_index / (tor2_extent)) % tor1_extent;
+                const OrdinalType itor3    = (team_index / (tor2_extent * tor1_extent)) % tor3_extent;
+                const OrdinalType ispecies = (team_index / (tor2_extent * tor1_extent * tor3_extent)) /* % species_extent */;
 
                 ComputeFloatType na;
                 ComputeFloatType vpara;
@@ -123,9 +123,9 @@ namespace koliop {
                         // reduction.
 
                         const ComputeFloatType f5d_s_value = Kokkos::max(1.0E-40,
-                                                                         f5d_s(imu, ivpar, itor1, itor2, itor3, ispecies));
+                                                                         f5d_s(imu, ivpar, itor2, itor1, itor3, ispecies));
 
-                        const ComputeFloatType ftmp = Bstar_s(ivpar, itor2, itor1, ispecies) *
+                        const ComputeFloatType ftmp = Bstar_s(ivpar, itor2, itor1, itor3, ispecies) *
                                                       coeff_intdmu(imu) *
                                                       coeff_intdvpar(ivpar) *
                                                       f5d_s_value;
@@ -135,7 +135,7 @@ namespace koliop {
                         vpara_reducer.join(vpara_reducer.reference(),
                                            vparg(ivpar) * ftmp);
 
-                        f5d_s(imu, ivpar, itor1, itor2, itor3, ispecies) = f5d_s_value;
+                        f5d_s(imu, ivpar, itor2, itor1, itor3, ispecies) = f5d_s_value;
                     });
 
                 a_team_handle.team_reduce(na_reducer);
@@ -151,7 +151,7 @@ namespace koliop {
                 Kokkos::Sum<ComputeFloatType> Ta_reducer{Ta};
                 Ta_reducer.init(Ta_reducer.reference());
 
-                const ComputeFloatType B_norm_r_theta = B_norm(itor2, itor1);
+                const ComputeFloatType B_norm_r_theta = B_norm(itor2, itor1, itor3);
 
                 IntraTeam::Iterate2D(
                     mu_extent, vpar_extent,
@@ -160,10 +160,10 @@ namespace koliop {
                         // Gysela fortran, a temporary buffer is used but
                         // that would hardly fit on a GPU.
                         // TODO(Etienne M): LOAD Hoist the invariant load.
-                        const ComputeFloatType ftmp = Bstar_s(ivpar, itor2, itor1, ispecies) *
+                        const ComputeFloatType ftmp = Bstar_s(ivpar, itor2, itor1, itor3, ispecies) *
                                                       coeff_intdmu(imu) *
                                                       coeff_intdvpar(ivpar) *
-                                                      f5d_s(imu, ivpar, itor1, itor2, itor3, ispecies);
+                                                      f5d_s(imu, ivpar, itor2, itor1, itor3, ispecies);
 
                         Ta_reducer.join(Ta_reducer.reference(),
                                         (((vparg(ivpar) - vpara) * (vparg(ivpar) - vpara)) +
@@ -185,9 +185,9 @@ namespace koliop {
 
                         na = k2Pi * na;
 
-                        n_s(itor1, itor2, itor3, ispecies)     = na;
-                        U_par_s(itor1, itor2, itor3, ispecies) = vpara;
-                        T_s(itor1, itor2, itor3, ispecies)     = Ta;
+                        n_s(itor2, itor1, itor3, ispecies)     = na;
+                        U_par_s(itor2, itor1, itor3, ispecies) = vpara;
+                        T_s(itor2, itor1, itor3, ispecies)     = Ta;
                     });
             };
 

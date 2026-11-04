@@ -16,8 +16,8 @@ namespace koliop {
 #define KOLIOP_COLLISIONS_CHECK_DISTRIBUTION_EXTENTS(f5d_s)                   \
     KOLIOP_ASSERT(static_cast<OrdinalType>(f5d_s.extent(0)) == mu_extent_);   \
     KOLIOP_ASSERT(static_cast<OrdinalType>(f5d_s.extent(1)) == vpar_extent_); \
-    KOLIOP_ASSERT(static_cast<OrdinalType>(f5d_s.extent(2)) == tor1_extent_); \
-    KOLIOP_ASSERT(static_cast<OrdinalType>(f5d_s.extent(3)) == tor2_extent_); \
+    KOLIOP_ASSERT(static_cast<OrdinalType>(f5d_s.extent(2)) == tor2_extent_); \
+    KOLIOP_ASSERT(static_cast<OrdinalType>(f5d_s.extent(3)) == tor1_extent_); \
     KOLIOP_ASSERT(static_cast<OrdinalType>(f5d_s.extent(4)) == tor3_extent_); \
     KOLIOP_ASSERT(static_cast<OrdinalType>(f5d_s.extent(5)) == species_extent_);
 
@@ -42,26 +42,25 @@ namespace koliop {
             /// right will work fine. We take a view (reference) of the input arrays, you may not deallocate them while
             /// the operator is not released. The values given below are expected NOT to change during the lifetime of
             /// the operator.
-            /// @param tor1_extent The rank's theta domain extent in grid point.
-            /// @param tor2_extent The rank's r domain extent in grid point.
+            /// @param tor1_extent The rank's r domain extent in grid point.
+            /// @param tor2_extent The rank's theta domain extent in grid point.
             /// @param tor3_extent The rank's phi domain extent in grid point.
             /// @param collision_interspecies Boolean as type int8_t (0 = false, else true) describing if a species
             /// collision with itself.
-            /// @param hat_As An array of double with extents ([0, species_extent) ).
-            /// @param hat_Zs An array of double with extents ([0, species_extent) ).
-            /// @param mug An array of double with extents ([0, mu_extent) ) representing the coordinate of the Mu grid
+            /// @param hat_As An array of double with extents [0, species_extent).
+            /// @param hat_Zs An array of double with extents [0, species_extent).
+            /// @param mug An array of double with extents [0, mu_extent) representing the coordinate of the Mu grid
             /// points.
-            /// @param vparg An array of double with extents ([0, vpar_extent) ) representing the coordinate of the Vpar
+            /// @param vparg An array of double with extents [0, vpar_extent) representing the coordinate of the Vpar
             /// grid points.
-            /// @param coeff_intdmu An array of double with extents ([0, mu_extent) ) representing the coefficients for
+            /// @param coeff_intdmu An array of double with extents [0, mu_extent) representing the coefficients for
             /// the integral of the coordinates in Mu.
-            /// @param coeff_intdvpar An array of double with extents ([0, vpar_extent) ) representing the coefficients
+            /// @param coeff_intdvpar An array of double with extents [0, vpar_extent) representing the coefficients
             /// for the integral of the coordinates in Vpar (generally using the simpson).
-            /// @param coeff_AD_r An array of double with extents ([0, r) ) representing the AD coefficients.
-            /// @param B_norm An array of double with extents ([0, r), [0, theta) ).
-            /// @param Bstar_s An array of double with extents ([0, vpar_extent), [0, r), [0, theta), [0,
-            /// species_extent) ), note that we do not use torN_extent as these may change depending on library calling
-            /// Koliop.
+            /// @param coeff_AD_r An array of double with extents [0, r) representing the AD coefficients.
+            /// @param B_norm An array of double (tor2, tor1, tor3) layout left.
+            /// @param Bstar_s An array of double (vpar, tor2, tor1, tor3, species), layout left, note that we do not
+            /// use torN_extent as these may change depending on library calling Koliop.
             Operator(uint64_t                                        tor1_extent,
                      uint64_t                                        tor2_extent,
                      uint64_t                                        tor3_extent,
@@ -73,8 +72,8 @@ namespace koliop {
                      const koliop::utility::View::UDL1<const Flo64>& coeff_intdmu,
                      const koliop::utility::View::UDL1<const Flo64>& coeff_intdvpar,
                      const koliop::utility::View::UDL1<const Flo64>& coeff_AD_r,
-                     const koliop::utility::View::UDL2<const Flo64>& B_norm,
-                     const koliop::utility::View::UDL4<const Flo64>& Bstar_s);
+                     const koliop::utility::View::UDL3<const Flo64>& B_norm,
+                     const koliop::utility::View::UDL5<const Flo64>& Bstar_s);
 
             ~Operator();
 
@@ -91,8 +90,7 @@ namespace koliop {
             ///
             /// WARNING: Either call Fence() after this call or chain with other koliop_* operator's operations. You
             /// still may have to fence after the last operation.
-            /// @param f5d_s An array of double with extents ([0, mu_extent), [0, vpar_extent), [0, tor1_extent), [0,
-            /// tor2_extent), [0, tor3_extent), [0, species_extent)).
+            /// @param f5d_s A distribution function in (mu, vpar, tor2, tor1, tor3, species)
             void ComputeMoments(const koliop::utility::View::UDL6<Flo64>& f5d_s);
 
             /// @brief Collisionality
@@ -113,8 +111,7 @@ namespace koliop {
             /// WARNING: Either call Fence() after this call or chain with other koliop_* operator's operations. You
             /// still may have to fence after the last operation.
             /// @param dt The collision dt (it may be larger than the simulation's dt).
-            /// @param f5d_s An array of double with extents ([0, mu_extent), [0, vpar_extent), [0, tor1_extent), [0,
-            /// tor2_extent), [0, tor3_extent), [0, species_extent)).
+            /// @param f5d_s A distribution function in (mu, vpar, tor2, tor1, tor3, species)
             void ComputeMaxwellianEvolution(ComputeFloatType                          dt,
                                             const koliop::utility::View::UDL6<Flo64>& f5d_s);
 
@@ -126,8 +123,7 @@ namespace koliop {
             /// WARNING: Either call Fence() after this call or chain with other
             /// koliop_* operator's operations. You still may have to fence after the last
             /// operation.
-            /// @param f5d_s An array of double with extents ([0, mu_extent), [0, vpar_extent), [0, tor1_extent), [0,
-            /// tor2_extent), [0, tor3_extent), [0, species_extent)).
+            /// @param f5d_s A distribution function in (mu, vpar, tor2, tor1, tor3, species)
             void ComputeQparOnNT(const koliop::utility::View::UDL6<const Flo64>& f5d_s);
 
             /// @brief Make Fa evolve:
@@ -141,8 +137,7 @@ namespace koliop {
             /// WARNING: Either call Fence() after this call or chain with other koliop_* operator's operations. You
             /// still may have to fence after the last operation.
             /// @param dt The collision dt (it may be larger than the simulation's dt).
-            /// @param f5d_s An array of double with extents ([0, mu_extent), [0, vpar_extent), [0, tor1_extent), [0,
-            /// tor2_extent), [0, tor3_extent), [0, species_extent)).
+            /// @param f5d_s A distribution function in (mu, vpar, tor2, tor1, tor3, species)
             void ComputeCpar(ComputeFloatType                          dt,
                              const koliop::utility::View::UDL6<Flo64>& f5d_s) const;
 
@@ -153,8 +148,7 @@ namespace koliop {
             ///
             /// WARNING: Either call Fence() after this call or chain with other koliop_* operator's operations. You
             /// still may have to fence after the last operation.
-            /// @param f5d_s An array of double with extents ([0, mu_extent), [0, vpar_extent), [0, tor1_extent), [0,
-            /// tor2_extent), [0, tor3_extent), [0, species_extent)).
+            /// @param f5d_s A distribution function in (mu, vpar, tor2, tor1, tor3, species)
             /// @param choice [3, 4]
             void ComputeMaxwellianUnshiftedLoc(uint32_t                                  choice,
                                                const koliop::utility::View::UDL6<Flo64>& f5d_s) const;
@@ -164,8 +158,7 @@ namespace koliop {
             /// WARNING: Either call Fence() after this call or chain with other koliop_* operator's operations. You
             /// still may have to fence after the last operation.
             /// @param dt The collision dt (it may be larger than the simulation's dt).
-            /// @param f5d_s An array of double with extents ([0, mu_extent), [0, vpar_extent), [0, tor1_extent), [0,
-            /// tor2_extent), [0, tor3_extent), [0, species_extent)).
+            /// @param f5d_s A distribution function in (mu, vpar, tor2, tor1, tor3, species)
             void Apply(ComputeFloatType                          dt,
                        const koliop::utility::View::UDL6<Flo64>& f5d_s);
 
@@ -177,8 +170,7 @@ namespace koliop {
             ///
             /// WARNING: Either call Fence() after this call or chain with other koliop_* operator's operations. You
             /// still may have to fence after the last operation.
-            /// @param f5d_s An array of double with extents ([0, mu_extent), [0, vpar_extent), [0, tor1_extent), [0,
-            /// tor2_extent), [0, tor3_extent), [0, species_extent)).
+            /// @param f5d_s A distribution function in (mu, vpar, tor2, tor1, tor3, species)
             void ComputeDensityCorrection(const koliop::utility::View::UDL6<Flo64>& f5d_s) const;
 
             /// @brief Correction to keep the local fluid moments constant. init corresponds to values before
@@ -188,8 +180,7 @@ namespace koliop {
             /// WARNING: Either call Fence() after this call or chain with other koliop_* operator's operations. You
             /// still may have to fence after the last operation.
             /// @param dt The collision dt (it may be larger than the simulation's dt).
-            /// @param f5d_s An array of double with extents ([0, mu_extent), [0, vpar_extent), [0, tor1_extent), [0,
-            /// tor2_extent), [0, tor3_extent), [0, species_extent)).
+            /// @param f5d_s A distribution function in (mu, vpar, tor2, tor1, tor3, species)
             void ComputeUparTCorrection(ComputeFloatType                          dt,
                                         const koliop::utility::View::UDL6<Flo64>& f5d_s);
 
@@ -224,8 +215,7 @@ namespace koliop {
             /// WARNING: Either call Fence() after this call or chain with other koliop_* operator's operations. You
             /// still may have to fence after the last operation.
             /// @param dt The collision dt (it may be larger than the simulation's dt).
-            /// @param f5d_s An array of double with extents ([0, mu_extent), [0, vpar_extent), [0, tor1_extent), [0,
-            /// tor2_extent), [0, tor3_extent), [0, species_extent)).
+            /// @param f5d_s A distribution function in (mu, vpar, tor2, tor1, tor3, species)
             void Collisions(ComputeFloatType                          dt,
                             const koliop::utility::View::UDL6<Flo64>& f5d_s);
 
@@ -246,8 +236,8 @@ namespace koliop {
             koliop::utility::View::UDL1<const Flo64> coeff_intdmu_;
             koliop::utility::View::UDL1<const Flo64> coeff_intdvpar_;
             koliop::utility::View::UDL1<const Flo64> coeff_AD_r_;
-            koliop::utility::View::UDL2<const Flo64> B_norm_;
-            koliop::utility::View::UDL4<const Flo64> Bstar_s_;
+            koliop::utility::View::UDL3<const Flo64> B_norm_;
+            koliop::utility::View::UDL5<const Flo64> Bstar_s_;
 
             // Constant, internally computed values
             koliop::utility::View::MDL3<ComputeFloatType> nustar_coeff_;

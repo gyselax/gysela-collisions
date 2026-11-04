@@ -52,7 +52,7 @@ namespace koliop {
 
             const uint64_t scratch_memory_bytes_per_team = (mu_extent) * sizeof(ComputeFloatType);
 
-            const auto team_count = tor1_extent * tor2_extent * tor3_extent * species_extent;
+            const auto team_count = tor2_extent * tor1_extent * tor3_extent * species_extent;
 
             // Due to the inherent Cuda/HIP thread block limit.
             KOLIOP_ASSERT(team_count <= std::numeric_limits<int>::max());
@@ -77,10 +77,10 @@ namespace koliop {
 
                         const OrdinalType team_index = a_team_handle.league_rank();
 
-                        const OrdinalType itor1     = (team_index) % tor1_extent;
-                        const OrdinalType itor2     = (team_index / (tor1_extent)) % tor2_extent;
-                        const OrdinalType itor3     = (team_index / (tor1_extent * tor2_extent)) % tor3_extent;
-                        const OrdinalType ispeciesA = (team_index / (tor1_extent * tor2_extent * tor3_extent)) /* % species_extent */;
+                        const OrdinalType itor2     = (team_index) % tor2_extent;
+                        const OrdinalType itor1     = (team_index / (tor2_extent)) % tor1_extent;
+                        const OrdinalType itor3     = (team_index / (tor2_extent * tor1_extent)) % tor3_extent;
+                        const OrdinalType ispeciesA = (team_index / (tor2_extent * tor1_extent * tor3_extent)) /* % species_extent */;
 
                         // TODO(Etienne M): Should we use a_team_handle.team_barrier() ?
                         ScratchMemory parameter0{a_team_handle.team_scratch(0),
@@ -88,9 +88,9 @@ namespace koliop {
 
                         static constexpr auto k2Pi = koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi;
 
-                        const ComputeFloatType Bij    = B_norm(itor2, itor1);
-                        const ComputeFloatType na     = n_s(itor1, itor2, itor3, ispeciesA);
-                        const ComputeFloatType Ta     = T_s(itor1, itor2, itor3, ispeciesA);
+                        const ComputeFloatType Bij    = B_norm(itor2, itor1, itor3);
+                        const ComputeFloatType na     = n_s(itor2, itor1, itor3, ispeciesA);
+                        const ComputeFloatType Ta     = T_s(itor2, itor1, itor3, ispeciesA);
                         const ComputeFloatType BijoTa = Bij / Ta;
                         const ComputeFloatType f2oTa  = 0.5 / Ta;
                         const ComputeFloatType coeff0 = na / (k2Pi * Ta * Kokkos::sqrt(k2Pi * Ta));
@@ -110,14 +110,14 @@ namespace koliop {
                             a_team_handle, [&](auto imu, auto ivpar) {
                                 // const ComputeFloatType v2oTa = mug(imu) * BijoTa + vparg(ivpar) * vparg(ivpar) * f2oTa;
 
-                                // f5d_s(imu, ivpar, itor1, itor2, itor3, ispeciesA) = Kokkos::max(0.0,
-                                //                                                                 coeff0 * Kokkos::exp(-v2oTa) * f5d_s(imu, ivpar, itor1, itor2, itor3, ispeciesA));
+                                // f5d_s(imu, ivpar, itor2, itor1, itor3, ispeciesA) = Kokkos::max(0.0,
+                                //                                                                 coeff0 * Kokkos::exp(-v2oTa) * f5d_s(imu, ivpar, itor2, itor1, itor3, ispeciesA));
 
                                 const ComputeFloatType variable0 = parameter0(imu) *
                                                                    Kokkos::exp(-(vparg(ivpar) * vparg(ivpar) * f2oTa));
 
-                                f5d_s(imu, ivpar, itor1, itor2, itor3, ispeciesA) = Kokkos::max(0.0,
-                                                                                                variable0 * f5d_s(imu, ivpar, itor1, itor2, itor3, ispeciesA));
+                                f5d_s(imu, ivpar, itor2, itor1, itor3, ispeciesA) = Kokkos::max(0.0,
+                                                                                                variable0 * f5d_s(imu, ivpar, itor2, itor1, itor3, ispeciesA));
                             });
                     };
 
@@ -129,10 +129,10 @@ namespace koliop {
                     const auto kernel_choice_4 = KOKKOS_LAMBDA(const typename PolicyType::member_type& a_team_handle) {
                         const OrdinalType team_index = a_team_handle.league_rank();
 
-                        const OrdinalType itor1     = (team_index) % tor1_extent;
-                        const OrdinalType itor2     = (team_index / (tor1_extent)) % tor2_extent;
-                        const OrdinalType itor3     = (team_index / (tor1_extent * tor2_extent)) % tor3_extent;
-                        const OrdinalType ispeciesA = (team_index / (tor1_extent * tor2_extent * tor3_extent)) /* % species_extent */;
+                        const OrdinalType itor2     = (team_index) % tor2_extent;
+                        const OrdinalType itor1     = (team_index / (tor2_extent)) % tor1_extent;
+                        const OrdinalType itor3     = (team_index / (tor2_extent * tor1_extent)) % tor3_extent;
+                        const OrdinalType ispeciesA = (team_index / (tor2_extent * tor1_extent * tor3_extent)) /* % species_extent */;
 
                         // TODO(Etienne M): Should we use a_team_handle.team_barrier() ?
                         ScratchMemory parameter0{a_team_handle.team_scratch(0),
@@ -140,9 +140,9 @@ namespace koliop {
 
                         static constexpr auto k2Pi = koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi;
 
-                        const ComputeFloatType Bij    = B_norm(itor2, itor1);
-                        const ComputeFloatType na     = n_s(itor1, itor2, itor3, ispeciesA);
-                        const ComputeFloatType Ta     = T_s(itor1, itor2, itor3, ispeciesA);
+                        const ComputeFloatType Bij    = B_norm(itor2, itor1, itor3);
+                        const ComputeFloatType na     = n_s(itor2, itor1, itor3, ispeciesA);
+                        const ComputeFloatType Ta     = T_s(itor2, itor1, itor3, ispeciesA);
                         const ComputeFloatType BijoTa = Bij / Ta;
                         const ComputeFloatType f2oTa  = 0.5 / Ta;
                         const ComputeFloatType coeff0 = (k2Pi * Ta * Kokkos::sqrt(k2Pi * Ta)) / na;
@@ -162,16 +162,16 @@ namespace koliop {
                             a_team_handle, [&](auto imu, auto ivpar) {
                                 // const ComputeFloatType v2oTa = mug(imu) * BijoTa + vparg(ivpar) * vparg(ivpar) * f2oTa;
 
-                                // f5d_s(imu, ivpar, itor1, itor2, itor3, ispeciesA) = Kokkos::max(0.001,
+                                // f5d_s(imu, ivpar, itor2, itor1, itor3, ispeciesA) = Kokkos::max(0.001,
                                 //                                                                 Kokkos::min(1000.0,
-                                //                                                                             coeff0 * Kokkos::exp(v2oTa) * f5d_s(imu, ivpar, itor1, itor2, itor3, ispeciesA)));
+                                //                                                                             coeff0 * Kokkos::exp(v2oTa) * f5d_s(imu, ivpar, itor2, itor1, itor3, ispeciesA)));
 
                                 const ComputeFloatType variable0 = parameter0(imu) *
                                                                    Kokkos::exp(vparg(ivpar) * vparg(ivpar) * f2oTa);
 
-                                f5d_s(imu, ivpar, itor1, itor2, itor3, ispeciesA) = Kokkos::max(0.001,
+                                f5d_s(imu, ivpar, itor2, itor1, itor3, ispeciesA) = Kokkos::max(0.001,
                                                                                                 Kokkos::min(1000.0,
-                                                                                                            variable0 * f5d_s(imu, ivpar, itor1, itor2, itor3, ispeciesA)));
+                                                                                                            variable0 * f5d_s(imu, ivpar, itor2, itor1, itor3, ispeciesA)));
                             });
                     };
 

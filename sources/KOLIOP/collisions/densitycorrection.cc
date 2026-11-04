@@ -43,7 +43,7 @@ namespace koliop {
             const auto& Bstar_s        = an_operator.Bstar_s_;
             const auto& n_s            = an_operator.n_s_;
 
-            const auto team_count = tor1_extent * tor2_extent * tor3_extent * species_extent;
+            const auto team_count = tor2_extent * tor1_extent * tor3_extent * species_extent;
 
             // Due to the inherent Cuda/HIP thread block limit.
             KOLIOP_ASSERT(team_count <= std::numeric_limits<int>::max());
@@ -63,10 +63,10 @@ namespace koliop {
 
                 const OrdinalType team_index = a_team_handle.league_rank();
 
-                const OrdinalType itor1     = (team_index) % tor1_extent;
-                const OrdinalType itor2     = (team_index / (tor1_extent)) % tor2_extent;
-                const OrdinalType itor3     = (team_index / (tor1_extent * tor2_extent)) % tor3_extent;
-                const OrdinalType ispeciesA = (team_index / (tor1_extent * tor2_extent * tor3_extent)) /* % species_extent */;
+                const OrdinalType itor2     = (team_index) % tor2_extent;
+                const OrdinalType itor1     = (team_index / (tor2_extent)) % tor1_extent;
+                const OrdinalType itor3     = (team_index / (tor2_extent * tor1_extent)) % tor3_extent;
+                const OrdinalType ispeciesA = (team_index / (tor2_extent * tor1_extent * tor3_extent)) /* % species_extent */;
 
                 ComputeFloatType              na;
                 Kokkos::Sum<ComputeFloatType> na_reducer{na};
@@ -83,10 +83,10 @@ namespace koliop {
                         // NOTE: This is not vectorized on CPU due to the
                         // reduction.
 
-                        const ComputeFloatType f5d_s_value = Kokkos::max(f5d_s(imu, ivpar, itor1, itor2, itor3, ispeciesA),
+                        const ComputeFloatType f5d_s_value = Kokkos::max(f5d_s(imu, ivpar, itor2, itor1, itor3, ispeciesA),
                                                                          0.0);
 
-                        const ComputeFloatType ftmp = Bstar_s(ivpar, itor2, itor1, ispeciesA) *
+                        const ComputeFloatType ftmp = Bstar_s(ivpar, itor2, itor1, itor3, ispeciesA) *
                                                       coeff_intdmu(imu) *
                                                       coeff_intdvpar(ivpar) *
                                                       f5d_s_value;
@@ -94,7 +94,7 @@ namespace koliop {
                         na_reducer.join(na_reducer.reference(),
                                         ftmp);
 
-                        f5d_s(imu, ivpar, itor1, itor2, itor3, ispeciesA) = f5d_s_value;
+                        f5d_s(imu, ivpar, itor2, itor1, itor3, ispeciesA) = f5d_s_value;
                     });
 
                 a_team_handle.team_reduce(na_reducer);
@@ -109,7 +109,7 @@ namespace koliop {
                 IntraTeam::Iterate2D(
                     mu_extent, vpar_extent,
                     a_team_handle, [&](auto imu, auto ivpar) {
-                        f5d_s(imu, ivpar, itor1, itor2, itor3, ispeciesA) *= n_s(itor1, itor2, itor3, ispeciesA) * na_inverse;
+                        f5d_s(imu, ivpar, itor2, itor1, itor3, ispeciesA) *= n_s(itor2, itor1, itor3, ispeciesA) * na_inverse;
                     });
             };
 

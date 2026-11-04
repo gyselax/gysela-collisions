@@ -48,7 +48,7 @@ namespace koliop {
             const auto a_host_visible_hat_Zs     = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{}, Kokkos::WithoutInitializing), hat_Zs);
             const auto a_host_visible_coeff_AD_r = Kokkos::create_mirror_view_and_copy(Kokkos::view_alloc(Kokkos::DefaultHostExecutionSpace::memory_space{}, Kokkos::WithoutInitializing), coeff_AD_r);
 
-            const auto& tor2_extent    = an_operator.tor2_extent_;
+            const auto& tor1_extent    = an_operator.tor1_extent_;
             const auto& species_extent = an_operator.species_extent_;
 
             // TODO(Etienne M): LOOP Obvious loop inter exchange optimization ?
@@ -63,19 +63,19 @@ namespace koliop {
                                                        (static_cast<ComputeFloatType>(1.0) / hat_Aa) *
                                                        (static_cast<ComputeFloatType>(1.0) / hat_Aa + static_cast<ComputeFloatType>(1.0) / hat_Ab);
 
-                    for(OrdinalType ir = 0; ir < tor2_extent; ++ir) {
+                    for(OrdinalType itor1 = 0; itor1 < tor1_extent; ++itor1) {
                         // AD(r) = sqrt(2)*eps(r)^(3/2)/(q(r) R0_)*nustaR0_(r) which
                         // is independent on the species considered
                         // (eps(r) = r/R0_).
                         // AD comprises a mask in r direction to avoid to *
                         // compute collision in the scrape-off layer.
-                        const ComputeFloatType AD = a_host_visible_coeff_AD_r(ir);
+                        const ComputeFloatType AD = a_host_visible_coeff_AD_r(itor1);
 
                         // Computation of nu_ab =
                         //  (AD * hat_Za^2 * hat_Zb^2 * Nb) /
                         //  (vTa^2 + vTb^2)^(3/2) *
                         //  (1/hat_Aa) * (1/hat_Aa + 1/hat_Ab)
-                        a_host_visible_nustar_coeff(ispeciesA, ispeciesB, ir) = AD * AD_factor;
+                        a_host_visible_nustar_coeff(ispeciesA, ispeciesB, itor1) = AD * AD_factor;
                     }
                 }
             }
@@ -102,8 +102,8 @@ namespace koliop {
                            const koliop::utility::View::UDL1<const Flo64>& coeff_intdmu,
                            const koliop::utility::View::UDL1<const Flo64>& coeff_intdvpar,
                            const koliop::utility::View::UDL1<const Flo64>& coeff_AD_r,
-                           const koliop::utility::View::UDL2<const Flo64>& B_norm,
-                           const koliop::utility::View::UDL4<const Flo64>& Bstar_s)
+                           const koliop::utility::View::UDL3<const Flo64>& B_norm,
+                           const koliop::utility::View::UDL5<const Flo64>& Bstar_s)
             // Constant, externally computed values
             : mu_extent_{static_cast<OrdinalType>(mug.extent(0))}
             , vpar_extent_{static_cast<OrdinalType>(vparg.extent(0))}
@@ -125,22 +125,22 @@ namespace koliop {
             // Constant, internally computed values
 
             , nustar_coeff_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "nustar_coeff_"),
-                            static_cast<std::size_t>(species_extent_), static_cast<std::size_t>(species_extent_), static_cast<std::size_t>(tor2_extent_)}
+                            static_cast<std::size_t>(species_extent_), static_cast<std::size_t>(species_extent_), static_cast<std::size_t>(tor1_extent_)}
 
             // Variable, internally computed values
 
             , n_s_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "n_s_"),
-                   static_cast<std::size_t>(tor1_extent_), static_cast<std::size_t>(tor2_extent_), static_cast<std::size_t>(tor3_extent_), static_cast<std::size_t>(species_extent_)}
+                   static_cast<std::size_t>(tor2_extent_), static_cast<std::size_t>(tor1_extent_), static_cast<std::size_t>(tor3_extent_), static_cast<std::size_t>(species_extent_)}
             , U_par_s_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "U_par_s_0_"),
-                       static_cast<std::size_t>(tor1_extent_), static_cast<std::size_t>(tor2_extent_), static_cast<std::size_t>(tor3_extent_), static_cast<std::size_t>(species_extent_)}
+                       static_cast<std::size_t>(tor2_extent_), static_cast<std::size_t>(tor1_extent_), static_cast<std::size_t>(tor3_extent_), static_cast<std::size_t>(species_extent_)}
             , U_par_s_input_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "U_par_s_1_"),
-                             static_cast<std::size_t>(tor1_extent_), static_cast<std::size_t>(tor2_extent_), static_cast<std::size_t>(tor3_extent_), static_cast<std::size_t>(species_extent_)}
+                             static_cast<std::size_t>(tor2_extent_), static_cast<std::size_t>(tor1_extent_), static_cast<std::size_t>(tor3_extent_), static_cast<std::size_t>(species_extent_)}
             , T_s_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "T_s_"),
-                   static_cast<std::size_t>(tor1_extent_), static_cast<std::size_t>(tor2_extent_), static_cast<std::size_t>(tor3_extent_), static_cast<std::size_t>(species_extent_)}
+                   static_cast<std::size_t>(tor2_extent_), static_cast<std::size_t>(tor1_extent_), static_cast<std::size_t>(tor3_extent_), static_cast<std::size_t>(species_extent_)}
             , nu_ab_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "nu_ab_"),
-                     static_cast<std::size_t>(tor1_extent_), static_cast<std::size_t>(tor2_extent_), static_cast<std::size_t>(tor3_extent_), static_cast<std::size_t>(species_extent_), static_cast<std::size_t>(species_extent_)}
+                     static_cast<std::size_t>(tor2_extent_), static_cast<std::size_t>(tor1_extent_), static_cast<std::size_t>(tor3_extent_), static_cast<std::size_t>(species_extent_), static_cast<std::size_t>(species_extent_)}
             , q_par_on_nT_s_{Kokkos::view_alloc(Kokkos::WithoutInitializing, "q_par_on_nT_s_"),
-                             static_cast<std::size_t>(tor1_extent_), static_cast<std::size_t>(tor2_extent_), static_cast<std::size_t>(tor3_extent_), static_cast<std::size_t>(species_extent_)}
+                             static_cast<std::size_t>(tor2_extent_), static_cast<std::size_t>(tor1_extent_), static_cast<std::size_t>(tor3_extent_), static_cast<std::size_t>(species_extent_)}
 
             // Miscellaneous tooling
             , execution_space_pool_{}
@@ -153,13 +153,15 @@ namespace koliop {
             KOLIOP_ASSERT(static_cast<OrdinalType>(vparg_.extent(0)) == vpar_extent_);
             KOLIOP_ASSERT(static_cast<OrdinalType>(coeff_intdmu_.extent(0)) == mu_extent_);
             KOLIOP_ASSERT(static_cast<OrdinalType>(coeff_intdvpar_.extent(0)) == vpar_extent_);
-            KOLIOP_ASSERT(static_cast<OrdinalType>(coeff_AD_r_.extent(0)) == tor2_extent_);
+            KOLIOP_ASSERT(static_cast<OrdinalType>(coeff_AD_r_.extent(0)) == tor1_extent_);
             KOLIOP_ASSERT(static_cast<OrdinalType>(B_norm_.extent(0)) == tor2_extent_);
             KOLIOP_ASSERT(static_cast<OrdinalType>(B_norm_.extent(1)) == tor1_extent_);
+            KOLIOP_ASSERT(static_cast<OrdinalType>(B_norm_.extent(2)) == tor3_extent_);
             KOLIOP_ASSERT(static_cast<OrdinalType>(Bstar_s_.extent(0)) == vpar_extent_);
             KOLIOP_ASSERT(static_cast<OrdinalType>(Bstar_s_.extent(1)) == tor2_extent_);
             KOLIOP_ASSERT(static_cast<OrdinalType>(Bstar_s_.extent(2)) == tor1_extent_);
-            KOLIOP_ASSERT(static_cast<OrdinalType>(Bstar_s_.extent(3)) == species_extent_);
+            KOLIOP_ASSERT(static_cast<OrdinalType>(Bstar_s_.extent(3)) == tor3_extent_);
+            KOLIOP_ASSERT(static_cast<OrdinalType>(Bstar_s_.extent(4)) == species_extent_);
 
             if(std::getenv("KOLIOP_DEBUG_ALL") != nullptr ||
                std::getenv("KOLIOP_DEBUG_koliop_Create") != nullptr) {
@@ -229,9 +231,7 @@ namespace koliop {
                                     Constant::kDisjointExecutionSpaceCount,
                                     execution_space_pool_);
 
-            cvcd_drivers_scheduler_.Plan(*this,
-                                         Constant::kPresetBlockExtentCount,
-                                         Constant::kPresetBlockExtent);
+            cvcd_drivers_scheduler_.Plan(*this);
 
 #if defined(KOLIOP_CONSTANT_MEMORY_USAGE)
             // The memory release is handled thanks to the shared ptr and

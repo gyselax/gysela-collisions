@@ -469,17 +469,14 @@ namespace koliop {
 
                 const auto& collision_interspecies = najl_provider.collision_interspecies_;
 
-                const auto kernel = KOKKOS_LAMBDA(OrdinalType itor1, OrdinalType ivpar, OrdinalType itor2, OrdinalType itor3) {
-
-                    // NOTE: kBlockExtentXXX are constant, the compiler can replace
-                    // the modulo with faster instructions.
+                const auto kernel = KOKKOS_LAMBDA(OrdinalType itor2, OrdinalType ivpar, OrdinalType itor1, OrdinalType itor3) {
                     const OrdinalType block_local_index_itor1 = itor1 - block_first_tor1;
                     const OrdinalType block_local_index_itor2 = itor2 - block_first_tor2;
                     const OrdinalType block_local_index_itor3 = itor3 - block_first_tor3;
 
-                    const OffsetType flattened_index = Najl::CvCdDriverType::kBlockExtentTor1 * Najl::CvCdDriverType::kBlockExtentTor2 * block_local_index_itor3 +
-                                                       Najl::CvCdDriverType::kBlockExtentTor1 * block_local_index_itor2 +
-                                                       block_local_index_itor1;
+                    const OffsetType flattened_index = Najl::CvCdDriverType::kBlockExtentTor2 * Najl::CvCdDriverType::kBlockExtentTor1 * block_local_index_itor3 +
+                                                       Najl::CvCdDriverType::kBlockExtentTor2 * block_local_index_itor1 +
+                                                       block_local_index_itor2;
 
                     const OrdinalType batch_element_index = (flattened_index) % Najl::CvCdDriverType::BatchTraitsType::kBatchSize;
                     const OrdinalType batch_index         = (flattened_index / (Najl::CvCdDriverType::BatchTraitsType::kBatchSize)) /* % Najl::CvCdDriverType::kBatchCount */;
@@ -495,8 +492,8 @@ namespace koliop {
                     auto* KOLIOP_RESTRICT local_N1 = najl + static_najl_slice(batch_element_index, 1, ivpar, batch_index);
                     auto* KOLIOP_RESTRICT local_N2 = najl + static_najl_slice(batch_element_index, 2, ivpar, batch_index);
 
-                    const auto local_n_s = Kokkos::subview(n_s, itor1, itor2, itor3, Kokkos::ALL());
-                    const auto local_T_s = Kokkos::subview(T_s, itor1, itor2, itor3, Kokkos::ALL());
+                    const auto local_n_s = Kokkos::subview(n_s, itor2, itor1, itor3, Kokkos::ALL());
+                    const auto local_T_s = Kokkos::subview(T_s, itor2, itor1, itor3, Kokkos::ALL());
 
                     for(OrdinalType l = 0; l < Constant::kMaximumLaguerrePolynomialDegree; ++l) {
                         for(OrdinalType j = 0; j < Constant::kMaximumLaguerrePolynomialDegree; ++j) {
@@ -523,7 +520,7 @@ namespace koliop {
                                           collision_interspecies,
                                           hat_As, hat_Zs,
                                           local_n_s, local_T_s,
-                                          nu_ab(itor1, itor2, itor3, species_index, species_index),
+                                          nu_ab(itor2, itor1, itor3, species_index, species_index),
                                           vpar2_on_Ta,
                                           L_mat);
 
@@ -595,13 +592,13 @@ namespace koliop {
                     Kokkos::Rank<4,
                                  Kokkos::Iterate::Left,
                                  Kokkos::Iterate::Left>>{an_execution_space,
-                                                         {block_first_tor1,
+                                                         {block_first_tor2,
                                                           0,
-                                                          block_first_tor2,
+                                                          block_first_tor1,
                                                           block_first_tor3},
-                                                         {block_first_tor1 + Najl::CvCdDriverType::kBlockExtentTor1,
+                                                         {block_first_tor2 + Najl::CvCdDriverType::kBlockExtentTor2,
                                                           vpar_extent,
-                                                          block_first_tor2 + Najl::CvCdDriverType::kBlockExtentTor2,
+                                                          block_first_tor1 + Najl::CvCdDriverType::kBlockExtentTor1,
                                                           block_first_tor3 + Najl::CvCdDriverType::kBlockExtentTor3},
                                                          {256, 1, 1, 1}};
                 Kokkos::parallel_for("DoComputeNajl",
@@ -610,16 +607,16 @@ namespace koliop {
                 const auto wrapped_kernel = KOKKOS_LAMBDA(OrdinalType flattened_index) {
                     // NOTE: The tor1,2,3 dimension are flattened modulo BatchTraitsType::kBatchSize an as such is
                     // contiguous in ~~block_first_tor1, then in vpar.
-                    kernel(static_cast<OrdinalType>(block_first_tor1 + (flattened_index) % Najl::CvCdDriverType::kBlockExtentTor1),
-                           static_cast<OrdinalType>(0 /*vpar offst*/ + (flattened_index / (Najl::CvCdDriverType::kBlockExtentTor1)) % vpar_extent),
-                           static_cast<OrdinalType>(block_first_tor2 + (flattened_index / (Najl::CvCdDriverType::kBlockExtentTor1 * vpar_extent)) % Najl::CvCdDriverType::kBlockExtentTor2),
-                           static_cast<OrdinalType>(block_first_tor3 + (flattened_index / (Najl::CvCdDriverType::kBlockExtentTor1 * vpar_extent * Najl::CvCdDriverType::kBlockExtentTor2)) /*% Najl::CvCdDriverType::kBlockExtentTor3*/));
+                    kernel(static_cast<OrdinalType>(block_first_tor2 + (flattened_index) % Najl::CvCdDriverType::kBlockExtentTor2),
+                           static_cast<OrdinalType>(0 /*vpar offst*/ + (flattened_index / (Najl::CvCdDriverType::kBlockExtentTor2)) % vpar_extent),
+                           static_cast<OrdinalType>(block_first_tor1 + (flattened_index / (Najl::CvCdDriverType::kBlockExtentTor2 * vpar_extent)) % Najl::CvCdDriverType::kBlockExtentTor1),
+                           static_cast<OrdinalType>(block_first_tor3 + (flattened_index / (Najl::CvCdDriverType::kBlockExtentTor2 * vpar_extent * Najl::CvCdDriverType::kBlockExtentTor1)) /*% Najl::CvCdDriverType::kBlockExtentTor3*/));
                 };
                 const auto a_policy = Kokkos::RangePolicy<ExecutionSpace, Kokkos::IndexType<OrdinalType>>{
                     an_execution_space, 0,
-                    static_cast<OrdinalType>(Najl::CvCdDriverType::kBlockExtentTor1 *
+                    static_cast<OrdinalType>(Najl::CvCdDriverType::kBlockExtentTor2 *
                                              vpar_extent *
-                                             Najl::CvCdDriverType::kBlockExtentTor2 *
+                                             Najl::CvCdDriverType::kBlockExtentTor1 *
                                              Najl::CvCdDriverType::kBlockExtentTor3)};
                 Kokkos::parallel_for(
                     "DoComputeNajl",

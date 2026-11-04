@@ -58,14 +58,6 @@ void Initialize(size_t a_host_thread_count,
         std::cout << "  koliop::collisions::Constant::kDisjointExecutionSpaceCount: " << koliop::collisions::Constant::kDisjointExecutionSpaceCount << "\n";
         std::cout << "  koliop::collisions::Constant::kDiscardedStreamCount: " << koliop::collisions::Constant::kDiscardedStreamCount << "\n";
         std::cout << "  koliop::collisions::Constant::kDefaultExecutionSpacePoolIndex: " << koliop::collisions::Constant::kDefaultExecutionSpacePoolIndex << "\n";
-        std::cout << "  koliop::collisions::Constant::kPresetBlockExtent: ";
-        for(std::size_t i = 0; i < koliop::collisions::Constant::kPresetBlockExtentCount; ++i) {
-            std::cout << "[" << koliop::collisions::Constant::kPresetBlockExtent[i][0]
-                      << "," << koliop::collisions::Constant::kPresetBlockExtent[i][1]
-                      << "," << koliop::collisions::Constant::kPresetBlockExtent[i][2]
-                      << "] ";
-        }
-        std::cout << "\n";
     }
     auto the_configuration = Kokkos::InitializationSettings()
                                  .set_device_id(static_cast<int>(a_device_index))

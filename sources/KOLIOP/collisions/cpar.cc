@@ -52,7 +52,7 @@ namespace koliop {
 
             const ComputeFloatType half_dt = dt / 2.0;
 
-            const auto team_count = tor1_extent * tor2_extent * tor3_extent * species_extent;
+            const auto team_count = tor2_extent * tor1_extent * tor3_extent * species_extent;
 
             // Due to the inherent Cuda/HIP thread block limit.
             KOLIOP_ASSERT(team_count <= std::numeric_limits<int>::max());
@@ -72,21 +72,21 @@ namespace koliop {
 
                 const OrdinalType team_index = a_team_handle.league_rank();
 
-                const OrdinalType itor1     = (team_index) % tor1_extent;
-                const OrdinalType itor2     = (team_index / (tor1_extent)) % tor2_extent;
-                const OrdinalType itor3     = (team_index / (tor1_extent * tor2_extent)) % tor3_extent;
-                const OrdinalType ispeciesA = (team_index / (tor1_extent * tor2_extent * tor3_extent)) /* % species_extent */;
+                const OrdinalType itor2     = (team_index) % tor2_extent;
+                const OrdinalType itor1     = (team_index / (tor2_extent)) % tor1_extent;
+                const OrdinalType itor3     = (team_index / (tor2_extent * tor1_extent)) % tor3_extent;
+                const OrdinalType ispeciesA = (team_index / (tor2_extent * tor1_extent * tor3_extent)) /* % species_extent */;
 
                 const ComputeFloatType hat_Aa     = hat_As(ispeciesA);
                 const ComputeFloatType hat_Za     = hat_Zs(ispeciesA);
                 const ComputeFloatType inv_hat_Aa = 1.0 / hat_Aa;
 
-                const ComputeFloatType Bij = B_norm(itor2, itor1);
+                const ComputeFloatType Bij = B_norm(itor2, itor1, itor3);
 
-                const ComputeFloatType na          = n_s(itor1, itor2, itor3, ispeciesA);
-                const ComputeFloatType Vpara       = U_par_s(itor1, itor2, itor3, ispeciesA);
-                const ComputeFloatType Ta          = T_s(itor1, itor2, itor3, ispeciesA);
-                const ComputeFloatType q_par_on_nT = q_par_on_nT_s(itor1, itor2, itor3, ispeciesA);
+                const ComputeFloatType na          = n_s(itor2, itor1, itor3, ispeciesA);
+                const ComputeFloatType Vpara       = U_par_s(itor2, itor1, itor3, ispeciesA);
+                const ComputeFloatType Ta          = T_s(itor2, itor1, itor3, ispeciesA);
+                const ComputeFloatType q_par_on_nT = q_par_on_nT_s(itor2, itor1, itor3, ispeciesA);
 
                 static constexpr auto k2Pi = koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi;
 
@@ -101,10 +101,10 @@ namespace koliop {
                     const ComputeFloatType hat_Ab         = hat_As(ispeciesB);
                     const ComputeFloatType inv_hat_Ab     = 1.0 / hat_Ab;
                     const ComputeFloatType hat_Zb         = hat_Zs(ispeciesB);
-                    const ComputeFloatType nb             = n_s(itor1, itor2, itor3, ispeciesB);
-                    const ComputeFloatType Vparb          = U_par_s(itor1, itor2, itor3, ispeciesB);
-                    const ComputeFloatType Tb             = T_s(itor1, itor2, itor3, ispeciesB);
-                    const ComputeFloatType q_parb_on_nbTb = q_par_on_nT_s(itor1, itor2, itor3, ispeciesB);
+                    const ComputeFloatType nb             = n_s(itor2, itor1, itor3, ispeciesB);
+                    const ComputeFloatType Vparb          = U_par_s(itor2, itor1, itor3, ispeciesB);
+                    const ComputeFloatType Tb             = T_s(itor2, itor1, itor3, ispeciesB);
+                    const ComputeFloatType q_parb_on_nbTb = q_par_on_nT_s(itor2, itor1, itor3, ispeciesB);
 
                     const ComputeFloatType Rat    = Kokkos::sqrt(hat_Aa / hat_Ab);
                     const ComputeFloatType vTb    = Kokkos::sqrt(Tb / hat_Ab);
@@ -141,7 +141,7 @@ namespace koliop {
                             // //  nu_sab(xb) = (AD * hat_Za^2 * hat_Zb^2 * Nb) * (1/hat_Aa) * &
                             // //               (1/hat_Aa + 1/hat_Ab)*Theta(xb) / vTb^3
                             // const ComputeFloatType nu_sab = (AD * hat_Za * hat_Za * hat_Zb * hat_Zb * nb) * inv_hat_Aa * (inv_hat_Aa + inv_hat_Ab) * Theta_func_tmp / (vTb * vTb * vTb);
-                            // f5d_s(imu, ivpar, itor1, itor2, itor3, ispeciesA) += half_dt * FM0a * nu_sab * coeff5 * (Rat * Vparb - Vpara + q_par_on_nT * (1.0 - 2.0 * xa * xa * 0.2) - coeff4);
+                            // f5d_s(imu, ivpar, itor2, itor1, itor3, ispeciesA) += half_dt * FM0a * nu_sab * coeff5 * (Rat * Vparb - Vpara + q_par_on_nT * (1.0 - 2.0 * xa * xa * 0.2) - coeff4);
 
                             // NOTE: this erf() is a pain to vectorize on CPU. We spend way too much time inside iot if we
                             // do not have it suported by the vectorized libm. Take a look at
@@ -170,7 +170,7 @@ namespace koliop {
 #endif
                             const ComputeFloatType variable1 = parameter0 * Kokkos::exp(-xa_sq) * Theta_func_tmp * vparg_value;
 
-                            f5d_s(imu, ivpar, itor1, itor2, itor3, ispeciesA) += variable1 * (parameter3 -
+                            f5d_s(imu, ivpar, itor2, itor1, itor3, ispeciesA) += variable1 * (parameter3 -
                                                                                               parameter4 * xa_sq);
                         });
                 }

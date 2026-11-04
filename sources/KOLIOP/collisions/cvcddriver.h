@@ -67,7 +67,7 @@ namespace koliop {
                 const auto& B_norm       = an_operator.B_norm_;
                 const auto& T_s          = an_operator.T_s_;
 
-                const auto team_count = CvCdDriver::kBlockExtentTor1 * CvCdDriver::kBlockExtentTor2 * CvCdDriver::kBlockExtentTor3;
+                const auto team_count = CvCdDriver::kBlockExtentTor2 * CvCdDriver::kBlockExtentTor1 * CvCdDriver::kBlockExtentTor3;
 
                 // Due to the inherent Cuda/HIP thread block limit.
                 KOLIOP_ASSERT(team_count <= std::numeric_limits<int>::max());
@@ -85,15 +85,14 @@ namespace koliop {
 
                 const auto kernel = KOKKOS_LAMBDA(const typename PolicyType::member_type& a_team_handle) {
 
-                    const OrdinalType team_index = a_team_handle.league_rank();
+                    const OrdinalType team_index      = a_team_handle.league_rank();
+                    const OffsetType  flattened_index = team_index;
 
                     // NOTE: kBlockExtentXXX are constant, the compiler can replace
                     // the modulo with faster instructions.
-                    const OrdinalType block_local_index_itor1 = (team_index) % CvCdDriver::kBlockExtentTor1;
-                    const OrdinalType block_local_index_itor2 = (team_index / (CvCdDriver::kBlockExtentTor1)) % CvCdDriver::kBlockExtentTor2;
-                    const OrdinalType block_local_index_itor3 = (team_index / (CvCdDriver::kBlockExtentTor1 * CvCdDriver::kBlockExtentTor2)) /* % CvCdDriver::kBlockExtentTor3 */;
-
-                    const OffsetType flattened_index = team_index;
+                    const OrdinalType block_local_index_itor2 = (team_index) % CvCdDriver::kBlockExtentTor2;
+                    const OrdinalType block_local_index_itor1 = (team_index / (CvCdDriver::kBlockExtentTor2)) % CvCdDriver::kBlockExtentTor1;
+                    const OrdinalType block_local_index_itor3 = (team_index / (CvCdDriver::kBlockExtentTor2 * CvCdDriver::kBlockExtentTor1)) /* % CvCdDriver::kBlockExtentTor3 */;
 
                     const OrdinalType batch_element_index = (flattened_index) % CvCdDriver::BatchTraitsType::kBatchSize;
                     const OrdinalType batch_index         = (flattened_index / (CvCdDriver::BatchTraitsType::kBatchSize)) /* % CvCdDriver::kBatchCount */;
@@ -102,8 +101,8 @@ namespace koliop {
                     const OrdinalType itor2 = block_first_tor2 + block_local_index_itor2;
                     const OrdinalType itor3 = block_first_tor3 + block_local_index_itor3;
 
-                    const ComputeFloatType BoT = B_norm(itor2, itor1) /
-                                                 T_s(itor1, itor2, itor3, species_index);
+                    const ComputeFloatType BoT = B_norm(itor2, itor1, itor3) /
+                                                 T_s(itor2, itor1, itor3, species_index);
 
                     for(OrdinalType ivpar = 0; ivpar < vpar_extent; ++ivpar) {
                         for(OrdinalType ipol = 0; ipol < Constant::kMaximumLaguerrePolynomialDegree; ++ipol) {
@@ -119,7 +118,7 @@ namespace koliop {
                                     const ComputeFloatType coeff_tot = DoComputeLaguerrePol(ipol, muBoT) * BoT * coeff_intdmu(imu) * Kokkos::exp(-muBoT);
 
                                     rhs_value_reducer.join(rhs_value_reducer.reference(),
-                                                           coeff_tot * f5d_s(imu, ivpar, itor1, itor2, itor3, species_index));
+                                                           coeff_tot * f5d_s(imu, ivpar, itor2, itor1, itor3, species_index));
                                 });
 
                             a_team_handle.team_reduce(rhs_value_reducer);
@@ -213,25 +212,22 @@ namespace koliop {
 
                 const auto& vparg = an_operator.vparg_;
 
-                const auto kernel = KOKKOS_LAMBDA(OrdinalType itor1, OrdinalType ipol, OrdinalType ivpar, OrdinalType itor2, OrdinalType itor3) {
-
-                    // NOTE: kBlockExtentXXX are constant, the compiler can replace
-                    // the modulo with faster instructions.
+                const auto kernel = KOKKOS_LAMBDA(OrdinalType itor2, OrdinalType ipol, OrdinalType ivpar, OrdinalType itor1, OrdinalType itor3) {
                     const OrdinalType block_local_index_itor1 = itor1 - block_first_tor1;
                     const OrdinalType block_local_index_itor2 = itor2 - block_first_tor2;
                     const OrdinalType block_local_index_itor3 = itor3 - block_first_tor3;
 
-                    const OffsetType flattened_index = CvCdDriver::kBlockExtentTor1 * CvCdDriver::kBlockExtentTor2 * block_local_index_itor3 +
-                                                       CvCdDriver::kBlockExtentTor1 * block_local_index_itor2 +
-                                                       block_local_index_itor1;
+                    const OffsetType flattened_index = CvCdDriver::kBlockExtentTor2 * CvCdDriver::kBlockExtentTor1 * block_local_index_itor3 +
+                                                       CvCdDriver::kBlockExtentTor2 * block_local_index_itor1 +
+                                                       block_local_index_itor2;
 
                     const OrdinalType batch_element_index = (flattened_index) % CvCdDriver::BatchTraitsType::kBatchSize;
                     const OrdinalType batch_index         = (flattened_index / (CvCdDriver::BatchTraitsType::kBatchSize)) /* % CvCdDriver::kBatchCount */;
 
                     const ComputeFloatType vpar_tmp       = vparg(ivpar);
-                    const ComputeFloatType Ta             = T_s(itor1, itor2, itor3, species_index);
-                    const ComputeFloatType U_para         = U_par_s(itor1, itor2, itor3, species_index);
-                    const ComputeFloatType q_para_on_naTa = q_par_on_nT_s(itor1, itor2, itor3, species_index);
+                    const ComputeFloatType Ta             = T_s(itor2, itor1, itor3, species_index);
+                    const ComputeFloatType U_para         = U_par_s(itor2, itor1, itor3, species_index);
+                    const ComputeFloatType q_para_on_naTa = q_par_on_nT_s(itor2, itor1, itor3, species_index);
 
                     // TODO(Etienne M): Can we simplify that ?
 
@@ -247,31 +243,31 @@ namespace koliop {
                     Kokkos::Rank<5,
                                  Kokkos::Iterate::Left,
                                  Kokkos::Iterate::Left>>{an_execution_space,
-                                                         {block_first_tor1,
+                                                         {block_first_tor2,
                                                           0,
                                                           0,
-                                                          block_first_tor2,
+                                                          block_first_tor1,
                                                           block_first_tor3},
-                                                         {block_first_tor1 + CvCdDriver::kBlockExtentTor1,
+                                                         {block_first_tor2 + CvCdDriver::kBlockExtentTor2,
                                                           Constant::kMaximumLaguerrePolynomialDegree,
                                                           vpar_extent,
-                                                          block_first_tor2 + CvCdDriver::kBlockExtentTor2,
+                                                          block_first_tor1 + CvCdDriver::kBlockExtentTor1,
                                                           block_first_tor3 + CvCdDriver::kBlockExtentTor3}};
 
                 Kokkos::parallel_for("DoComputeCvCdSource",
                                      a_policy, kernel);
 #else
                 const auto wrapped_kernel = KOKKOS_LAMBDA(OrdinalType flattened_index) {
-                    kernel(static_cast<OrdinalType>(block_first_tor1 + (flattened_index) % CvCdDriver::kBlockExtentTor1),
-                           static_cast<OrdinalType>(0 /*          */ + (flattened_index / (CvCdDriver::kBlockExtentTor1)) % Constant::kMaximumLaguerrePolynomialDegree),
-                           static_cast<OrdinalType>(0 /*          */ + (flattened_index / (CvCdDriver::kBlockExtentTor1 * Constant::kMaximumLaguerrePolynomialDegree)) % vpar_extent),
-                           static_cast<OrdinalType>(block_first_tor2 + (flattened_index / (CvCdDriver::kBlockExtentTor1 * Constant::kMaximumLaguerrePolynomialDegree * vpar_extent)) % CvCdDriver::kBlockExtentTor2),
-                           static_cast<OrdinalType>(block_first_tor3 + (flattened_index / (CvCdDriver::kBlockExtentTor1 * Constant::kMaximumLaguerrePolynomialDegree * vpar_extent * CvCdDriver::kBlockExtentTor2)) /*% CvCdDriver::kBlockExtentTor3*/));
+                    kernel(static_cast<OrdinalType>(block_first_tor2 + (flattened_index) % CvCdDriver::kBlockExtentTor2),
+                           static_cast<OrdinalType>(0 /*          */ + (flattened_index / (CvCdDriver::kBlockExtentTor2)) % Constant::kMaximumLaguerrePolynomialDegree),
+                           static_cast<OrdinalType>(0 /*          */ + (flattened_index / (CvCdDriver::kBlockExtentTor2 * Constant::kMaximumLaguerrePolynomialDegree)) % vpar_extent),
+                           static_cast<OrdinalType>(block_first_tor1 + (flattened_index / (CvCdDriver::kBlockExtentTor2 * Constant::kMaximumLaguerrePolynomialDegree * vpar_extent)) % CvCdDriver::kBlockExtentTor1),
+                           static_cast<OrdinalType>(block_first_tor3 + (flattened_index / (CvCdDriver::kBlockExtentTor2 * Constant::kMaximumLaguerrePolynomialDegree * vpar_extent * CvCdDriver::kBlockExtentTor1)) /*% CvCdDriver::kBlockExtentTor3*/));
                 };
                 const auto a_policy = Kokkos::RangePolicy<ExecutionSpace, Kokkos::IndexType<OrdinalType>>{
                     an_execution_space, 0,
-                    static_cast<OrdinalType>(CvCdDriver::kBlockExtentTor1 * Constant::kMaximumLaguerrePolynomialDegree *
-                                             vpar_extent * CvCdDriver::kBlockExtentTor2 * CvCdDriver::kBlockExtentTor3)};
+                    static_cast<OrdinalType>(CvCdDriver::kBlockExtentTor2 * Constant::kMaximumLaguerrePolynomialDegree *
+                                             vpar_extent * CvCdDriver::kBlockExtentTor1 * CvCdDriver::kBlockExtentTor3)};
                 Kokkos::parallel_for(
                     "DoComputeCvCdSource",
                     a_policy, wrapped_kernel);
@@ -300,7 +296,7 @@ namespace koliop {
                 const auto& B_norm = an_operator.B_norm_;
                 const auto& T_s    = an_operator.T_s_;
 
-                const auto team_count = CvCdDriver::kBlockExtentTor1 * CvCdDriver::kBlockExtentTor2 * CvCdDriver::kBlockExtentTor3;
+                const auto team_count = CvCdDriver::kBlockExtentTor2 * CvCdDriver::kBlockExtentTor1 * CvCdDriver::kBlockExtentTor3;
 
                 // Due to the inherent Cuda/HIP thread block limit.
                 KOLIOP_ASSERT(team_count <= std::numeric_limits<int>::max());
@@ -318,15 +314,14 @@ namespace koliop {
 
                 const auto kernel = KOKKOS_LAMBDA(const typename PolicyType::member_type& a_team_handle) {
 
-                    const OrdinalType team_index = a_team_handle.league_rank();
+                    const OrdinalType team_index      = a_team_handle.league_rank();
+                    const OffsetType  flattened_index = team_index;
 
                     // NOTE: kBlockExtentXXX are constant, the compiler can replace
                     // the modulo with faster instructions.
-                    const OrdinalType block_local_index_itor1 = (team_index) % CvCdDriver::kBlockExtentTor1;
-                    const OrdinalType block_local_index_itor2 = (team_index / (CvCdDriver::kBlockExtentTor1)) % CvCdDriver::kBlockExtentTor2;
-                    const OrdinalType block_local_index_itor3 = (team_index / (CvCdDriver::kBlockExtentTor1 * CvCdDriver::kBlockExtentTor2)) /* % CvCdDriver::kBlockExtentTor3 */;
-
-                    const OffsetType flattened_index = team_index;
+                    const OrdinalType block_local_index_itor2 = (team_index) % CvCdDriver::kBlockExtentTor2;
+                    const OrdinalType block_local_index_itor1 = (team_index / (CvCdDriver::kBlockExtentTor2)) % CvCdDriver::kBlockExtentTor1;
+                    const OrdinalType block_local_index_itor3 = (team_index / (CvCdDriver::kBlockExtentTor2 * CvCdDriver::kBlockExtentTor1)) /* % CvCdDriver::kBlockExtentTor3 */;
 
                     const OrdinalType batch_element_index = (flattened_index) % CvCdDriver::BatchTraitsType::kBatchSize;
                     const OrdinalType batch_index         = (flattened_index / (CvCdDriver::BatchTraitsType::kBatchSize)) /* % CvCdDriver::kBatchCount */;
@@ -335,8 +330,8 @@ namespace koliop {
                     const OrdinalType itor2 = block_first_tor2 + block_local_index_itor2;
                     const OrdinalType itor3 = block_first_tor3 + block_local_index_itor3;
 
-                    const ComputeFloatType BoT = B_norm(itor2, itor1) /
-                                                 T_s(itor1, itor2, itor3, species_index);
+                    const ComputeFloatType BoT = B_norm(itor2, itor1, itor3) /
+                                                 T_s(itor2, itor1, itor3, species_index);
 
                     using koliop::utility::IntraTeam;
                     IntraTeam::Iterate2D(
@@ -351,7 +346,7 @@ namespace koliop {
                                                DoComputeLaguerrePol(ipol, muBoT);
                             }
 
-                            f5d_s(imu, ivpar, itor1, itor2, itor3, species_index) = f5d_s_value;
+                            f5d_s(imu, ivpar, itor2, itor1, itor3, species_index) = f5d_s_value;
                         });
                 };
 
