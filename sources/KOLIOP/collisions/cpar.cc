@@ -91,7 +91,7 @@ namespace koliop {
                 static constexpr auto k2Pi = koliop::portability::MathematicalConstant<ComputeFloatType>::k2Pi;
 
                 const ComputeFloatType vTa = Kokkos::sqrt(Ta * inv_hat_Aa);
-                const ComputeFloatType AD  = coeff_AD_r(itor2);
+                const ComputeFloatType AD  = coeff_AD_r(itor1);
 
                 for(OrdinalType ispeciesB = 0; ispeciesB < species_extent; ++ispeciesB) {
                     // NOTE: We do very large jump in memory, but all the
