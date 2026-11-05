@@ -3,6 +3,8 @@
 #ifndef KOLIOP_UTILITY_INDEX_H
 #define KOLIOP_UTILITY_INDEX_H
 
+#include <array>
+
 namespace koliop {
     namespace utility {
         /// @brief Inspired from libsplb2:utility/isomap
