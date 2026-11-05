@@ -81,56 +81,77 @@ namespace koliop {
                 // blocks.
                 {1, 1, 1}};
 
-            static inline constexpr std::size_t kPresetBlockExtentCount = sizeof(kPresetBlockExtent) /
-                                                                          sizeof(kPresetBlockExtent[0]);
+            static inline constexpr std::size_t kPresetBlockExtentCount = std::size(kPresetBlockExtent);
 
-            template <std::size_t I = 0, typename Driver, typename... Args>
-            void DispatchCvCdDriver(Driver&     a_cvcd_driver,
-                                    OrdinalType block_tor1_extent,
-                                    OrdinalType block_tor2_extent,
-                                    OrdinalType block_tor3_extent,
-                                    Args&&... args) {
-                if constexpr(I < std::size(kPresetBlockExtent)) {
-                    constexpr auto kExtentBlockTor1 = kPresetBlockExtent[I][0];
-                    constexpr auto kExtentBlockTor2 = kPresetBlockExtent[I][1];
-                    constexpr auto kExtentBlockTor3 = kPresetBlockExtent[I][2];
-                    if(block_tor1_extent == kExtentBlockTor1 && block_tor2_extent == kExtentBlockTor2 && block_tor3_extent == kExtentBlockTor3) {
-                        if constexpr(kExtentBlockTor1 == 1 && kExtentBlockTor2 == 1 && kExtentBlockTor3 == 1) {
-                            // NOTE: the FakeBatchTraitsType is important for the 1x1x1 fallback.
-                            a_cvcd_driver.Set(CvCdDriver<kExtentBlockTor1, kExtentBlockTor2, kExtentBlockTor3, Constant::FakeBatchTraitsType>{std::forward<Args>(args)...});
-                        } else {
-                            a_cvcd_driver.Set(CvCdDriver<kExtentBlockTor1, kExtentBlockTor2, kExtentBlockTor3, Constant::BatchTraitsType>{std::forward<Args>(args)...});
-                        }
-                    } else {
-                        DispatchCvCdDriver<I + 1>(a_cvcd_driver, block_tor1_extent, block_tor2_extent, block_tor3_extent, std::forward<Args>(args)...);
-                    }
-                } else {
-                    // The block size is registered in
-                    // preset_block_extent but we are not able to build
-                    // such block of this size.
-                    KOLIOP_ASSERT(false && "For some reason, the CvCd operator blocking configuration you choose is not part of the factory.");
+            template <std::size_t I>
+            inline constexpr bool kIsFallbackPreset = kPresetBlockExtent[I][0] == 1 &&
+                                                      kPresetBlockExtent[I][1] == 1 &&
+                                                      kPresetBlockExtent[I][2] == 1;
+
+            // The driver type for preset I. NOTE: 1x1x1 must use the fake batch traits.
+            template <std::size_t I>
+            using PresetCvCdDriver = CvCdDriver<kPresetBlockExtent[I][0],
+                                                kPresetBlockExtent[I][1],
+                                                kPresetBlockExtent[I][2],
+                                                std::conditional_t<kIsFallbackPreset<I>,
+                                                                   Constant::FakeBatchTraitsType,
+                                                                   Constant::BatchTraitsType>>;
+
+            template <std::size_t I, typename... Args>
+            bool TryCreateCvCdDriver(CvCdDriverEraser& a_cvcd_driver,
+                                     OrdinalType       block_tor1_extent,
+                                     OrdinalType       block_tor2_extent,
+                                     OrdinalType       block_tor3_extent,
+                                     const Args&... args) {
+                if(block_tor1_extent != kPresetBlockExtent[I][0] ||
+                   block_tor2_extent != kPresetBlockExtent[I][1] ||
+                   block_tor3_extent != kPresetBlockExtent[I][2]) {
+                    return false;
                 }
+                a_cvcd_driver.Set(PresetCvCdDriver<I>{args...});
+                return true;
             }
+
+            template <typename... Args, std::size_t... Is>
+            bool CreateCvCdDriver(std::index_sequence<Is...>,
+                                  CvCdDriverEraser& a_cvcd_driver,
+                                  OrdinalType       block_tor1_extent,
+                                  OrdinalType       block_tor2_extent,
+                                  OrdinalType       block_tor3_extent,
+                                  const Args&... args) {
+                return (TryCreateCvCdDriver<Is>(a_cvcd_driver,
+                                                block_tor1_extent, block_tor2_extent, block_tor3_extent,
+                                                args...) ||
+                        // Short-circuits on the first matching preset.
+                        ...);
+            }
+
+            // Completes every preset driver type here, in a non-deferred context, before the nvcc stub names
+            // Najl<CvCdDriver<...>>. Drop it once Najl no longer takes the driver as template parameter.
+            template <std::size_t... Is>
+            constexpr bool CompleteAllPresetCvCdDrivers(std::index_sequence<Is...>) {
+                return ((sizeof(PresetCvCdDriver<Is>) > 0) && ...);
+            }
+
+            // Must be at namespace scope (not inside a function template) so it is evaluated immediately.
+            static_assert(CompleteAllPresetCvCdDrivers(std::make_index_sequence<kPresetBlockExtentCount>{}));
 
             void CreateCvCdDriver(const Operator&   an_operator,
                                   CvCdDriverEraser& a_cvcd_driver,
                                   OrdinalType       block_tor1_extent,
                                   OrdinalType       block_tor2_extent,
                                   OrdinalType       block_tor3_extent) {
-
-                const auto& vpar_extent    = an_operator.vpar_extent_;
-                const auto& species_extent = an_operator.species_extent_;
-
-                const auto& hat_As         = an_operator.hat_As_;
-                const auto& hat_Zs         = an_operator.hat_Zs_;
-                const auto& coeff_intdvpar = an_operator.coeff_intdvpar_;
-                const auto& vparg          = an_operator.vparg_;
-
-                const auto& collision_interspecies = an_operator.collision_interspecies_;
-
-                DispatchCvCdDriver(a_cvcd_driver,
-                                   block_tor1_extent, block_tor2_extent, block_tor3_extent,
-                                   vpar_extent, species_extent, collision_interspecies, hat_As, hat_Zs, vparg, coeff_intdvpar);
+                const bool is_created = CreateCvCdDriver(std::make_index_sequence<kPresetBlockExtentCount>{},
+                                                         a_cvcd_driver,
+                                                         block_tor1_extent, block_tor2_extent, block_tor3_extent,
+                                                         an_operator.vpar_extent_,
+                                                         an_operator.species_extent_,
+                                                         an_operator.collision_interspecies_,
+                                                         an_operator.hat_As_,
+                                                         an_operator.hat_Zs_,
+                                                         an_operator.vparg_,
+                                                         an_operator.coeff_intdvpar_);
+                KOLIOP_ASSERT(is_created && "The CvCd operator blocking configuration you chose is not part of kPresetBlockExtent.");
             }
 
             static inline void
