@@ -15,7 +15,7 @@ $ git clone https://gitlab.com/cines/code.gysela/libkoliop
 ### Dependencies
 
 ```
-cmake >= 3.22.1 (3.25 and up is recommended)
+cmake >= 3.25
 ```
 
 ### Compiling
@@ -35,7 +35,7 @@ $ make
 Where `<machine_file>` being one of the supported machines. For instance:
 
 ```bash
-$ cmake .. -GNinja --toolchain=../toolchains/mi250.cce.adastra/toolchain.cmake
+$ cmake .. -GNinja --toolchain=../toolchains/mi250.rocm.adastra/toolchain.cmake
 ```
 
 ### Testing

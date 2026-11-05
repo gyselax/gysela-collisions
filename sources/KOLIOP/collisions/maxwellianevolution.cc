@@ -58,8 +58,6 @@ namespace koliop {
                                                // NOTE: Be careful with the restrict.
                                                Kokkos::MemoryTraits<Kokkos::Restrict>>;
 
-            const uint64_t scratch_memory_bytes_per_thread = species_extent * sizeof(ComputeFloatType);
-
             const auto team_count = tor2_extent * tor1_extent * tor3_extent;
 
             // Due to the inherent Cuda/HIP thread block limit.
@@ -77,7 +75,7 @@ namespace koliop {
                 koliop::utility::Select<Constant::DeviceExecutionSpaceType>(Kokkos::AUTO, Kokkos::AUTO, 64, 64)};
 
             a_policy.set_scratch_size(0,
-                                      Kokkos::PerThread(ScratchMemory::shmem_size(scratch_memory_bytes_per_thread)));
+                                      Kokkos::PerThread(ScratchMemory::shmem_size(species_extent /**sizeof(..) handled by shmem_size*/)));
 
             const auto kernel = KOKKOS_LAMBDA(const typename PolicyType::member_type& a_team_handle) {
 

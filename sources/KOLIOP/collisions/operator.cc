@@ -226,6 +226,7 @@ namespace koliop {
                             hat_As_,
                             hat_Zs_,
                             coeff_AD_r_);
+            Kokkos::fence();
 
             detail::GetFreshStreams(Constant::kDiscardedStreamCount,
                                     Constant::kDisjointExecutionSpaceCount,
