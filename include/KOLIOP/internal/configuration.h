@@ -242,10 +242,8 @@ namespace koliop {
 ///
 //////////////////////////////////////
 
-#if defined(SPLB2_COMPILER_MIMICRY_GCC)
+#if defined(__GNUC__)
     #define KOLIOP_RESTRICT __restrict // or __restrict__
-#elif defined(SPLB2_COMPILER_IS_MSVC)
-    #define KOLIOP_RESTRICT __restrict // __declspec(restrict)
 #else
     #define KOLIOP_RESTRICT
 #endif

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 
-#ifndef KOLIOP_COLLISION_OPERATOR_H
-#define KOLIOP_COLLISION_OPERATOR_H
+#ifndef KOLIOP_COLLISION_COLLISIONS_H
+#define KOLIOP_COLLISION_COLLISIONS_H
 
 #include <Kokkos_Core.hpp>
 #include <vector>
@@ -45,8 +45,7 @@ namespace koliop {
             /// @param tor1_extent The rank's r domain extent in grid point.
             /// @param tor2_extent The rank's theta domain extent in grid point.
             /// @param tor3_extent The rank's phi domain extent in grid point.
-            /// @param collision_interspecies Boolean as type int8_t (0 = false, else true) describing if a species
-            /// collision with itself.
+            /// @param collision_interspecies Boolean describing if a species collision with itself.
             /// @param hat_As An array of double with extents [0, species_extent).
             /// @param hat_Zs An array of double with extents [0, species_extent).
             /// @param mug An array of double with extents [0, mu_extent) representing the coordinate of the Mu grid
@@ -76,6 +75,7 @@ namespace koliop {
                      const koliop::utility::View::UDL5<const Flo64>& Bstar_s);
 
             ~Operator();
+            Operator(Operator&&) = delete;
 
             void Fence(OrdinalType execution_space_index) const;
 
