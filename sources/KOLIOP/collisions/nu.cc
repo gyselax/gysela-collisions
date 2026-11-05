@@ -80,7 +80,7 @@ namespace koliop {
                     Kokkos::TeamThreadRange(a_team_handle,
                                             0, tor2_extent),
                     [&](auto itor2) {
-                        nu_ab(itor2, itor1, itor3, ispeciesA, ispeciesB) = DoComputeFrequencyNuab(nustar_coeff(ispeciesA, ispeciesB, itor2),
+                        nu_ab(itor2, itor1, itor3, ispeciesA, ispeciesB) = DoComputeFrequencyNuab(nustar_coeff(ispeciesA, ispeciesB, itor1),
                                                                                                   hat_As(ispeciesA), hat_As(ispeciesB),
                                                                                                   T_s(itor2, itor1, itor3, ispeciesA),
                                                                                                   n_s(itor2, itor1, itor3, ispeciesB),

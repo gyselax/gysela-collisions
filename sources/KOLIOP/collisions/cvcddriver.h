@@ -651,8 +651,7 @@ namespace koliop {
                                   RHS_matrix_sampler,
                                   kFlattenedBlockExtent, vpar_extent,
                                   alpha_coefficients_.data(),
-                                  // Discards whatever garbage
-                                  // rhs could contain.
+                                  // Discards whatever garbage rhs could contain but not NaNs.
                                   0.0,
                                   rhs_.data());
                     }

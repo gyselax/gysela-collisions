@@ -40,6 +40,7 @@ namespace koliop {
             ///
             /// Because we assume A_matrix_sampler could be a View or an
             /// operator() we can not rely on the ThreadVectorType.
+            /// beta_scalar=0 does not mean it'll clear NaNs!
             ///
             template <typename MatrixSampler>
             void Apply(ExecutionSpaceType an_execution_space,
@@ -96,17 +97,17 @@ namespace koliop {
             const auto kernel = KOKKOS_LAMBDA(OrdinalType batch_element_index, OrdinalType scalar_index, OrdinalType small_block_index, OrdinalType batch_index) {
                 const auto vector_x_batch_element = Kokkos::subview(x_vector_view,
                                                                     batch_index,
-                                                                    // TODO(Etienne M): These ALL() are constant, should we
-                                                                    // hardcode them to facilitate the compiler's work ?
+                                                                    // TODO(Etienne M): These ALL() are constant, should
+                                                                    // we hardcode them to facilitate the compiler's
+                                                                    // work ?
                                                                     Kokkos::ALL(), // kBigBlockExtent
                                                                     Kokkos::ALL(), // kSmallBlockExtent
                                                                     batch_element_index);
 
                 value_type dot_product{};
 
-                // TODO(Etienne M): These reduction are not ideal for numerical
-                // stability. Using more threads, we could do some kind of tree
-                // like reduction with better properties.
+                // TODO(Etienne M): These reduction are not ideal for numerical stability. Using more threads, we could
+                // do some kind of tree like reduction with better properties.
 
                 if(small_block_index > 0) {
                     // Every time, except for the first small block row.
@@ -142,15 +143,11 @@ namespace koliop {
                     }
                 }
 
-                y_vector_view(batch_index,
-                              small_block_index,
-                              scalar_index,
-                              batch_element_index) *= beta_scalar;
-
-                y_vector_view(batch_index,
-                              small_block_index,
-                              scalar_index,
-                              batch_element_index) += alpha_scalar * dot_product;
+                auto& y = y_vector_view(batch_index, small_block_index, scalar_index, batch_element_index);
+                // y = alpha_scalar * dot_product + beta_scalar * y;
+                // Also ensure we remove NaNs.
+                y = (beta_scalar == value_type{0}) ? alpha_scalar * dot_product :
+                                                     beta_scalar * y + alpha_scalar * dot_product;
             };
 
             const auto a_policy = Kokkos::MDRangePolicy<
