@@ -76,6 +76,7 @@ namespace koliop {
                 {32, 32, 2},
                 // Nspace = 1024
                 {32, 32, 1},
+                {4, 4, 1},
                 // Nspace = 1
                 // NOTE: Degraded operation performance is expected for 1x1x1
                 // blocks.
@@ -151,6 +152,7 @@ namespace koliop {
                                                          an_operator.hat_Zs_,
                                                          an_operator.vparg_,
                                                          an_operator.coeff_intdvpar_);
+                KOLIOP_UNUSED(is_created);
                 KOLIOP_ASSERT(is_created && "The CvCd operator blocking configuration you chose is not part of kPresetBlockExtent.");
             }
 
