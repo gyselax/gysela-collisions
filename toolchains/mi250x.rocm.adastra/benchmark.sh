@@ -11,7 +11,8 @@ hostname
 
 DEVICE_INDEX="4"
 export ROCR_VISIBLE_DEVICES="${DEVICE_INDEX}"
-export KOLIOP_DEBUG_ALL="1"
+export KOLIOP_DEBUG_koliop_Create="1"
+export KOLIOP_DEBUG_PrepareBlockPosition="1"
 
 PROFILE_COMMAND=""
 # PROFILE_COMMAND="rocprofv3 --output-format=csv --stats --hip-trace --kernel-trace -- "
