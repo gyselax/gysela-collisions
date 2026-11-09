@@ -76,6 +76,9 @@ namespace koliop {
                 {32, 32, 2},
                 // Nspace = 1024
                 {32, 32, 1},
+                // Nspace = 512
+                {8, 64, 1},
+                // Nspace = 16
                 {4, 4, 1},
                 // Nspace = 1
                 // NOTE: Degraded operation performance is expected for 1x1x1
